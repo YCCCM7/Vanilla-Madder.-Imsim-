@@ -1,0 +1,3 @@
+VMDDynamicPaintTexture01-08 - Stone
+VMDDynamicPaintTexture09-32 - Paper
+VMDDynamicPaintTexture33 - Ladder

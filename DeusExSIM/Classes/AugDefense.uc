@@ -1,0 +1,316 @@
+//=============================================================================
+// AugDefense.
+//=============================================================================
+class AugDefense extends VMDBufferAugmentation;
+
+var float mpAugValue;
+var float mpEnergyDrain;
+var bool bDefenseActive;
+
+var float defenseSoundTime;
+const defenseSoundDelay = 2;
+
+// ----------------------------------------------------------------------------
+// Networking Replication
+// ----------------------------------------------------------------------------
+
+replication
+{
+   	//server to client variable propagation.
+   	reliable if (Role == ROLE_Authority)
+      		bDefenseActive;
+	
+   	//server to client function call
+   	reliable if (Role == ROLE_Authority)
+      		TriggerDefenseAugHUD, SetDefenseAugStatus;
+}
+
+state Active
+{
+	function Timer()
+	{
+		local float mindist, GSpeed;
+		local DeusExProjectile minproj;
+		
+		minproj = None;
+		
+      		// DEUS_EX AMSD Multiplayer check
+      		if ((Player == None) && (VMBP == None))
+		{
+         		SetTimer(0.1,False);
+         		return;
+      		}
+		
+		GSpeed = 1.0;
+		if ((Level != None) && (Level.Game != None))
+		{
+			GSpeed = Level.Game.GameSpeed;
+		}
+		
+		if (Player != None)
+		{
+			// In multiplayer propagate a sound that will let others know their in an aggressive defense field
+			// with range slightly greater than the current level value of the aug
+			if ( (Level.NetMode != NM_Standalone) && ( Level.Timeseconds > defenseSoundTime ))
+			{
+				Player.PlaySound(Sound'AugDefenseOn', SLOT_Interact, 1.0,, (LevelValues[CurrentLevel]*1.33), 0.75 * GSpeed);
+				defenseSoundTime = Level.Timeseconds + defenseSoundDelay;
+			}
+			
+	      		//DEUS_EX AMSD Exported to function call for duplication in multiplayer.
+      			minproj = FindNearestProjectile();
+			
+			// if we have a valid projectile, send it to the aug display window
+			if (minproj != None)
+			{
+        	 		bDefenseActive = True;
+        	 		mindist = VSize(Player.Location - minproj.Location);
+				
+         			// DEUS_EX AMSD In multiplayer, let the client turn his HUD on here.
+         			// In singleplayer, turn it on normally.
+         			if (Level.Netmode != NM_Standalone)
+				{
+            				TriggerDefenseAugHUD();
+				}
+         			else
+         			{         
+            				SetDefenseAugStatus(True,CurrentLevel,minproj);
+         			}
+				
+				// play a warning sound
+				Player.PlaySound(sound'GEPGunLock', SLOT_None,,,, 2.0 * GSpeed);
+				
+				if (mindist < LevelValues[CurrentLevel])
+				{
+            				minproj.bAggressiveExploded=True;
+					minproj.Explode(minproj.Location, vect(0,0,1));
+					Player.PlaySound(sound'ProdFire', SLOT_None,,,, 2.0 * GSpeed);
+				}
+			}
+			else
+			{
+         			if ((Level.NetMode == NM_Standalone) || (bDefenseActive))
+				{
+            				SetDefenseAugStatus(False,CurrentLevel,None);
+				}
+         			bDefenseActive = false;
+			}
+		}
+		else if (VMBP != None)
+		{
+	      		//DEUS_EX AMSD Exported to function call for duplication in multiplayer.
+      			minproj = FindNearestProjectile();
+			
+			// if we have a valid projectile, send it to the aug display window
+			if (minproj != None)
+			{
+        	 		bDefenseActive = True;
+        	 		mindist = VSize(VMBP.Location - minproj.Location);
+				
+            			SetDefenseAugStatus(True,CurrentLevel,minproj);
+				
+				// play a warning sound
+				VMBP.PlaySound(sound'GEPGunLock', SLOT_None,,,, 2.0 * GSpeed);
+				
+				if (mindist < LevelValues[CurrentLevel])
+				{
+					//MADDERS, 12/28/23: Hack so LAW stops insta-nuking walton. Similar to MP code anyways.
+					MinProj.Damage = MinProj.Damage/3;
+            				minproj.bAggressiveExploded = True;
+					minproj.Explode(minproj.Location, vect(0,0,1));
+					VMBP.PlaySound(sound'ProdFire', SLOT_None,,,, 2.0 * GSpeed);
+				}
+			}
+			else
+			{
+            			SetDefenseAugStatus(False,CurrentLevel,None);
+         			bDefenseActive = false;
+			}
+		}
+	}
+	
+Begin:
+	SetTimer(0.1, True);
+}
+
+function Deactivate()
+{
+	Super.Deactivate();
+	
+	SetTimer(0.1, False);
+   	SetDefenseAugStatus(False,CurrentLevel,None);
+}
+
+// ------------------------------------------------------------------------------
+// FindNearestProjectile()
+// DEUS_EX AMSD Exported to a function since it also needs to exist in the client
+// TriggerDefenseAugHUD;
+// ------------------------------------------------------------------------------
+
+simulated function DeusExProjectile FindNearestProjectile()
+{
+   	local DeusExProjectile proj, minproj;
+   	local float dist, mindist;
+   	local bool bValidProj;
+	
+   	minproj = None;
+   	mindist = 999999;
+   	foreach AllActors(class'DeusExProjectile', proj)
+   	{
+		//MADDERS, 1/16/21: We're all that matters. Nihilism 2021.
+         	bValidProj = !proj.bIgnoresNanoDefense;
+		
+      		if (bValidProj)
+      		{
+         		// make sure we don't own it
+         		if (proj.Owner != Player && Player != None)
+         		{
+			 	// MBCODE : If team game, don't blow up teammates projectiles
+				if (!((TeamDMGame(Player.DXGame) != None) && (TeamDMGame(Player.DXGame).ArePlayersAllied(DeusExPlayer(proj.Owner),Player))))
+				{
+					if ((ScriptedPawn(proj.Owner) != None && ScriptedPawn(proj.Owner).GetPawnAllianceType(Player) == ALLIANCE_Hostile) || (ScriptedPawn(proj.Owner) == None))
+					{
+						// make sure it's moving fast enough
+						if (VSize(proj.Velocity) > 100 || ThrownProjectile(Proj) != None)
+						{
+				   			dist = VSize(Player.Location - proj.Location);
+							
+							// Transcended - Require LOS
+				   			if ((dist < mindist) && FastTrace(proj.Location, Player.Location))
+				   			{
+						  		mindist = dist;
+						  		minproj = proj;
+							}
+				   		}
+					}
+				}
+         		}
+			
+         		// make sure we don't own it
+         		else if (proj.Owner != VMBP && VMBP != None)
+         		{
+				if ((ScriptedPawn(proj.Owner) != None && ScriptedPawn(proj.Owner).GetPawnAllianceType(VMBP) == ALLIANCE_Hostile) || (ScriptedPawn(proj.Owner) == None))
+				{
+					// make sure it's moving fast enough
+					if (VSize(proj.Velocity) > 100 || ThrownProjectile(Proj) != None)
+					{
+				  		dist = VSize(VMBP.Location - proj.Location);
+						
+						// Transcended - Require LOS
+				  		if ((dist < mindist) && FastTrace(proj.Location, VMBP.Location))
+				  		{
+					  		mindist = dist;
+					  		minproj = proj;
+						}
+				  	}
+				}
+         		}
+      		}
+   	}
+	
+   	return minproj;
+}
+
+// ------------------------------------------------------------------------------
+// TriggerDefenseAugHUD()
+// ------------------------------------------------------------------------------
+
+simulated function TriggerDefenseAugHUD()
+{
+   	local DeusExProjectile minproj;
+   	
+   	minproj = None;
+   	minproj = FindNearestProjectile();
+   	
+   	// if we have a valid projectile, send it to the aug display window
+   	// That's all we do.
+   	if (minproj != None)
+   	{
+      		SetDefenseAugStatus(True,CurrentLevel,minproj);      
+   	}
+}
+
+simulated function Tick(float DeltaTime)
+{
+   	Super.Tick(DeltaTime);
+	
+   	// DEUS_EX AMSD Make sure it gets turned off in multiplayer.
+   	if (Level.NetMode == NM_Client)
+   	{
+      		if (!bDefenseActive)
+		{
+         		SetDefenseAugStatus(False, CurrentLevel, None);
+		}  
+ 	}
+}
+
+// ------------------------------------------------------------------------------
+// SetDefenseAugStatus()
+// ------------------------------------------------------------------------------
+simulated function SetDefenseAugStatus(bool bDefenseActive, int defenseLevel, DeusExProjectile defenseTarget)
+{
+	local DeusExRootWindow DXRW;
+	
+	if (Player != None)
+	{
+		DXRW = DeusExRootWindow(Player.RootWindow);
+		if ((DXRW != None) && (DXRW.AugDisplay != None))
+		{
+ 	  		DXRW.AugDisplay.bDefenseActive = bDefenseActive;
+ 	  		DXRW.AugDisplay.defenseLevel = defenseLevel;
+   			DXRW.AugDisplay.defenseTarget = defenseTarget;
+		}
+	}
+}
+
+simulated function PreBeginPlay()
+{
+	Super.PreBeginPlay();
+
+	// If this is a netgame, then override defaults
+	if (Level.NetMode != NM_StandAlone)
+	{
+		LevelValues[3] = mpAugValue;
+		EnergyRate = mpEnergyDrain;
+		defenseSoundTime = 0;
+	}
+}
+
+function string VMDGetAdvancedDescription()
+{
+	local int i;
+	local string Ret;
+	
+	Ret = AdvancedDescription;
+	
+	for (i=0; i<= MaxLevel; i++)
+	{
+		Ret = Ret$"|n|n"$SprintF(AdvancedDescLevels[i], int((LevelValues[i] / 16.0) + 0.5));
+	}
+	
+	return Ret;
+}
+
+defaultproperties
+{
+     bNPCEcoAug=True
+     AdvancedDescription="Aerosol nanoparticles are released upon the detection of objects fitting the electromagnetic threat profile of missiles, grenades, or other electronically armed projectiles; these nanoparticles will prematurely detonate such objects prior to reaching the agent."
+     AdvancedDescLevels(0)="TECH ONE: The range at which incoming rockets and grenades are detonated is %d ft."
+     AdvancedDescLevels(1)="TECH TWO: The range at which detonation occurs is increased slightly, at %d ft."
+     AdvancedDescLevels(2)="TECH THREE: The range at which detonation occurs is increased moderately, at %d ft."
+     AdvancedDescLevels(3)="TECH FOUR: Rockets and grenades are detonated almost before they are fired, at %d ft."
+     
+     mpAugValue=500.000000
+     mpEnergyDrain=35.000000
+     EnergyRate=10.000000
+     Icon=Texture'DeusExUI.UserInterface.AugIconDefense'
+     smallIcon=Texture'DeusExUI.UserInterface.AugIconDefense_Small'
+     AugmentationName="Aggressive Defense System"
+     Description="Aerosol nanoparticles are released upon the detection of objects fitting the electromagnetic threat profile of missiles, grenades, or other electronically armed projectiles; these nanoparticles will prematurely detonate such objects prior to reaching the agent.|n|nTECH ONE: The range at which incoming rockets and grenades are detonated is 10 ft.|n|nTECH TWO: The range at which detonation occurs is increased slightly, at 20 ft.|n|nTECH THREE: The range at which detonation occurs is increased moderately, at 30 ft.|n|nTECH FOUR: Rockets and grenades are detonated almost before they are fired, at 50 ft."
+     MPInfo="When active, enemy rockets detonate when they get close, doing reduced damage.  Some large rockets may still be close enough to do damage when they explode.  Energy Drain: Low"
+     LevelValues(0)=320.000000
+     LevelValues(1)=640.000000
+     LevelValues(2)=960.000000
+     LevelValues(3)=1600.000000
+     MPConflictSlot=7
+}
