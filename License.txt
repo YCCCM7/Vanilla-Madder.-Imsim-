@@ -1,0 +1,15 @@
+All Rights Reserved
+
+Copyright (c) 2017 WCCC
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+For inquiries requesting permission to use this project's assets in something going forward, please direct emails to WhiteChocolateChipClock@gmail.com.
+I always reply to non-spam emails. If you've clearly labeled your email inquiry, and it has not received a reply within 1 calendar year of being sent,
+it is likely that I am no longer around to enforce this license. Such a concern is why this repo has been opened to the public.
