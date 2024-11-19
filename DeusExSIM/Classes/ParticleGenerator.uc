@@ -46,50 +46,59 @@ replication
 function Trigger(Actor Other, Pawn EventInstigator)
 {
 	Super.Trigger(Other, EventInstigator);
-
+	
 	// if we are spewing, turn us off
 	if (bSpewing)
 	{
 		bSpewing = False;
 		proxy.bHidden = True;
-		if (bAmbientSound && (AmbientSound != None))
+		if ((bAmbientSound) && (AmbientSound != None))
+		{
 			SoundVolume = 0;
+		}
 	}
 	else		// otherwise, turn us on
 	{
 		bSpewing = True;
 		proxy.bHidden = False;
 		LifeSpan = spewTime;
-		if (bAmbientSound && (AmbientSound != None))
+		if ((bAmbientSound) && (AmbientSound != None))
+		{
 			SoundVolume = 255;
+		}
 	}
 }
 
 function UnTrigger(Actor Other, Pawn EventInstigator)
 {
 	Super.UnTrigger(Other, EventInstigator);
-
+	
 	// if we are spewing, turn us off
 	if (bSpewing)
 	{
 		bSpewing = False;
-		proxy.bHidden = True;
+		if (Proxy != None)
+		{
+			proxy.bHidden = True;
+		}
 		if (bAmbientSound && (AmbientSound != None))
+		{
 			SoundVolume = 0;
+		}
 	}
 }
 
 simulated function Tick(float deltaTime)
 {
 	local int i;
-
+	
 	// Server updates these location and rotation proxies
 	if ( Role == ROLE_Authority )
 	{
 		pLoc = Location;
 		pRot = Rotation;
 	}
-
+	
 	if (proxy != None)
 	{
 		// don't freeze if we're dying
@@ -98,68 +107,93 @@ simulated function Tick(float deltaTime)
 
 		// if we are close, say 120 feet
 		else if (proxy.DistanceFromPlayer < 1920)
+		{
 			bFrozen = False;
+		}
 		// if we are close, say 20 feet
-		// else if (proxy.DistanceFromPlayer < 320)
-			// bFrozen = False;
-
+		/*else if (proxy.DistanceFromPlayer < 320)
+		{
+			bFrozen = False;
+		}*/
 		// can the player see the generator?
 		else if (proxy.LastRendered() <= 2.0)
+		{
 			bFrozen = False;
-
+		}
 		// can the player see our base?
 		else if ((Base != None) && (Base != Level) && (Base.LastRendered() <= 2.0))
+		{
 			bFrozen = False;
-
+		}
 		else
+		{
 			bFrozen = True;
+		}
 	}
 	else
+	{
 		bFrozen = True;
-
+	}
+	
 	// check LifeSpan and see if we need to DelayedDestroy()
 	if ((LifeSpan > 0) && (LifeSpan <= 1.0))
 	{
 		LifeSpan = 0;
 		DelayedDestroy();
 	}
-
+	
 	// are we frozen
 	if (bFrozen)
+	{
 		return;
-
+	}
+	
 	Super.Tick(deltaTime);
-
+	
 	if (proxy != None)
+	{
 		if (proxy.Texture != particleTexture)
+		{
 			SetProxyData();
-
+		}
+	}
+	
 	// tick the iterator since Objects don't Tick()
 	if (ParticleIterator(RenderInterface) != None)
-			ParticleIterator(RenderInterface).Update(deltaTime);
-
+	{
+		ParticleIterator(RenderInterface).Update(deltaTime);
+	}
 	// don't spew anymore if we're dying
 	if (bDying || !bSpewing)
+	{
 		return;
-
+	}
+	
 	// if the owner that I'm attached to is dead, kill me
 	if ((attachTag != '') && (Owner == None))
+	{
 		Destroy();
-
+	}
+	
 	time += deltaTime;
-
+	
 	if (time > checkTime)
 	{
 		time = 0;
-
+		
 		if (FRand() <= frequency)
 		{
 			if (spawnSound != None)
+			{
 				PlaySound(spawnSound, SLOT_Misc,,, 1024);
-
+			}
 			for (i=0; i<numPerSpawn; i++)
+			{
 				if (ParticleIterator(RenderInterface) != None)
+				{
 					ParticleIterator(RenderInterface).AddParticle();
+				}
+			}
 		}
 	}
 }
@@ -180,10 +214,14 @@ function Timer()
 	if (ParticleIterator(RenderInterface) != None)
 	{
 		if (ParticleIterator(RenderInterface).IsListEmpty())
+		{
 			Destroy();
+		}
 	}
 	else // MB - We are most likely the server with no render interface, so kill it.
+	{
 		Destroy();
+	}
 }
 
 function Destroyed()
@@ -201,41 +239,51 @@ simulated function SetProxyData()
 	if (proxy != None)
 	{
 		proxy.bUnlit = bParticlesUnlit;
-
+		
 		if (bModulated)
+		{
 			proxy.Style = STY_Modulated;
+		}
 		else if (bTranslucent)
+		{
 			proxy.Style = STY_Translucent;
+		}
 		else
+		{
 			proxy.Style = STY_Masked;
-
+		}
 		if (particleTexture != None)
+		{
 			proxy.Texture = particleTexture;
+		}
 	}
 }
 
 function PostBeginPlay()
 {
 	local Actor A;
-
+	
 	Super.PostBeginPlay();
-
+	
 	DrawType = DT_None;
-
+	
 	// create our proxy particle
 	if (proxy == None)
 	{
 		proxy = Spawn(class'ParticleProxy',,, Location, Rotation);
 		SetProxyData();
 	}
-
-	if (bTriggered && !bInitiallyOn)
+	
+	if ((bTriggered) && (!bInitiallyOn))
 	{
 		bSpewing = False;
-		proxy.bHidden = True;
+		if (Proxy != None)
+		{
+			proxy.bHidden = True;
+		}
 		SoundVolume = 0;
 	}
-
+	
 	// attach us to the actor that was tagged
 	if (attachTag != '')
 	{
