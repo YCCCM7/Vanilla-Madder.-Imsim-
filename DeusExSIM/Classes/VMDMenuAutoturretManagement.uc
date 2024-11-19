@@ -196,8 +196,8 @@ function DoPop()
 function UpdateInfo()
 {
 	local bool bHasTalent;
-	local int SkillLevel, LastMaxAmmo, TMaxHealth, TRoll;
-	local float CraftCostTweak;
+	local int SkillLevel, LastMaxAmmo, TMaxHealth;
+	local float CraftCostTweak, TRoll;
 	
 	local Inventory TInv;
 	local DeusExAmmo FindAmmo, TAmmo;
@@ -275,27 +275,28 @@ function UpdateInfo()
 	{
 		if (Turret.Rotation.Roll != 0)
 		{
-			TRoll = int((Turret.Rotation.Roll / 16384.0) + 0.49) % 4;
+			TRoll = Abs(float(Turret.Rotation.Roll & 65535)) / 16384.0;
 		}
 		else if (Turret.Rotation.Pitch != 0)
 		{
-			TRoll = int((Turret.Rotation.Pitch / 16384.0) + 0.49) % 4;
+			TRoll = Abs(float(Turret.Rotation.Pitch & 65535)) / 16384.0;
 		}
 		
-		switch(TRoll)
+		if (Abs(TRoll - 1.0) < 0.2)
 		{
-			case 0:
-				TurretIcon.SetBackground(Texture'VMDManagementIconAutoturret0');
-			break;
-			case 1:
-				TurretIcon.SetBackground(Texture'VMDManagementIconAutoturret1');
-			break;
-			case 2:
-				TurretIcon.SetBackground(Texture'VMDManagementIconAutoturret2');
-			break;
-			case 3:
-				TurretIcon.SetBackground(Texture'VMDManagementIconAutoturret3');
-			break;
+			TurretIcon.SetBackground(Texture'VMDManagementIconAutoturret1');
+		}
+		else if (Abs(TRoll - 2.0) < 0.2)
+		{
+			TurretIcon.SetBackground(Texture'VMDManagementIconAutoturret2');
+		}
+		else if (Abs(TRoll - 3.0) < 0.2)
+		{
+			TurretIcon.SetBackground(Texture'VMDManagementIconAutoturret3');
+		}
+		else
+		{
+			TurretIcon.SetBackground(Texture'VMDManagementIconAutoturret0');
 		}
 	}
 }
