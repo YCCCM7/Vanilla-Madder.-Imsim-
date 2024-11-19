@@ -84,22 +84,42 @@ function PreTravel()
 
 function Timer()
 {
+	local int count;
+	local Actor A;
+	local AutoTurret turret;
+	local DeusExMover M;
+	local Inventory item, nextItem;
+	local LaserTrigger laser;
+	local PaulDenton Paul;
+	local ScriptedPawn P;
+	local SecurityCamera cam;
+	local SpawnPoint SP;
 	local Terrorist T;
 	local TerroristCarcass carc;
-	local ScriptedPawn P;
-	local SpawnPoint SP;
-	local DeusExMover M;
-	local PaulDenton Paul;
-	local AutoTurret turret;
-	local LaserTrigger laser;
-	local SecurityCamera cam;
-	local int count;
-	local Inventory item, nextItem;
 
 	Super.Timer();
 
 	if (localURL == "01_NYC_UNATCOISLAND")
 	{
+		if (!flags.GetBool('VMDStarterPicked'))
+		{
+			if (Player.FindInventoryType(class'WeaponGEPGun') != None)
+			{
+				Flags.SetBool('VMDStarterPicked', True,, 2);
+				Flags.SetBool('VMDStarterWasGEPGun', True,, 2);
+			}
+			else if (Player.FindInventoryType(class'WeaponRifle') != None)
+			{
+				Flags.SetBool('VMDStarterPicked', True,, 2);
+				Flags.SetBool('VMDStarterWasRifle', True,, 2);
+			}
+			else if (Player.FindInventoryType(class'WeaponMiniCrossbow') != None)
+			{
+				Flags.SetBool('VMDStarterPicked', True,, 2);
+				Flags.SetBool('VMDStarterWasMiniCrossbow', True,, 2);
+			}
+		}
+		
 		// count the number of dead terrorists
 		if (!flags.GetBool('M01PlayerAggressive'))
 		{
@@ -249,6 +269,42 @@ function Timer()
 					Paul.EnterWorld();
 
 				flags.SetBool('MS_ReadyForBriefing', True,, 2);
+				
+				//MADDERS, 11/17/24: Paul shows up and gives us an extra thanks, if we've been good boys and girls.
+				if ((!Flags.GetBool('TerroristCommander_Dead')) && (!Flags.GetBool('M01PlayerAggressive')))
+				{
+					if (Flags.GetBool('VMDStarterWasGEPGun'))
+					{
+						A = Spawn(Class'Datacube',,, Vect(-178,1230,288), Rot(0,8192,0));
+						if (A != None)
+						{
+							Datacube(A).TextPackage = "VMDText";
+							Datacube(A).TextTag = '01_PaulThanks';
+						}
+						A = Spawn(class'AmmoRocketEMP',,, Vect(-155,1210,248), Rot(0,-6000,0));
+					}
+					else if (Flags.GetBool('VMDStarterWasRifle'))
+					{
+						A = Spawn(Class'Datacube',,, Vect(-178,1230,288), Rot(0,8192,0));
+						if (A != None)
+						{
+							Datacube(A).TextPackage = "VMDText";
+							Datacube(A).TextTag = '01_PaulThanks';
+						}
+						A = Spawn(class'Ammo3006Tranq',,, Vect(-155,1210,248), Rot(0,-6000,0));
+					}
+					else if (Flags.GetBool('VMDStarterWasMiniCrossbow'))
+					{
+						A = Spawn(Class'Datacube',,, Vect(-178,1230,288), Rot(0,8192,0));
+						if (A != None)
+						{
+							Datacube(A).TextPackage = "VMDText";
+							Datacube(A).TextTag = '01_PaulThanks';
+						}
+						A = Spawn(class'AmmoDartPoison',,, Vect(-155,1210,248), Rot(0,-6000,0));
+						A = Spawn(class'Ammo10mmGasCap',,, Vect(-197,1210,248), Rot(0,6000,0));
+					}
+				}
 			}
 		}
 	}
