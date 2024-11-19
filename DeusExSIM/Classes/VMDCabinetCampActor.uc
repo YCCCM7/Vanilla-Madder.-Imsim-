@@ -3,7 +3,7 @@
 //=============================================================================
 class VMDCabinetCampActor extends VMDFillerActors;
 
-var() bool bLastOpened;
+var() bool bLastOpened, bIgnoreLockStatus, bOpenOnceOnly, bEverOpened;
 var() int CabinetDoorClosedFrames[4], NumWatchedDoors;
 var() Vector MinCampLocation, MaxCampLocation;
 var() DeusExMover CabinetDoors[4];
@@ -27,17 +27,18 @@ function Timer()
 	bOpened = false;
 	for(i=0; i<NumWatchedDoors; i++)
 	{
-		if (CabinetDoors[i] == None || CabinetDoors[i].bDestroyed || CabinetDoors[i].DoorStrength ~= 0.0 || CabinetDoors[i].KeyNum != CabinetDoorClosedFrames[i])
+		if (CabinetDoors[i] == None || CabinetDoors[i].bDestroyed || (CabinetDoors[i].DoorStrength ~= 0.0 && !bIgnoreLockStatus) || CabinetDoors[i].KeyNum != CabinetDoorClosedFrames[i])
 		{
 			bOpened = true;
 			break;
 		}
 	}
 	
-	if (bOpened != bLastOpened)
+	if ((bOpened != bLastOpened) && (!bEverOpened || !bOpenOnceOnly))
 	{
 		if (bOpened)
 		{
+			bEverOpened = true;
 			forEach AllActors(class'Inventory', TInv)
 			{
 				if (TInv.Location.X > MinCampLocation.X && TInv.Location.X < MaxCampLocation.X &&
