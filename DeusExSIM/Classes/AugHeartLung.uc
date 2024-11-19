@@ -15,7 +15,7 @@ Loop:
 	if ((Player != None) && (Player.AugmentationSystem != None))
 	{
 		Player.AugmentationSystem.BoostAugs(True, Self);
-		if (NumAugsBoosted(Player.AugmentationSystem) - int(Player.AugmentationSystem.GetAugLevelValue(class'AugLight') > -1) < 1)
+		if (NumAugsBoosted(Player.AugmentationSystem) < 1) // - int(Player.AugmentationSystem.GetAugLevelValue(class'AugLight') > -1)
 		{
 			InactiveCount++;
 		}
@@ -34,7 +34,7 @@ Loop:
 	else if ((VMBP != None) && (VMBP.AugmentationSystem != None))
 	{
 		VMBP.AugmentationSystem.BoostAugs(True, Self);
-		if (NumVMBPAugsBoosted(VMBP.AugmentationSystem) - int(VMBP.AugmentationSystem.GetAugLevelValue(class'AugLight') > -1) < 1)
+		if (NumVMBPAugsBoosted(VMBP.AugmentationSystem) < 1) // - int(VMBP.AugmentationSystem.GetAugLevelValue(class'AugLight') > -1)
 		{
 			InactiveCount++;
 		}
