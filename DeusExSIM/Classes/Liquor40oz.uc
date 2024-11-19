@@ -193,7 +193,7 @@ state Activated
 			if (VMP != None)
 			{
 			 	//Alcohol is considerably addictive.
-			 	VMP.VMDAddToAddiction("Alcohol", 60.0);
+			 	VMP.VMDAddToAddiction("Alcohol", 12.0);
 				FoodSeed = GetFoodSeed(17);
 				if (FoodSeed == 2 || FoodSeed == 5 || FoodSeed == 9 || FoodSeed == 14)
 				{
