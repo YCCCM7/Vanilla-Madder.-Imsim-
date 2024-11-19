@@ -14,7 +14,8 @@ struct VMDButtonPos {
 
 var localized String SkillCoreDescs[11],
 			SkillLevelDescsA[11], AltSkillLevelDescsA[11], SkillLevelDescsB[11], SkillLevelDescsC[11], SkillLevelDescsD[11],
-			NoCraftingSkillLevelDescsA[11], AltNoCraftingSkillLevelDescsA[11], NoCraftingSkillLevelDescsB[11], NoCraftingSkillLevelDescsC[11], NoCraftingSkillLevelDescsD[11];
+			NoCraftingSkillLevelDescsA[11], AltNoCraftingSkillLevelDescsA[11], NoCraftingSkillLevelDescsB[11], NoCraftingSkillLevelDescsC[11], NoCraftingSkillLevelDescsD[11],
+			NoTalentsSkillLevelDescsA[11], AltNoTalentsSkillLevelDescsA[11], NoTalentsSkillLevelDescsB[11], NoTalentsSkillLevelDescsC[11], NoTalentsSkillLevelDescsD[11];
 var class<Skill> Skills[11], SkillMapSkillOrder[11];
 
 var string SkillTalentIcons[100];
@@ -67,7 +68,7 @@ var VMDBufferPlayer LastVMDBufferPlayer;
 
 function string BuildLevelString(class<Skill> InSkill, int InLevel, String DescStr, int SkillArray)
 {
-	local bool bCrafting;
+	local bool bCrafting, bTalents;
 	local int TVars[4];
 	local float GetVal, TMath, TFVars[4];
 	local string TString, TSVars[4];
@@ -80,38 +81,79 @@ function string BuildLevelString(class<Skill> InSkill, int InLevel, String DescS
 	if (TSkill == None) return "ERR NO SKILL";
 	
 	bCrafting = TPlayer.bCraftingSystemEnabled;
+	bTalents = TPlayer.bSkillAugmentsEnabled;
 	GetVal = TSkill.LevelValues[InLevel];
 	switch(InSkill.Name)
 	{
 		case 'SkillWeaponHeavy':
 		case 'SkillWeaponPistol':
 		case 'SkillWeaponRifle':
-			if ((InLevel == 0) && (Abs(GetVal) > 0.009))
+			if (bTalents)
 			{
-				DescStr = AltSkillLevelDescsA[SkillArray];
-				TVars[0] = int(GetVal * -100);
-				TVars[1] = int(GetVal * -100);
-				TVars[2] = int(GetVal * -200);
-			}
-			else if (InLevel == 1)
-			{
-				TVars[0] = int(GetVal * -100);
-				TVars[1] = int(GetVal * -100);
-				TVars[2] = int(GetVal * -200);
-			}
-			else if (InLevel == 2)
-			{
-				TVars[0] = int((GetVal+0.05) * -100);
-				TVars[1] = int(GetVal * -100);
-				TVars[2] = int(GetVal * -100);
-				TVars[3] = int(GetVal * -200);
+				if ((InLevel == 0) && (Abs(GetVal) > 0.009))
+				{
+					DescStr = AltSkillLevelDescsA[SkillArray];
+					TVars[0] = int(GetVal * -100);
+					TVars[1] = int(GetVal * -100);
+					TVars[2] = int(GetVal * -200);
+				}
+				else if (InLevel == 1)
+				{
+					TVars[0] = int(GetVal * -100);
+					TVars[1] = int(GetVal * -100);
+					TVars[2] = int(GetVal * -200);
+				}
+				else if (InLevel == 2)
+				{
+					TVars[0] = int((GetVal+0.05) * -100);
+					TVars[1] = int(GetVal * -100);
+					TVars[2] = int(GetVal * -100);
+					TVars[3] = int(GetVal * -200);
+				}
+				else
+				{
+					TVars[0] = int((GetVal+0.1) * -100);
+					TVars[1] = int(GetVal * -100);
+					TVars[2] = int(GetVal * -100);
+					TVars[3] = int(GetVal * -200);
+				}
 			}
 			else
 			{
-				TVars[0] = int((GetVal+0.1) * -100);
-				TVars[1] = int(GetVal * -100);
-				TVars[2] = int(GetVal * -100);
-				TVars[3] = int(GetVal * -200);
+				if ((InLevel == 0) && (Abs(GetVal) > 0.009))
+				{
+					DescStr = AltNoTalentsSkillLevelDescsA[SkillArray];
+					TVars[0] = int(GetVal * -100);
+					TVars[1] = int(GetVal * -100);
+					TVars[2] = int(GetVal * -200);
+				}
+				else if (InLevel == 0)
+				{
+					DescStr = NoTalentsSkillLevelDescsA[SkillArray];
+				}
+				else if (InLevel == 1)
+				{
+					DescStr = NoTalentsSkillLevelDescsB[SkillArray];
+					TVars[0] = int(GetVal * -100);
+					TVars[1] = int(GetVal * -100);
+					TVars[2] = int(GetVal * -200);
+				}
+				else if (InLevel == 2)
+				{
+					DescStr = NoTalentsSkillLevelDescsC[SkillArray];
+					TVars[0] = int((GetVal+0.05) * -100);
+					TVars[1] = int(GetVal * -100);
+					TVars[2] = int(GetVal * -100);
+					TVars[3] = int(GetVal * -200);
+				}
+				else
+				{
+					DescStr = NoTalentsSkillLevelDescsD[SkillArray];
+					TVars[0] = int((GetVal+0.1) * -100);
+					TVars[1] = int(GetVal * -100);
+					TVars[2] = int(GetVal * -100);
+					TVars[3] = int(GetVal * -200);
+				}
 			}
 		break;
 		case 'SkillWeaponLowTech':
@@ -163,12 +205,42 @@ function string BuildLevelString(class<Skill> InSkill, int InLevel, String DescS
 			}
 		break;
 		case 'SkillEnviro':
-			if ((InLevel == 0) && (Abs(GetVal) > 1.009 || Abs(GetVal) < 0.991))
+			if (bTalents)
 			{
-				DescStr = AltSkillLevelDescsA[SkillArray];
+				if ((InLevel == 0) && (Abs(GetVal) > 1.009 || Abs(GetVal) < 0.991))
+				{
+					DescStr = AltSkillLevelDescsA[SkillArray];
+				}
+				TVars[0] = int(((1.0 / Abs(GetVal)) - 1.0) * 100);
+				TVars[1] = int(((1.0 / ((Abs(GetVal) + 0.75) / 2)) - 1.0) * 100);
 			}
-			TVars[0] = int(((1.0 / Abs(GetVal)) - 1.0) * 100);
-			TVars[1] = int(((1.0 / ((Abs(GetVal) + 1.0) / 2)) - 1.0) * 100);
+			else
+			{
+				if ((InLevel == 0) && (Abs(GetVal) > 1.009 || Abs(GetVal) < 0.991))
+				{
+					DescStr = AltNoTalentsSkillLevelDescsA[SkillArray];
+				}
+				else
+				{
+					switch(InLevel)
+					{
+						case 0:
+							DescStr = NoTalentsSkillLevelDescsA[SkillArray];
+						break;
+						case 1:
+							DescStr = NoTalentsSkillLevelDescsB[SkillArray];
+						break;
+						case 2:
+							DescStr = NoTalentsSkillLevelDescsC[SkillArray];
+						break;
+						case 3:
+							DescStr = NoTalentsSkillLevelDescsD[SkillArray];
+						break;
+					}
+				}
+				TVars[0] = int(((1.0 / Abs(GetVal)) - 1.0) * 100);
+				TVars[1] = int(((1.0 / ((Abs(GetVal) + 0.75) / 2)) - 1.0) * 100);
+			}
 		break;
 		case 'SkillComputer':
 			if ((InLevel == 1) && (Abs(GetVal) > 1.009 || Abs(GetVal) < 0.991))
@@ -185,6 +257,13 @@ function string BuildLevelString(class<Skill> InSkill, int InLevel, String DescS
 		case 'SkillTech':
 			//Pick/hack strength.
 			TMath = Abs(GetVal) * 100.0;
+			
+			//MADDERS, 11/15/24: Wave surfer and data analyst are stock without talents enabled.
+			if ((InSkill.Name == 'SkillTech') && (!bTalents))
+			{
+				TMath *= 1.5;
+			}
+			
 			TString = String(TMath);
 			TSVars[0] = Left( TString, InStr(TString, ".")+2);
 			
@@ -222,6 +301,13 @@ function string BuildLevelString(class<Skill> InSkill, int InLevel, String DescS
 		break;
 		case 'SkillMedicine':
 			TVars[0] = int(Abs(GetVal) * 30);
+			
+			//MADDERS, 11/15/24: Assume +15 from trained professional without talents.
+			if (!bTalents)
+			{
+				TVars[0] += 15;
+			}
+			
 			if (!bCrafting)
 			{
 				switch(InLevel)
@@ -242,11 +328,41 @@ function string BuildLevelString(class<Skill> InSkill, int InLevel, String DescS
 			}
 		break;
 		case 'SkillSwimming':
-			if ((InLevel == 0) && (Abs(GetVal) > 1.009 || Abs(GetVal) < 0.991))
+			if (bTalents)
 			{
-				DescStr = AltSkillLevelDescsA[SkillArray];
+				if ((InLevel == 0) && (Abs(GetVal) > 1.009 || Abs(GetVal) < 0.991))
+				{
+					DescStr = AltSkillLevelDescsA[SkillArray];
+				}
+				TVars[0] = int(Abs(GetVal - 1.0) * 50);
 			}
-			TVars[0] = int(Abs(GetVal - 1.0) * 50);
+			else
+			{
+				if ((InLevel == 0) && (Abs(GetVal) > 1.009 || Abs(GetVal) < 0.991))
+				{
+					DescStr = AltNoTalentsSkillLevelDescsA[SkillArray];
+				}
+				else
+				{
+					switch(InLevel)
+					{
+						case 0:
+							DescStr = NoTalentsSkillLevelDescsA[SkillArray];
+						break;
+						case 1:
+							DescStr = NoTalentsSkillLevelDescsB[SkillArray];
+						break;
+						case 2:
+							DescStr = NoTalentsSkillLevelDescsC[SkillArray];
+						break;
+						case 3:
+							DescStr = NoTalentsSkillLevelDescsD[SkillArray];
+						break;
+					}
+				}
+				TVars[0] = int(Abs(GetVal - 1.0) * 125);
+				TVars[1] = int(Abs(GetVal - 1.0) * 50);
+			}
 		break;
 	}
 	
@@ -1123,6 +1239,11 @@ defaultproperties
     SkillLevelDescsB(2)="|n~Equipment can be used for %d%% longer.|n~Defensive equipment offers %d%% more protection.|n~Tactical gear is looted from enemies at 16%% efficiency."
     SkillLevelDescsC(2)="|n~Equipment can be used for %d%% longer.|n~Defensive equipment offers %d%% more protection.|n~Tactical gear is looted from enemies at 33%% efficiency."
     SkillLevelDescsD(2)="|n~Equipment can be used for %d%% longer.|n~Defensive equipment offers %d%% more protection.|n~Tactical gear is looted from enemies at 50%% efficiency."
+    NoTalentsSkillLevelDescsA(2)="|n~Equipment can be used at a standard level.|n~Tactical gear cannot be looted from enemies."
+    AltNoTalentsSkillLevelDescsA(2)="|n~Equipment can be used for %d%% longer.|n~Defensive equipment offers %d%% more protection.|n~Tactical gear cannot be looted from enemies."
+    NoTalentsSkillLevelDescsB(2)="|n~Equipment can be used for %d%% longer.|n~Defensive equipment offers %d%% more protection.|n~Tactical gear is looted from enemies at 33%% efficiency."
+    NoTalentsSkillLevelDescsC(2)="|n~Equipment can be used for %d%% longer.|n~Defensive equipment offers %d%% more protection.|n~Tactical gear is looted from enemies at 66%% efficiency."
+    NoTalentsSkillLevelDescsD(2)="|n~Equipment can be used for %d%% longer.|n~Defensive equipment offers %d%% more protection.|n~Tactical gear is looted from enemies at 100%% efficiency."
     
     SkillCoreDescs(3)="The effectiveness with which lockpicks can be handled. Talents often focus on enhancing stealth."
     SkillLevelDescsA(3)="|n~Lockpicks can weaken locks by %d%% per unit.|n~Failed rush attempts generate %d%% noise."
@@ -1149,6 +1270,11 @@ defaultproperties
     SkillLevelDescsB(5)="|n~An agent can swim %d%% faster and longer.|n~An agent moves at a standard pace on land."
     SkillLevelDescsC(5)="|n~An agent can swim %d%% faster and longer.|n~An agent moves 7.5%% faster than standard on land."
     SkillLevelDescsD(5)="|n~An agent can swim %d%% faster and longer.|n~An agent moves 15%% faster than standard on land."
+    NoTalentsSkillLevelDescsA(5)="|n~An agent can swim at a standard pace.|n~An agent moves 7.5%% slower than standard on land."
+    AltNoTalentsSkillLevelDescsA(5)="|n~An agent can swim %d%% faster.|n~An agent can swim %d%% longer.|n~An agent moves 7.5%% slower than standard on land."
+    NoTalentsSkillLevelDescsB(5)="|n~An agent can swim %d%% faster.|n~An agent can swim %d%% longer.|n~An agent moves at a standard pace on land."
+    NoTalentsSkillLevelDescsC(5)="|n~An agent can swim %d%% faster.|n~An agent can swim %d%% longer.|n~An agent moves 7.5%% faster than standard on land."
+    NoTalentsSkillLevelDescsD(5)="|n~An agent can swim %d%% faster.|n~An agent can swim %d%% longer.|n~An agent moves 15%% faster than standard on land."
     
     SkillCoreDescs(6)="The effectiveness with which multitools can be handled, and mechanical crafting can occur."
     SkillLevelDescsA(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise.|n*Crafting cannot occur without a specialization."
@@ -1166,8 +1292,13 @@ defaultproperties
     SkillLevelDescsA(7)="|n~An agent can use heavy weapons with standard efficiency."
     AltSkillLevelDescsA(7)="|n~Heavy accuracy and reload speed are increased by %d%%.|n~Heavy recoil is decreased by %d%%.|n~Heavy damage is increased by %d%%."
     SkillLevelDescsB(7)="|n~Heavy accuracy and reload speed are increased by %d%%.|n~Heavy recoil is decreased by %d%%.|n~Heavy damage is increased by %d%%.|n~Heavy movement speed is increased by 16%%.|n~Heavy aim focus speeds are increased by 25%%."
-    SkillLevelDescsC(7)="|n~Heavy accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Heavy recoil is decreased by %d%%.|n~Heavy damage is increased by %d%.|n~Heavy movement speed is increased by 33%%.|n~Heavy aim focus speeds are increased by 50%%."
-    SkillLevelDescsD(7)="|n~Heavy accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Heavy recoil is decreased by %d%%.|n~Heavy damage is increased by %d%.|n~Heavy movement speed  is increased by 50%%.|n~Heavy aim focus speeds are increased by 75%%."
+    SkillLevelDescsC(7)="|n~Heavy accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Heavy recoil is decreased by %d%%.|n~Heavy damage is increased by %d%.|n~Heavy movement speed is increased by 33%.|n~Heavy aim focus speeds are increased by 50%."
+    SkillLevelDescsD(7)="|n~Heavy accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Heavy recoil is decreased by %d%%.|n~Heavy damage is increased by %d%.|n~Heavy movement speed  is increased by 50%.|n~Heavy aim focus speeds are increased by 75%."
+    NoTalentsSkillLevelDescsA(7)="|n~An agent can use heavy weapons with standard efficiency."
+    AltNoTalentsSkillLevelDescsA(7)="|n~Heavy accuracy and reload speed are increased by %d%%.|n~Heavy recoil is decreased by %d%%.|n~Heavy damage is increased by %d%%."
+    NoTalentsSkillLevelDescsB(7)="|n~Heavy accuracy and reload speed are increased by %d%%.|n~Heavy recoil is decreased by %d%%.|n~Heavy damage is increased by %d%%.|n~Heavy movement speed is increased by 33%.|n~Heavy aim focus speeds are increased by 50%."
+    NoTalentsSkillLevelDescsC(7)="|n~Heavy accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Heavy recoil is decreased by %d%%.|n~Heavy damage is increased by %d%.|n~Heavy movement speed is increased by 66%.|n~Heavy aim focus speeds are increased by 100%."
+    NoTalentsSkillLevelDescsD(7)="|n~Heavy accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Heavy recoil is decreased by %d%%.|n~Heavy damage is increased by %d%.|n~Heavy movement speed  is increased by 100%.|n~Heavy aim focus speeds are increased by 150%."
     
     SkillCoreDescs(8)="The use of melee weapons such as batons, knives, throwing knives, swords, pepper guns, and prods."
     SkillLevelDescsA(8)="|n~An agent can use low-tech weapons with standard efficiency."
@@ -1180,13 +1311,23 @@ defaultproperties
     SkillLevelDescsA(9)="|n~An agent can use pistols with standard efficiency."
     AltSkillLevelDescsA(9)="|n~Pistol accuracy and reload speed are increased by %d%%.|n~Pistol recoil is decreased by %d%%.|n~Pistol damage is increased by %d%%."
     SkillLevelDescsB(9)="|n~Pistol accuracy and reload speed are increased by %d%%.|n~Pistol recoil is decreased by %d%%.|n~Pistol damage is increased by %d%%.|n~Pistol aim focus speeds are increased by 25%%."
-    SkillLevelDescsC(9)="|n~Pistol accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Pistol recoil is decreased by %d%%.|n~Pistol damage is increased by %d%.|n~Pistol aim focus speeds are increased by 50%%."
-    SkillLevelDescsD(9)="|n~Pistol accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Pistol recoil is decreased by %d%%.|n~Pistol damage is increased by %d%.|n~Pistol aim focus speeds are increased by 75%%."
+    SkillLevelDescsC(9)="|n~Pistol accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Pistol recoil is decreased by %d%%.|n~Pistol damage is increased by %d%.|n~Pistol aim focus speeds are increased by 50%."
+    SkillLevelDescsD(9)="|n~Pistol accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Pistol recoil is decreased by %d%%.|n~Pistol damage is increased by %d%.|n~Pistol aim focus speeds are increased by 75%."
+    NoTalentsSkillLevelDescsA(9)="|n~An agent can use pistols with standard efficiency."
+    AltNoTalentsSkillLevelDescsA(9)="|n~Pistol accuracy and reload speed are increased by %d%%.|n~Pistol recoil is decreased by %d%%.|n~Pistol damage is increased by %d%%."
+    NoTalentsSkillLevelDescsB(9)="|n~Pistol accuracy and reload speed are increased by %d%%.|n~Pistol recoil is decreased by %d%%.|n~Pistol damage is increased by %d%%.|n~Pistol aim focus speeds are increased by 50%%."
+    NoTalentsSkillLevelDescsC(9)="|n~Pistol accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Pistol recoil is decreased by %d%%.|n~Pistol damage is increased by %d%.|n~Pistol aim focus speeds are increased by 100%."
+    NoTalentsSkillLevelDescsD(9)="|n~Pistol accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Pistol recoil is decreased by %d%%.|n~Pistol damage is increased by %d%.|n~Pistol aim focus speeds are increased by 150%."
     
     SkillCoreDescs(10)="The use of rifles, including assault rifles, sniper rifles, and shotguns."
     SkillLevelDescsA(10)="|n~An agent can use rifles with standard efficiency."
     AltSkillLevelDescsA(10)="|n~Rifle accuracy and reload speed are increased by %d%%|n~Rifle recoil is decreased by %d%% and damage is increased by %d%%."
     SkillLevelDescsB(10)="|n~Rifle accuracy and reload speed are increased by %d%%.|n~Rifle recoil is decreased by %d%%.|n~Rifle damage is increased by %d%%.|n~Rifle aim focus speeds are increased by 25%%."
-    SkillLevelDescsC(10)="|n~Rifle accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Rifle recoil is decreased by %d%%.|n~Rifle damage is increased by %d%.|n~Rifle aim focus speeds are increased by 50%%."
-    SkillLevelDescsD(10)="|n~Rifle accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Rifle recoil is decreased by %d%%.|n~Rifle damage is increased by %d%.|n~Rifle aim focus speeds are increased by 75%%."
+    SkillLevelDescsC(10)="|n~Rifle accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Rifle recoil is decreased by %d%%.|n~Rifle damage is increased by %d%.|n~Rifle aim focus speeds are increased by 50%."
+    SkillLevelDescsD(10)="|n~Rifle accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Rifle recoil is decreased by %d%%.|n~Rifle damage is increased by %d%.|n~Rifle aim focus speeds are increased by 75%."
+    NoTalentsSkillLevelDescsA(10)="|n~An agent can use rifles with standard efficiency."
+    AltNoTalentsSkillLevelDescsA(10)="|n~Rifle accuracy and reload speed are increased by %d%%|n~Rifle recoil is decreased by %d%% and damage is increased by %d%%."
+    NoTalentsSkillLevelDescsB(10)="|n~Rifle accuracy and reload speed are increased by %d%%.|n~Rifle recoil is decreased by %d%%.|n~Rifle damage is increased by %d%%.|n~Rifle aim focus speeds are increased by 50%%."
+    NoTalentsSkillLevelDescsC(10)="|n~Rifle accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Rifle recoil is decreased by %d%%.|n~Rifle damage is increased by %d%.|n~Rifle aim focus speeds are increased by 100%."
+    NoTalentsSkillLevelDescsD(10)="|n~Rifle accuracy and reload speed are increased by %d%% and %d%%, respectively.|n~Rifle recoil is decreased by %d%%.|n~Rifle damage is increased by %d%.|n~Rifle aim focus speeds are increased by 150%."
 }
