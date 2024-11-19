@@ -23,7 +23,6 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 	// Step 1: Decide our appearance.
 	FaceIndices[0] = -1;
 	FaceIndices[1] = -1;
-	FaceIndices[2] = -1;
 	TClothing = Rand(2);
 	TSkin = Rand(12);
 	switch(TClothing)
@@ -683,7 +682,9 @@ defaultproperties
      HealthArmLeft=300
      HealthArmRight=300
      Mesh=LodMesh'TranscendedModels.TransGM_Suit'
-     DrawScale=1.100000
+     DrawScale=1.000000
+     CollisionRadius=20.000000
+     CollisionHeight=47.500000
      MultiSkins(0)=Texture'DeusExCharacters.Skins.MIBTex0'
      MultiSkins(1)=Texture'DeusExCharacters.Skins.PantsTex5'
      MultiSkins(2)=Texture'DeusExCharacters.Skins.MIBTex0'
@@ -692,7 +693,6 @@ defaultproperties
      MultiSkins(5)=Texture'DeusExCharacters.Skins.FramesTex2'
      MultiSkins(6)=Texture'DeusExCharacters.Skins.LensesTex3'
      MultiSkins(7)=Texture'DeusExItems.Skins.PinkMaskTex'
-     CollisionHeight=52.250000
      BindName="MJ12Revenant"
      FamiliarName="MJ12 Revenant"
      UnfamiliarName="MJ12 Revenant"
