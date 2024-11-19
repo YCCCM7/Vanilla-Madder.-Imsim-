@@ -15,6 +15,13 @@ class VMDSimSoundImports extends VMDSimImportsParent abstract;
 #exec AUDIO IMPORT FILE="Sounds\AssaultGunSemi.wav" NAME="AssaultGunSemi" GROUP="Weapons"
 #exec AUDIO IMPORT FILE="Sounds\AssaultGunFireSilenced.wav" NAME="AssaultGunFireSilenced" GROUP="Weapons"
 
+#exec AUDIO IMPORT FILE="Sounds\AssaultShotgunFireDragonsBreath.wav" NAME="AssaultShotgunFireDragonsBreath" GROUP="Weapons"
+#exec AUDIO IMPORT FILE="Sounds\PistolFire10mmHEAP.wav" NAME="PistolFire10mmHEAP" GROUP="Weapons"
+#exec AUDIO IMPORT FILE="Sounds\RifleFire3006AP.wav" NAME="RifleFire3006AP" GROUP="Weapons"
+#exec AUDIO IMPORT FILE="Sounds\RifleFire3006HEAT.wav" NAME="RifleFire3006HEAT" GROUP="Weapons"
+#exec AUDIO IMPORT FILE="Sounds\RifleFire3006Tranq.wav" NAME="RifleFire3006Tranq" GROUP="Weapons"
+#exec AUDIO IMPORT FILE="Sounds\StealthPistolFire10mmHEAP.wav" NAME="StealthPistolFire10mmHEAP" GROUP="Weapons"
+
 #exec AUDIO IMPORT FILE="Sounds\TaserSlugImpact.wav" NAME="TaserSlugImpact" GROUP="Weapons"
 
 #exec AUDIO IMPORT FILE="Sounds\DoggoBark.wav" NAME="DoggoBark" GROUP="Animal"
@@ -28,6 +35,8 @@ class VMDSimSoundImports extends VMDSimImportsParent abstract;
 
 //Sound from Bogie for smelling those smelly smells. The ones that smell... Smelly.
 #exec AUDIO IMPORT FILE="Sounds\SmellSniff.wav" NAME="SmellSniff" GROUP="Generic"
+
+#exec AUDIO IMPORT FILE="Sounds\MaleJumpDuck.wav" NAME="MaleJumpDuck" GROUP="Player"
 
 #exec AUDIO IMPORT FILE="Sounds\HungerSmall.wav" NAME="HungerSmall" GROUP="Generic"
 #exec AUDIO IMPORT FILE="Sounds\HungerLarge.wav" NAME="HungerLarge" GROUP="Generic"
@@ -56,6 +65,7 @@ class VMDSimSoundImports extends VMDSimImportsParent abstract;
 #exec AUDIO IMPORT FILE="Sounds\CommandoDeathGibbed.wav" NAME="CommandoDeathGibbed" GROUP="NPC"
 #exec AUDIO IMPORT FILE="Sounds\CommandoUnconscious.wav" NAME="CommandoUnconscious" GROUP="NPC"
 
+#exec AUDIO IMPORT FILE="Sounds\MeghDeath.wav" NAME="VMDMeghDeath" GROUP="Robot"
 #exec AUDIO IMPORT FILE="Sounds\MeghDropWeapon.wav" NAME="VMDMeghDropWeapon" GROUP="Robot"
 
 #exec AUDIO IMPORT FILE="Sounds\VMDMeghPropeller.wav" NAME="VMDMeghPropeller" GROUP="Robot"
