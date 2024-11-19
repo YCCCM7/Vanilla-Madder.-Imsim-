@@ -244,6 +244,7 @@ function CommitMapFixing()
  	local DeusExLevelInfo LI;
 	local DeusExWeapon DXW;
 	local ScriptedPawn SP;
+	local Seat TSeat;
 	local VMDBufferPlayer VMP;
 	
 	//Door stuff.
@@ -947,6 +948,11 @@ function CommitMapFixing()
 							else if (UNATCOTroop(SP) != None || RiotCop(SP) != None)
 							{
 								SP.ChangeAlly('Thugs', -1, true);
+							}
+							else if (ThugMale(SP) != None || SandraRenton(SP) != None)
+							{
+								SP.bUseHome = true;
+								SP.HomeLoc = SP.Location;
 							}
 						}
 						
@@ -2445,6 +2451,9 @@ function CommitMapFixing()
 							}
 						}
 						
+						//MADDERS, 11/16/24: Add a box here, to prevent softlocks.
+						Spawn(class'CrateUnbreakableSmall',,, Vect(4105, 2149, 24));
+						
 						forEach AllActors(class'DeusExMover', DXM)
 						{
 							if ((DXM != None) && (!DXM.bMadderPatched))
@@ -2533,6 +2542,13 @@ function CommitMapFixing()
 										}
 									break;
 								}
+							}
+						}
+						forEach AllActors(class'Seat', TSeat)
+						{
+							if (OfficeChair(TSeat) != None)
+							{
+								UnRandoSeat(TSeat);
 							}
 						}
 						forEach AllActors(class'ScriptedPawn', SP)
@@ -2772,6 +2788,14 @@ function CommitMapFixing()
 				case "11_PARIS_CATHEDRAL":
 					if (!bRevisionMapSet)
 					{
+						//Plug a hole in a crate we can walk through. Oops.
+						PlugVect = Vect(2440, 0, 193);
+						for (i=-424; i<-188; i += 8)
+						{
+							PlugVect.Y = i;
+							AddBSPPlug(PlugVect, 8, 16);
+						}
+						
 						forEach AllActors(class'ScriptedPawn', SP)
 						{
 							if (GuntherHermann(SP) != None)
@@ -3004,6 +3028,24 @@ function CommitMapFixing()
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
+									case 10:
+										//Rotation yaw of 0
+										//Base: 428, -1456, 513
+										//Desired: 424, -1456, 510
+										//----------------------
+										//IGNORING Z
+										if (MoverIsLocation(DXM, Vect(428, -1456, 513)))
+										{
+											LocAdd = vect(-4,0,0);
+											PivAdd = vect(-4,0,0);
+											FrameAdd[0] = vect(-4,0,0);
+											FrameAdd[1] = vect(-4,0,0);
+											DXM.SetLocation(DXM.Location + LocAdd);
+											DXM.PrePivot = DXM.PrePivot + PivAdd;
+											DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+											DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										}
+									break;
 									case 15:
 										DXM.bIsDoor = true;
 									break;
@@ -3076,6 +3118,13 @@ function CommitMapFixing()
 									break;
 								}
 								DXM.bMadderPatched = true;
+							}
+						}
+						forEach AllActors(class'ScriptedPawn', SP)
+						{
+							if (GarySavage(SP) != None)
+							{
+								DumbAllReactions(SP);
 							}
 						}
 					}

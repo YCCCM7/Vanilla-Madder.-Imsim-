@@ -3270,7 +3270,7 @@ function VMDUpdateEvoName()
 
 function VMDChangeFiringMode()
 {
- 	if (NumFiringModes < 2) return;
+ 	if (NumFiringModes < 2 || (VMDBufferPlayer(Owner) != None && VMDBufferPlayer(Owner).TaseDuration > 0)) return;
  	if ((!bInstantHit) && (Default.bInstantHit)) return; //No 20mm, please.
  	
 	if (IsA('WeaponA17') || IsA('WeaponAssault17'))
@@ -5559,6 +5559,8 @@ function ScopeOff()
 
 simulated function ScopeToggle()
 {
+	if (VMDBufferPlayer(Owner) != None && VMDBufferPlayer(Owner).TaseDuration > 0) return;
+	
 	if (IsInState('Idle') || WeaponLAW(Self) != None)
 	{
 		if ((bHasScope) && (DeusExPlayer(Owner) != None))
@@ -5654,6 +5656,8 @@ function LaserOff()
 
 function LaserToggle()
 {
+	if (VMDBufferPlayer(Owner) != None && VMDBufferPlayer(Owner).TaseDuration > 0) return;
+	
 	if (IsInState('Idle'))
 	{
 		if (bHasLaser)

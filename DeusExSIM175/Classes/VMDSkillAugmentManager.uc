@@ -893,7 +893,7 @@ defaultproperties
      SkillAugmentNames(39)="Aquadynamic"
      SkillAugmentDescs(39)="Swim speed bonuses gain 150% value relative to skill level. Additionally, your breath recovers 4x faster out of water and you take 40% less drowning damage per tick."
      SkillAugmentIDs(39)="SwimmingBreathRegen"
-     SkillAugmentAssumed(39)=0 //Denied for sim purposes
+     SkillAugmentAssumed(39)=1 //Re-enabled to not make swimming shit without talents
      SkillAugmentLevel(39)=1
      SkillAugmentLevelRequired(39)=1
      SkillAugmentRequired(39)=""

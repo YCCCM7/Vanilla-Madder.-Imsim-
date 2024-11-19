@@ -533,6 +533,13 @@ function UpdateSettings( DeusExPlayer player )
 	//MADDERS, 8/29/22: Include hit indicator in whether crosshair is shown.
 	cross.SetCrosshair(player.bCrosshairVisible);
 	HitInd.SetVisibility(Player.bCrosshairVisible);
+	
+	if ((Player != None) && (InformationDevices(Player.FrobTarget) != None) && (InformationDevices(Player.FrobTarget).AReader == Player))
+	{
+		InformationDevices(Player.FrobTarget).DestroyWindow();
+		InformationDevices(Player.FrobTarget).AReader = Player;
+		InformationDevices(Player.FrobTarget).CreateInfoWindow();
+	}
 }
 
 // ----------------------------------------------------------------------

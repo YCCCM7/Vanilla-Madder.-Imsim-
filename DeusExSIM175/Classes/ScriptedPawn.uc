@@ -3334,39 +3334,56 @@ function bool FilterDamageType(Pawn instigatedBy, Vector hitLocation, Vector off
 // ModifyDamage()
 // ----------------------------------------------------------------------
 
-function float ModifyDamage(int Damage, Pawn instigatedBy, Vector hitLocation,
-                            Vector offset, Name damageType)
+function float ModifyDamage(int Damage, Pawn instigatedBy, Vector hitLocation, Vector offset, Name damageType)
 {
-	local int   actualDamage;
+	local bool bTreatStunned;
+	local int actualDamage;
 	local float headOffsetZ, headOffsetY, armOffset;
-
+	local VMDBufferPawn VMBP;
+	
+	VMBP = VMDBufferPawn(Self);
+	
 	actualDamage = Damage;
-
+	
 	// calculate our hit extents
 	headOffsetZ = CollisionHeight * 0.7;
 	headOffsetY = CollisionRadius * 0.3;
-	armOffset   = CollisionRadius * 0.35;
-
+	armOffset = CollisionRadius * 0.35;
+	
+	bTreatStunned = (VMBP == None && bStunned) || (VMBP != None && VMBP.bStunnedThisFrame);
+	
 	// if the pawn is stunned, damage is 4X
-	if (bStunned)
+	if (bTreatStunned)
+	{
 		actualDamage *= 4;
-
+	}
+	
 	// if the pawn is hit from behind at point-blank range, he is killed instantly
 	else if (offset.x < 0)
+	{
 		if ((instigatedBy != None) && (VSize(instigatedBy.Location - Location) < 96)) // Transcended - Was 64
+		{
 			actualDamage  *= 10;
-
+		}
+	}
+	
 	actualDamage = Level.Game.ReduceDamage(actualDamage, DamageType, self, instigatedBy);
-
+	
 	if (ReducedDamageType == 'All') //God mode
+	{
 		actualDamage = 0;
+	}
 	else if (Inventory != None) //then check if carrying armor
+	{
 		actualDamage = Inventory.ReduceDamage(actualDamage, DamageType, HitLocation);
-
+	}
+	
 	// gas, EMP and nanovirus do no damage
 	if (damageType == 'TearGas' || damageType == 'EMP' || damageType == 'NanoVirus')
+	{
 		actualDamage = 0;
-
+	}
+	
 	return actualDamage;
 
 }
@@ -9099,7 +9116,7 @@ function bool SwitchToBestWeapon()
 				// {
 				if (!bValid)
 				{
-					for (i=0; i<ArrayCount(curWeapon.AmmoNames); i++)
+					for (i=ArrayCount(curWeapon.AmmoNames)-1; i>-1; i--)
 					{
 						PossibleAmmo = Ammo(FindInventoryType(curWeapon.AmmoNames[i]));
 						

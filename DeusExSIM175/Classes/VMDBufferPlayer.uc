@@ -4229,9 +4229,17 @@ function bool VMDOtherIsName(Actor Other, string S)
 function int VMDGetBloodLevel()
 {
  	local int Ret;
+	local float SmellMult;
  	
- 	if (BloodSmellLevel >= 45) Ret = 1;
- 	if (BloodSmellLevel >= 90) Ret = 2;
+	//Scale smell with our augment for it now.
+	SmellMult = 1.0;
+	if (HasSkillAugment("LockpickScent"))
+ 	{
+		SmellMult = 1.25 + (0.25 * SkillLevel);
+	}
+	
+ 	if (BloodSmellLevel >= 45*SmellMult) Ret = 1;
+ 	if (BloodSmellLevel >= 90*SmellMult) Ret = 2;
  	
  	return Ret;
 }
@@ -4301,12 +4309,16 @@ function VMDZoneChangeHook(ZoneInfo NewZone)
 
 function int VMDConfigureInvSlotsX(Inventory I)
 {
+	if (I == None) return 0;
+	
  	if (DeusExWeapon(I) != None) return DeusExWeapon(I).VMDConfigureInvSlotsX(Self);
 	if (DeusExPickup(I) != None) return DeusExPickup(I).VMDConfigureInvSlotsX(Self);
  	return I.InvSlotsX;
 }
 function int VMDConfigureInvSlotsY(Inventory I)
 {
+	if (I == None) return 0;
+	
  	if (DeusExWeapon(I) != None) return DeusExWeapon(I).VMDConfigureInvSlotsY(Self);
 	if (DeusExPickup(I) != None) return DeusExPickup(I).VMDConfigureInvSlotsY(Self);
  	return I.InvSlotsY;
@@ -6436,7 +6448,7 @@ function bool SpottedByHostiles(out int CountRobot, out int CountHostile, out in
  	forEach RadiusActors(Class'ScriptedPawn', SP, 960)
  	{
   		//NEW: Having heard them talk lowers stress. Any level of personality helps.
-  		if ((SP != None) && (SP.bInWorld) && (Animal(SP) == None) && (SP.GetPawnAllianceType(Self) > 0) && (FastTrace(SP.Location, Location)))
+  		if ((SP != None) && (SP.bInWorld) && (Animal(SP) == None) && (Robot(SP) == None || Robot(SP).EMPHitPoints > 0) && (SP.GetPawnAllianceType(Self) > 0) && (FastTrace(SP.Location, Location)))
   		{
    			//MADDERS note: 0 = friendly, 1 = neutral, and 2 = hostile
    			AType = SP.GetPawnAllianceType(Self);
@@ -6462,6 +6474,8 @@ function bool SpottedByHostiles(out int CountRobot, out int CountHostile, out in
 
 function bool IsScaryRobot(ScriptedPawn SP)
 {
+	if (Robot(SP) == None || Robot(SP).EMPHitPoints <= 0) return false;
+	
 	if (VMDOtherIsName(SP, "Medical")) return false;
 	if (VMDOtherIsName(SP, "Repair")) return false;
 	if (VMDOtherIsName(SP, "Cleaner")) return false;
@@ -7789,7 +7803,8 @@ function bool VMDShouldSave(DeusExLevelInfo info)
         	|| IsInState('Dying') || IsInState('Paralyzed') || IsInState('Interpolating')
         	|| dataLinkPlay != none
         	|| Level.NetMode != NM_Standalone
-		|| LastAutoSaveLoc ~= GetMissionLocation()) //MADDERS: Don't save on the same map 2x in a row.
+		|| LastAutoSaveLoc ~= GetMissionLocation() //MADDERS: Don't save on the same map 2x in a row.
+		|| (DeusExRootWindow(RootWindow) != None && DeusExRootWindow(RootWindow).GetTopWindow() != None)) //MADDERS, 11/16/24: Sneaky cunt saving during repair bots.
 	{
 	        return false;
     	}
@@ -8592,7 +8607,8 @@ defaultproperties
      DroneWeaponModAccurateRange=-1.000000
      DroneWeaponModReloadTime=-1.000000
      DroneWeaponModRecoilStrength=-1.000000
-     
+     DroneGunClass="NULL"
+          
      MayhemFactor=-1
      
      TimerDifficulty=1.000000
