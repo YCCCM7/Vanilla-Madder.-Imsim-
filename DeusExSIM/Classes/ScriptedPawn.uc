@@ -1178,9 +1178,11 @@ function ReactToProjectiles(Actor projectileActor)
 	local DeusExProjectile dxProjectile;
 	local Pawn instigator;
 	local Spydrone TDrone;
+	local VMDBufferPawn VMBP;
 	
 	if ((bFearProjectiles || bReactProjectiles) && bLookingForProjectiles)
 	{
+		VMBP = VMDBufferPawn(Self);
 		dxProjectile = DeusExProjectile(projectileActor);
 		if ((dxProjectile == None) || IsProjectileDangerous(dxProjectile))
 		{
@@ -1195,6 +1197,11 @@ function ReactToProjectiles(Actor projectileActor)
 				if (bFearProjectiles)
 				{
 					IncreaseFear(instigator, 2.0);
+				}
+				
+				if ((VMBP != None) && (ThrownProjectile(ProjectileActor) != None) && (EMPGrenade(ProjectileActor) == None) && (SpyDrone(ProjectileActor) == None))
+				{
+					VMBP.VMDStartSprinting();
 				}
 				
 				TDrone = SpyDrone(ProjectileActor);
@@ -3590,11 +3597,14 @@ function bool FilterDamageType(Pawn instigatedBy, Vector hitLocation, Vector off
 // ModifyDamage()
 // ----------------------------------------------------------------------
 
-function float ModifyDamage(int Damage, Pawn instigatedBy, Vector hitLocation,
-                            Vector offset, Name damageType)
+function float ModifyDamage(int Damage, Pawn instigatedBy, Vector hitLocation, Vector offset, Name damageType)
 {
-	local int   actualDamage;
+	local bool bTreatStunned;
+	local int actualDamage;
 	local float headOffsetZ, headOffsetY, armOffset;
+	local VMDBufferPawn VMBP;
+	
+	VMBP = VMDBufferPawn(Self);
 	
 	actualDamage = Damage;
 	
@@ -3603,14 +3613,16 @@ function float ModifyDamage(int Damage, Pawn instigatedBy, Vector hitLocation,
 	headOffsetY = CollisionRadius * 0.3;
 	armOffset = CollisionRadius * 0.35;
 	
+	bTreatStunned = (VMBP == None && bStunned) || (VMBP != None && VMBP.bStunnedThisFrame);
+	
 	// if the pawn is stunned, damage is 4X
-	if (bStunned)
+	if (bTreatStunned)
 	{
 		actualDamage *= 4;
 	}
 	
 	// if the pawn is hit from behind at point-blank range, he is killed instantly
-	if ((offset.x < 0) && (!bStunned || !IsInState('RubbingEyes')))
+	if ((offset.x < 0) && (!bTreatStunned || !IsInState('RubbingEyes')))
 	{
 		if ((instigatedBy != None) && (VSize(instigatedBy.Location - Location) < 96)) // Transcended - Was 64
 		{
@@ -3621,13 +3633,19 @@ function float ModifyDamage(int Damage, Pawn instigatedBy, Vector hitLocation,
 	actualDamage = Level.Game.ReduceDamage(actualDamage, DamageType, self, instigatedBy);
 	
 	if (ReducedDamageType == 'All') //God mode
+	{
 		actualDamage = 0;
+	}
 	else if (Inventory != None) //then check if carrying armor
+	{
 		actualDamage = Inventory.ReduceDamage(actualDamage, DamageType, HitLocation);
+	}
 	
 	// gas, EMP and nanovirus do no damage
 	if (damageType == 'TearGas' || damageType == 'EMP' || damageType == 'NanoVirus')
+	{
 		actualDamage = 0;
+	}
 	
 	return actualDamage;
 
@@ -4490,7 +4508,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	{
 		ReactToInjury(instigatedBy, damageType, hitPos);
 	}
-	else if ((DamageType != 'AutoShot') && (GetPawnAllianceType(InstigatedBy) != ALLIANCE_Hostile || VMDBufferPlayer(InstigatedBy) == None || IsInState('Attacking')))
+	else if ((DamageType != 'AutoShot') && (GetPawnAllianceType(InstigatedBy) == ALLIANCE_Friendly || VMDBufferPlayer(InstigatedBy) == None || IsInState('Attacking')))
 	{
 		ReactToInjury(instigatedBy, damageType, hitPos);
 	}
@@ -4506,7 +4524,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 			TComp = VMBP.VMDFindTurretComputer();
 		}
 		
-		if (GetPawnAllianceType(InstigatedBy) != ALLIANCE_Hostile || IsInState('Attacking'))
+		if (GetPawnAllianceType(InstigatedBy) == ALLIANCE_Friendly || IsInState('Attacking'))
 		{
 			ReactToInjury(instigatedBy, damageType, hitPos);
 		}
@@ -9998,7 +10016,7 @@ function bool SwitchToBestWeapon()
 				// {
 				if (!bValid)
 				{
-					for (i=0; i<ArrayCount(curWeapon.AmmoNames); i++)
+					for (i=ArrayCount(curWeapon.AmmoNames)-1; i>-1; i--)
 					{
 						PossibleAmmo = Ammo(FindInventoryType(curWeapon.AmmoNames[i]));
 						
