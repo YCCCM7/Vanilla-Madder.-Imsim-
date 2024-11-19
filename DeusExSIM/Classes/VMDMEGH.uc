@@ -4652,7 +4652,7 @@ function PlayMEGHDeathSound()
 			GSpeed = Level.Game.GameSpeed;
 		}
 		
-		VMP.PlaySound(sound'NanoSwordSelect', SLOT_Interface, 255,, 255, 3.0 * GSpeed);
+		VMP.PlaySound(sound'VMDMEGHDeath', SLOT_Interface, 255,, 255, GSpeed);
 		VMP.ClientMessage(SprintF(MsgMeghKilled, CustomName));
 		
 		VMP.VMDClearDroneData();

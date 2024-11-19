@@ -1316,6 +1316,7 @@ function UpdateMagSkin()
 
 function PlaySIDDDeathSound()
 {
+	local float GSpeed;
 	local VMDBufferPlayer VMP;
 	
 	AIEndEvent('WeaponDrawn', EAITYPE_Visual);
@@ -1323,7 +1324,13 @@ function PlaySIDDDeathSound()
 	VMP = GetLastVMP();
 	if (VMP != None)
 	{
-		VMP.PlaySound(sound'NanoSwordSelect', SLOT_Interface, 255,, 255, 3.0);
+		GSpeed = 1.0;
+		if ((Level != None) && (Level.Game != None))
+		{
+			GSpeed = Level.Game.GameSpeed;
+		}
+		
+		VMP.PlaySound(sound'VMDMEGHDeath', SLOT_Interface, 255,, 255, GSpeed);
 		VMP.ClientMessage(SprintF(MsgSIDDKilled, CustomName));
 		
 		VMDCleanFakeDroneActors();
