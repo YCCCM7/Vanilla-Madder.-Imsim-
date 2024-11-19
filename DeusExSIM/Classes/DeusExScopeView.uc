@@ -46,10 +46,14 @@ event Tick(float deltaSeconds)
 	{
 		cross = dxRoot.hud.cross;
 
-		if (bActive)
+		if ((bActive) && (bBinocs))
+		{
 			cross.SetCrosshair(false);
+		}
 		else
+		{
 			cross.SetCrosshair(player.bCrosshairVisible);
+		}
 	}
 }
 
@@ -80,7 +84,7 @@ function ActivateView(int newFOV, bool bNewBinocs, bool bInstant)
 			player.SetFOVAngle(desiredFOV);
 		else
 			player.desiredFOV = desiredFOV;
-
+		
 		bViewVisible = True;
 		bActive = True; // Transcended - Possibly missing before?
 		Show();
@@ -149,23 +153,23 @@ event DrawWindow(GC gc)
 	local string PathsString;
 	local float w, h;
 	local string textStr;
-
+	
 	Super.DrawWindow(gc);
-
+	
 	if (GetRootWindow().parentPawn != None)
 	{
 		if (player.IsInState('Dying'))
 			return;
 	}
-
+	
 	// Figure out where to put everything
 	if (bBinocs)
 		scopeWidth  = 512;
 	else
 		scopeWidth  = 256;
-
+	
 	scopeHeight = 256;
-
+	
 	// HX_HAN
 	// Figure out scale ( Use ReferenceHeight as base height ),
 	// but don't draw it smaller on lower res.
@@ -174,30 +178,25 @@ event DrawWindow(GC gc)
 		ScopeScale = 1.0;
 	else if ( Width < ScopeScale*ScopeWidth || Height < ScopeScale*ScopeHeight )
  		ScopeScale = FMin( ScopeScale, FMin( Width/ScopeWidth, Height/ScopeHeight ) );
-
+	
 	ScaledScopeWidth  = ScopeScale*(ScopeWidth +0.75);
 	ScaledScopeHeight = ScopeScale*(ScopeHeight+0.75);
-
+	
 	ScaledFromX = (Width-ScaledScopeWidth)/2;
 	ScaledFromY = (Height-ScaledScopeHeight)/2;
 	ScaledToX   = ScaledFromX + ScaledScopeWidth;
 	ScaledToY   = ScaledFromY + ScaledScopeHeight;
-
+	
 	fromX = (width-scopeWidth)/2;
 	fromY = (height-scopeHeight)/2;
 	toX   = fromX + scopeWidth;
 	toY   = fromY + scopeHeight;
-
+	
 	// Draw the black borders
 	gc.SetTileColorRGB(0, 0, 0);
 	gc.SetStyle(DSTY_Normal);
 	if ( Player.Level.NetMode == NM_Standalone )	// Only block out screen real estate in single player
 	{
-		// gc.DrawPattern(0, 0, width, fromY, 0, 0, Texture'Solid');
-		// gc.DrawPattern(0, toY, width, fromY, 0, 0, Texture'Solid');
-		// gc.DrawPattern(0, fromY, fromX, scopeHeight, 0, 0, Texture'Solid');
-		// gc.DrawPattern(toX, fromY, fromX, scopeHeight, 0, 0, Texture'Solid');
-		
 		//needs to be in int, otherwise we get weird lines. Also padd some of these by a pixel since casting to int truncates it.
 		gc.DrawPattern(0,           	0,          		int(Width+16*ScopeScale)+1,    	int(ScaledFromY)+1,                		0, 0, Texture'Solid'); //Top
 		gc.DrawPattern(0,           	int(ScaledToY)-1, 	int(Width+16*ScopeScale)+1,    	int(ScaledFromY+8*ScopeScale)+1,       	0, 0, Texture'Solid'); //Bottom
@@ -206,23 +205,13 @@ event DrawWindow(GC gc)
 	}
 	// Draw the center scope bitmap
 	// Use the Header Text color 
-
-//	gc.SetStyle(DSTY_Masked);
+	
 	if (bBinocs)
 	{
-		// gc.SetStyle(DSTY_Modulated);
-		// gc.DrawTexture(fromX,       fromY, 256, scopeHeight, 0, 0, Texture'HUDBinocularView_1');
-		// gc.DrawTexture(fromX + 256, fromY, 256, scopeHeight, 0, 0, Texture'HUDBinocularView_2');
-		//
-		// gc.SetTileColor(colLines);
-		// gc.SetStyle(DSTY_Masked);
-		// gc.DrawTexture(fromX,       fromY, 256, scopeHeight, 0, 0, Texture'HUDBinocularCrosshair_1');
-		// gc.DrawTexture(fromX + 256, fromY, 256, scopeHeight, 0, 0, Texture'HUDBinocularCrosshair_2');
-		
 		gc.SetStyle( DSTY_Modulated );
 		TempTexture = Texture'VMDHUDBinocularView';
 		gc.DrawStretchedTexture( ScaledFromX, ScaledFromY, ScaledScopeWidth, ScaledScopeHeight, 0, 0, TempTexture.USize, TempTexture.VSize, TempTexture );
-
+		
 		gc.SetTileColor( colLines );
 		gc.SetStyle( DSTY_Masked );
 		TempTexture = Texture'VMDHUDBinocularCrosshair';
@@ -233,16 +222,10 @@ event DrawWindow(GC gc)
 		// Crosshairs - Use new scope in multiplayer, keep the old in single player
 		if ( Player.Level.NetMode == NM_Standalone )
 		{
-			// gc.SetStyle(DSTY_Modulated);
-			// gc.DrawTexture(fromX, fromY, scopeWidth, scopeHeight, 0, 0, Texture'HUDScopeView');
-			// gc.SetTileColor(colLines);
-			// gc.SetStyle(DSTY_Masked);
-			// gc.DrawTexture(fromX, fromY, scopeWidth, scopeHeight, 0, 0, Texture'HUDScopeCrosshair');
-			
 			gc.SetStyle( DSTY_Modulated );
 			TempTexture = Texture'VMDHUDScopeView';
 			gc.DrawStretchedTexture( ScaledFromX, ScaledFromY, ScaledScopeWidth, ScaledScopeHeight, 0, 0, TempTexture.USize, TempTexture.VSize, TempTexture );
-
+			
 			gc.SetTileColor( colLines );
 			gc.SetStyle( DSTY_Masked );
 			TempTexture = Texture'VMDHUDScopeCrosshair';
@@ -265,20 +248,11 @@ event DrawWindow(GC gc)
 	
 	if ((bBinocs) && (Player != None))
 	{
-		// creditsWindow = TextWindow(NewChild(Class'TextWindow'));
-		// creditsWindow.SetBackground(Texture'DeusExUI.UserInterface.ConWindowActiveBackground');
-		// creditsWindow.SetFont(Font'DeusExUI.FontConversation');
-		// creditsWindow.SetTextMargins(200,200);
-		// creditsColor.G = 255;
-		// creditsColor.B = 255;
-		// creditsWindow.SetTextColor(creditsColor);
-		// creditsWindow.SetPos(((toX - fromX) / 2) + fromX, ((toY - fromY) / 4) + fromY);
-		
 		traceActor = TraceLOS(50000,AimLocation);
 		if (traceActor != None)
 		{
 			TargetRange = Abs(VSize(traceActor.Location - player.Location));
-			TargetName = player.GetDisplayName(traceActor);				
+			TargetName = player.GetDisplayName(traceActor);
 			gc.SetFont(Font'DeusExUI.FontConversation');
 			if (TargetName != "")
 			{
@@ -293,6 +267,26 @@ event DrawWindow(GC gc)
 			else if (Inventory(traceActor) != None)
 			{
 				textStr = Caps(Inventory(traceActor).ItemName);
+				gc.GetTextExtent(0, w, h, textStr);
+				gc.DrawText(226, 256, w, h, textStr);
+				
+				textStr = msgLockRange $ ":" @ Int(TargetRange/16) @ msgRangeUnit @ "(" $ Int(TargetRange/52.4934) @ msgRangeUnitMetres $ ")";
+				gc.GetTextExtent(0, w, h, textStr);
+				gc.DrawText(226, 271, w, h, textStr);
+			}
+		}
+	}
+	else if ((Player != None) && (DeusExWeapon(Player.InHand) != None) && (DeusExWeapon(Player.InHand).bZoomed) && (DeusExWeapon(Player.InHand).bLasing))
+	{
+		traceActor = TraceLOS(50000,AimLocation);
+		if (traceActor != None)
+		{
+			TargetRange = Abs(VSize(traceActor.Location - player.Location));
+			TargetName = player.GetDisplayName(traceActor);
+			gc.SetFont(Font'DeusExUI.FontConversation');
+			if (TargetName != "")
+			{
+				textStr = Caps("");
 				gc.GetTextExtent(0, w, h, textStr);
 				gc.DrawText(226, 256, w, h, textStr);
 				
