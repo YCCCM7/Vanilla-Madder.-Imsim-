@@ -1196,7 +1196,6 @@ function SaveSettings()
 				default:
 					if (VarSetting[i] != "")
 					{
-						Log("DEFAULTING VALUE:"@StrSetting[i]);
 						TBGet = Bool(VMP.GetPropertyText(VarSetting[i]));
 						VMP.SetPropertyText(VarSetting[i], string(TBGet));
 					}	
@@ -1457,21 +1456,21 @@ defaultproperties
      strSetting(46)="Dog Jump Attack"
      varSetting(46)="bDogJumpEnabled"
      strDescription(46)="If enabled, dogs will employ an extremely dangerous jump attack."
-     strSetting(47)="Enemy GEP Lock"
-     varSetting(47)="bEnemyGEPLockEnabled"
-     strDescription(47)="If enabled, enemies with GEP guns can lock onto targets."
+     //strSetting(47)="Enemy GEP Lock"
+     //varSetting(47)="bEnemyGEPLockEnabled"
+     //strDescription(47)="If enabled, enemies with GEP guns can lock onto targets."
      strSetting(48)="Enemies Disarm Explosives"
      varSetting(48)="bEnemyDisarmExplosivesEnabled"
      strDescription(48)="If enabled, during an ambush in M04, the AI will disarm explosives placed in the ambush area, to ensure a fair fight. This may be expanded in the future."
      strSetting(49)="Enemies Target Explosives"
      varSetting(49)="bShootExplosivesEnabled"
      strDescription(49)="If enabled, opportunistic enemies will open fire on explosives you're in range of."
-     strSetting(50)="Smart Enemy Melee"
-     varSetting(50)="bDrawMeleeEnabled"
-     strDescription(50)="If enabled, enemies will draw melee weapons instead of reloading, when it would benefit them."
-     strSetting(51)="Smart Enemy Weapon Swap"
-     varSetting(51)="bSmartEnemyWeaponSwapEnabled"
-     strDescription(51)="If enabled, enemies will switch weapons instead of reloading, when it would save them in a pinch."
+     //strSetting(50)="Smart Enemy Melee"
+     //varSetting(50)="bDrawMeleeEnabled"
+     //strDescription(50)="If enabled, enemies will draw melee weapons instead of reloading, when it would benefit them."
+     //strSetting(51)="Smart Enemy Weapon Swap"
+     //varSetting(51)="bSmartEnemyWeaponSwapEnabled"
+     //strDescription(51)="If enabled, enemies will switch weapons instead of reloading, when it would save them in a pinch."
      strSetting(52)="NPCs Projectile Fear"
      varSetting(52)="bEnemyAlwaysAvoidProj"
      strDescription(52)="If enabled, enemies will always fear projectiles, both in and out of combat... Poison gas, thrown grenades, etc."
