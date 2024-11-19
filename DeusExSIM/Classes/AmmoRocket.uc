@@ -37,11 +37,42 @@ function VMDAttemptCrateSwap(int Seed)
 
 function ProcessVMDChanges()
 {
- 	local int Seed;
+ 	local bool bTripped;
+	local int Seed, AltSeed[3];
+ 	local VMDBufferPlayer VMP;
  	
  	if (bDidSetup) return;
  	if ((Level.TimeSeconds > 5) && (!bCrateSummoned)) return;
  	
+	VMP = VMDBufferPlayer(GetPlayerPawn());
+	if (VMP != None)
+	{
+		AltSeed[0] = class'VMDStaticFunctions'.Static.DeriveActorSeed(Self, 5, True);
+		AltSeed[1] = class'VMDStaticFunctions'.Static.DeriveActorSeed(Self, 3, True);
+		AltSeed[2] = class'VMDStaticFunctions'.Static.DeriveActorSeed(Self, 2, True);
+		if (class'VMDStaticFunctions'.Static.VMDUseDifficultyModifier(VMP, "Loot Swap") || class'VMDStaticFunctions'.Static.VMDUseDifficultyModifier(VMP, "Loot Deletion"))
+		{
+			if ((AltSeed[1] == 2) && (VMP.SavedLootSwapSeverity > 0))
+			{
+				bTripped = true;
+			}
+			if ((AltSeed[1] == 4) && (VMP.SavedLootSwapSeverity > 1))
+			{
+				bTripped = true;
+			}
+			if ((AltSeed[2] == 2) && (VMP.SavedLootSwapSeverity > 2))
+			{
+				bTripped = true;
+			}
+		}
+		
+		//MADDERS, 11/12/24: Lower our ammo count for balancing sake.
+		if (bTripped)
+		{
+			AmmoAmount *= 0.5;
+		}
+	}
+	
  	Super.ProcessVMDChanges();
  	
  	Seed = class'VMDStaticFunctions'.Static.DeriveActorSeed(Self);
