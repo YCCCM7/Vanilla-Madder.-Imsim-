@@ -583,6 +583,13 @@ function UpdateSettings( DeusExPlayer player )
 		Smell.SetVisibility(false);
 		LightGem.SetVisibility(false);
 	}
+	
+	if ((Player != None) && (InformationDevices(Player.FrobTarget) != None) && (InformationDevices(Player.FrobTarget).AReader == Player))
+	{
+		InformationDevices(Player.FrobTarget).DestroyWindow();
+		InformationDevices(Player.FrobTarget).AReader = Player;
+		InformationDevices(Player.FrobTarget).CreateInfoWindow();
+	}
 }
 
 function ClearConfiguring()
