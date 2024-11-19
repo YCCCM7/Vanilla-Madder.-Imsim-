@@ -14,39 +14,30 @@ simulated function PlayFiringSound()
 {
 	local Sound OldFire;
 	
-	Super.PlayFiringSound();
 	if (Ammo3006AP(AmmoType) != None)
 	{
 		OldFire = FireSound;
-		FireSound = Sound'MediumExplosion1';
-     		FirePitchMin = 1.900000;
-     		FirePitchMax = 2.100000;
+		FireSound = Sound'RifleFire3006AP';
 		Super.PlayFiringSound();
-     		FirePitchMin = 0.900000;
-     		FirePitchMax = 1.100000;
 		FireSound = OldFire;
 	}
 	else if ((Ammo3006Tranq(AmmoType) != None) && (!bHasSilencer))
 	{
 		OldFire = FireSound;
-		FireSound = Sound'StealthPistolFire';
-     		FirePitchMin = 0.700000;
-     		FirePitchMax = 0.800000;
+		FireSound = Sound'RifleFire3006Tranq';
 		Super.PlayFiringSound();
-     		FirePitchMin = 1.200000;
-     		FirePitchMax = 1.400000;
 		FireSound = OldFire;
 	}
 	else if (Ammo3006HEAT(AmmoType) != None)
 	{
 		OldFire = FireSound;
-		FireSound = Sound'MediumExplosion1';
-     		FirePitchMin = 1.600000;
-     		FirePitchMax = 1.800000;
+		FireSound = Sound'RifleFire3006HEAT';
 		Super.PlayFiringSound();
-     		FirePitchMin = 0.700000;
-     		FirePitchMax = 0.900000;
 		FireSound = OldFire;
+	}
+	else
+	{
+		Super.PlayFiringSound();
 	}
 }
 
@@ -60,32 +51,24 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 	
 	if (Ammo3006AP(AmmoType) != None)
 	{
-     		FirePitchMin = 0.900000;
-     		FirePitchMax = 1.100000;
      		PenetrationHitDamage = 25 * EvoMod;
      		RicochetHitDamage = 10 * EvoMod;
 		HitDamage = Default.HitDamage * EvoMod;
 	}
 	if (Ammo3006Tranq(AmmoType) != None)
 	{
-     		FirePitchMin = 1.200000;
-     		FirePitchMax = 1.400000;
      		PenetrationHitDamage = 0 * EvoMod;
      		RicochetHitDamage = 0 * EvoMod;
 		HitDamage = Default.HitDamage * EvoMod * 0.5;
 	}
 	else if (Ammo3006HEAT(AmmoType) != None)
 	{
-     		FirePitchMin = 0.700000;
-     		FirePitchMax = 0.900000;
      		PenetrationHitDamage = 20 * EvoMod;
      		RicochetHitDamage = 0 * EvoMod;
 		HitDamage = Default.HitDamage * EvoMod;
 	}
 	else
 	{
-     		FirePitchMin = 0.900000;
-     		FirePitchMax = 1.100000;
      		PenetrationHitDamage = Default.PenetrationHitDamage * EvoMod;
      		RicochetHitDamage = Default.RicochetHitDamage * EvoMod;
 		HitDamage = Default.HitDamage * EvoMod;
@@ -213,7 +196,7 @@ defaultproperties
      reloadTime=2.000000
      HitDamage=25
      maxRange=48000 //MADDERS, used to be 48K and 28.8K, respectively.
-     AccurateRange=6400
+     AccurateRange=4800 //Used to be 6400, before nerf for fun bullet drop.
      bCanHaveScope=True
      bHasScope=True
      bCanHaveLaser=True
