@@ -75,6 +75,37 @@ function float FakeRand(int Ceil)
 	return Ret;
 }
 
+function SetMoverFragmentType(DeusExMover DXM, string MaterialClass)
+{
+	if (DXM == None) return;
+	
+	MaterialClass = CAPS(MaterialClass);
+	
+	switch(MaterialClass)
+	{
+		case "GLASS":
+     			DXM.ExplodeSound1 = Sound'GlassBreakSmall';
+     			DXM.ExplodeSound2 = Sound'GlassBreakLarge';
+			DXM.FragmentClass = class'GlassFragment';
+		break;
+		case "METAL":
+     			DXM.ExplodeSound1 = Sound'MediumExplosion1';
+     			DXM.ExplodeSound2 = Sound'MediumExplosion1';
+			DXM.FragmentClass = class'MetalFragment';
+		break;
+		case "PLASTIC":
+     			DXM.ExplodeSound1 = Sound'PlasticHit1';
+     			DXM.ExplodeSound2 = Sound'GlassBreakSmall';
+			DXM.FragmentClass = class'PlasticFragment';
+		break;
+		case "WOOD":
+     			DXM.ExplodeSound1 = Sound'WoodBreakSmall';
+     			DXM.ExplodeSound2 = Sound'WoodBreakLarge';
+			DXM.FragmentClass = class'WoodFragment';
+		break;
+	}
+}
+
 function CommitNakedSolutionNerfing()
 {
 	local int TMission, TranslatedNumber;
@@ -196,6 +227,8 @@ function CommitNakedSolutionNerfing()
 				}
 			break;
 			case "01_NYC_UNATCOHQ":
+				RemoveSolutions[0] = int(FakeFRand() < TFactor);
+				
 				forEach AllActors(class'Actor', TAct)
 				{
 					//Remove the free key in jacobson's, but keep the other.
@@ -204,9 +237,25 @@ function CommitNakedSolutionNerfing()
 						switch(SF.Static.StripBaseActorSeed(TAct))
 						{
 							case 1:
-								if (FakeFRand() < TFactor)
+								if (RemoveSolutions[0] > 0)
 								{
 									TAct.Destroy();
+								}
+							break;
+						}
+					}
+					else if (TAct.Class == class'DeusExMover')
+					{
+						switch(SF.Static.StripBaseActorSeed(TAct))
+						{
+							case 2:
+								if (RemoveSolutions[0] > 0)
+								{
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 25;
+									}
 								}
 							break;
 						}
@@ -232,11 +281,20 @@ function CommitNakedSolutionNerfing()
 							case 24:
 							case 29:
 							case 37:
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.2;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.2;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 20;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -473,7 +531,7 @@ function CommitNakedSolutionNerfing()
 									if (!DeusExMover(TAct).bBreakable)
 									{
 										DeusExMover(TAct).bBreakable = true;
-										DeusExMover(TAct).MinDamageThreshold = 15;
+										DeusExMover(TAct).MinDamageThreshold = 25;
 									}
 									if (!DeusExMover(TAct).bLocked)
 									{
@@ -484,21 +542,49 @@ function CommitNakedSolutionNerfing()
 								}
 							break;
 							//Solution 2: Remove key to control room
-							case 13:
 							case 14:
+								if (RemoveSolutions[2] > 0)
+								{
+									DeusExMover(TAct).KeyIDNeeded = '';
+									
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 70;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
+								}
+							break;
+							case 13:
 							case 15:
 								if (RemoveSolutions[2] > 0)
 								{
 									DeusExMover(TAct).KeyIDNeeded = '';
+									
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 50;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 							//Lock the sewer exit from the map.
 							case 21:
 								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.3;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.3;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 30;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -609,11 +695,20 @@ function CommitNakedSolutionNerfing()
 						{
 							case 1: //Lock vent next to lockers. Too easy.
 							case 5: //Lock vent to munitions bay.
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.3;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.3;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 30;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -659,11 +754,20 @@ function CommitNakedSolutionNerfing()
 						switch(SF.Static.StripBaseActorSeed(TAct))
 						{
 							case 2:
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.4;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.4;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 40;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -677,12 +781,21 @@ function CommitNakedSolutionNerfing()
 					{
 						switch(SF.Static.StripBaseActorSeed(TAct))
 						{
-							case 6:
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+							case 6: //Solution 1: Lock big grate to the elevator area.
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.5;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.5;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 50;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -701,19 +814,37 @@ function CommitNakedSolutionNerfing()
 						{
 							case 5: //Solution 1: Lock vents to upper vents that bypasses most doors
 							case 12:
-								if ((RemoveSolutions[1] > 0) && (!DeusExMover(TAct).bLocked))
+								if (RemoveSolutions[1] > 0)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.25;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.25;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 25;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 							case 13: //Lock vent to medbot and repairbot
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.45;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.45;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 45;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -742,11 +873,20 @@ function CommitNakedSolutionNerfing()
 						switch(SF.Static.StripBaseActorSeed(TAct))
 						{
 							case 19: //Lock vent to chopper room
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.35;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.35;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 35;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -865,11 +1005,20 @@ function CommitNakedSolutionNerfing()
 						switch(SF.Static.StripBaseActorSeed(TAct))
 						{
 							case 5: //Lock vents going around planks as well sometimes.
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.3;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.3;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 30;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -959,11 +1108,20 @@ function CommitNakedSolutionNerfing()
 						switch(SF.Static.StripBaseActorSeed(TAct))
 						{
 							case 8:
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.35;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.35;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 35;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -996,11 +1154,20 @@ function CommitNakedSolutionNerfing()
 						switch(SF.Static.StripBaseActorSeed(TAct))
 						{
 							case 0:
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.55;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.55;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 55;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -1016,11 +1183,20 @@ function CommitNakedSolutionNerfing()
 						switch(SF.Static.StripBaseActorSeed(TAct))
 						{
 							case 9:
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.45;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.45;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 45;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -1042,20 +1218,38 @@ function CommitNakedSolutionNerfing()
 							case 8: //Don't let us believe there's a key that we cannot acquire, duh.
 								if (RemoveSolutions[0] > 0)
 								{
-									//Update: There's a duplicate of this in the shed. Just make this door pickable when this happens, as an additional solution.
-									//Close a door, open 2 windows.
-									//DeusExMover(TAct).KeyIDNeeded = '';
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.75;
+									if (!DeusExMover(TAct).bPickable)
+									{
+										//Update: There's a duplicate of this in the shed. Just make this door pickable when this happens, as an additional solution.
+										//Close a door, open 2 windows.
+										//DeusExMover(TAct).KeyIDNeeded = '';
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.75;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 75;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 							case 11: //Lock the hatch in corner of the room. Brutal.
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.45;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.45;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 45;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -1112,19 +1306,37 @@ function CommitNakedSolutionNerfing()
 						switch(SF.Static.StripBaseActorSeed(TAct))
 						{
 							case 14: //Lock the door going into the repair bot room. Gasp.
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.65;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.65;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 65;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 							case 26: //Lock the hatch to the secret slide.
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.55;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.55;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 55;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -1165,28 +1377,60 @@ function CommitNakedSolutionNerfing()
 								if (RemoveSolutions[0] > 0)
 								{
 									DeusExMover(TAct).KeyIDNeeded = '';
+									
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 75;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 							case 26: //Solution 1: Don't mislead player with the idea of a key.
 								if (RemoveSolutions[1] > 0)
 								{
 									DeusExMover(TAct).KeyIDNeeded = '';
+									
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 25;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 							case 5: //Lock the hatch to fan area. Brutal.
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.6;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.6;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 60;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 							case 8: //Lock the door to the elevator disarm. Stacking is likely still possible?
-								if ((RemoveSolutions[2] > 0) && (!DeusExMover(TAct).bLocked))
+								if (RemoveSolutions[2] > 0)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.35;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.35;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 35;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
@@ -1233,11 +1477,20 @@ function CommitNakedSolutionNerfing()
 						switch(SF.Static.StripBaseActorSeed(TAct))
 						{
 							case 13: //Lock this, but still allow forklift up.
-								if ((FakeFRand() < TFactor) && (!DeusExMover(TAct).bLocked))
+								if (FakeFRand() < TFactor)
 								{
-									DeusExMover(TAct).bLocked = true;
-									DeusExMover(TAct).bPickable = true;
-									DeusExMover(TAct).LockStrength = 0.45;
+									if (!DeusExMover(TAct).bLocked)
+									{
+										DeusExMover(TAct).bLocked = true;
+										DeusExMover(TAct).bPickable = true;
+										DeusExMover(TAct).LockStrength = 0.45;
+									}
+									if (!DeusExMover(TAct).bBreakable)
+									{
+										DeusExMover(TAct).bBreakable = true;
+										DeusExMover(TAct).MinDamageThreshold = 45;
+										SetMoverFragmentType(DeusExMover(TAct), "Metal");
+									}
 								}
 							break;
 						}
