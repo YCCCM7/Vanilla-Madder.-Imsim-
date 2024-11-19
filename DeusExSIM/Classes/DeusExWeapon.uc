@@ -590,7 +590,7 @@ auto state Pickup
 		}
 		else if ((bTossedOut) && (Other.Class == Class) && (Inventory(Other).bTossedOut))
 		{
-				Destroy();
+			Destroy();
 		}
 		
 		//MADDERS, 10/26/22: Post-engine stuff.
@@ -2689,11 +2689,6 @@ function Sound VMDGetIntendedFireSound(Ammo NewAmmo)
 	{
 		return Sound'GEPGunFire';
 	}
-	else if (Ammo10mmHeat(newAmmo) != None)
-	{
-		if (WeaponPistol(Self) != None) return Sound'SawedOffShotgunFire';
-		else return Sound'AssaultShotgunFire';
-	}
 	
 	return Default.FireSound;
 }
@@ -3499,7 +3494,7 @@ function VMDUpdateEvoName()
 
 function VMDChangeFiringMode()
 {
- 	if (NumFiringModes < 2) return;
+ 	if (NumFiringModes < 2 || (VMDBufferPlayer(Owner) != None && VMDBufferPlayer(Owner).TaseDuration > 0)) return;
  	if ((!bInstantHit) && (Default.bInstantHit)) return; //No 20mm, please.
  	
 	if (IsA('WeaponA17') || IsA('WeaponAssault17'))
@@ -4075,6 +4070,8 @@ function TravelPostAccept()
 			if (DeusExPlayer(Owner) != None)
 				DeusExPlayer(Owner).RemoveItemFromSlot(Self);   // remove it from the inventory grid
 		}*/
+		
+		Log("MADDERS DEBUG! WEAPON"@Self@"DELETING SELF BECAUSE WE WERE DESTROY ON FINISH ON TRAVEL POST ACCEPT!");
 		
 		bWasZoomed = False;
 		if (bZoomed)
@@ -5962,6 +5959,8 @@ function ScopeOff()
 
 simulated function ScopeToggle()
 {
+	if (VMDBufferPlayer(Owner) != None && VMDBufferPlayer(Owner).TaseDuration > 0) return;
+	
 	if (IsInState('Idle') || WeaponLAW(Self) != None)
 	{
 		if ((bHasScope) && (DeusExPlayer(Owner) != None))
@@ -6057,6 +6056,8 @@ function LaserOff()
 
 function LaserToggle()
 {
+	if (VMDBufferPlayer(Owner) != None && VMDBufferPlayer(Owner).TaseDuration > 0) return;
+	
 	if (IsInState('Idle'))
 	{
 		if (bHasLaser)
@@ -6174,10 +6175,13 @@ simulated function HandToHandAttack()
 	{
 		if (ProjectileFire(ProjectileClass, ProjectileSpeed, bWarnTarget) != None)
 		{
-			SimAmmoAmount = AmmoType.AmmoAmount - 1;
-			if ((ReloadCount > 0) && (bFireFudge))
+			if (bFireFudge)
 			{
-				AmmoType.UseAmmo(1);
+				SimAmmoAmount = AmmoType.AmmoAmount - 1;
+				if (ReloadCount > 0)
+				{
+					AmmoType.UseAmmo(1);
+				}
 			}
 			bFireFudge = false;
 			
@@ -6185,10 +6189,11 @@ simulated function HandToHandAttack()
 				DeusExPlayer(Owner).UpdateBeltText(Self);
 		}
 	}
-
+	
 	// if we are a thrown weapon and we run out of ammo, destroy the weapon
 	if ((bHandToHand) && (ReloadCount > 0 || VMDIsWeaponName("WeaponC4")) && (SimAmmoAmount <= 0))
 	{
+		Log("MADDERS DEBUG: OUT OF AMMO! MARKING SELF FOR DELETION! TRUE AMMO LEFT?"@AmmoType.AmmoAmount);
 		DestroyOnFinish();
 		if ( Role < ROLE_Authority )
 		{
@@ -7730,7 +7735,7 @@ simulated function TraceFire( float Accuracy )
 	TRange = AccurateRange;
 	if (VMDIsBulletWeapon())
 	{
-		if ((Owner != None) && (Owner.Region.Zone != None))
+		if ((Owner != None) && (Owner.Region.Zone != None) && (Owner.Region.Zone.bWaterZone))
 		{
 			TRange *= 0.35;
 		}
