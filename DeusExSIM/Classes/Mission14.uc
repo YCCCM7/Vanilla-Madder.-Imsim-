@@ -11,11 +11,24 @@ class Mission14 extends MissionScript;
 
 function FirstFrame()
 {
+	local TimerDisplay TTimer;
+	
 	Super.FirstFrame();
 
 	if (localURL == "14_OCEANLAB_LAB")
 	{
 		Player.GoalCompleted('StealSub');
+	}
+	else if (localURL == "14_OCEANLAB_SILO")
+	{
+		if ((VMDBufferPlayer(Player) != None) && (DeusExRootWindow(Player.RootWindow) != None) && (DeusExRootWindow(Player.RootWindow).HUD != None))
+		{
+			TTimer = DeusExRootWindow(Player.RootWindow).HUD.CreateTimerWindow();
+			TTimer.Time = int((25.0 * 60.0) / Sqrt(FMin(VMDBufferPlayer(Player).TimerDifficulty, Sqrt(VMDBufferPlayer(Player).TimerDifficulty))));
+			TTimer.bCritical = False;
+			TTimer.Message = "Rocket Launch";
+			TTimer.bIntegerDisplay = true;
+		}
 	}
 }
 
@@ -111,6 +124,11 @@ function Timer()
 	}
 	else if (localURL == "14_OCEANLAB_SILO")
 	{
+		if (!flags.GetBool('missile_aborted'))
+		{
+			RocketLaunchEffects();
+		}
+		
 		// when HowardStrong is dead, unhide the helicopter
 		if (!flags.GetBool('MS_UnhideHelicopter'))
 		{
@@ -158,6 +176,53 @@ function Timer()
 				Bob.LeaveWorld();
 
 			flags.SetBool('MS_HideBobPage', True,, 15);
+		}
+	}
+}
+
+function RocketLaunchEffects()
+{
+	local float Size, ShakeTime, ShakeRoll, ShakeVert;
+	local Dispatcher TDis;
+	local MapExit TExit;
+	local TimerDisplay TTimer;
+	
+	if ((Player != None) && (DeusExRootWindow(Player.RootWindow) != None) && (DeusExRootWindow(Player.RootWindow).HUD != None))
+	{
+		if (DeusExRootWindow(Player.RootWindow).HUD.Timer != None)
+		{
+			TTimer = DeusExRootWindow(Player.RootWindow).HUD.Timer;
+			TTimer.Time -= 1;
+			Flags.SetInt('VMDShipBlowUpTime', int(TTimer.Time + 0.99),, 10);
+			if (TTimer.Time <= 0)
+			{
+				if (!Flags.GetBool('VMDStartedRocketSequence'))
+				{
+					Flags.SetBool('VMDStartedRocketSequence', true,, 15);
+					forEach AllActors(Class'MapExit', TExit, 'ExitPath')
+					{
+						TExit.DestMap = "dxonly.dx";
+					}
+					forEach AllActors(class'Dispatcher', TDis, 'SiloExit')
+					{
+						TDis.Trigger(Player, Player);
+					}
+				}
+				TTimer.Time = 0;
+			}
+			else if (TTimer.Time <= 180)
+			{
+				TTimer.bCritical = true;
+			}
+		}
+		else
+		{
+			TTimer = DeusExRootWindow(Player.RootWindow).HUD.CreateTimerWindow();
+			TTimer.Time = Flags.GetInt('VMDRocketLaunchTime');
+			TTimer.bCritical = (TTimer.Time <= 180);
+			TTimer.Message = "Rocket Launch";
+			TTimer.bIntegerDisplay = true;
+			RocketLaunchEffects();
 		}
 	}
 }
