@@ -8,7 +8,7 @@ defaultproperties
      CarcassType=Class'DeusEx.ChadCarcass'
      WalkingSpeed=0.213333
      bImportant=True
-     bInvincible=False	 // Transcended - Added as mentioned in chapter 11. VMD: Rescinded, due to branching dialogue existing.
+     bInvincible=True
      walkAnimMult=0.500000
      GroundSpeed=180.000000
      Mesh=LodMesh'TranscendedModels.TransGM_DressShirt_S'
