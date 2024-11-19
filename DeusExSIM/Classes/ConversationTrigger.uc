@@ -15,6 +15,9 @@ var() string BindName;
 var() name checkFlag;
 var() bool bCheckFalse;
 
+//MADDERS, 11/17/24: Special shit, hurray.
+var(MADDERS) bool bPopWindow;
+
 singular function Trigger(Actor Other, Pawn Instigator)
 {
 	local DeusExPlayer player;
@@ -30,7 +33,12 @@ singular function Trigger(Actor Other, Pawn Instigator)
 	// only works for DeusExPlayers
 	if (player == None)
 		return;
-
+	
+	if ((bPopWindow) && (DeusExRootWindow(Player.RootWindow) != None) && (DeusExRootWindow(Player.RootWindow).GetTopWindow() != None))
+	{
+		DeusExRootWindow(Player.RootWindow).PopWindow();
+	}
+	
 	if (checkFlag != '')
 	{
 		if (!player.flagBase.GetBool(checkFlag))
@@ -38,7 +46,7 @@ singular function Trigger(Actor Other, Pawn Instigator)
 		else
 			bSuccess = !bCheckFalse;
 	}
-
+	
 	if ((BindName != "") && (conversationTag != ''))
 	{
 		UseTag = ConversationTag;
