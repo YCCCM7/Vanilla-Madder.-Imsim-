@@ -562,13 +562,14 @@ function EEventAction SetupEventCheckObject( ConEventCheckObject event, out Stri
 
 function EEventAction SetupEventTransferObject( ConEventTransferObject event, out String nextLabel )
 {
+	local bool bSpawnedItem, bSplitItem;
+	local int itemsTransferred;
+	local ammo AmmoType;
+	local DeusExWeapon DXW;
 	local EEventAction nextAction;
 	local Inventory invItemFrom;
 	local Inventory invItemTo;
-	local ammo AmmoType;
-	local bool bSpawnedItem;
-	local bool bSplitItem;
-	local int itemsTransferred;
+	local VMDBufferPlayer VMP;
 
 	/*
 	log("SetupEventTransferObject()------------------------------------------");
@@ -655,6 +656,24 @@ function EEventAction SetupEventTransferObject( ConEventTransferObject event, ou
 			invItemFrom.Destroy();
 				
 		return nextAction;
+	}
+	
+	if ((DeusExWeapon(InvItemFrom) != None) && (ScriptedPawn(Event.ToActor) != None) && (VMDBufferPlayer(Event.FromActor) != None))
+	{
+		DXW = DeusExWeapon(InvItemFrom);
+		VMP = VMDBufferPlayer(Event.FromActor);
+		VMP.LastGenerousWeaponClass = string(DXW.Class);
+		
+		VMP.LastGenerousWeaponModLaser = int(DXW.bHasLaser);
+		VMP.LastGenerousWeaponModScope = int(DXW.bHasScope);
+		VMP.LastGenerousWeaponModSilencer = int(DXW.bHasSilencer);
+		VMP.LastGenerousWeaponModEvolution = int(DXW.bHasEvolution);
+		
+		VMP.LastGenerousWeaponModAccuracy = DXW.ModBaseAccuracy;
+		VMP.LastGenerousWeaponModReloadCount = DXW.ModReloadCount;
+		VMP.LastGenerousWeaponModAccurateRange = DXW.ModAccurateRange;
+		VMP.LastGenerousWeaponModReloadTime = DXW.ModReloadTime;
+		VMP.LastGenerousWeaponModRecoilStrength = DXW.ModRecoilStrength;
 	}
 	
 	// Okay, there's enough room in the player's inventory or we're not 
