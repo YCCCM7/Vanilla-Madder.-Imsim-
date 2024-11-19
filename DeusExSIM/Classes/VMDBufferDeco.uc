@@ -24,12 +24,12 @@ var() travel string content3Backup;
 var() float dripRate;
 var() float waterDripCounter;
 
-var(Movement) vector origLocation;
+var(Movement) vector origLocation, SpecialPrePivot;
 var vector pendingLocation;
 var bool bUpdateLoc, LastSeenState;
 var() bool bMemorable;
 
-var() bool bSuperOwned; //MADDERS, 12/23/23: Alert people nearby we're basically stealing.
+var() bool bSuperOwned, bDisablePassiveConvos; //MADDERS, 12/23/23: Alert people nearby we're basically stealing.
 var() travel int StoredSeed;
 
 function string VMDGetItemName()
@@ -809,9 +809,15 @@ function SimulateSuperDestroyed()
 //This is what we did back when we were a shitpost mod. Never change, VMD. Never change.
 function ApplySpecialStats()
 {
+	local Vector HackVect;
+	
 	if (StoredSeed < 0)
 	{
 		StoredSeed = class'VMDStaticFunctions'.Static.DeriveActorSeed(Self);
+	}
+	if (SpecialPrePivot != HackVect)
+	{
+		PrePivot = PrePivot + SpecialPrePivot;
 	}
 }
 
