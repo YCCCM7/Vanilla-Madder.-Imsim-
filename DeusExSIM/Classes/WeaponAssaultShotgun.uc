@@ -30,17 +30,17 @@ simulated function PlayFiringSound()
 {
 	local Sound OldFire;
 	
-	Super.PlayFiringSound();
+	//Super.PlayFiringSound();
 	if (AmmoDragonsBreath(AmmoType) != None)
 	{
 		OldFire = FireSound;
-		FireSound = Sound'MediumExplosion1';
-     		FirePitchMin = 1.900000;
-     		FirePitchMax = 2.100000;
+		FireSound = Sound'AssaultShotgunFireDragonsBreath';
 		Super.PlayFiringSound();
-     		FirePitchMin = 0.700000;
-     		FirePitchMax = 0.900000;
 		FireSound = OldFire;
+	}
+	else
+	{
+		Super.PlayFiringSound();
 	}
 }
 
@@ -49,32 +49,29 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 {
 	if (AmmoSabot(AmmoType) != None)
 	{
-     		FirePitchMin = 0.900000;
-     		FirePitchMax = 1.100000;
 		MinSpreadAcc = 0.075000;
      		PenetrationHitDamage = 2;
      		RicochetHitDamage = 1;
 		HitDamage = Default.HitDamage;
 		BulletHoleSize = 0.175000;
+		MaxRange = 7200;
 	}
 	else if (AmmoDragonsBreath(AmmoType) != None)
 	{
-     		FirePitchMin = 0.700000;
-     		FirePitchMax = 0.900000;
 		MinSpreadAcc = 0.300000; //Quadruple width spread, possible to our benefit.
      		PenetrationHitDamage = 0;
      		RicochetHitDamage = 0;
 		HitDamage = 1;
+		MaxRange = 4800;
 	}
 	else
 	{
-     		FirePitchMin = 0.900000;
-     		FirePitchMax = 1.100000;
 		MinSpreadAcc = 0.075000;
      		PenetrationHitDamage = Default.PenetrationHitDamage;
      		RicochetHitDamage = Default.RicochetHitDamage;
 		HitDamage = Default.HitDamage;
 		BulletHoleSize = 0.075000;
+		MaxRange = 4800;
 	}
 }
 

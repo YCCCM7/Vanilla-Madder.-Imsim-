@@ -32,11 +32,13 @@ function VMDAlertPostAmmoLoad( bool bInstant )
      		PenetrationHitDamage = 2;
      		RicochetHitDamage = 1;
 		BulletHoleSize = 0.175000;
+		MaxRange = 7200;
 	}
 	else if (AmmoTaserSlug(AmmoType) != None)
 	{
      		FirePitchMin = 1.150000;
      		FirePitchMax = 1.400000;
+		MaxRange = 4800;
 	}
 	else
 	{
@@ -46,6 +48,7 @@ function VMDAlertPostAmmoLoad( bool bInstant )
      		PenetrationHitDamage = Default.PenetrationHitDamage;
      		RicochetHitDamage = Default.RicochetHitDamage;
 		BulletHoleSize = 0.075000;
+		MaxRange = 4800;
 	}
 }
 
