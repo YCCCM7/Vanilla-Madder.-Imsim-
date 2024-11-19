@@ -482,7 +482,7 @@ event MouseMoved(float newX, float newY)
 			// Only start a drag even if the cursor has moved more than, say,
 			// two pixels.  This prevents problems if the user just wants to 
 			// click on an item to select it but is a little sloppy.  :)
-			if (( Abs(newX - clickX) > 2 ) || ( Abs(newY- clickY) > 2 ))
+			if (( Abs(newX - clickX) > 2 ) || ( Abs(newY - clickY) > 2 ))
 			{
 				StartButtonDrag();
 				SetCursorPos(width/2, height/2);
