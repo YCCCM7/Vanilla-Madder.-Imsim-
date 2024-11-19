@@ -13,6 +13,7 @@ class VMDSimFemJCSoundImports extends VMDSimImportsParent abstract;
 #exec AUDIO IMPORT FILE="Sounds\FJCEyePain.wav" NAME="VMDFJCEyePain" GROUP="Player"
 #exec AUDIO IMPORT FILE="Sounds\FJCGasp.wav" NAME="VMDFJCGasp" GROUP="Player"
 #exec AUDIO IMPORT FILE="Sounds\FJCJump.wav" NAME="VMDFJCJump" GROUP="Player"
+#exec AUDIO IMPORT FILE="Sounds\FJCJumpDuck.wav" NAME="VMDFJCJumpDuck" GROUP="Player"
 #exec AUDIO IMPORT FILE="Sounds\FJCLand.wav" NAME="VMDFJCLand" GROUP="Player"
 #exec AUDIO IMPORT FILE="Sounds\FJCPainLarge.wav" NAME="VMDFJCPainLarge" GROUP="Player"
 #exec AUDIO IMPORT FILE="Sounds\FJCPainMedium.wav" NAME="VMDFJCPainMedium" GROUP="Player"
