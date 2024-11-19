@@ -983,14 +983,14 @@ defaultproperties
      
      PresetNames(4)="Invader"
      PresetDescs(4)="Infiltration, hardware, and software... What more need be said? You can also pickpocket, and your ability to bypass obstacles often goes unnoticed.|n|nSkills: Infiltration(2), Hardware(1), Software(1)|nTalents: Keen Instincts, Sleight of Hand, Silent Mode, Invader's Kit"
-     Presets(4)=(SpecOne=5,SpecTwo=6,FreePoints=575,MinMax=75,Combat=0,Stealth=100,Difficulty=80)
+     Presets(4)=(SpecOne=5,SpecTwo=6,FreePoints=675,MinMax=75,Combat=0,Stealth=100,Difficulty=80)
      PresetNamesNoCrafting(4)="Invader"
      PresetDescsNoCrafting(4)="Infiltration, hardware, and software... What more need be said? You can also pickpocket, and your ability to bypass obstacles often goes unnoticed.|n|nSkills: Infiltration(2), Hardware(1), Software(1)|nTalents: Keen Instincts, Sleight of Hand, Silent Mode, Invader's Kit"
      PresetsNoCrafting(4)=(SpecOne=5,SpecTwo=6,FreePoints=675,MinMax=75,Combat=0,Stealth=100,Difficulty=80)
      
      PresetNames(5)="Hacker"
      PresetDescs(5)="The digital realm has always spoken to you. While okay enough with a multitool, you really shine behind a keyboard, with a suite of software ready to go. You can bypass alarm units and keypads quite well, to your credit, and aren't half bad with a magnum.|n|nSkills: Hardware(1), Software(2), Weapons: Pistol(1)|nTalents: Data Analyst, Wave Surfer, Deep Fake, Wiz Kid, IFF Programming"
-     Presets(5)=(SpecOne=6,SpecTwo=7,FreePoints=1275,MinMax=30,Combat=20,Stealth=80,Difficulty=40)
+     Presets(5)=(SpecOne=6,SpecTwo=7,FreePoints=1375,MinMax=30,Combat=20,Stealth=80,Difficulty=40)
      PresetNamesNoCrafting(5)="Hacker"
      PresetDescsNoCrafting(5)="The digital realm has always spoken to you. While okay enough with a multitool, you really shine behind a keyboard, with a suite of software ready to go. You can bypass alarm units and keypads quite well, to your credit, and aren't half bad with a magnum.|n|nSkills: Hardware(1), Software(2), Weapons: Pistol(1)|nTalents: Data Analyst, Wave Surfer, Wiz Kid, IFF Programming"
      PresetsNoCrafting(5)=(SpecOne=6,SpecTwo=7,FreePoints=1375,MinMax=30,Combat=20,Stealth=80,Difficulty=40)
@@ -1004,7 +1004,7 @@ defaultproperties
      
      PresetNames(7)="Renegade"
      PresetDescs(7)="You're good at bypassing obstacles on foot, but are prepared to take a couple hits with a flak jacket. You're respectable with a lockpick and multitool, too, so you can tackle all forms of obstacles that come your way.|n|nSkills: Fitness(1), Tactical Gear(2), Infiltration(1), Hardware(1)|nTalents: Fit As a Fiddle, Off Switch, Gentle Touch, Insulation"
-     Presets(7)=(SpecOne=8,SpecTwo=9,FreePoints=525,MinMax=60,Combat=15,Stealth=85,Difficulty=85)
+     Presets(7)=(SpecOne=8,SpecTwo=9,FreePoints=625,MinMax=60,Combat=15,Stealth=85,Difficulty=85)
      PresetNamesNoCrafting(7)="Renegade"
      PresetDescsNoCrafting(7)="You're good at bypassing obstacles on foot, but are prepared to take a couple hits with a flak jacket. You're respectable with a lockpick and multitool, too, so you can tackle all forms of obstacles that come your way.|n|nSkills: Fitness(1), Tactical Gear(2), Infiltration(1), Hardware(1)|nTalents: Fit As a Fiddle, Off Switch, Gentle Touch, Insulation"
      PresetsNoCrafting(7)=(SpecOne=8,SpecTwo=9,FreePoints=625,MinMax=60,Combat=15,Stealth=85,Difficulty=85)
@@ -1046,7 +1046,7 @@ defaultproperties
      
      PresetNames(13)="Surgeon"
      PresetDescs(13)="You're not here to fight, per se. You'd prefer not to take lives if you can help it. You are, however, quite good at mending wounds and cooking up your own supplies... Including a nasty little something called 'compound 23'... But that's for when shit hits the fan.|n|nSkills: Weapons: Hardware(1), Medicine(2), Low Tech(1)|nTalents: Data Analyst, Medigel Treatment, Pharmacist, PHD In Chemistry, Compound 23, Silent Takedown"
-     Presets(13)=(SpecOne=6,SpecTwo=10,FreePoints=1050,MinMax=35,Combat=50,Stealth=50,Difficulty=50)
+     Presets(13)=(SpecOne=6,SpecTwo=10,FreePoints=1150,MinMax=35,Combat=50,Stealth=50,Difficulty=50)
      PresetNamesNoCrafting(13)="Surgeon"
      PresetDescsNoCrafting(13)="You're not here to fight, per se. You'd prefer not to take lives if you can help it, being handy with a baton in particular, but know how to retrieve darts from a victim, too. In particular, you know how to get maximum mileage from medkits and medbots.|n|nSkills: Weapons: Low Tech(1), Medicine(2), Hardware(1), Software(1)|nTalents: Trained Professional, Walking Closet, Silent Takedown, Dislodge"
      PresetsNoCrafting(13)=(SpecOne=4,SpecTwo=10,FreePoints=525,MinMax=35,Combat=50,Stealth=50,Difficulty=50)
@@ -1060,7 +1060,7 @@ defaultproperties
      
      PresetNames(15)="Engineer"
      PresetDescs(15)="STEM is fused into your very essence. While most agents might operate alone, or with another human, you find camaraderie in pure steel. You only skimmed the manuals on handguns and hacking, but your focus is building masterwork drones and miniature turrets.|n|nSkills: Hardware[2], Software[1], Weapons: Pistol[1]|nTalents: M.E.G.H, Reinforced Plating, Illegal Modules, Experimental Skillware, S.I.D.D."
-     Presets(15)=(SpecOne=6,SpecTwo=7,FreePoints=150,MinMax=55,Combat=40,Stealth=60,Difficulty=65)
+     Presets(15)=(SpecOne=6,SpecTwo=7,FreePoints=475,MinMax=55,Combat=40,Stealth=60,Difficulty=65)
      
      MaxPresetIndex=15
      MaxPresetIndexNoCrafting=15
