@@ -393,7 +393,7 @@ simulated function Tick(float deltaTime)
 	// to the player to start one (and all the other checks that take place
 	// when a valid conversation can be started);
 	
-	if (conListItems != None)
+	if ((conListItems != None) && (VMDBufferDeco(Self) == None || !VMDBufferDeco(Self).bDisablePassiveConvos))
 	{
 		player = DeusExPlayer(GetPlayerPawn());
 		if (player != None)
