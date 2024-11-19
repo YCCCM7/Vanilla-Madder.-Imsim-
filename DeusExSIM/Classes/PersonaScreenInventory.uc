@@ -699,19 +699,27 @@ event bool ToggleChanged(Window button, bool bNewToggle)
 
 event bool VirtualKeyPressed(EInputKey key, bool bRepeat)
 {
-	local int keyIndex;
 	local bool bKeyHandled;
-
+	local int keyIndex, SizeX, SizeY, i;
+	local Inventory TItem;
+	local VMDBufferPlayer VMP;
+	
 	bKeyHandled = True;
-
+	
 	if ( IsKeyDown( IK_Alt ) || IsKeyDown( IK_Shift ) || IsKeyDown( IK_Ctrl ))
 		return False;
-
+	
+	if (SelectedItem != None)
+	{
+		TItem = Inventory(SelectedItem.GetClientObject());
+	}
+	
+	VMP = VMDBufferPlayer(Player);
 	// If a number key was pressed and we have a selected inventory item,
 	// then assign the hotkey
-	if (( key >= IK_1 ) && ( key <= IK_9 ) && (selectedItem != None) && (Inventory(selectedItem.GetClientObject()) != None))
+	if (( key >= IK_1 ) && ( key <= IK_9 ) && (TItem != None))
 	{
-		invBelt.AssignObjectBeltByKey(Inventory(selectedItem.GetClientObject()), key);
+		invBelt.AssignObjectBeltByKey(TItem, key);
 	}
 	else
 	{
@@ -719,28 +727,74 @@ event bool VirtualKeyPressed(EInputKey key, bool bRepeat)
 		{	
 			// Allow a selected object to be dropped
 			// TODO: Use the actual key(s) assigned to drop
-
+			
 			case IK_Backspace:
 				DropSelectedItem();
-				break;
-
+			break;
+			
 			case IK_Delete:
 				ClearSelectedSlot();
-				break;
-
+			break;
+			
 			case IK_Enter:
 				UseSelectedItem();
-				break;
-
+			break;
+			
+			case IK_W:
+				SizeY = VMP.VMDConfigureInvSlotsY(TItem);
+				for(i=1; i<=SizeY; i++)
+				{
+					if (VMDAttemptControllerDrag(PersonaInventoryItemButton(SelectedItem), 0, -i))
+					{
+						break;
+					}
+				}
+			break;
+			case IK_S:
+				SizeY = VMP.VMDConfigureInvSlotsY(TItem);
+				for(i=1; i<=SizeY; i++)
+				{
+					if (VMDAttemptControllerDrag(PersonaInventoryItemButton(SelectedItem), 0, i))
+					{
+						break;
+					}
+				}
+			break;
+			case IK_A:
+				SizeX = VMP.VMDConfigureInvSlotsX(TItem);
+				for(i=1; i<=SizeX; i++)
+				{
+					if (VMDAttemptControllerDrag(PersonaInventoryItemButton(SelectedItem), -i, 0))
+					{
+						break;
+					}
+				}
+			break;
+			case IK_D:
+				SizeX = VMP.VMDConfigureInvSlotsX(TItem);
+				for(i=1; i<=SizeX; i++)
+				{
+					if (VMDAttemptControllerDrag(PersonaInventoryItemButton(SelectedItem), i, 0))
+					{
+						break;
+					}
+				}
+			break;
+			
 			default:
 				bKeyHandled = False;
+			break;
 		}
 	}
-
+	
 	if (!bKeyHandled)
+	{
 		return Super.VirtualKeyPressed(key, bRepeat);
+	}
 	else
+	{
 		return bKeyHandled;
+	}
 }
 
 // ----------------------------------------------------------------------
@@ -1962,7 +2016,7 @@ function FinishButtonDrag()
 		
 		dragInv = Inventory(dragButton.GetClientObject());
 		dragTarget = PersonaInventoryItemButton(lastDragOverButton);
-
+		
 		// Check if this is a weapon mod and we landed on a weapon
 		if ( (dragInv.IsA('WeaponMod')) && (dragTarget != None) && (dragTarget.GetClientObject().IsA('DeusExWeapon')) )
 		{
@@ -1973,19 +2027,19 @@ function FinishButtonDrag()
 				// 2.  Remove from Object Belt
 				// 3.  Destroy the upgrade (will cause button to be destroyed)
 				// 4.  Highlight the weapon.
-
+				
 				WeaponMod(dragInv).ApplyMod(DeusExWeapon(dragTarget.GetClientObject()));
 				
             			Player.RemoveObjectFromBelt(dragInv);
             			//invBelt.objBelt.RemoveObjectFromBelt(dragInv);
-
+				
 				// Send status message
 				winStatus.AddText(Sprintf(WeaponUpgradedLabel, DeusExWeapon(dragTarget.GetClientObject()).itemName));
-
+				
             			//DEUS_EX AMSD done here for multiplayer propagation.
             			WeaponMod(draginv).DestroyMod();
 				//player.DeleteInventory(dragInv);
-
+				
 				dragButton = None;
 				SelectInventory(dragTarget);
 			}
@@ -2003,10 +2057,10 @@ function FinishButtonDrag()
 			{
 				// Load this ammo into the weapon
 				DeusExWeapon(dragTarget.GetClientObject()).LoadAmmoType(DeusExAmmo(dragInv));
-
+				
 				// Send status message
 				winStatus.AddText(Sprintf(AmmoLoadedLabel, DeusExAmmo(dragInv).itemName));
-
+				
 				// move back to original spot
 				ReturnButton(PersonaInventoryItemButton(dragButton));
 			}
@@ -2023,13 +2077,13 @@ function FinishButtonDrag()
 			if ( HUDObjectSlot( lastDragOverButton ) != None )
 			{
 				beltSlot = HUDObjectSlot(lastDragOverButton).objectNum;
-
+				
 				// Don't allow to be moved over NanoKeyRing
 				if (beltSlot > 0)
 				{
 					invBelt.AddObject(dragInv, beltSlot);
 				}
-
+				
 				// Restore item to original slot
 				ReturnButton(PersonaInventoryItemButton(dragButton));
 			}
@@ -2040,7 +2094,7 @@ function FinishButtonDrag()
 			// }
 			// Vanilla Matters: We don't need this check anymore since we're gonna handle it ourselves.
 		}
-
+		
 		// Vanilla Matters: Swaps the items if possible, otherwise resorts to vanilla behaviors.
 		if ( dragButton != None ) 
 		{
@@ -2052,15 +2106,15 @@ function FinishButtonDrag()
 				{
 					MoveItemButton( VM_swapOthers[i], VM_swapOtherSlotXs[i], VM_swapOtherSlotYs[i], true );
 				}
-
+				
 				// VM: Moves the dragged item.
 				MoveItemButton( invButton, VM_swapOriginalSlotX, VM_swapOriginalSlotY, true );
-
+				
 				// VM: MoveItemButton does a SetInvSlots to 0 (clears slots), clearing the previous location (now for the new swapped ones) of the dragged item, we're gonna fill it back.
 				for ( i = 0; i < VM_swapOtherCount; i++ ) 
 				{
 					otherInv = Inventory(VM_swapOthers[i].GetClientObject());
-
+					
 					player.SetInvSlots(otherInv, 0);
 					player.PlaceItemInSlot( otherInv, otherInv.invPosX, otherInv.invPosY );
 				}
@@ -2093,9 +2147,9 @@ function FinishButtonDrag()
 		//
 		// Swap the two items and select the one that was dragged
 		// but make sure the target isn't the NanoKeyRing
-
+		
 		itemSlot = HUDObjectSlot(lastDragOverButton);
-
+		
 		if (itemSlot != None) 
 		{
 			if (((itemSlot.Item != None) && (!itemSlot.Item.IsA('NanoKeyRing'))) || (itemSlot.Item == None))
@@ -2108,11 +2162,11 @@ function FinishButtonDrag()
 		{
 			// If the player drags the item outside the object belt, 
 			// then remove it.
-
+			
 			ClearSlotItem(HUDObjectSlot(dragButton).item);
 		}
 	}
-
+	
     	EndDragMode();
 }
 
@@ -2588,6 +2642,8 @@ function int FindSwapOther( PersonaInventoryItemButton other )
 
 function bool AddSwapOther( PersonaInventoryItemButton other ) 
 {
+	if (other == None) return false;
+	
 	if ( VM_swapOtherCount >= ArrayCount( VM_swapOthers ) )
 		return false;
 
@@ -3674,6 +3730,41 @@ function int CountNumWeapons(class<DeusExWeapon> CheckClass, Inventory StartInv)
 		}
 	}
 	return Ret;
+}
+
+function bool VMDAttemptControllerDrag(PersonaInventoryItemButton MoveButton, int XMovement, int YMovement)
+{
+	local int SizeX, SizeY, OldX, OldY;
+	local float NewX, NewY;
+	local Inventory Item;
+	local VMDBufferPlayer VMP;
+	
+	VMP = VMDBufferPlayer(Player);
+	if (bDragging || DragButton != None || MoveButton == None || VMP == None || MoveButton.GetClientObject() == None || (XMovement == 0 && YMovement == 0))
+	{
+		return false;
+	}
+	
+	Item = Inventory(MoveButton.GetClientObject());
+	SizeX = VMP.VMDConfigureInvSlotsX(Item);
+	SizeY = VMP.VMDConfigureInvSlotsY(Item);
+	OldX = Item.InvPosX;
+	OldY = Item.InvPosY;
+	
+	if ((Item.InvPosX == 0 && XMovement < 0) || (Item.InvPosX + SizeX >= Player.MaxInvCols && XMovement > 0) || 
+		(Item.InvPosY == 0 && YMovement < 0) || (Item.InvPosY + SizeY >= Player.MaxInvRows && YMovement > 0))
+	{
+		return false;
+	}
+	
+	MoveButton.MouseButtonPressed(MoveButton.X + (MoveButton.Width * 0.5), MoveButton.Y + (MoveButton.Height * 0.5), IK_LeftMouse, 1);
+	NewX = XMovement * (InvButtonWidth) + InvButtonWidth * 0.5;
+	NewY = YMovement * (InvButtonHeight) + InvButtonHeight * 0.5;
+	
+	MoveButton.MouseMoved(NewX, NewY);
+	MoveButton.MouseButtonReleased(0, 0, IK_LeftMouse, 1);
+	
+	return (OldX != Item.InvPosX || OldY != Item.InvPosY);
 }
 
 function VMDGetCurScrollDistance()
