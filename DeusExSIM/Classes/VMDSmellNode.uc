@@ -145,6 +145,7 @@ defaultproperties
 {
      bHidden=True
      bAlwaysRelevant=True
+     bInvincible=True
      
      VerticalMitigationFactor=2.500000
      CollisionHeight=0.000000
