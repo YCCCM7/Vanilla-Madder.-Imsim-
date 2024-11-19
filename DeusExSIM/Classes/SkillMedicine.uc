@@ -34,6 +34,8 @@ simulated function int GetCost()
 	local int Ret;
 	local VMDBufferPlayer VMP;
 	
+	if (CurrentLevel > ArrayCount(Cost)) return MaxInt;
+	
 	Ret = Super.GetCost();
 	VMP = VMDBufferPlayer(Player);
 	
