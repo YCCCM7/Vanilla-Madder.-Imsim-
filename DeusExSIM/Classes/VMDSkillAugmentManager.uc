@@ -905,7 +905,7 @@ defaultproperties
      SkillAugmentNames(36)="Wave Surfer"
      SkillAugmentDescs(36)="~Your electronic bypassing potency is 100% stronger, relative to skill level.|n*Overrides Data Analyst"
      SkillAugmentIDs(36)=ElectronicsHackingPotency2
-     SkillAugmentAssumed(36)=1
+     SkillAugmentAssumed(36)=0 //Too OP I find.
      SkillAugmentLevel(36)=1
      SkillAugmentLevelRequired(36)=1
      SkillAugmentRequired(36)=ElectronicsHackingPotency1
@@ -952,7 +952,7 @@ defaultproperties
      SkillAugmentNames(41)="Aquadynamic"
      SkillAugmentDescs(41)="~Swim speed bonuses gain 150% value, relative to skill level.|n~Your breath recovers 4x faster out of water.|n~You take 40% less drowning damage per tick."
      SkillAugmentIDs(41)=SwimmingBreathRegen
-     SkillAugmentAssumed(41)=0 //Denied for sim purposes
+     SkillAugmentAssumed(41)=1 //Approved to make swimming usable without talents.
      SkillAugmentLevel(41)=1
      SkillAugmentLevelRequired(41)=1
      SkillAugmentRequired(41)=
@@ -1125,9 +1125,9 @@ defaultproperties
      SkillAugmentLevelRequired(59)=1
      SkillAugmentRequired(59)=
      SkillAugmentSkillRequired(59)=class'SkillComputer'
-     //4.) ATM's target the best possible account when hacked (advanced)
+     //4.) ATMs target the best possible account when hacked (advanced)
      SkillAugmentNames(60)="Check Sum"
-     SkillAugmentDescs(60)="~Your familiarity with data structures lets you extract the best possible sum from ATM's, granting 2x the cash extraction, relative to skill level."
+     SkillAugmentDescs(60)="~Your familiarity with data structures lets you extract the best possible sum from ATMs, granting 2x the cash extraction, relative to skill level."
      SkillAugmentIDs(60)=ComputerATMQuality
      SkillAugmentAssumed(60)=1 //Keeping because it's vanilla
      SkillAugmentLevel(60)=2
