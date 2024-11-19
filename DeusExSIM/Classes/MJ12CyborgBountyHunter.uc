@@ -888,13 +888,14 @@ defaultproperties
      HealthLegRight=300
      HealthArmLeft=300
      HealthArmRight=300
+     DrawScale=1.100000
      Mesh=LodMesh'TranscendedModels.TransGM_ScaryTroop'
      MultiSkins(0)=Texture'DeusExCharacters.Skins.MJ12CommandoTex1'
      MultiSkins(1)=Texture'DeusExCharacters.Skins.MJ12CommandoTex1'
      MultiSkins(2)=Texture'DeusExCharacters.Skins.MJ12CommandoTex0'
      MultiSkins(3)=Texture'DeusExCharacters.Skins.MJ12CommandoTex1'
      CollisionRadius=28.000000
-     CollisionHeight=49.880001
+     CollisionHeight=54.868001
      BindName="MJ12Retributor"
      FamiliarName="MJ12 Retributor"
      UnfamiliarName="MJ12 Retributor"
