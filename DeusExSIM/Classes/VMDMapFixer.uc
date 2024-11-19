@@ -251,12 +251,13 @@ function CommitMapFixing()
 	//Parent class junk.
 	local Actor A;
 	local DeusExDecoration DXD;
-	local VMDBufferDeco VMD;
  	local DeusExLevelInfo LI;
 	local DeusExWeapon DXW;
 	local Inventory TInv;
 	local Pawn TPawn;
 	local ScriptedPawn SP;
+	local Seat TSeat;
+	local VMDBufferDeco VMD;
 	local VMDBufferPlayer VMP;
 	
 	//Door stuff.
@@ -266,6 +267,7 @@ function CommitMapFixing()
 	
 	//Universal bits and bobs.
 	local bool FoundFlag;
+	local float Diff;
 	local int GM, i;
 	local string MN;
 	local Rotator TRot;
@@ -284,9 +286,11 @@ function CommitMapFixing()
 	local AllianceTrigger ATrig;
 	local AutoTurret ATur;
 	local AutoTurretSmall SATur;
+	local ConversationTrigger ConTrig;
 	local CrateExplosiveSmall CExpSmall;
 	local Credits Cred;
 	local DatalinkTrigger DataTrig;
+	local Dispatcher TDispatch;
 	local ElectronicDevices ED;
 	local FlagTrigger FT;
 	local OrdersTrigger OTrig;
@@ -303,6 +307,7 @@ function CommitMapFixing()
 	
 	//MADDERS, 11/1/21: LDDP stuff.
 	local class<DeusExCarcass> DXCLoad;
+	local class<DeusExWeapon> LDXW;
 	local class<ScriptedPawn> SPLoad;
 	local class<VMDStaticFunctions> SF;
 	local DeusExCarcass DXC;
@@ -558,6 +563,66 @@ function CommitMapFixing()
 				case "01_NYC_UNATCOHQ":
 					if (!bRevisionMapSet)
 					{
+						//MADDERS, 11/17/24: Gunther gives us back our loaned weapon, with interest. Yay.
+						if ((VMP != None) && (VMP.LastGenerousWeaponClass != "NULL"))
+						{
+							LDXW = class<DeusExWeapon>(DynamicLoadObject(VMP.LastGenerousWeaponClass, class'Class', true));
+							if (LDXW != None)
+							{
+								A = Spawn(class'CrateUnbreakableSmall',,, vect(-397,1385,256), Rot(0, 8192, 0));
+								A = Spawn(class'Datacube',,, vect(-397,1348,242));
+								if (A != None)
+								{
+									Datacube(A).TextPackage = "VMDText";
+									Datacube(A).TextTag = '01_GuntherThanks';
+								}
+								
+								DXW = Spawn(LDXW,,, vect(-397,1385,276));
+								if (DXW != None)
+								{
+									A = Spawn(class'WeaponModAccuracy',,, Vect(-397,1385,296));
+									
+									DXW.PickupAmmoCount = 0;
+									
+									if (VMP.LastGenerousWeaponModSilencer > 0) DXW.bHasSilencer = true;
+									if (VMP.LastGenerousWeaponModScope > 0) DXW.bHasScope = true;
+									if (VMP.LastGenerousWeaponModLaser > 0) DXW.bHasLaser = true;
+									
+									DXW.ModBaseAccuracy = VMP.LastGenerousWeaponModAccuracy;
+									if (DXW.BaseAccuracy == 0.0)
+									{
+										DXW.BaseAccuracy -= DXW.ModBaseAccuracy;
+									}
+									else
+									{
+										DXW.BaseAccuracy -= (DXW.Default.BaseAccuracy * DXW.ModBaseAccuracy);
+									}
+									
+									DXW.ModReloadCount = VMP.LastGenerousWeaponModReloadCount;
+									Diff = Float(DXW.Default.ReloadCount) * DXW.ModReloadCount;
+									DXW.ReloadCount += Max(Diff, DXW.ModReloadCount / 0.1);
+									
+									DXW.ModAccurateRange = VMP.LastGenerousWeaponModAccurateRange;
+									DXW.RelativeRange += (DXW.Default.RelativeRange * DXW.ModAccurateRange);
+									DXW.AccurateRange += (DXW.Default.AccurateRange * DXW.ModAccurateRange);
+									
+									DXW.ModReloadTime = VMP.LastGenerousWeaponModReloadTime;
+									DXW.ReloadTime += (DXW.Default.ReloadTime * DXW.ModReloadTime);
+									if (DXW.ReloadTime < 0.0) DXW.ReloadTime = 0.0;
+									
+									DXW.ModRecoilStrength = VMP.LastGenerousWeaponModRecoilStrength;
+									DXW.RecoilStrength += (DXW.Default.RecoilStrength * DXW.ModRecoilStrength);
+									
+									if (VMP.LastGenerousWeaponModEvolution > 0)
+									{
+										DXW.bHasEvolution = true;
+										DXW.VMDUpdateEvolution();
+									}
+								}
+							}
+						}
+						VMP.VMDClearGenerousWeaponData();
+						
 						for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
 						{
 							SP = ScriptedPawn(TPawn);
@@ -846,6 +911,9 @@ function CommitMapFixing()
 				case "02_NYC_HOTEL":
 					if (!bRevisionMapSet)
 					{
+						//MADDERS, 11/17/24: Use this remote binding special phone.
+						A = Spawn(class'PaulM02Phone',,, Vect(-610,-3244,96), Rot(0,32768,0));
+						
 						//MADDERS, 11/1/21: LDDP branching functionality.
 						if ((Flags != None) && (Flags.GetBool('LDDPJCIsFemale')))
 						{
@@ -884,7 +952,6 @@ function CommitMapFixing()
 											DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
 										}
 									break;
-	
 								}
 								DXM.bMadderPatched = true;
 							}
@@ -913,6 +980,11 @@ function CommitMapFixing()
 							else if (UNATCOTroop(SP) != None || RiotCop(SP) != None)
 							{
 								SP.ChangeAlly('Thugs', -1.0, true);
+							}
+							else if (ThugMale(SP) != None || SandraRenton(SP) != None)
+							{
+								SP.bUseHome = true;
+								SP.HomeLoc = SP.Location;
 							}
 						}
 						
@@ -1084,6 +1156,64 @@ function CommitMapFixing()
 				case "03_NYC_AIRFIELDHELIBASE":
 					if (!bRevisionMapSet)
 					{
+						Comp = Spawn(class'ComputerSecurity',,, Vect(-1160,524,269), Rot(0,16384,0));
+						if (Comp != None)
+						{
+							Comp.SetCollisionSize(0, Comp.CollisionHeight);
+							Comp.SetLocation(Vect(-1160,515,269));
+							Comp.SetCollisionSize(Comp.Default.CollisionRadius, Comp.CollisionHeight);
+							Comp.UserList[0].UserName = "JHEARST";
+							Comp.UserList[0].Password = "CHUNKOHONEY";
+							Comp.SpecialOptions[0].bTriggerOnceOnly = true;
+							Comp.SpecialOptions[0].Text = "Join Call";
+							Comp.SpecialOptions[0].TriggerEvent = 'RestoredJuanConvoStart';
+							Comp.SpecialOptions[0].TriggerText = "Joined... 2 other members";
+						}
+						
+						TDispatch = Spawn(class'Dispatcher',,'RestoredJuanConvoStart', Vect(-1160,544,269));
+						if (TDispatch != None)
+						{
+							TDispatch.SetCollision(False, False, False);
+							TDispatch.OutEvents[0] = 'RestoredJuanConvo';
+							TDispatch.OutDelays[0] = 1.2500000;
+						}
+						
+						ConTrig = Spawn(class'ConversationTrigger',,'RestoredJuanConvo', Vect(-1160,544,269));
+						if (ConTrig != None)
+						{
+							ConTrig.SetCollision(False, False, False);
+							ConTrig.BindName = "JCDenton";
+							ConTrig.bCheckFalse = true;
+							ConTrig.CheckFlag = 'OverhearLebedev_Played';
+							ConTrig.ConversationTag = 'OverhearLebedev';
+							ConTrig.bPopWindow = true;
+						}
+						
+						A = Spawn(class'Button1',,, Vect(-1140,514,268));
+						if (A != None)
+						{
+							A.BindName = "JuanLebedev";
+							A.bHidden = true;
+							A.FamiliarName = "Unknown";
+							A.UnfamiliarName = "Unknown";
+							A.SetCollision(False, False, False);
+							A.SetPhysics(PHYS_None);
+							DeusExDecoration(A).ConBindEvents();
+							VMDBufferDeco(A).bDisablePassiveConvos = true;
+						}
+						
+						A = Spawn(class'Button1',,, Vect(-1140,514,278));
+						if (A != None)
+						{
+							A.BindName = "TracerTong";
+							A.bHidden = true;
+							A.FamiliarName = "Unknown";
+							A.UnfamiliarName = "Unknown";
+							A.SetCollision(False, False, False);
+							A.SetPhysics(PHYS_None);
+							DeusExDecoration(A).ConBindEvents();
+						}
+						
 						forEach AllActors(class'DeusExMover', DXM)
 						{
 							if ((DXM != None) && (!DXM.bMadderPatched))
@@ -1260,6 +1390,31 @@ function CommitMapFixing()
 				case "03_NYC_UNATCOHQ":
 					if (!bRevisionMapSet)
 					{
+						//MADDERS, 11/18/24: Anna gives us some seriously sweet ammo for being a terrie shredder.
+						if ((Flags.GetBool('AmbrosiaTagged')) && (Flags.GetBool('BatteryParkSlaughter')) && (!Flags.GetBool('M02MechSlur')) && (Flags.GetBool('SubTerroristsDead')) && (!Flags.GetBool('SubHostageMale_Dead')) && (!Flags.GetBool('SubHostageFemale_Dead')))
+						{
+							A = Spawn(Class'Datacube',,, Vect(-261,1297,288), Rot(0,8192,0));
+							if (A != None)
+							{
+								Datacube(A).TextPackage = "VMDText";
+								Datacube(A).TextTag = '03_AnnaThanks';
+							}
+							A = Spawn(class'Ammo10mmHEAT',,, Vect(-227,1292,244));
+							A = Spawn(class'Ammo10mmHEAT',,, Vect(-227,1302,244));
+						}
+						//MADDERS, 11/18/24: Alternatively, Paul gives us some taser slugs for being a thoroughly cool dude.
+						else if ((Flags.GetBool('AmbrosiaTagged')) && (!Flags.GetBool('BatteryParkSlaughter')) && (!Flags.GetBool('SubHostageMale_Dead')) && (!Flags.GetBool('SubHostageFemale_Dead')))
+						{
+							A = Spawn(Class'Datacube',,, Vect(-336,1054,270));
+							if (A != None)
+							{
+								Datacube(A).TextPackage = "VMDText";
+								Datacube(A).TextTag = '03_PaulThanks';
+							}
+							A = Spawn(class'AmmoTaserSlug',,, Vect(-367,1054,279));
+							A = Spawn(class'AmmoTaserSlug',,, Vect(-351,1054,279));
+						}
+						
 						//MADDERS, 11/1/21: LDDP branching functionality.
 						if ((Flags != None) && (Flags.GetBool('LDDPJCIsFemale')))
 						{
@@ -2698,6 +2853,56 @@ function CommitMapFixing()
 				case "08_NYC_HOTEL":
 					if (!bRevisionMapSet)
 					{
+						//MADDERS, 11/18/24: Mr Renton returns our lent gat in M08 silently.
+						if ((VMP != None) && (VMP.LastGenerousWeaponClass != "NULL") && (!Flags.GetBool('GilbertRenton_Dead')))
+						{
+							LDXW = class<DeusExWeapon>(DynamicLoadObject(VMP.LastGenerousWeaponClass, class'Class', true));
+							if (LDXW != None)
+							{
+								DXW = Spawn(LDXW,,, Vect(-730,-3146,109), Rot(0, 16384, 0));
+								if (DXW != None)
+								{
+									DXW.PickupAmmoCount = 0;
+									
+									if (VMP.LastGenerousWeaponModSilencer > 0) DXW.bHasSilencer = true;
+									if (VMP.LastGenerousWeaponModScope > 0) DXW.bHasScope = true;
+									if (VMP.LastGenerousWeaponModLaser > 0) DXW.bHasLaser = true;
+									
+									DXW.ModBaseAccuracy = VMP.LastGenerousWeaponModAccuracy;
+									if (DXW.BaseAccuracy == 0.0)
+									{
+										DXW.BaseAccuracy -= DXW.ModBaseAccuracy;
+									}
+									else
+									{
+										DXW.BaseAccuracy -= (DXW.Default.BaseAccuracy * DXW.ModBaseAccuracy);
+									}
+									
+									DXW.ModReloadCount = VMP.LastGenerousWeaponModReloadCount;
+									Diff = Float(DXW.Default.ReloadCount) * DXW.ModReloadCount;
+									DXW.ReloadCount += Max(Diff, DXW.ModReloadCount / 0.1);
+									
+									DXW.ModAccurateRange = VMP.LastGenerousWeaponModAccurateRange;
+									DXW.RelativeRange += (DXW.Default.RelativeRange * DXW.ModAccurateRange);
+									DXW.AccurateRange += (DXW.Default.AccurateRange * DXW.ModAccurateRange);
+									
+									DXW.ModReloadTime = VMP.LastGenerousWeaponModReloadTime;
+									DXW.ReloadTime += (DXW.Default.ReloadTime * DXW.ModReloadTime);
+									if (DXW.ReloadTime < 0.0) DXW.ReloadTime = 0.0;
+									
+									DXW.ModRecoilStrength = VMP.LastGenerousWeaponModRecoilStrength;
+									DXW.RecoilStrength += (DXW.Default.RecoilStrength * DXW.ModRecoilStrength);
+									
+									if (VMP.LastGenerousWeaponModEvolution > 0)
+									{
+										DXW.bHasEvolution = true;
+										DXW.VMDUpdateEvolution();
+									}
+								}
+							}
+						}
+						VMP.VMDClearGenerousWeaponData();
+						
 						forEach AllActors(class'PatrolPoint', Pat)
 						{
 							if (Pat != None)
@@ -2885,6 +3090,9 @@ function CommitMapFixing()
 							}
 						}
 						
+						//MADDERS, 11/16/24: Add a box here, to prevent softlocks.
+						Spawn(class'CrateUnbreakableSmall',,, Vect(4105, 2149, 24));
+						
 						forEach AllActors(class'DeusExMover', DXM)
 						{
 							if ((DXM != None) && (!DXM.bMadderPatched))
@@ -2983,6 +3191,13 @@ function CommitMapFixing()
 										}
 									break;
 								}
+							}
+						}
+						forEach AllActors(class'Seat', TSeat)
+						{
+							if (OfficeChair(TSeat) != None)
+							{
+								UnRandoSeat(TSeat);
 							}
 						}
 						for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
@@ -3277,6 +3492,26 @@ function CommitMapFixing()
 				case "11_PARIS_CATHEDRAL":
 					if (!bRevisionMapSet)
 					{
+						TCamp = Spawn(class'VMDCabinetCampActor',,, Vect(-6382,291,-542));
+						if (TCamp != None)
+						{
+							TCamp.MinCampLocation = Vect(-6479,257,-607);
+							TCamp.MaxCampLocation = Vect(-6289,335,-481);
+							TCamp.NumWatchedDoors = 1;
+							TCamp.CabinetDoors[0] = DeusExMover(FindActorBySeed(class'BreakableGlass', 8));
+							TCamp.CabinetDoorClosedFrames[0] = 0;
+							TCamp.bIgnoreLockStatus = true;
+							TCamp.bLastOpened = true;
+						}
+						
+						//Plug a hole in a crate we can walk through. Oops.
+						PlugVect = Vect(2440, 0, 193);
+						for (i=-424; i<-188; i += 8)
+						{
+							PlugVect.Y = i;
+							AddBSPPlug(PlugVect, 8, 16);
+						}
+						
 						for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
 						{
 							SP = ScriptedPawn(TPawn);
@@ -3556,6 +3791,24 @@ function CommitMapFixing()
 							{
 								switch(SF.Static.StripBaseActorSeed(DXM))
 								{
+									case 10:
+										//Rotation yaw of 0
+										//Base: 428, -1456, 513
+										//Desired: 424, -1456, 510
+										//----------------------
+										//IGNORING Z
+										if (MoverIsLocation(DXM, Vect(428, -1456, 513)))
+										{
+											LocAdd = vect(-4,0,0);
+											PivAdd = vect(-4,0,0);
+											FrameAdd[0] = vect(-4,0,0);
+											FrameAdd[1] = vect(-4,0,0);
+											DXM.SetLocation(DXM.Location + LocAdd);
+											DXM.PrePivot = DXM.PrePivot + PivAdd;
+											DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+											DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										}
+									break;
 									case 15:
 										DXM.bIsDoor = true;
 									break;
@@ -3628,6 +3881,16 @@ function CommitMapFixing()
 									break;
 								}
 								DXM.bMadderPatched = true;
+							}
+						}
+						//Another softlock in such a tiny map? Good grief. Fix scientists breaking trigger positions from things being blown up upstairs.
+						for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+						{
+							SP = ScriptedPawn(TPawn);
+							if (GarySavage(SP) != None)
+							{
+								//MADDERS: Eliminate reactions here.
+								DumbAllReactions(SP);
 							}
 						}
 					}
@@ -3711,7 +3974,7 @@ function CommitMapFixing()
 		case 15:
 			switch(MN)
 			{
-				//15_Area51_Bunker: Slightly illogical login.
+				//15_AREA51_BUNKER: Slightly illogical login.
 				case "15_AREA51_BUNKER":
 					if (!bRevisionMapSet)
 					{
@@ -3727,6 +3990,24 @@ function CommitMapFixing()
 									break;
 								}
 							}
+						}
+					}
+				break;
+				//15_AREA51_ENTRANCE: Fix nabbable aug through the glass.
+				case "15_AREA51_ENTRANCE":
+					if (!bRevisionMapSet)
+					{
+						TCamp = Spawn(class'VMDCabinetCampActor',,, Vect(4805,484,-95));
+						if (TCamp != None)
+						{
+							TCamp.MinCampLocation = Vect(4733,386,-130);
+							TCamp.MaxCampLocation = Vect(4898,514,132);
+							TCamp.NumWatchedDoors = 1;
+							TCamp.CabinetDoors[0] = DeusExMover(FindActorBySeed(class'DeusExMover', 126));
+							TCamp.CabinetDoorClosedFrames[0] = 0;
+							TCamp.bIgnoreLockStatus = true;
+							TCamp.bLastOpened = true;
+							TCamp.bOpenOnceOnly = true; //Hack for the fact we can climb INTO this one.
 						}
 					}
 				break;
