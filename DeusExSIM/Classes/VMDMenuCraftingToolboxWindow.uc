@@ -30,7 +30,7 @@ var localized string MsgBotRequired, MsgSkillRequired, MsgAllRequirementsMet, Sk
 			MsgCraftParamsA, MsgCraftParamsB,
 			MsgCraftReqsA, MsgCraftReqsB,
 			MsgBreakdownParamsA, MsgBreakdownParamsB, MsgDepleted,
-			MsgXOwned, MsgXOutOfY, MsgBreakdownGain;
+			MsgXOwned, MsgXOutOfY, MsgBreakdownGain, MsgItemSize;
 
 var VMDStylizedWindow RequirementBGs[5], RequirementPictures[5];
 var MenuUIHelpWindow RequirementLabels[6];
@@ -621,7 +621,12 @@ function UpdateInfo()
 			}
 			BuildStr[1] = BuildStr[1]$CR();
 			
+			if (class<DeusExAmmo>(TarItem) == None)
+			{
+				BuildStr[1] = BuildStr[1]$CR()$SprintF(MsgItemSize, TarItem.Default.InvSlotsX, TarItem.Default.InvSlotsY)$CR();
+			}
 			BuildStr[1] = BuildStr[1]$CR()$TarItem.Default.Description;
+			
 			WinInfoBody.Clear();
 			WinInfoBody.SetText(BuildStr[1]);
 		}
@@ -1233,6 +1238,7 @@ function DoPop()
 
 defaultproperties
 {
+     MsgItemSize="Size: (%dx%d)"
      MsgBotRequired="Repair Bot Required"
      MsgSkillRequired="%d Skill Required"
      MsgAllRequirementsMet="Skill and workspace requirements ARE met"
