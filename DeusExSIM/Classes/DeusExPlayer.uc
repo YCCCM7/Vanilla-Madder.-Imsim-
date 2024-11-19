@@ -4037,11 +4037,11 @@ function HandleWalking()
 				{
 					if (VMP == None || !VMP.bAssignedFemale)
 					{
-						PlaySound(sound'MaleLand', SLOT_None,,,, 1.075);
+						PlaySound(sound'MaleJumpDuck', SLOT_None,,,, 1.0);
 					}
 					else
 					{
-						PlaySound(sound'VMDFJCLand', SLOT_None,,,, 1.075);
+						PlaySound(sound'VMDFJCJumpDuck', SLOT_None,,,, 1.0);
 					}
 					
 					//MADDERS: Jump duck snaps upwards, not downwards.
@@ -4522,11 +4522,11 @@ state PlayerWalking
 							{
 								if (VMDBufferPlayer(Self) == None || !VMDBufferPlayer(Self).bAssignedFemale)
 								{
-									PlaySound(sound'MaleLand', SLOT_None,,,, 1.075);
+									PlaySound(sound'MaleJumpDuck', SLOT_None,,,, 1.075);
 								}
 								else
 								{
-									PlaySound(sound'VMDFJCLand', SLOT_None,,,, 1.075);
+									PlaySound(sound'VMDFJCJumpDuck', SLOT_None,,,, 1.075);
 								}
 							}
 							
@@ -6943,7 +6943,7 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 		if (DXW != None)
 		{
 			DXW.VMDSignalPickupUpdate();
-			if ((FindInventoryType(DXW.Class) == None) && (!DXW.VMDHasJankyAmmo() || DXW.VMDIsMeleeWeapon()))
+			if ((FindInventoryType(DXW.Class) == None) && (!DXW.VMDHasJankyAmmo() || DXW.VMDIsMeleeWeapon() || DXW.AmmoName == None || DXW.AmmoName.Default.Icon != DXW.Icon))
 			{
 				//MADDERS, 8/8/23: Icon feedback for picking this bad boy up.
 				if ((DXRW != None) && (DXRW.HUD != None) && (DXRW.HUD.ReceivedItems != None))
@@ -10777,7 +10777,7 @@ function bool StartConversationByName(
 
 		conListItem = conListItem.next;
 	}
-
+	
 	// Now check to see that we're in a respectable radius.
 	if (con != None)
 	{
@@ -10788,8 +10788,10 @@ function bool StartConversationByName(
 		// If "bForcePlay" is set, then force the conversation
 		// to play!
 
-		if ((dist <= 800) || (bForcePlay))
+		if (dist <= 800 || bForcePlay)
+		{
 			bConversationStarted = StartConversation(conOwner, IM_Named, con, bAvoidState, bForcePlay);
+		}
 	}
 
 	return bConversationStarted;
