@@ -3,6 +3,23 @@
 //=============================================================================
 class WeaponStealthPistol extends DeusExWeapon;
 
+simulated function PlayFiringSound()
+{
+	local Sound OldFire;
+	
+	if (Ammo10mmHEAT(AmmoType) != None)
+	{
+		OldFire = FireSound;
+		FireSound = Sound'StealthPistolFire10mmHEAP';
+		Super.PlayFiringSound();
+		FireSound = OldFire;
+	}
+	else
+	{
+		Super.PlayFiringSound();
+	}
+}
+
 simulated function PreBeginPlay()
 {
 	Super.PreBeginPlay();
@@ -83,7 +100,7 @@ defaultproperties
      ShotTime=0.150000
      bSemiautoTrigger=True
      bAutomatic=False
-     BaseAccuracy=0.800000
+     BaseAccuracy=0.750000
      ReloadCount=10
      ReloadTime=1.500000
      EvolvedName="Super Stealth SMG"
@@ -143,9 +160,9 @@ defaultproperties
      Concealability=CONC_All //MADDERS: Keeping this as all, as the signature stealth gun
      //ShotTime=0.150000
      //reloadTime=1.500000
-     HitDamage=8
+     HitDamage=10
      maxRange=4800
-     AccurateRange=2400
+     AccurateRange=1200
      //BaseAccuracy=0.800000
      bCanHaveScope=True
      ScopeFOV=20 //MADDERS, 1/9/21: Lowered from 25, because FOV succc.
