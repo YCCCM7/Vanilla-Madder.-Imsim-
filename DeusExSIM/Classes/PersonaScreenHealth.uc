@@ -888,7 +888,7 @@ function VMDShowStatusInfo()
 	{
 		skillValue = VMP.SkillSystem.GetSkillLevelValue(class'SkillEnviro');
 	}
-	SkillValue2 = (SkillValue + 1.0) / 2;
+	SkillValue2 = (SkillValue + 0.75) / 2;
 	
 	DMult = 1.0;
 	if (VMP.CombatDifficulty < 1.0) DMult = VMP.CombatDifficulty;
@@ -1954,9 +1954,9 @@ defaultproperties
      StrHungerDesc(1)="You are at %d%% hunger. You will be starving in %d minutes."
      StrHungerDesc(2)="You are literally starving. Every 10 second(s), you will suffer up to %d point(s) of damage."
      StrBloodSmellDesc(0)="You smell of blood"
-     StrBloodSmellDesc(1)="You smell heavily of blood"
+     StrBloodSmellDesc(1)="You smell heavily of and are covered in blood"
      StrBloodSmellDesc(2)="You are at %d blood smell units. Drop below %d to lose your smell."
-     StrBloodSmellDesc(3)="You are at %d blood smell units. Drop below %d to lower your smell."
+     StrBloodSmellDesc(3)="You are at %d blood smell units, and may terrify those around you. Drop below %d to lower your smell and stop scaring people."
      StrFoodSmellDesc(0)="You do not smell of food"
      StrFoodSmellDesc(1)="You smell of food"
      StrFoodSmellDesc(2)="You smell heavily of food"
