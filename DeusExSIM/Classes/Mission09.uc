@@ -15,6 +15,7 @@ function FirstFrame()
 {
 	local DeusExMover M;
 	local BlackHelicopter chopper;
+	local TimerDisplay TTimer;
 	
 	Super.FirstFrame();
 	
@@ -55,6 +56,14 @@ function FirstFrame()
 
 function PreTravel()
 {
+	local TimerDisplay TTimer;
+	
+	if ((Player != None) && (DeusExRootWindow(Player.RootWindow) != None) && (DeusExRootWindow(Player.RootWindow).HUD != None) && (DeusExRootWindow(Player.RootWindow).HUD.Timer != None))
+	{
+		TTimer = DeusExRootWindow(Player.RootWindow).HUD.Timer;
+		Flags.SetInt('VMDShipBlowUpTime', int(TTimer.Time + 0.99),, 10);
+	}
+	
 	Super.PreTravel();
 }
 
@@ -80,9 +89,10 @@ function Timer()
 	local PathNode TPath;
 	local Pawn TPawn;
 	local ScriptedPawn SP;
-
+	local TimerDisplay TTimer;
+	
 	Super.Timer();
-
+	
 	if (localURL == "09_NYC_SHIP")
 	{
 		// unhide Walton Simons
@@ -94,7 +104,7 @@ function Timer()
 
 			flags.SetBool('MS_SimonsAppeared', True,, 10);
 		}
-
+		
 		// hide Walton Simons, and make this convo retriggerable
 		if (flags.GetBool('MS_SimonsAppeared') &&
 			flags.GetBool('M09SimonsDisappears'))
@@ -116,11 +126,14 @@ function Timer()
 			flags.SetBool('MS_SimonsAppeared', False,, 10);
 			flags.SetBool('SummonSimons', False,, 10);
 		}
-
+		
 		// randomly play explosions and shake the view
 		// if the ship has been breeched
 		if (flags.GetBool('MS_ShipBreeched'))
+		{
+			ShipSinkingEffects();
 			ShipExplosionEffects(False);
+		}
 	}
 	else if (localURL == "09_NYC_SHIPBELOW")
 	{
@@ -136,6 +149,16 @@ function Timer()
 			{
 				if (flags.GetBool('Bilge'))
 				{
+					if ((Player != None) && (DeusExRootWindow(Player.RootWindow) != None) && (DeusExRootWindow(Player.RootWindow).HUD != None))
+					{
+						TTimer = DeusExRootWindow(Player.RootWindow).HUD.CreateTimerWindow();
+						TTimer.Time = 1800;
+						TTimer.bCritical = False;
+						TTimer.Message = "Ship Sinking";
+						TTimer.bIntegerDisplay = true;
+						Flags.SetInt('VMDShipBlowUpTime', int(TTimer.Time + 0.99),, 10);
+					}
+					
 					Player.StartDataLinkTransmission("DL_AllDone");
 					flags.SetBool('MS_ShipBreeched', True,, 10);
 					
@@ -175,6 +198,7 @@ function Timer()
 				}
 				break;
 			}
+			ShipSinkingEffects();
 			ShipExplosionEffects(True);
 		}
 	}
@@ -240,6 +264,113 @@ function Timer()
 				commando.EnterWorld();
 
 			flags.SetBool('MS_UnhideCommandos', True,, 10);
+		}
+	}
+}
+
+function ShipSinkingEffects()
+{
+	local float Size, ShakeTime, ShakeRoll, ShakeVert;
+	local Actor A;
+	local Pawn TPawn;
+	local TimerDisplay TTimer;
+	
+	if ((Player != None) && (DeusExRootWindow(Player.RootWindow) != None) && (DeusExRootWindow(Player.RootWindow).HUD != None))
+	{
+		if (DeusExRootWindow(Player.RootWindow).HUD.Timer != None)
+		{
+			TTimer = DeusExRootWindow(Player.RootWindow).HUD.Timer;
+			TTimer.Time -= 1;
+			Flags.SetInt('VMDShipBlowUpTime', int(TTimer.Time + 0.99),, 10);
+			if (TTimer.Time <= 0)
+			{
+				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+				{
+					if (!(localURL ~= "09_NYC_SHIP") || (TPawn.Location.Y > -900 && TPawn.Location.X > -3546))
+					{
+						if (TTimer.Time <= -2)
+						{
+							Level.Game.SendPlayer(Player, "dxonly");
+							break;
+						}
+						else
+						{
+							if (PlayerPawn(TPawn) != None)
+							{
+								A = Spawn(class'ExplosionLarge',,, TPawn.Location - Normal(TPawn.Location) * 128);
+								if (A == None)
+								{
+									A = Spawn(class'ExplosionLarge',,, TPawn.Location - Normal(TPawn.Location) * 64);
+								}
+								if (A == None)
+								{
+									A = Spawn(class'ExplosionLarge',,, TPawn.Location - Normal(TPawn.Location) * 15);
+								}
+							}
+							TPawn.TakeDamage(10000, TPawn, TPawn.Location, Normal(TPawn.Location) * 1000, 'Exploded');
+						}
+					}
+					else
+					{
+						if (TTimer.Time <= -2)
+						{
+							//Send to menu at another time? Maybe?
+							break;
+						}
+						else
+						{
+							// pick a random explosion size and modify everything accordingly
+							Size = FRand();
+							ShakeTime = 0.5 + size;
+							ShakeRoll = 512.0 + 1024.0 * size;
+							ShakeVert = 8.0 + 16.0 * size;
+							
+							TPawn.TakeDamage(50, Player, Player.Location, VRand() * 300, 'DieNerd');
+							
+							// shake the view
+							if (PlayerPawn(TPawn) != None)
+							{
+								Player.ShakeView(ShakeTime, ShakeRoll, ShakeVert);
+								
+								// play a sound
+								if (Size < 0.2)
+								{
+									TPawn.PlaySound(Sound'SmallExplosion1', SLOT_None, 2.0,, 16384);
+								}
+								else if (Size < 0.4)
+								{
+									TPawn.PlaySound(Sound'MediumExplosion1', SLOT_None, 2.0,, 16384);
+								}
+								else if (Size < 0.6)
+								{
+									TPawn.PlaySound(Sound'MediumExplosion2', SLOT_None, 2.0,, 16384);
+								}
+								else if (Size < 0.8)
+								{
+									TPawn.PlaySound(Sound'LargeExplosion1', SLOT_None, 2.0,, 16384);
+								}
+								else
+								{
+									TPawn.PlaySound(Sound'LargeExplosion2', SLOT_None, 2.0,, 16384);
+								}
+							}
+						}
+					}
+				}
+			}
+			else if (TTimer.Time <= 300)
+			{
+				TTimer.bCritical = true;
+			}
+		}
+		else
+		{
+			TTimer = DeusExRootWindow(Player.RootWindow).HUD.CreateTimerWindow();
+			TTimer.Time = Flags.GetInt('VMDShipBlowUpTime');
+			TTimer.bCritical = (TTimer.Time <= 300);
+			TTimer.Message = "Ship Sinking";
+			TTimer.bIntegerDisplay = true;
+			ShipSinkingEffects();
 		}
 	}
 }
@@ -354,8 +485,10 @@ function ShipExplosionEffects(bool bFragments)
 	
 	//Bjorn: If we have no Klaxon ID we haven't started the sound yet. The sound and the ID resets on travel.
 	if (KlaxonID == 0)
+	{
 		KlaxonID = player.PlaySound(Sound'Klaxon', SLOT_None, 2.0,, 16384);
-
+	}
+	
 	// make sure the player's zone has an alarm ambient sound
 	// if (Player.HeadRegion.Zone != None)
 	// {
