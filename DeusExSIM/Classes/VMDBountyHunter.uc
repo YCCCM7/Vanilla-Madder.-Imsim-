@@ -167,8 +167,8 @@ function PostPostBeginPlay()
 
 function VMDUpdateHunterBarks()
 {
-	local DeusExLevelInfo DXLI;
 	local string OldPackageName;
+	local DeusExLevelInfo DXLI;
 	
 	//MADDERS, 6/22/24: Universal bark loading. Devious, but effective.
 	forEach AllActors(class'DeusExLevelInfo', DXLI)
