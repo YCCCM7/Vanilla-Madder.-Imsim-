@@ -18,7 +18,7 @@ var localized string LineFiller,
 			StrItemName,
 			StrScrapCostCraft, StrScrapGainBreakdown, StrDepleted, StrChemicalsCostCraft, StrChemicalsGainBreakdown,
 			StrToolboxRequired, StrRepairBotRequired, StrChemistrySetRequired, StrMedicalBotRequired,
-			StrInsufficientTechSkill, StrInsufficientMedicineSkill, SkillLevelNames[4],
+			StrInsufficientTechSkill, StrInsufficientMedicineSkill, StrSizeDesc, SkillLevelNames[4],
 			CraftButtonLabel, CraftButtonLabelNull, BreakdownButtonLabel,
 			ShowOnlyOwnedItemsLabel, ShowCraftingDescriptionsLabel;
 
@@ -332,36 +332,7 @@ function AddMechanicalCraftingInfoWindow(class<Inventory> TItem, bool bShowDescr
 		QuantityOwned = CountNumThings(TItem, VMP);
 		RelevantQuantity = Max(CF.GetMechanicalItemQuanMade(TItem), CF.GetMechanicalBreakdownQuanNeeded(TItem));
 		
-		if (DXA != None)
-		{
-			TTex = DXA.Default.Icon;
-		}
-		else if (DXP != None)
-		{
-			/*if (DXP.Default.InvSlotsX != 1 || DXP.Default.InvSlotsY != 1)
-			{*/
-				TTex = DXP.Default.Icon;
-			/*}
-			else
-			{
-				TXSize = Min(42, DXP.Default.LargeIconWidth);
-				TYSize = DXP.Default.LargeIconHeight;
-				TTex = DXP.Default.LargeIcon;
-			}*/
-		}
-		else if (DXW != None)
-		{
-			/*if (DXW.Default.InvSlotsX != 1 || DXW.Default.InvSlotsY != 1)
-			{*/
-				TTex = DXW.Default.Icon;
-			/*}
-			else
-			{
-				TXSize = Min(42, DXW.Default.LargeIconWidth);
-				TYSize = DXW.Default.LargeIconHeight;
-				TTex = DXW.Default.LargeIcon;
-			}*/
-		}
+		TTex = TItem.Default.Icon;
 		
 		// Add icon
 		winIcon = TAlign.NewChild(Class'Window');
@@ -375,12 +346,20 @@ function AddMechanicalCraftingInfoWindow(class<Inventory> TItem, bool bShowDescr
 		winText.SetTextMargins(0, 0);
 		winText.SetTextAlignments(HALIGN_Left, VALIGN_Top);
 		
-		WinText.AppendText(SprintF(StrItemName, Left(TItem.Default.ItemName, 28), QuantityOwned, RelevantQuantity)$CR());
+		if (DXA == None)
+		{
+			WinText.AppendText(SprintF(StrItemName, Left(TItem.Default.ItemName, 28), QuantityOwned, RelevantQuantity)$CR()$SprintF(StrSizeDesc, TItem.Default.InvSlotsX, TItem.Default.InvSlotsY)$CR());
+			LineTrack = 11;
+		}
+		else
+		{
+			WinText.AppendText(SprintF(StrItemName, Left(TItem.Default.ItemName, 28), QuantityOwned, RelevantQuantity)$CR());
+		}
 		
-		VMDInjectLine(WinText, 0, 13, 128);
+		VMDInjectLine(WinText, 0, 13+LineTrack, 128);
 		WinText.AppendText(CR());
 		
-		LineTrack = 11;
+		LineTrack += 11;
 		if (bCanCraft)
 		{
 			winText.AppendText(SprintF(StrScrapCostCraft, CraftPrice)$CR());
@@ -539,36 +518,7 @@ function AddMedicalCraftingInfoWindow(class<Inventory> TItem, bool bShowDescript
 		QuantityOwned = CountNumThings(TItem, VMP);
 		RelevantQuantity = Max(CF.GetMedicalItemQuanMade(TItem), CF.GetMedicalBreakdownQuanNeeded(TItem));
 		
-		if (DXA != None)
-		{
-			TTex = DXA.Default.Icon;
-		}
-		else if (DXP != None)
-		{
-			/*if (DXP.Default.InvSlotsX != 1 || DXP.Default.InvSlotsY != 1)
-			{*/
-				TTex = DXP.Default.Icon;
-			/*}
-			else
-			{
-				TXSize = Min(42, DXP.Default.LargeIconWidth);
-				TYSize = DXP.Default.LargeIconHeight;
-				TTex = DXP.Default.LargeIcon;
-			}*/
-		}
-		else if (DXW != None)
-		{
-			/*if (DXW.Default.InvSlotsX != 1 || DXW.Default.InvSlotsY != 1)
-			{*/
-				TTex = DXW.Default.Icon;
-			/*}
-			else
-			{
-				TXSize = Min(42, DXW.Default.LargeIconWidth);
-				TYSize = DXW.Default.LargeIconHeight;
-				TTex = DXW.Default.LargeIcon;
-			}*/
-		}
+		TTex = TItem.Default.Icon;
 		
 		// Add icon
 		winIcon = TAlign.NewChild(Class'Window');
@@ -582,12 +532,20 @@ function AddMedicalCraftingInfoWindow(class<Inventory> TItem, bool bShowDescript
 		winText.SetTextMargins(0, 0);
 		winText.SetTextAlignments(HALIGN_Left, VALIGN_Top);
 		
-		WinText.AppendText(SprintF(StrItemName, Left(TItem.Default.ItemName, 28), QuantityOwned, RelevantQuantity)$CR());
+		if (DXA == None)
+		{
+			WinText.AppendText(SprintF(StrItemName, Left(TItem.Default.ItemName, 28), QuantityOwned, RelevantQuantity)$CR()$SprintF(StrSizeDesc, TItem.Default.InvSlotsX, TItem.Default.InvSlotsY)$CR());
+			LineTrack = 11;
+		}
+		else
+		{
+			WinText.AppendText(SprintF(StrItemName, Left(TItem.Default.ItemName, 28), QuantityOwned, RelevantQuantity)$CR());
+		}
 		
-		VMDInjectLine(WinText, 0, 13, 128);
+		VMDInjectLine(WinText, 0, 13+LineTrack, 128);
 		WinText.AppendText(CR());
 		
-		LineTrack = 11;
+		LineTrack += 11;
 		if (bCanCraft)
 		{
 			winText.AppendText(SprintF(StrChemicalsCostCraft, CraftPrice)$CR());
@@ -815,6 +773,7 @@ defaultproperties
      StrChemistrySetRequired="Requires use of chemistry set or medical bot"
      StrMedicalBotRequired="Requires use of medical bot"
      StrDepleted="(Fatigued: -50% gain)"
+     StrSizeDesc="Size: (%dx%d)"
      CraftButtonLabel="Craft"
      CraftButtonLabelNull="N/A"
      BreakdownButtonLabel="Breakdown"
