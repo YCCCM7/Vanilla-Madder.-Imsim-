@@ -18,7 +18,7 @@ var int SeedSet; //Binary sum.
 var float TimeSinceEngaged, TimeSincePickpocket; //If < 0.15
 
 //Silent kills yo.
-var bool bDoScream, bScreamStart, bStatusAlert, bDamageGateInTact, bDamageGateBullshitFrame; //Fast kills are now silent.
+var bool bDoScream, bScreamStart, bStatusAlert, bDamageGateInTact, bDamageGateBullshitFrame, bStunnedThisFrame; //Fast kills are now silent.
 var float ScreamTimer, StatusAlertTime, TurretFleeTimer;
 var float ArmorStrength; //How much damage reduction for armor hits?
 
@@ -4646,6 +4646,8 @@ function VMDPawnTickHook(float DeltaTime)
 			}
 		}
 	}
+	
+	bStunnedThisFrame = bStunned;
 	
 	if (bDamageGateBullshitFrame)
 	{
