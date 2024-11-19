@@ -38,7 +38,7 @@ var travel float SkillNotifierDisplayTimes[11];
 //Debilitation
 //---------------
 //Sugar, Caffeine, Nicotine, Alcohol, Zyme
-var(MADDERSADDICTION) travel float AddictionTimers[5], AfflictionTimers[5], AddictionKickTimers[5],
+var(MADDERSADDICTION) travel float AddictionTimers[5], OverdoseTimers[5], AfflictionTimers[5], AddictionKickTimers[5],
 			AddictionThresholds[5];
 var travel float WaterBuildup, LastGameSpeed; //How much water have we drank?
 var travel bool bZymeAffected;
@@ -335,6 +335,12 @@ var travel int DroneHealth, DroneEMPHitPoints, DroneAmmoLeft,
 var travel float DroneWeaponModBaseAccuracy, DroneWeaponModReloadCount, DroneWeaponModAccurateRange,
 		DroneWeaponModReloadTime, DroneWeaponModRecoilStrength;
 var travel string DroneCustomName, DroneGunClass;
+
+//11/17/24: Store some given weapon info, as a misc thing.
+var travel string LastGenerousWeaponClass;
+var travel int LastGenerousWeaponModLaser, LastGenerousWeaponModScope, LastGenerousWeaponModSilencer, LastGenerousWeaponModEvolution;
+var travel float LastGenerousWeaponModAccuracy, LastGenerousWeaponModReloadCount, LastGenerousWeaponModAccurateRange,
+		LastGenerousWeaponModReloadTime, LastGenerousWeaponModRecoilStrength;
 
 //12/21/23: Misc fix for sticking grenades on shit.
 var Mover LastMoverFrobTarget;
@@ -1046,7 +1052,6 @@ exec function BrendanFraser()
 	
 	VMDPB.ScoutSetup(TScout);
 	VMDPB.RedefinePaths();
-	VMDPB.AllowScoutToSpawn();
 	
 	TScout.Destroy();
 	VMDPB.Destroy();
@@ -1755,6 +1760,24 @@ function bool HasAnyMegh()
 	return false;
 }
 
+//MADDERS, 11/18/24: Used in M09 script. If we have reason to believe our precaching is gonna lag like crazy, don't flush.
+function bool VMDIsFlushGoodIdea()
+{
+	local string GetDevice;
+	
+	GetDevice = CAPS(GetConfig("Engine.Engine", "GameRenderDevice"));
+	switch(GetDevice)
+	{
+		case "D3D10Drv.D3D10RenderDevice":
+		case "D3D11Drv.D3D11RenderDevice":
+			return (!bD3DPrecachingEnabled);
+		break;
+		default:
+			return true;
+		break;
+	}
+}
+
 function bool VMDShouldPackUpDrone()
 {
 	local string TMap;
@@ -1772,6 +1795,20 @@ function bool VMDShouldPackUpDrone()
 	{
 		return true;
 	}
+}
+
+function VMDClearGenerousWeaponData()
+{
+	LastGenerousWeaponModSilencer = -1;
+	LastGenerousWeaponModScope = -1;
+	LastGenerousWeaponModLaser = -1;
+	LastGenerousWeaponModEvolution = -1;
+	LastGenerousWeaponModAccuracy = -1.000000;
+	LastGenerousWeaponModReloadCount = -1.000000;
+	LastGenerousWeaponModAccurateRange = -1.000000;
+	LastGenerousWeaponModReloadTime = -1.000000;
+	LastGenerousWeaponModRecoilStrength = -1.000000;
+	LastGenerousWeaponClass = "NULL";
 }
 
 function VMDClearDroneData()
@@ -4663,6 +4700,7 @@ function VMDResetNewGameVars(int Phase)
 			FormatSkillAugmentPointsLeft();
 			bStartNewGameAfterIntro = False;
 			VMDClearDroneData();
+			VMDClearGenerousWeaponData();
 		break;
 	}
 }
@@ -4687,14 +4725,14 @@ function ResetDifficultyVars()
 	bWeakGrenadeClimbing = Default.bWeakGrenadeClimbing;
 	bEternalLaserAlarms = Default.bEternalLaserAlarms;
 	
-	bSmartEnemyWeaponSwapEnabled = Default.bSmartEnemyWeaponSwapEnabled;
+	//bSmartEnemyWeaponSwapEnabled = Default.bSmartEnemyWeaponSwapEnabled;
 	bShootExplosivesEnabled = Default.bShootExplosivesEnabled;
 	bNoticeBumpingEnabled = Default.bNoticeBumpingEnabled;
 	bRecognizeMovedObjectsEnabled = Default.bRecognizeMovedObjectsEnabled;
-	bDrawMeleeEnabled = Default.bDrawMeleeEnabled;
+	//bDrawMeleeEnabled = Default.bDrawMeleeEnabled;
 	bEnemyDamageGateEnabled = Default.bEnemyDamageGateEnabled;
 	bEnemyDisarmExplosivesEnabled = Default.bEnemyDisarmExplosivesEnabled;
-	bEnemyGEPLockEnabled = Default.bEnemyGEPLockEnabled;
+	//bEnemyGEPLockEnabled = Default.bEnemyGEPLockEnabled;
 	bDogJumpEnabled = Default.bDogJumpEnabled;
 	bBossDeathmatchEnabled = Default.bBossDeathmatchEnabled;
 	bEnemyVisionExtensionEnabled = Default.bEnemyVisionExtensionEnabled;
@@ -4928,13 +4966,24 @@ function bool FakeParseRightClick(Actor FakeFrobTarget)
 //As such, do this in an elegant fashion.
 function Inventory DonateNGItem(class<Inventory> ItemClass, optional string StartProp, optional string PropSetting)
 {
-	local Inventory AnItem;
+	local int i;
+	local DeusExRootWindow DXRW;
+	local HUDObjectBelt TBelt;
+	local Inventory AnItem, TItem, BeltItems[10];
 	
 	if (ItemClass == None) return None;
 	
 	AnItem = Spawn(ItemClass);
 	if (AnItem != None)
 	{
+		for(TItem = Inventory; TItem != None; TItem = TItem.Inventory)
+		{
+			if ((TItem.bInObjectBelt) && (TItem.BeltPos > -1))
+			{
+				BeltItems[TItem.BeltPos] = TItem;
+			}
+		}
+		
 		if (StartProp != "")
 		{
 			AnItem.SetPropertyText(StartProp, PropSetting);
@@ -4950,12 +4999,20 @@ function Inventory DonateNGItem(class<Inventory> ItemClass, optional string Star
 			MarkItemDiscovered(AnItem);
 		}
 		
-		/*AnItem.Frob(Self, None);
-		
-		if (Ammo(AnItem) == None)
+		for(TItem = Inventory; TItem != None; TItem = TItem.Inventory)
 		{
-			AnItem.bInObjectBelt = True;
-		}*/
+			if ((TItem.bInObjectBelt) && (TItem.BeltPos > -1) && (BeltItems[TItem.BeltPos] != None))
+			{
+				TItem.bInObjectBelt = false;
+				TITem.BeltPos = -1;
+			}
+		}
+		
+		for(i=0; i<ArrayCount(BeltItems); i++)
+		{
+			BeltItems[i].bInObjectBelt = true;
+			BeltItems[i].BeltPos = i;
+		}
 	}
 	
 	return AnItem;
@@ -5666,10 +5723,23 @@ function bool VMDOtherIsName(Actor Other, string S)
 
 function int VMDGetBloodLevel()
 {
- 	local int Ret;
+ 	local int Ret, SkillLevel;
+	local float SmellMult;
  	
- 	if (BloodSmellLevel >= 45) Ret = 1;
- 	if (BloodSmellLevel >= 90) Ret = 2;
+	if (SkillSystem != None)
+	{
+		SkillLevel = SkillSystem.GetSkillLevel(class'SkillLockpicking');
+	}
+	
+	//Scale smell with our augment for it now.
+	SmellMult = 1.0;
+	if (HasSkillAugment('LockpickScent'))
+ 	{
+		SmellMult = 1.25 + (0.25 * SkillLevel);
+	}
+	
+ 	if (BloodSmellLevel >= 45*SmellMult) Ret = 1;
+ 	if (BloodSmellLevel >= 90*SmellMult) Ret = 2;
  	
  	return Ret;
 }
@@ -5752,12 +5822,16 @@ function VMDZoneChangeHook(ZoneInfo NewZone)
 
 function int VMDConfigureInvSlotsX(Inventory I)
 {
+	if (I == None) return 0;
+	
  	if (DeusExWeapon(I) != None) return DeusExWeapon(I).VMDConfigureInvSlotsX(Self);
 	if (DeusExPickup(I) != None) return DeusExPickup(I).VMDConfigureInvSlotsX(Self);
  	return I.InvSlotsX;
 }
 function int VMDConfigureInvSlotsY(Inventory I)
 {
+	if (I == None) return 0;
+	
  	if (DeusExWeapon(I) != None) return DeusExWeapon(I).VMDConfigureInvSlotsY(Self);
 	if (DeusExPickup(I) != None) return DeusExPickup(I).VMDConfigureInvSlotsY(Self);
  	return I.InvSlotsY;
@@ -5955,6 +6029,7 @@ function float GetStressFloor()
 {
 	local int HT;
 	local float Ret, HM;
+	local TimerDisplay TTimer;
 	
 	//MADDERS, 5/17/22: Get absolutey thrown out of our minds.
 	if (VMDHasBuffType(class'CombatStimAura')) return 100.0;
@@ -5976,6 +6051,17 @@ function float GetStressFloor()
 		if (HungerTimer > HungerCap * 0.85) Ret = FClamp(Ret+30.0, 0, GetStressCeiling());
 		else Ret = FClamp(Ret+15.0, 0, GetStressCeiling());
 	}
+	
+	if ((DeusExRootWindow(RootWindow) != None) && (DeusExRootWindow(RootWindow).HUD != None))
+	{
+		TTimer = DeusExRootWindow(RootWindow).HUD.Timer;
+		if ((TTimer != None) && (TTimer.Message ~= "Rocket Launch") && (TTimer.Time < 300))
+		{
+			Ret += ((300.0 - TTimer.Time) / 3.0);
+		}
+		Ret = FClamp(Ret, 0, GetStressCeiling());
+	}
+	
 	return Ret;
 }
 
@@ -6822,7 +6908,7 @@ function BroadUpdateKillswitch()
 
 function bool IsOverdosed()
 {
- 	if ((AddictionTimers[4] <= (AddictionThresholds[4]*2.5)) && (AddictionTimers[3] < (AddictionThresholds[3]*3)) && (WaterBuildup < 300))
+ 	if ((OverdoseTimers[4] <= (AddictionThresholds[4]*2.5)) && (OverdoseTimers[3] < (AddictionThresholds[3]*0.3)) && (WaterBuildup < 300))
 	{
 		return false;
 	}
@@ -6842,12 +6928,12 @@ function RunOverdoseEffects(float DT)
 	if (!bLastOverdosed)
 	{
 		//Zyme
-		if (AddictionTimers[4] > AddictionThresholds[4]*2.5)
+		if (OverdoseTimers[4] > AddictionThresholds[4]*2.5)
 		{
 			ClientMessage(OverdoseDescs[0]);
 		}
 		//Alcohol
-		if (AddictionTimers[3] > AddictionThresholds[3]*3)
+		if (OverdoseTimers[3] > AddictionThresholds[3]*3)
 		{
 			ClientMessage(OverdoseDescs[1]);
 		}
@@ -6856,7 +6942,6 @@ function RunOverdoseEffects(float DT)
 		{
 			ClientMessage(OverdoseDescs[2]);
 		}
-
 	}
 	
  	if (OverdoseTimer > 0)
@@ -7664,7 +7749,22 @@ function RunAddictionEffects(float DT)
 			}
 		}
 		
-  		if (AddictionTimers[i] > 0) AddictionTimers[i] -= DT;
+  		if (AddictionTimers[i] > 0)
+		{
+			if (i == 3)
+			{
+				AddictionTimers[i] -= DT * 0.015; //MADDERS, 11/16/24: Alcohol addiction builds slower, is released slower.
+			}
+			else
+			{
+				AddictionTimers[i] -= DT;
+			}
+		}
+		
+		if (OverdoseTimers[i] > 0)
+		{
+			OverdoseTimers[i] -= DT;
+		}
 		
 		//MADDERS: Zyme has run out. Kick us in the teeth.
 		if ((i == 4) && (AddictionTimers[i] <= 0) && (bZymeActive))
@@ -7773,6 +7873,7 @@ function VMDAddToAddiction(string AddType, float AddAmount)
 			AddictionKickTimers[TGroup] = FClamp((AddictionKickTimers[TGroup]+AddAmount), 0, 1200);
   		}
   		
+		OverdoseTimers[TGroup] += AddAmount;
   		AddictionTimers[TGroup] += AddAmount;
   		if ((AddictionTimers[TGroup] > AddictionThresholds[TGroup]) && (AddictionStates[TGroup] < 1))
   		{
@@ -7783,9 +7884,9 @@ function VMDAddToAddiction(string AddType, float AddAmount)
  	else if (TGroup == -99)
  	{
   		DrugEffectTimer = FMax(0, DrugEffectTimer - 5);
-  		for(i=0; i<ArrayCount(AddictionTimers); i++)
+  		for(i=0; i<ArrayCount(OverdoseTimers); i++)
   		{
-   			AddictionTimers[i] = FMax(0.0, AddictionTimers[i] - AddAmount);
+   			OverdoseTimers[i] = FMax(0.0, OverdoseTimers[i] - AddAmount);
   		}
  	}
 }
@@ -8141,7 +8242,7 @@ function bool SpottedByHostiles(out int CountRobot, out int CountHostile, out in
  	forEach RadiusActors(Class'ScriptedPawn', SP, 960)
  	{
   		//NEW: Having heard them talk lowers stress. Any level of personality helps.
-  		if ((SP != None) && (SP.bInWorld) && (Animal(SP) == None) && (SP.GetPawnAllianceType(Self) > 0) && (FastTrace(SP.Location, Location)))
+  		if ((SP != None) && (SP.bInWorld) && (Animal(SP) == None) && (Robot(SP) == None || Robot(SP).EMPHitPoints > 0) && (SP.GetPawnAllianceType(Self) > 0) && (FastTrace(SP.Location, Location)))
   		{
    			//MADDERS note: 0 = friendly, 1 = neutral, and 2 = hostile
    			AType = SP.GetPawnAllianceType(Self);
@@ -8167,6 +8268,8 @@ function bool SpottedByHostiles(out int CountRobot, out int CountHostile, out in
 
 function bool IsScaryRobot(ScriptedPawn SP)
 {
+	if (Robot(SP) == None || Robot(SP).EMPHitPoints <= 0) return false;
+	
 	if (VMDOtherIsName(SP, "Medical")) return false;
 	if (VMDOtherIsName(SP, "Repair")) return false;
 	if (VMDOtherIsName(SP, "Cleaner")) return false;
@@ -10051,7 +10154,8 @@ function VMDRunTickHook( float DT )
  	{
   		HUDEMPTimer -= DT;
 		
-  		ShowHUD(False);
+	  	ShowHUD(False);
+		
 		if ((DeusExRootWindow(RootWindow) != None) && (DeusExRootWindow(RootWindow).AugDisplay != None))
 		{
 			DeusExRootWindow(RootWindow).AugDisplay.Hide();
@@ -10068,14 +10172,14 @@ function VMDRunTickHook( float DT )
 				}
 			}
   		}
-  		if (HUDEMPTimer <= 0)
+	  	if (HUDEMPTimer <= 0)
   		{
    			ShowHUD(True);
 			if ((DeusExRootWindow(RootWindow) != None) && (DeusExRootWindow(RootWindow).AugDisplay != None))
 			{
 				DeusExRootWindow(RootWindow).AugDisplay.Show();
 			}
-  		}
+		}
  	}
 	if (HUDScramblerTimer > 0)
 	{
@@ -10389,7 +10493,8 @@ function bool VMDShouldSave(DeusExLevelInfo info, optional bool bNGPlus)
         	if (IsInState('Dying') || IsInState('Paralyzed') || IsInState('TrulyParalyzed') || IsInState('Interpolating')
         		|| dataLinkPlay != none
         		|| Level.NetMode != NM_Standalone
-			|| LastAutoSaveLoc ~= GetMissionLocation()) //MADDERS: Don't save on the same map 2x in a row.
+			|| LastAutoSaveLoc ~= GetMissionLocation() //MADDERS: Don't save on the same map 2x in a row.
+			|| (DeusExRootWindow(RootWindow) != None && DeusExRootWindow(RootWindow).GetTopWindow() != None)) //MADDERS, 11/16/24: Sneaky cunt saving during repair bots.
 		{
 	        	return false;
 		}
@@ -10571,8 +10676,8 @@ function VMDRegisterFoodEaten( int FoodPoints, string FoodType )
 		break;
    		case "MEDKIT":
 			//MADDERS: Using medkits negates drug overdoses. This one's a freebie.
- 			AddictionTimers[4] = Clamp(AddictionTimers[4], 0, AddictionThresholds[4]*2.5);
-			AddictionTimers[3] = Clamp(AddictionTimers[3], 0, AddictionThresholds[3]*3);
+ 			OverdoseTimers[4] = Clamp(OverdoseTimers[4], 0, AddictionThresholds[4]*2.5);
+			OverdoseTimers[3] = Clamp(OverdoseTimers[3], 0, AddictionThresholds[3]*0.3);
    		break;
    		case "MEDBOT":
     			if (bStressEnabled) VMDModPlayerStress(-1000,,,true);
@@ -11426,11 +11531,24 @@ defaultproperties
      DroneWeaponModSilencer=-1
      DroneWeaponModScope=-1
      DroneWeaponModLaser=-1
+     DroneWeaponModEvolution=-1
      DroneWeaponModBaseAccuracy=-1.000000
      DroneWeaponModReloadCount=-1.000000
      DroneWeaponModAccurateRange=-1.000000
      DroneWeaponModReloadTime=-1.000000
      DroneWeaponModRecoilStrength=-1.000000
+     DroneGunClass="NULL"
+     
+     LastGenerousWeaponModSilencer=-1
+     LastGenerousWeaponModScope=-1
+     LastGenerousWeaponModLaser=-1
+     LastGenerousWeaponModEvolution=-1
+     LastGenerousWeaponModAccuracy=-1.000000
+     LastGenerousWeaponModReloadCount=-1.000000
+     LastGenerousWeaponModAccurateRange=-1.000000
+     LastGenerousWeaponModReloadTime=-1.000000
+     LastGenerousWeaponModRecoilStrength=-1.000000
+     LastGenerousWeaponClass="NULL"
      
      LastBrowsedAug=-1
      LastBrowsedAugPage=-1
@@ -11498,6 +11616,11 @@ defaultproperties
      bAIReactUnconscious=True
      bAINonStandardAmmo=True
      bRegenStayOn=True
+     bSmartEnemyWeaponSwapEnabled=true
+     bDrawMeleeEnabled=true
+     bEnemyGEPLockEnabled=true
+
+
      QuickSaveNumber=-1
      CountRemainingString="amount remaining:"
      CurScrap=100
