@@ -91,7 +91,8 @@ function BeginPlay()
 									HitPoints = 12;
 									break;
 		case SC_RadioActive:		Skin = Texture'Barrel1Tex9';
-									bInvincible = True;
+									bInvincible = False;
+									MinDamageThreshold=150; //MADDERS, 11/15/24: Let us be destroyed by explosives.
 									bPushable = False; //MADDERS, 6/19/24: It's weird to grab the pain cylinder, so don't let us do that.
 									LightType = LT_Steady;
 									LightRadius = 8;
