@@ -98,6 +98,8 @@ simulated function int GetCost()
 	local bool bSpecialized;
 	local VMDBufferPlayer VMP;
 	
+	if (CurrentLevel > ArrayCount(Cost)) return MaxInt;
+	
 	Ret = Cost[CurrentLevel];
 	VMP = VMDBufferPlayer(Player);
 	if ((VMP != None) && (VMP.SkillAugmentManager != None))
