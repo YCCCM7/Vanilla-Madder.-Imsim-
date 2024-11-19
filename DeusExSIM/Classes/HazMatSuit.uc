@@ -20,7 +20,7 @@ function float VMDConfigurePickupDamageMult(name DT, int HitDamage, Vector HitLo
 	DXP = DeusExPlayer(Owner);
 	if ((VMBP != None) && (TSkill != None))
 	{
-		Ret = (TSkill.Default.LevelValues[VMBP.EnviroSkillLevel] + 1.0) / 2;
+		Ret = (TSkill.Default.LevelValues[VMBP.EnviroSkillLevel] + 0.75) / 2;
 		
 		switch(DT)
 		{
@@ -53,7 +53,7 @@ function float VMDConfigurePickupDamageMult(name DT, int HitDamage, Vector HitLo
 	//MADDERS: Nerf damage reduction somewhat, since we're left on long term, even if not for a high number of hits.
 	if (DXP != None)
 	{
-		Ret = (DXP.SkillSystem.GetSkillLevelValue(TSkill) + 1.0) / 2;
+		Ret = (DXP.SkillSystem.GetSkillLevelValue(TSkill) + 0.75) / 2;
 		switch(DT)
 		{
 			case 'TearGas':
