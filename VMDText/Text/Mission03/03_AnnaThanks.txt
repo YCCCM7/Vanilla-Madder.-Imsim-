@@ -1,0 +1,6 @@
+<DC=255,255,255>
+<P>Denton
+<P>
+<P>You have proven yourself a promising agent, but you must stay alert for future threats. The enemy will not always be so unprepared.
+<P>
+<P>Navarre
