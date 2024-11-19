@@ -67,7 +67,8 @@ function VMDAttemptCrateSwap(int Seed)
 	forEach AllActors(class'DeusExLevelInfo', DXLI) break;
 	if (Seed == 2) // || Seed == 5
 	{
-		ReplaceWithGasCap();
+		//MADDERS, 11/12/24: Restore 10mm ammo frequency somewhat with this.
+		//ReplaceWithGasCap();
 	}
 	else if (Seed == 8)
 	{
