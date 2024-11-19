@@ -32,6 +32,12 @@ function InitFor(Actor Other)
 		//MADDERS, 9/11/21: Clone fatness for goofy stuff.
 		Fatness = Other.Fatness;
 		
+		//MADDERS, 11/14/24: Oops. Sickly boys look terrible when dead.
+		if (MJ12NanoAugBountyHunter(Other) != None)
+		{
+			Fatness = Max(128, Fatness);
+		}
+		
 		MyPawnSeed = class'VMDStaticFunctions'.Static.DeriveActorSeed(Other);
 		
 		//MADDERS: Store this data for use with complex corpse interactions.
