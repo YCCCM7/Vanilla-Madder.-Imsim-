@@ -3,6 +3,23 @@
 //=============================================================================
 class WeaponPistol extends DeusExWeapon;
 
+simulated function PlayFiringSound()
+{
+	local Sound OldFire;
+	
+	if (Ammo10mmHEAT(AmmoType) != None)
+	{
+		OldFire = FireSound;
+		FireSound = Sound'PistolFire10mmHEAP';
+		Super.PlayFiringSound();
+		FireSound = OldFire;
+	}
+	else
+	{
+		Super.PlayFiringSound();
+	}
+}
+
 function bool VMDGetHasSilencer()
 {
 	if (Ammo10mmHEAT(AmmoType) != None) return false;
