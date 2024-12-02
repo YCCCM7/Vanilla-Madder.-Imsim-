@@ -212,7 +212,7 @@ function string BuildLevelString(class<Skill> InSkill, int InLevel, String DescS
 					DescStr = AltSkillLevelDescsA[SkillArray];
 				}
 				TVars[0] = int(((1.0 / Abs(GetVal)) - 1.0) * 100);
-				TVars[1] = int(((1.0 / ((Abs(GetVal) + 0.75) / 2)) - 1.0) * 100);
+				TVars[1] = int(((0.875 / ((Abs(GetVal) + 0.75) / 2)) - 1.0) * 100);
 			}
 			else
 			{
