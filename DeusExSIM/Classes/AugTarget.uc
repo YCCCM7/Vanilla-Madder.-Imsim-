@@ -111,10 +111,10 @@ defaultproperties
 {
      bBulkAugException=True
      AdvancedDescription="Image-scaling and recognition provided by multiplexing the optic nerve with doped polyacetylene 'quantum wires' not only increases accuracy, but also delivers limited situational info about a target."
-     AdvancedDescLevels(0)="TECH ONE: %d%% increase in accuracy, %d%% increase in damage, and general target information."
-     AdvancedDescLevels(1)="TECH TWO: %d%% increase in accuracy, %d%% increase in damage, and more target information."
-     AdvancedDescLevels(2)="TECH THREE: %d%% increase in accuracy, %d%% increase in damage, and specific target information."
-     AdvancedDescLevels(3)="TECH FOUR: %d%% increase in accuracy, %d%% increase in damage, and telescopic vision."
+     AdvancedDescLevels(0)="TECH ONE: %d%% increase in accuracy, %d%% increase in ranged, non-thrown damage, and general target information."
+     AdvancedDescLevels(1)="TECH TWO: %d%% increase in accuracy, %d%% increase in ranged, non-thrown damage, and more target information."
+     AdvancedDescLevels(2)="TECH THREE: %d%% increase in accuracy, %d%% increase in ranged, non-thrown damage, and specific target information."
+     AdvancedDescLevels(3)="TECH FOUR: %d%% increase in accuracy, %d%% increase in ranged, non-thrown damage, and telescopic vision."
      
      mpAugValue=-0.125000
      mpEnergyDrain=40.000000
