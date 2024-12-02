@@ -1255,7 +1255,9 @@ function int LootPickups(DeusExPlayer Player)
 						DXP.NumCopies -= ItemCount;
 						FindPickup.NumCopies = FindPickup.VMDConfigureMaxCopies();
 						FindPickup.UpdateBeltText();
+						
 						Player.ClientMessage(FindPickup.PickupMessage @ FindPickup.itemArticle @ FindPickup.itemName, 'Pickup');
+						
 						AddReceivedItem(Player, FindPickup, ItemCount);
 						
 						VMDRemoveInventory(DXP, true);
@@ -1282,6 +1284,7 @@ function int LootPickups(DeusExPlayer Player)
 					VMDRemoveInventory(DXP, false);
 					
 					Player.ClientMessage(FindPickup.PickupMessage @ FindPickup.itemArticle @ FindPickup.itemName, 'Pickup');
+					
 					AddReceivedItem(Player, FindPickup, ItemCount);
 				}
 			}

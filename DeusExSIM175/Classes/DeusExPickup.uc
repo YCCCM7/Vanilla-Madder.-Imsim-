@@ -167,7 +167,7 @@ function bool HandlePickupQuery( inventory Item )
 			{
 				if ((DeusExPickup(Item) != None) && (DeusExPickup(Item).bNameCaseSensitive))
 				{
-					player.ClientMessage(Item.PickupMessage @ Item.itemArticle @ Item.itemName, 'Pickup');
+					Player.ClientMessage(Item.PickupMessage @ Item.itemArticle @ Item.itemName, 'Pickup');
 				}
 				else
 				{

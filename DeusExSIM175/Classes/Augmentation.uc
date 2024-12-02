@@ -130,7 +130,7 @@ function Activate()
 		}
 		bIsActive = True;
 		if (Player != None)
-		{	
+		{
 			Player.ClientMessage(Sprintf(AugActivated, AugmentationName));
 			
 			if (Player.bHUDShowAllAugs)

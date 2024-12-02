@@ -15,7 +15,8 @@ var float VMDLastTickChunk; //Other stuff
 //---------------
 //Sugar, Caffeine, Nicotine, Alcohol, Zyme
 var travel int AddictionStates[5], ForceAddictions[5], LastRecMission; //Record this, mostly for addiction.
-var travel float ActiveStress, StressMomentum, UnivStressScales[5]; //1-100
+var travel float ActiveStress, StressMomentum;
+var float UnivStressScales[5]; //1-100
 var travel int LastStressPhase, FoodSmellThresholds[2]; //MADDERS, 1/19/21: Stops redundant message tripping. Yay.
 
 //^^^^^^^^^^^^^^^^^^^^^
@@ -8553,6 +8554,8 @@ defaultproperties
      TaseDuration=-1.00000
      HUDEMPTimer=-1.000000
      HUDScramblerTimer=-1.000000
+     ActiveStress=-1.000000
+     StressMomentum=-1.000000
       
      SugarName="Sugar"
      CaffeineName="Caffeine"

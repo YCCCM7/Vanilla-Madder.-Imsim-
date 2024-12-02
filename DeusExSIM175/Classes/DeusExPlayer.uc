@@ -6015,7 +6015,8 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 				{
 					if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExWeapon(TFrobTarget))))
 					{
-						ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, DeusExWeapon(TFrobTarget).itemName));
+						TName = DeusExWeapon(TFrobTarget).ItemName;
+						ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, TName));
 						DeusExWeapon(TFrobTarget).bItemRefusalOverride = True;
 						bCanPickup = False;
 					}
@@ -6033,7 +6034,8 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 			{
 				if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExWeapon(TFrobTarget))))
 				{
-					ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, DeusExWeapon(TFrobTarget).itemName));
+					TName = DeusExWeapon(TFrobTarget).ItemName;
+					ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, TName));
 					DeusExWeapon(TFrobTarget).bItemRefusalOverride = True;
 					bCanPickup = False;
 				}
@@ -6045,7 +6047,8 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 			{
 				if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExPickup(TFrobTarget))))
 				{
-					ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, DeusExPickup(TFrobTarget).itemName));
+					TName = DeusExPickup(TFrobTarget).ItemName;
+					ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, TName));
 					DeusExPickup(TFrobTarget).bItemRefusalOverride = True;
 					bCanPickup = False;
 				}

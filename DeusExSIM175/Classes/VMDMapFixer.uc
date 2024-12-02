@@ -1748,6 +1748,10 @@ function CommitMapFixing()
 								{
 									SAT.SkillPointsAdded = 1000;
 								}
+								else
+								{
+									SAT.Destroy();
+								}
 							break;
 						}
 					}

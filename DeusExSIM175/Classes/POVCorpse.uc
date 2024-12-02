@@ -66,6 +66,12 @@ function VMDPreTravel()
 //MADDERS: Carrying corpses around adds awful smell. Yikes.
 function Tick(float DT)
 {
+	if ((!bDeleteMe) && (DeusExPlayer(Owner) != None) && (DeusExPlayer(Owner).InHand != Self))
+	{
+		Destroy();
+		return;
+	}
+	
 	if (SmellTimer > 0)
 	{
 		SmellTimer -= DT;
