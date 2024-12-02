@@ -75,6 +75,12 @@ function Tick(float DT)
 	
 	Super.Tick(DT);
 	
+	if ((!bDeleteMe) && (DeusExPlayer(Owner) != None) && (DeusExPlayer(Owner).InHand != Self))
+	{
+		Destroy();
+		return;
+	}
+	
 	if (SmellTimer > 0)
 	{
 		SmellTimer -= DT;
