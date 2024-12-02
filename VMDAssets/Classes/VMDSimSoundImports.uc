@@ -9,7 +9,7 @@ class VMDSimSoundImports extends VMDSimImportsParent abstract;
 #exec AUDIO IMPORT FILE="Sounds\FireModeChangeA.wav" NAME="FireModeChangeA" GROUP="Weapons"
 #exec AUDIO IMPORT FILE="Sounds\FireModeChangeB.wav" NAME="FireModeChangeB" GROUP="Weapons"
 
-#exec AUDIO IMPORT FILE="Sounds\ShotgunLoad01.wav" NAME="SawedOffShotgunSingleLoad" GROUP="Weapons"
+#exec AUDIO IMPORT FILE="Sounds\ShotgunLoadLogan01.wav" NAME="SawedOffShotgunSingleLoad" GROUP="Weapons"
 #exec AUDIO IMPORT FILE="Sounds\ShotgunLoad05.wav" NAME="AssaultShotgunSingleLoad" GROUP="Weapons"
 
 #exec AUDIO IMPORT FILE="Sounds\AssaultGunSemi.wav" NAME="AssaultGunSemi" GROUP="Weapons"
@@ -30,6 +30,8 @@ class VMDSimSoundImports extends VMDSimImportsParent abstract;
 
 #exec AUDIO IMPORT FILE="Sounds\HazmatSuitLoop.wav" NAME="VMDHazmatSuitLoop" GROUP="Pickup"
 #exec AUDIO IMPORT FILE="Sounds\ZymeSnort.wav" NAME="ZymeSnort" GROUP="Pickup"
+
+#exec AUDIO IMPORT FILE="Sounds\DodgeRollFaded.wav" NAME="DodgeRoll" GROUP="Player"
 
 #exec AUDIO IMPORT FILE="Sounds\RollCooldownReset.wav" NAME="RollCooldownReset" GROUP="Player"
 
