@@ -24,7 +24,7 @@ var float ArmorStrength; //How much damage reduction for armor hits?
 
 //Do some stuff with tech goggles here.
 var bool bTechGogglesActive;
-var float TechGogglesCheckTimer, TechGogglesRadius;
+var float TechGogglesCheckTimer, TechGogglesSeekCooldown, TechGogglesRadius;
 var TechGoggles ActiveGoggles;
 
 //Sprint system. Used in niche circumstances.
@@ -141,6 +141,7 @@ var transient int HousingScriptedTexcount;
 
 //MADDERS, 12/27/23: Aug system. Neato.
 var(VMDAugs) bool bHasAugmentations, bMechAugs, bKillswitchEngaged, bAugsGuardDown; //Ayooo
+var(VMDAugs) int LastAugActivateSoundID, LastAugDeactivateSoundID;
 var(VMDAugs) float Energy, EnergyMax,
 			BiocellUseTimer, SpeedAfterimageTimer,
 			LastSpeedAugValue, LastLungAugValue;
@@ -1156,7 +1157,7 @@ function VMDLadderPoint VMDFindLadderFrom(Pawn TEnemy, out float BestDist)
 	local VMDLadderPoint FP, LP, BestTarget, LadderList[64], Exceptions[64];
 	
 	BestDist = 9999;
-	if (TEnemy == None) return None;
+	if (TEnemy == None || 1 == 1) return None;
 	
 	forEach AllActors(class'VMDLadderPoint', LP)
 	{
@@ -4151,12 +4152,12 @@ function VMDMaintainEnergy(float DeltaTime)
 
 function bool VMDShouldActivateAugs()
 {
-	if (Enemy != None || IsInState('Attacking') || IsInState('Seeking') || IsInState('Burning') || IsInState('Stunned') || IsInState('RubbingEyes'))
+	if (Enemy != None || IsInState('HandlingEnemy') || IsInState('Attacking') || IsInState('Seeking') || SeekLevel > 0 || IsInState('Burning') || IsInState('Stunned') || IsInState('RubbingEyes'))
 	{
 		return true;
 	}
 	
-	if ((!bAugsGuardDown) && (!bInvincible) && (Orders == 'WaitingFor' || Orders == 'RunningTo' || Orders == 'GoingTo') && VSize(Acceleration) > 10)
+	if ((!bAugsGuardDown) && (!bInvincible) && (Orders == 'WaitingFor' || Orders == 'RunningTo' || Orders == 'GoingTo') && (VSize(Acceleration) > 10))
 	{
 		return true;
 	}
@@ -4268,8 +4269,10 @@ function VMDUpdateSpeedAugEffects(float DT)
 function VMDPawnTickHook(float DeltaTime)
 {
 	local bool bWasLowHealth;
-	local float TSpeedValue, GSpeed;
+	local float TSpeedValue, GSpeed, TDist;
 			//TLungValue;
+	local Vector TLoc;
+	local Actor TTarget;
 	local FireExtinguisher TExting;
 	local Medkit TMedkit;
 	local Pawn TPawn;
@@ -4560,11 +4563,16 @@ function VMDPawnTickHook(float DeltaTime)
 	//MADDERS, 12/29/23: See shit through walls. A bit chunky, but this is done only on rare occasions.
 	if (VMDCanSeeThroughWalls())
 	{
+		if (TechGogglesSeekCooldown > 0)
+		{
+			TechGogglesSeekCooldown -= DeltaTime;
+		}
+		
 		TechGogglesCheckTimer -= DeltaTime;
 		if (TechGogglesCheckTimer <= 0)
 		{
 			TechGogglesCheckTimer = 0.1;
-			if (Enemy == None || EnemyLastSeen > 1.0 || IsInState('Seeking'))
+			if (TechGogglesSeekCooldown <= 0 && (Enemy == None || EnemyLastSeen > 1.0 || IsInState('Seeking')))
 			{
 				if (bTechGogglesActive)
 				{
@@ -4581,23 +4589,39 @@ function VMDPawnTickHook(float DeltaTime)
 					{
 						TDegrees = (FOVAngle / 360.0) * 65536;
 						RotDif = Rotation.Yaw - Rotator(TPawn.Location - Location).Yaw;
- 						RDM = Abs(RotDif);
+ 						RDM = Abs(RotDif & 65535);
 						
-   						if ((RDM < TDegrees) && (Enemy != TPawn))
+   						if ((RDM < TDegrees || 65536 - RDM < TDegrees) && (Enemy != TPawn))
    						{
 							if (SetEnemy(TPawn))
 							{
 								if (DeusExWeapon(Weapon) == None)
 								{
+									bKeepWeaponDrawn = True; //MADDERS, 11/27/24: Hack so we stop doing this shit after one.
 									SwitchToBestWeapon();
 								}
 								
+								TechGogglesSeekCooldown = 1.0;
 								GetAxes(ViewRotation, X, Y, Z);
-								if (DeusExWeapon(Weapon) == None || !AISafeToShoot(HitActor, Enemy.Location, DeusExWeapon(Weapon).ComputeProjectileStart(X, Y, Z)))
+								if (!AISafeToShoot(HitActor, Enemy.Location, DeusExWeapon(Weapon).ComputeProjectileStart(X, Y, Z)))
 								{
-									SwitchToBestWeapon();
-									SetSeekLocation(TPawn, TPawn.Location, SEEKTYPE_Sight, true);
-									HandleEnemy();
+									if (DeusExPlayer(TPawn) == None || !DeusExPlayer(TPawn).bForceDuck)
+									{
+										//TTarget = GetNextWaypoint(TPawn);
+										DestLoc = TPawn.Location;
+									}
+									else
+									{
+										TDist = VSize(DestLoc-Location);
+										TLoc = Normal(TPawn.Location-Location) * 0.65;
+										DestLoc = Normal(DestLoc-Location) * 0.35;
+										TLoc = (DestLoc + TLoc);
+										TLoc.Z /= 2.0;
+										DestLoc = (TLoc * TDist * 2.0) + Location;
+									}
+									SetSeekLocation(TPawn, DestLoc, SEEKTYPE_None, true);
+									GoToState('Seeking', 'GoToLocation');
+									//HandleEnemy();
 								}
 								else
 								{
