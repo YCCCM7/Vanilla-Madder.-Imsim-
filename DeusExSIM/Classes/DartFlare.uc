@@ -25,7 +25,7 @@ defaultproperties
      //MADDERS: Used to be AmmoDartFlare, but is no longer.
      spawnAmmoClass=Class'DeusEx.AmmoDart'
      ItemName="Flare Dart"
-     Damage=15.000000
+     Damage=20.000000
      bUnlit=True
      LightType=LT_Steady
      LightEffect=LE_NonIncidence

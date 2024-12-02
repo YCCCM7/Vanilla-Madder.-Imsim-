@@ -30,7 +30,7 @@ defaultproperties
      ItemArticle="a"
      speed=2000.000000
      MaxSpeed=3000.000000
-     Damage=15.000000
+     Damage=20.000000
      MomentumTransfer=1000
      ImpactSound=Sound'DeusExSounds.Generic.BulletHitFlesh'
      Mesh=LodMesh'DeusExItems.Dart'
