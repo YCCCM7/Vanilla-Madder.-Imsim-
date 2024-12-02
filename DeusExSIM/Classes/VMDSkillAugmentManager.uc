@@ -591,7 +591,7 @@ defaultproperties
      SkillAugmentSkillRequired(2)=class'SkillWeaponPistol'
      //4.) No accuracy penalty for alt ammos (advanced)
      SkillAugmentNames(3)="Pistol Ballistics"
-     SkillAugmentDescs(3)="~Alternate crossbow munitions shift from a slight debuff to a slight buff to accuracy.|n~10mm gas caps gain double damage upon ricocheting from a surface.|n~Standard darts gain armor piercing, and flare darts gain the ability to ignite targets."
+     SkillAugmentDescs(3)="~Alternate crossbow munitions shift from a slight debuff to a slight buff to accuracy.|n~Standard darts gain armor piercing, and flare darts gain the ability to ignite targets.|n~10mm gas caps gain double damage upon ricocheting from a surface.|n~10mm HEAP rounds gain 50% more blast radius."
      SkillAugmentIDs(3)=PistolAltAmmos
      SkillAugmentAssumed(3)=1
      SkillAugmentLevel(3)=2
@@ -639,7 +639,7 @@ defaultproperties
      //4.) No accuracy penalty for alt ammos (advanced)
      SkillAugmentNames(8)="Rifle Ballistics"
 	// HVAP gains 100% more penetration against humans and robots.
-     SkillAugmentDescs(8)="~HEAT and 20mm rounds gain 50% more blast size.|n~Tranq rounds have their accuracy penalty reduced by 65%.|n~Shotgun slugs gain a considerable boost in accuracy.|n~Dragon's breath has more effective range.|n~Taser slugs have 35% more projectile speed."
+     SkillAugmentDescs(8)="~3006 HEAT and 20mm grenade rounds gain 50% more blast size.|n~Tranq rounds have their accuracy penalty reduced by 65%.|n~Shotgun slugs gain a considerable boost in accuracy.|n~Dragon's breath has more effective range.|n~Taser slugs have 35% more projectile speed."
      SkillAugmentIDs(8)=RifleAltAmmos
      SkillAugmentAssumed(8)=1
      SkillAugmentLevel(8)=2
@@ -780,7 +780,7 @@ defaultproperties
      //MELEE
      //1.) Retrieve projectiles from corpses (trained)
      SkillAugmentNames(23)="Dislodge"
-     SkillAugmentDescs(23)="~Darts and throwing knives can be retrieved from enemy corpses successfully.|n~Throwing speed for grenades and throwing knives is increased by 5%/15%/30%/50%, depending on skill level."
+     SkillAugmentDescs(23)="~Darts and throwing knives can be retrieved from enemy corpses successfully.|n*Each projectile type has a unique chance to succeed.|n~Throwing speed for grenades and throwing knives is increased by 5%/15%/30%/50%, depending on skill level."
      SkillAugmentIDs(23)=MeleeProjectileLooting
      SkillAugmentAssumed(23)=1 //Keeping this for sim purposes
      SkillAugmentLevel(23)=1
@@ -1225,7 +1225,7 @@ defaultproperties
      //PISTOL/ELECTRONICS HYBRID!
      //1.) Build a mini-turret. (advanced)
      SkillAugmentNames(68)="S.I.D.D."
-     SkillAugmentDescs(68)="~You can craft a Static Improvised Defense Device, or SIDD. It is a small turret that uses 7.62 ammo.|n~You can now tweak friendly, full-size autoturrets' rate of fire, as well as restock their 7.62 ammo."
+     SkillAugmentDescs(68)="~You can craft a Static Improvised Defense Device, or SIDD. It is a small turret that uses 7.62 ammo.|n~You can now tweak friendly, full-size autoturrets' rate of fire, range, and turn rates, as well as restock their 7.62 ammo."
      SkillAugmentIDs(68)=TagTeamMiniTurret
      SkillAugmentAssumed(68)=1
      SkillAugmentLevel(68)=2
@@ -1319,7 +1319,7 @@ defaultproperties
      //FITNESS/MELEE HYBRID!
      //1.) Matrix-esque Dodge Roll.
      SkillAugmentNames(75)="Untouchable"
-     SkillAugmentDescs(75)="~You can now double tap a direction to 'dodge roll' towards it, granting high levels of damage reduction mid-roll.|n*Pushing jump during a dodge will interrupt it as soon as possible.|n*Dodge rolls are longer lasting than tactical rolls, with a cooldown of 10 seconds."
+     SkillAugmentDescs(75)="~You can now double tap a direction to 'dodge roll' towards it, granting high levels of damage reduction mid-roll.|n~For 2.5 seconds after starting a dodge roll, you gain 100% weapon draw and holster speeds|n*Pushing jump during a dodge will interrupt it as soon as possible.|n*Dodge rolls are longer lasting than tactical rolls, with a cooldown of 10 seconds."
      SkillAugmentIDs(75)=TagTeamDodgeRoll
      SkillAugmentAssumed(75)=0
      SkillAugmentLevel(75)=2
