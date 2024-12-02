@@ -3598,8 +3598,14 @@ function Landed(vector HitNormal)
 {
     	local vector legLocation;
 	local int augLevel, TRollDir;
-	local float augReduce, dmg, RollRed;
+	local float augReduce, dmg, RollRed, GSpeed;
 	local VMDBufferPlayer VMP;
+	
+	GSpeed = 1.0;
+	if ((Level != None) && (Level.Game != None))
+	{
+		GSpeed = Level.Game.GameSpeed;
+	}
 	
 	//Note - physics changes type to PHYS_Walking by default for landed pawns
 	PlayLanded(Velocity.Z);
@@ -3618,10 +3624,17 @@ function Landed(vector HitNormal)
 			VMP.bWasFallRoll = true;
 		}
 	}
+	
 	//Rolling reduces fall damage by ~20%
 	RollRed = 1.0;
 	if (VMP != None)
 	{
+		//MADDERS, 11/23/24: Play dodge roll sound when we land.
+		if (VMP.DodgeRollTimer > 0)
+		{
+			PlaySound(Sound'DodgeRoll',SLOT_Interact,,,96, GSpeed);
+		}
+		
 		if (VMP.RollTimer > 0.0)
 		{
 			RollRed = 0.8;
@@ -3992,6 +4005,7 @@ function HealPart(out int points, out int amt)
 function HandleWalking()
 {
 	local bool FlagJumpDuck;
+	local float GSpeed;
 	local VMDBufferPlayer VMP;
 	
 	Super.HandleWalking();
@@ -4004,6 +4018,12 @@ function HandleWalking()
 	// handle the toggle walk key
 	if (bToggleWalk)
 		bIsWalking = !bIsWalking;
+	
+	GSpeed = 1.0;
+	if ((Level != None) && (Level.Game != None))
+	{
+		GSpeed = Level.Game.GameSpeed;
+	}
 	
 	VMP = VMDBufferPlayer(Self);
 	if (bToggleCrouch)
@@ -4028,24 +4048,27 @@ function HandleWalking()
 		}
 		
 		//MADDERS, 8/29/22: Make this consistent due to jump duck changes.
-		if ((bCrouchOn) && ((Physics == PHYS_Walking) || (Physics == PHYS_Falling && FlagJumpDuck)))
+		if (bCrouchOn && (Physics == PHYS_Walking || (Physics == PHYS_Falling && FlagJumpDuck)))
 		{
 			//MADDERS, 7/13/24: Play a new sound for jump duck.
 			if (Physics == PHYS_Falling)
 			{
 				if ((!VMP.bJumpDucked) && (CollisionHeight > 30)) 
 				{
-					if (VMP == None || !VMP.bAssignedFemale)
+					if ((VMP != None) && (VMP.bJumpDuckFeedbackNoise))
 					{
-						PlaySound(sound'MaleJumpDuck', SLOT_None,,,, 1.0);
+						if (!VMP.bAssignedFemale)
+						{
+							PlaySound(sound'MaleJumpDuck', SLOT_None,,,, GSpeed);
+						}
+						else
+						{
+							PlaySound(sound'VMDFJCJumpDuck', SLOT_None,,,, GSpeed);
+						}
+						
+						//MADDERS: Jump duck snaps upwards, not downwards.
+						SetLocation(Location+vect(0,0,20)); //used to be 31.5, but nerfed slightly.
 					}
-					else
-					{
-						PlaySound(sound'VMDFJCJumpDuck', SLOT_None,,,, 1.0);
-					}
-					
-					//MADDERS: Jump duck snaps upwards, not downwards.
-					SetLocation(Location+vect(0,0,20)); //used to be 31.5, but nerfed slightly.
 				}
 				VMP.bJumpDucked = true;
 				VMP.JumpDuckResetTimer = VMP.JumpDuckResetTime;
@@ -4096,12 +4119,12 @@ function DoJump(optional float F)
 	{
 		if ((Level != None) && (Level.Game != None))
 		{
-			if (VMP.LastDuckTimer < (VMP.DodgeClickTime*Level.Game.GameSpeed))
+			if (VMP.LastDuckTimer < (VMP.TacticalRollTime*Level.Game.GameSpeed))
 			{
 				bMetTiming = true;
 			}
 		}
-		else if (VMP.LastDuckTimer < VMP.DodgeClickTimer)
+		else if (VMP.LastDuckTimer < VMP.TacticalRollTime)
 		{
 			bMetTiming = true;
 		}
@@ -4465,11 +4488,17 @@ state PlayerWalking
 		local float legTotal, weapSkill;
 		
 		local bool bInverse, bJumpDuck, bFreshJumpDuck, bCanJumpDuck;
-		local float RollChunk, TMath;
+		local float RollChunk, TMath, GSpeed;
 		local VMDBufferPlayer VMP;
 		
 		local Vector HN, HL, TVel;
  		local Actor HitAct;
+		
+		GSpeed = 1.0;
+		if ((Level != None) && (Level.Game != None))
+		{
+			GSpeed = Level.Game.GameSpeed;
+		}
 		
 		// if the spy drone augmentation is active
 		if (bSpyDroneActive)
@@ -4518,15 +4547,18 @@ state PlayerWalking
 						if (bool(bDuck))
 						{
 							//MADDERS, 7/13/24: Play a new sound for jump duck.
-							if ((Physics == PHYS_Falling) && (!VMP.VMDUsingLadder()))
+							if ((Physics == PHYS_Falling) && (!VMP.VMDUsingLadder()) && (CollisionHeight > 30))
 							{
-								if (VMDBufferPlayer(Self) == None || !VMDBufferPlayer(Self).bAssignedFemale)
+								if ((VMP != None) && (VMP.bJumpDuckFeedbackNoise))
 								{
-									PlaySound(sound'MaleJumpDuck', SLOT_None,,,, 1.075);
-								}
-								else
-								{
-									PlaySound(sound'VMDFJCJumpDuck', SLOT_None,,,, 1.075);
+									if (!VMP.bAssignedFemale)
+									{
+										PlaySound(sound'MaleJumpDuck', SLOT_None,,,, GSpeed);
+									}
+									else
+									{
+										PlaySound(sound'VMDFJCJumpDuck', SLOT_None,,,, GSpeed);
+									}
 								}
 							}
 							
@@ -4536,7 +4568,7 @@ state PlayerWalking
 							bJumpDuck = true;
 						}
 					}
-					else
+					else if (!VMP.VMDUsingLadder())
 					{
 						bJumpDuck = true;
 					}
@@ -4618,7 +4650,7 @@ state PlayerWalking
 					{
 						VMP.DodgeRollTimer = 0;
 					}
-					else if ((Abs(HN.X) + AbS(HN.Y) >= 1) && (VMP.DodgeRollTimer > 0.1))
+					else if ((Abs(HN.X) + Abs(HN.Y) >= 1) && (VMP.DodgeRollTimer > 0.1))
 					{
 						RollChunk = VMP.DodgeRollDuration * 0.5;
 						TMath = VMP.DodgeRollTimer % (RollChunk);
@@ -4687,8 +4719,8 @@ state PlayerWalking
 				VMP.LastFireRollDir = Rotator(NewAccel).Yaw;
 			}
 			
-			//MADDERS: Jump duck snaps upwards, not downwards.
-			if ((CollisionHeight > 30) && (bFreshJumpDuck))
+			//MADDERS: Jump duck snaps upwards, not downwards. Fix the exploit by not letting us snap upwards on ladders.
+			if ((CollisionHeight > 30) && (bFreshJumpDuck) && (VMP == None || !VMP.VMDUsingLadder()))
 			{
 				SetLocation(Location+vect(0,0,20)); //used to be 31.5, but nerfed slightly.
 			}
@@ -4713,7 +4745,8 @@ state PlayerWalking
 		}
 		//MADDERS, 1/3/21: Exploit fix time BBY.
 		//else if (!bCanJumpDuck || ((bCanJumpDuck) && (!bJumpDuck)))
-		else if (((VMDBufferPlayer(Self) == None && WallMaterial != 'Ladder') || (VMDBufferPlayer(Self) != None && !VMDBufferPlayer(Self).VMDUsingLadder())) && (Physics != PHYS_Falling))
+		//else if ((VMP != None) && (!VMP.VMDUsingLadder()))
+		else
 		{
          		// DEUS_EX AMSD Changed this to grab defspeed, because GetCurrentGroundSpeed takes 31k cycles to run.
 			GroundSpeed = defSpeed;
@@ -4725,7 +4758,7 @@ state PlayerWalking
 			}
 		}
 		
-		if ((bCantStandUp) || ((VMP != None) && (VMP.RollTimer > 0 || VMP.DodgeRollTimer > 0)))
+		if (bCantStandUp || (VMP != None && (VMP.RollTimer > 0 || VMP.DodgeRollTimer > 0)))
 			bForceDuck = True;
 		else
 			bForceDuck = False;
@@ -6407,6 +6440,9 @@ exec function ParseRightClick()
 	if (RestrictInput())
 		return;
 	
+	//MADDERS, 11/25/24: Stop dodging if we frob something inbetween, thank you.
+	DodgeDir = DODGE_None;
+	
    	oldFirstItem = Inventory;
 	oldInHand = inHand;
 	oldCarriedDecoration = CarriedDecoration;
@@ -6760,7 +6796,9 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 				{
 					if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExWeapon(TFrobTarget))))
 					{
-						ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, DeusExWeapon(TFrobTarget).itemName));
+						TName = DeusExWeapon(TFrobTarget).ItemName;
+						if (!DeusExWeapon(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
+						ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, TName));
 						DeusExWeapon(TFrobTarget).bItemRefusalOverride = True;
 						bCanPickup = False;
 					}
@@ -6778,7 +6816,9 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 			{
 				if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExWeapon(TFrobTarget))))
 				{
-					ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, DeusExWeapon(TFrobTarget).itemName));
+					TName = DeusExWeapon(TFrobTarget).ItemName;
+					if (!DeusExWeapon(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
+					ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, TName));
 					DeusExWeapon(TFrobTarget).bItemRefusalOverride = True;
 					bCanPickup = False;
 				}
@@ -6790,7 +6830,9 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 			{
 				if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExPickup(TFrobTarget))))
 				{
-					ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, DeusExPickup(TFrobTarget).itemName));
+					TName = DeusExPickup(TFrobTarget).ItemName;
+					if (!DeusExPickup(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
+					ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, TName));
 					DeusExPickup(TFrobTarget).bItemRefusalOverride = True;
 					bCanPickup = False;
 				}
@@ -13739,7 +13781,7 @@ function SkillPointsAdd(int numPoints)
 			{
 				for(TSkill = SkillSystem.FirstSkill; TSkill != None; TSkill = TSkill.Next)
 				{
-					if ((OldPoints < TSkill.GetCost()) && (NewPoints >= TSkill.GetCost()))
+					if ((TSkill.CurrentLevel < 3) && (OldPoints < TSkill.GetCost()) && (NewPoints >= TSkill.GetCost()))
 					{
 						if (!bPlayedSound)
 						{
@@ -14322,9 +14364,17 @@ exec function AllEnergy()
 		return;
 	
 	if ( Level.NetMode != NM_Standalone )
+	{
 		Energy = default.Energy;
+	}
 	else
+	{
 		Energy = EnergyMax;
+		if (VMDBufferPlayer(Self) != None)
+		{
+			VMDBufferPlayer(Self).HUDEMPTimer = 0;
+		}
+	}
 }
 
 // ----------------------------------------------------------------------
