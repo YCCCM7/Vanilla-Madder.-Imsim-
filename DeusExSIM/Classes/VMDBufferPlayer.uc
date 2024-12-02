@@ -14,7 +14,8 @@ var float VMDLastTickChunk; //Other stuff
 //---------------
 //Sugar, Caffeine, Nicotine, Alcohol, Zyme
 var(MADDERSADDICTION) travel int AddictionStates[5], ForceAddictions[5], LastRecMission; //Record this, mostly for addiction.
-var travel float ActiveStress, StressMomentum, UnivStressScales[5]; //1-100
+var travel float ActiveStress, StressMomentum; //1-100
+var float UnivStressScales[5];
 var travel int LastStressPhase, FoodSmellThresholds[2]; //MADDERS, 1/19/21: Stops redundant message tripping. Yay.
 
 //^^^^^^^^^^^^^^^^^^^^^
@@ -207,8 +208,10 @@ var() globalconfig bool bDoorFrobKeyring; //5/3/24: Derived from conversations i
 var() globalconfig int DoorFrobLockpick; //5/3/24: Similar to above, but more flexible.
 var() globalconfig bool bElectronicsDrawMultitool; //5/9/24: The above option's buddy.
 var() globalconfig bool bUpdateVanillaSkins; //10/20/24: For those who prefer the OG ones or have rando? Speculative, but sure.
+var() globalconfig bool bJumpDuckFeedbackNoise; //11/27/24: Some people find this annoying.
 var() bool BarfStartupFullscreen, BarfUseDirectInput; //6/24/24: Purely temporary variables. Used in options menu as a metric.
 var() globalconfig int CustomUIScale;
+var() globalconfig float TacticalRollTime;
 
 var() globalconfig bool bAimFocuserVisible, bHUDVisible, bFrobDisplayBordersVisible, bLogVisible, bSmellIndicatorVisible, bLightGemVisible, bSkillNotifierVisible;
 var bool VSyncBarf;
@@ -279,7 +282,7 @@ var(MADDERSDIFF) travel int SaveGateCombatThreshold, SavedMayhemForgiveness, Sav
 				BarfROFWeight, BarfAccuracyMod,
 				BarfReactionSpeedMult, BarfSurprisePeriodMax, EnemyExtraSearchSteps,
 				BarfHearingRangeMult, BarfVisionRangeMult, BarfVisionStrengthMult, BarfGuessingFudge,
-				BarfDodgeClickTime;
+				BarfDodgeClickTime, BarfTacticalRollTime;
 
 var(MADDERSDIFF) travel float GallowsSaveGateTimer, GallowsSaveGateTime, TimerDifficulty, EnemyHPScale;
 
@@ -1799,16 +1802,16 @@ function bool VMDShouldPackUpDrone()
 
 function VMDClearGenerousWeaponData()
 {
-	LastGenerousWeaponModSilencer = -1;
-	LastGenerousWeaponModScope = -1;
-	LastGenerousWeaponModLaser = -1;
-	LastGenerousWeaponModEvolution = -1;
-	LastGenerousWeaponModAccuracy = -1.000000;
-	LastGenerousWeaponModReloadCount = -1.000000;
-	LastGenerousWeaponModAccurateRange = -1.000000;
-	LastGenerousWeaponModReloadTime = -1.000000;
-	LastGenerousWeaponModRecoilStrength = -1.000000;
-	LastGenerousWeaponClass = "NULL";
+	LastGenerousWeaponModSilencer = 0;
+	LastGenerousWeaponModScope = 0;
+	LastGenerousWeaponModLaser = 0;
+	LastGenerousWeaponModEvolution = 0;
+	LastGenerousWeaponModAccuracy = 0.000000;
+	LastGenerousWeaponModReloadCount = 0.000000;
+	LastGenerousWeaponModAccurateRange = 0.000000;
+	LastGenerousWeaponModReloadTime = 0.000000;
+	LastGenerousWeaponModRecoilStrength = 0.000000;
+	LastGenerousWeaponClass = "";
 }
 
 function VMDClearDroneData()
@@ -4774,6 +4777,7 @@ function ResetDifficultyVars()
 	BarfVisionStrengthMult = Default.BarfVisionStrengthMult;
 	BarfGuessingFudge = Default.BarfGuessingFudge;
 	BarfDodgeClickTime = Default.BarfDodgeClickTime;
+	BarfTacticalRollTime = Default.BarfTacticalRollTime;
 	
 	GallowsSaveGateTimer = Default.GallowsSaveGateTimer;
 	GallowsSaveGateTime = Default.GallowsSaveGateTime;
@@ -6309,7 +6313,8 @@ function InitiatePlayerRoll(int NewRollDir)
 	{
 		GSpeed = Level.Game.GameSpeed;
 	}
-	PlaySound(Sound'BodyHit',SLOT_Interact,,,96, GSpeed);
+	//PlaySound(Sound'BodyHit',SLOT_Interact,,,96, GSpeed);
+	PlaySound(Sound'DodgeRoll',SLOT_Interact,,,96, GSpeed);
 }
 
 function bool HasDodgeRollObjection(EDodgeDir DodgeMove)
@@ -6407,7 +6412,15 @@ function InitiatePlayerDodgeRoll(EDodgeDir DodgeMove, Vector InSpeed)
 		GSpeed = Level.Game.GameSpeed;
 	}
 	
-	PlaySound(Sound'BodyHit',,,,96, 1.1 * GSpeed);
+	//PlaySound(Sound'BodyHit',,,,96, 1.1 * GSpeed);
+	if (!bAssignedFemale)
+	{
+		PlaySound(sound'MaleJumpDuck', SLOT_None,,,, GSpeed);
+	}
+	else
+	{
+		PlaySound(sound'VMDFJCJumpDuck', SLOT_None,,,, GSpeed);
+	}
 }
 
 //====================================================
@@ -8536,6 +8549,8 @@ function bool UpdateLastTouchingLadder()
 	
 	GrabDist = 24;
 	
+	bLastTouchingLadder = false;
+	
 	// MADDERS, 8/4/24: Here we are again. More stupid solutions because native functionality doesn't work.
 	// In this case, using even a SINGLE axis of extents in this function will cause a GPF in the game...
 	// So fuck it. Do lots of mini traces, looking for ladder association.
@@ -8558,8 +8573,6 @@ function bool UpdateLastTouchingLadder()
 			break;
 		}
 	}
-	
-	bLastTouchingLadder = false;
 }
 
 
@@ -9080,7 +9093,7 @@ function VMDTravelPostAcceptHook()
 	//MADDERS, 8/28/23: Configure click dodge time, so we can use melee dodge.
 	if (DodgeClickTime <= 0)
 	{
-		ChangeDodgeClickTime(0.05);
+		ChangeDodgeClickTime(0.1);
 		SaveConfig();
 	}
 	if (StoredPlayerMeshLeft == "") bDefabricateQueued = true;
@@ -9990,12 +10003,12 @@ function VMDRunTickHook( float DT )
 			if ((MusicMode == MUS_Dying) && (!IsInState('Dying')))
 			{
 				MusicMode = MUS_Ambient;
-				ClientSetMusic(ModSwappedMusic, 255, 255, MTRAN_Fade);
+				ClientSetMusic(ModSwappedMusic, 0, 255, MTRAN_Fade);
 			}
 			else if ((MusicMode == MUS_Conversation) && (!IsInState('Conversation')))
 			{
 				MusicMode = MUS_Ambient;
-				ClientSetMusic(ModSwappedMusic, 255, 255, MTRAN_Fade);
+				ClientSetMusic(ModSwappedMusic, 0, 255, MTRAN_Fade);
 			}
 		}
 	}
@@ -10133,12 +10146,12 @@ function VMDRunTickHook( float DT )
 	
 	if ((Level != None) && (Level.Game != None))
 	{
-		if (LastDuckTimer < (DodgeClickTime*Level.Game.GameSpeed))
+		if (LastDuckTimer < (TacticalRollTime*Level.Game.GameSpeed))
 		{
 			bMetTiming = true;
 		}
 	}
-	else if (LastDuckTimer < DodgeClickTime)
+	else if (LastDuckTimer < TacticalRollTime)
 	{
 		bMetTiming = true;
 	}
@@ -11445,6 +11458,8 @@ defaultproperties
      TaseDuration=-1.00000
      HUDEMPTimer=-1.000000
      HUDScramblerTimer=-1.000000
+     ActiveStress=-0.100000
+     StressMomentum=-0.100000
      
      SugarName="Sugar"
      CaffeineName="Caffeine"
@@ -11501,6 +11516,7 @@ defaultproperties
      DoorFrobLockpick=1
      bElectronicsDrawMultitool=True
      bUpdateVanillaSkins=True
+     bJumpDuckFeedbackNoise=True
      CustomUIScale=1
      
      PreferredHandedness=-1
@@ -11589,7 +11605,8 @@ defaultproperties
      DodgeRollCooldown=10.000000
      DodgeRollDuration=1.2000000
      StressMomentum=1.000000
-     DodgeClickTime=0.150000
+     DodgeClickTime=0.100000
+     TacticalRollTime=0.150000
      InventoryFullNull="You cannot remove the %s"
      InventoryFullFeedback="You don't have enough room in your inventory to pick up the %s. You require %dx%d in space"
      
