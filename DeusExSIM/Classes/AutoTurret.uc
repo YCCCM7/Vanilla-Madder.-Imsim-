@@ -91,7 +91,7 @@ function Trigger(Actor Other, Pawn Instigator)
 // if we are untriggered, turn us off
 function UnTrigger(Actor Other, Pawn Instigator)
 {
-	if (bDisabled)
+	if (bDisabled || bTrackPawnsOnly)
 	{
 		return;
 	}
