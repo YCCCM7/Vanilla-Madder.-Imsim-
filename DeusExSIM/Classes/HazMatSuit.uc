@@ -247,7 +247,7 @@ defaultproperties
      largeIcon=Texture'DeusExUI.Icons.LargeIconHazMatSuit'
      largeIconWidth=46
      largeIconHeight=45
-     Description="A standard hazardous materials suit that protects against a full range of environmental hazards including radiation, fire, biochemical toxins, electricity, and EMP. Hazmat suits contain an integrated bacterial oxygen scrubber that degrades over time and thus should not be reused. At base, a hazmat suit reduces poison gas and radiation by 50%, and other hazards by 25%, but grants full immunity to blinding aerosols. Any user's skill fitting the suit, however, has a strong influence on its lifetime and effectiveness."
+     Description="A standard hazardous materials suit that protects against a full range of environmental hazards including radiation, fire, biochemical toxins, electricity, and EMP. Hazmat suits contain an integrated bacterial oxygen scrubber that degrades over time and thus should not be reused. At base, a hazmat suit reduces poison gas and radiation by 56%, and other hazards by 34%, but grants full immunity to blinding aerosols. Any user's skill fitting the suit, however, has a strong influence on its lifetime and effectiveness."
      beltDescription="HAZMAT"
      Texture=Texture'DeusExItems.Skins.ReflectionMapTex1'
      Mesh=LodMesh'DeusExItems.HazMatSuit'
