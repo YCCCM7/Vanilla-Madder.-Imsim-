@@ -618,7 +618,7 @@ function Tick(float DT)
 		TSpeed = GetSpeedMult();
 		TAnim = GetAnimType(bFastAnim);
 		
-		if (LastGetAnim != TAnim || !IsAnimating() || TSpeed != LastSpeed)
+		if (LastGetAnim != TAnim || TAnim == 'Walk' || !IsAnimating() || TSpeed != LastSpeed)
 		{
 			LastSpeed = TSpeed;
 			if ((bFastAnim == 2) && (VMP.AnimFrame > 0)) //Quick one-offs only.
