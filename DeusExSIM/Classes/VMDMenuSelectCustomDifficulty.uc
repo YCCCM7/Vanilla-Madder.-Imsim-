@@ -1279,7 +1279,7 @@ defaultproperties
      strSetting(5)="Loot Swapping"
      varSetting(5)="BarfLootReduction"
      OverrideLabelValues(5)="None|Reduce|Delete"
-     strDescription(5)="If enabled, loot sources will either be reduced (replaced with scrap or chemicals) or outright deleted."
+     strDescription(5)="If enabled, loot sources will either be reduced (replaced with scrap or chemicals) or outright deleted. GEP gun rockets are reduced in ammo counts sometimes on either setting."
      OverrideSettingCaps(6)=3
      strSetting(6)="Loot Swap Severity"
      varSetting(6)="BarfLootSwapSeverity"
