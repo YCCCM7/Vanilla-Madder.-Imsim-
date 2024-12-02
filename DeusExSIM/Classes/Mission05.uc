@@ -410,14 +410,14 @@ function VMDDumpItems(out Inventory ContinueItem, DeusExPlayer Player, Inventory
 			else if (DXP != None)
 			{
 				DXP.bRotatedInInventory = false;
-			}
-			else if (VMDScrapMetal(Item) != None)
-			{
-				VMDScrapMetal(Item).UpdateModel();
-			}
-			else if (VMDChemicals(Item) != None)
-			{
-				VMDChemicals(Item).UpdateModel();
+				if (VMDScrapMetal(Item) != None)
+				{
+					VMDScrapMetal(Item).UpdateModel();
+				}
+				else if (VMDChemicals(Item) != None)
+				{
+					VMDChemicals(Item).UpdateModel();
+				}
 			}
 		}
 		
