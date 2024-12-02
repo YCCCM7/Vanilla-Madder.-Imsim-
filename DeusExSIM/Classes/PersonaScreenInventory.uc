@@ -1574,7 +1574,7 @@ function UpdateDragMouse(float newX, float newY)
 	local HUDObjectSlot objSlot;
 	local Bool bValidDrop;
 	local Bool bOverrideButtonColor;
-
+	
 	// Vanilla Matters
 	local Inventory buttonInv, TInv;
 	local int i, TSlotsX, TSlotsY;
@@ -1582,22 +1582,22 @@ function UpdateDragMouse(float newX, float newY)
 	// buttons can be deleted (such as one use weapon, charged pickup) in real time UI, crashes without this.
 	if (dragButton == None)
 		return;
-
+	
 	// Vanilla Matters: Saves mouse position for later use.
 	VM_mouseX = newX;
 	VM_mouseY = newY;
-
+	
 	// Vanilla Matters: Resets swapping indicators.
 	for ( i = 0; i < VM_swapOtherCount; i++ )
 		VM_swapOthers[i].ResetFill();
-
+	
 	VM_bSwapping = false;
-
+	
 	findWin = FindWindow(newX, newY, relX, relY);
-
+	
 	// If we're dragging an inventory button, behave one way, if we're
 	// dragging a hotkey button, behave another
-
+	
 	if (dragButton.IsA('PersonaInventoryItemButton'))
 	{
 		// Vanilla Matters: Gets the inventory item of this button for swapping checks.
@@ -1795,7 +1795,7 @@ function UpdateDragMouse(float newX, float newY)
 		
 		objSlot.bDimIcon = !bValidDrop;
 	}
-
+	
 	// Unhighlight the previous window we were over	
 	if ((lastDragOverButton != None) && (lastDragOverButton != findWin))
 	{
@@ -2008,7 +2008,7 @@ function FinishButtonDrag()
 		EndDragMode();
 		return;
 	}
-
+	
 	if (dragButton.IsA('PersonaInventoryItemButton'))
 	{
 		// Vanilla Matters: Gets our inventory button.
@@ -2049,7 +2049,7 @@ function FinishButtonDrag()
 				ReturnButton(PersonaInventoryItemButton(dragButton));
 			}
 		}
-
+		
 		// Check if this is ammo and we landed on a weapon
 		else if ((dragInv.IsA('DeusExAmmo')) && (dragTarget != None) && (dragTarget.GetClientObject().IsA('DeusExWeapon')) )
 		{
@@ -3734,7 +3734,7 @@ function int CountNumWeapons(class<DeusExWeapon> CheckClass, Inventory StartInv)
 
 function bool VMDAttemptControllerDrag(PersonaInventoryItemButton MoveButton, int XMovement, int YMovement)
 {
-	local int SizeX, SizeY, OldX, OldY;
+	local int SizeX, SizeY, OldPosX, OldPosY;
 	local float NewX, NewY;
 	local Inventory Item;
 	local VMDBufferPlayer VMP;
@@ -3748,8 +3748,8 @@ function bool VMDAttemptControllerDrag(PersonaInventoryItemButton MoveButton, in
 	Item = Inventory(MoveButton.GetClientObject());
 	SizeX = VMP.VMDConfigureInvSlotsX(Item);
 	SizeY = VMP.VMDConfigureInvSlotsY(Item);
-	OldX = Item.InvPosX;
-	OldY = Item.InvPosY;
+	OldPosX = Item.InvPosX;
+	OldPosY = Item.InvPosY;
 	
 	if ((Item.InvPosX == 0 && XMovement < 0) || (Item.InvPosX + SizeX >= Player.MaxInvCols && XMovement > 0) || 
 		(Item.InvPosY == 0 && YMovement < 0) || (Item.InvPosY + SizeY >= Player.MaxInvRows && YMovement > 0))
@@ -3764,7 +3764,7 @@ function bool VMDAttemptControllerDrag(PersonaInventoryItemButton MoveButton, in
 	MoveButton.MouseMoved(NewX, NewY);
 	MoveButton.MouseButtonReleased(0, 0, IK_LeftMouse, 1);
 	
-	return (OldX != Item.InvPosX || OldY != Item.InvPosY);
+	return (OldPosX != Item.InvPosX || OldPosY != Item.InvPosY);
 }
 
 function VMDGetCurScrollDistance()
