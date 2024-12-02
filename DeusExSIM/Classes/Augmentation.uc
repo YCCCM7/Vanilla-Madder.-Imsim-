@@ -161,11 +161,13 @@ function Activate()
 			//MADDERS, 12/28/23: Ongoing crusade of fuckery to conceal reused sounds.
 			if (VMDMechAugmentation(Self) != None)
 			{
-				TVMBP.PlaySound(ActivateSound, SLOT_None,,,512, 1.3 * GSpeed);
+				if (TVMBP.LastAugActivateSoundID != 0) TVMBP.StopSound(TVMBP.LastAugActivateSoundID);
+				TVMBP.LastAugActivateSoundID = TVMBP.PlaySound(ActivateSound, SLOT_None,,,512, 1.3 * GSpeed);
 			}
 			else
 			{
-				TVMBP.PlaySound(ActivateSound, SLOT_None,,,512, GSpeed);
+				if (TVMBP.LastAugActivateSoundID != 0) TVMBP.StopSound(TVMBP.LastAugActivateSoundID);
+				TVMBP.LastAugActivateSoundID = TVMBP.PlaySound(ActivateSound, SLOT_None,,,512, GSpeed);
 			}
 			
 			if ((TVMBP.AugmentationSystem != None ) && (TVMBP.AugmentationSystem.NumAugsActive() == 0))
@@ -263,11 +265,13 @@ function Deactivate()
 			//MADDERS, 12/28/23: Ongoing crusade of fuckery to conceal reused sounds.
 			if (VMDMechAugmentation(Self) != None)
 			{
-				TVMBP.PlaySound(DeactivateSound, SLOT_None,,,512 , 1.3 * GSpeed);
+				if (TVMBP.LastAugDeactivateSoundID != 0) TVMBP.StopSound(TVMBP.LastAugDeactivateSoundID);
+				TVMBP.LastAugDeactivateSoundID = TVMBP.PlaySound(DeactivateSound, SLOT_None,,,512 , 1.3 * GSpeed);
 			}
 			else
 			{
-				TVMBP.PlaySound(DeactivateSound, SLOT_None,,,512 , GSpeed);
+				if (TVMBP.LastAugDeactivateSoundID != 0) TVMBP.StopSound(TVMBP.LastAugDeactivateSoundID);
+				TVMBP.LastAugDeactivateSoundID = TVMBP.PlaySound(DeactivateSound, SLOT_None,,,512 , GSpeed);
 			}
 		}
 		
