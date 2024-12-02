@@ -298,12 +298,9 @@ function Frob(Actor Frobber, Inventory frobWith)
 			TGun.InvokeTurretAdjustWindow(VMP);
 			Msg = "";
 			
-			if ((hackStrength == 0.0) && (VMP.HasSkillAugment('ElectronicsTurrets')))
-			{
-				TTurret.bActive = true;
-				TTurret.bTrackPawnsOnly = true;
-				TTurret.bDisabled = false;
-			}
+			TTurret.bActive = true;
+			TTurret.bTrackPawnsOnly = true;
+			TTurret.bDisabled = false;
 		}
 		else if (hackStrength == 0.0)
 		{
