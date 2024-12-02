@@ -14,7 +14,7 @@ defaultproperties
      maxRange=24000
      speed=1500.000000
      MaxSpeed=1500.000000
-     Damage=40.000000
+     Damage=30.000000
      MomentumTransfer=5000
      DrawScale=1.500000
 }
