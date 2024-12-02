@@ -373,6 +373,11 @@ function AttemptEnhance()
 		
 		VMP.CurScrap -= LastScrapCost;
 		Turret.FireRate /= 2.0;
+		Turret.MaxRange = Min(MaxInt, Turret.MaxRange*1.5);
+		if (Turret.Gun != None)
+		{
+			Turret.Gun.RotationRate *= 1.5;
+		}
 		UpdateInfo();
 	}
 }
