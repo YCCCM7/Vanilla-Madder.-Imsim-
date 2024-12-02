@@ -50,7 +50,7 @@ defaultproperties
      mpMaxRange=640
      bBlood=True
      bStickToWall=True
-     DamageType=shot
+     DamageType=sabot
      AccurateRange=640
      maxRange=1280
      spawnWeaponClass=Class'DeusEx.WeaponShuriken'
