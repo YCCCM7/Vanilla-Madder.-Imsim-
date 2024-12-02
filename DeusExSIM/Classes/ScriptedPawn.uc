@@ -4048,6 +4048,10 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	local VMDBufferPlayer VMPlayer;
 	
 	VMBP = VMDBufferPawn(Self);
+	if (VMBP != None)
+	{
+		VMPlayer = VMBP.GetLastVMP();
+	}
 	
 	// use the hitlocation to determine where the pawn is hit
 	// transform the worldspace hitlocation into objectspace
@@ -4098,22 +4102,21 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	
 	if (VMBP != None)
 	{
-		if (VMBP.bDebugFractionalDamage)
+		if ((VMBP.bDebugFractionalDamage) && (VMPlayer != None))
 		{
-			BroadcastMessage("DAMAGE 1?"@FDamage);
+			VMPlayer.ClientMessage("DAMAGE 1?"@FDamage);
 		}
 		
 		VMBP.LastInstigator = InstigatedBy;
-		VMPlayer = VMBP.GetLastVMP();
 		if (VMBP.LastWeaponDamageSkillMult >= 0)
 		{
 			FDamage *= VMBP.LastWeaponDamageSkillMult;
 			VMBP.LastWeaponDamageSkillMult = -1.0;
 		}
 		
-		if (VMBP.bDebugFractionalDamage)
+		if ((VMBP.bDebugFractionalDamage) && (VMPlayer != None))
 		{
-			BroadcastMessage("DAMAGE 2?"@FDamage);
+			VMPlayer.ClientMessage("DAMAGE 2?"@FDamage);
 		}
 		
 		TPos = VMBP.VMDGetDamageLocation(HitLocation);
@@ -4135,7 +4138,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 		
 		if (VMBP.bDebugFractionalDamage)
 		{
-			BroadcastMessage("DAMAGE 3?"@FDamage);
+			VMPlayer.ClientMessage("DAMAGE 3?"@FDamage);
 		}
 		
 		VMBP.StunLengthModifier = 0;
@@ -4169,9 +4172,9 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 			FDamage *= 0.5;
 		}
 		
-		if (VMBP.bDebugFractionalDamage)
+		if ((VMBP.bDebugFractionalDamage) && (VMPlayer != None))
 		{
-			BroadcastMessage("DAMAGE 4?"@FDamage);
+			VMPlayer.ClientMessage("DAMAGE 4?"@FDamage);
 		}
 	}
 	
@@ -4258,9 +4261,9 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 			actualDamage = 0;
 		}
 		
-		if (VMBP.bDebugFractionalDamage)
+		if ((VMBP.bDebugFractionalDamage) && (VMPlayer != None))
 		{
-			BroadcastMessage("DAMAGE 5?"@FDamage@ActualDamage);
+			VMPlayer.ClientMessage("DAMAGE 5?"@FDamage@ActualDamage);
 		}
 		
 		if (VMBP != None)
@@ -4333,17 +4336,17 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 		// gib us if we get blown up
 		if (DamageType == 'Exploded')
 		{
-			if ((VMDBufferPlayer(GetPlayerPawn()) != None) && (InstigatedBy != None) && (VMBP != None) && (class'VMDStaticFunctions'.Static.TargetIsMayhemable(Self)))
+			if ((VMPlayer != None) && (InstigatedBy != None) && (VMBP != None) && (class'VMDStaticFunctions'.Static.TargetIsMayhemable(Self)))
 			{
 				if (DeusExPlayer(InstigatedBy) != None || InstigatedBy.IsA('VMDMEGH') || InstigatedBy.IsA('VMDSIDD') || (ScriptedPawn(InstigatedBy) != None && ScriptedPawn(InstigatedBy).bReverseAlliances))
 				{
 					if (VMDBountyHunter(Self) != None)
 					{
-						VMDBufferPlayer(GetPlayerPawn()).OwedMayhemFactor -= VMDBufferPlayer(GetPlayerPawn()).MayhemGibbingValue * 4;
+						VMPlayer.OwedMayhemFactor -= VMPlayer.MayhemGibbingValue * 4;
 					}
 					else
 					{
-						VMDBufferPlayer(GetPlayerPawn()).OwedMayhemFactor += VMDBufferPlayer(GetPlayerPawn()).MayhemGibbingValue;
+						VMPlayer.OwedMayhemFactor += VMPlayer.MayhemGibbingValue;
 					}
 				}
 			}
@@ -4487,6 +4490,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	{
 		if (VMDBufferPlayer(InstigatedBy) != None)
 		{
+			IncreaseAgitation(VMDBufferPlayer(InstigatedBy), 1.0);
 			if (VMBP.bFirstSearchedForPoison)
 			{
 				SeekLevel = Clamp(SeekLevel + 2, -1, 3 + VMBP.DifficultyExtraSearchSteps);
@@ -13214,15 +13218,23 @@ State Seeking
 			{
 				MoveTarget = FindPathTo(destLoc);
 				if (MoveTarget == None)
+				{
 					bDone = true;
+				}
 				else if (bDefendHome && !IsNearHome(MoveTarget.Location))
+				{
 					bDone = true;
+				}
 				else
+				{
 					nextLoc = MoveTarget.Location;
+				}
 			}
 		}
 		else
+		{
 			bDone = true;
+		}
 		
 		return (!bDone);
 	}
@@ -13305,7 +13317,7 @@ State Seeking
 						
 						//MADDERS, 1/4/24: Within a certain range, just run up to the player, a certain amount of the time.
 						//This is because our close quarters guessing gets RUINED by fudge, not enhanced.
-						if ((FRand() < TFudge*1.1) && (VSize(VMP.Location - Location) < 480*TFudge))
+						if ((!VMP.bForceDuck) && (FRand() < TFudge*1.1) && (VSize(VMP.Location - Location) < 480*TFudge))
 						{
 							TTarget = GetNextWaypoint(VMP);
 							if (TTarget != None)
@@ -18810,6 +18822,21 @@ Begin:
 	Acceleration = vect(0,0,0);
 	
 	SpawnCarcass();
+	if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).GetLastVMP() != None))
+	{
+		if (VSize(VMDBufferPawn(Self).GetLastVMP().Location - Location) < 384 || FastTrace(VMDBufferPawn(Self).GetLastVMP().Location + (VMDBufferPawn(Self).GetLastVMP().BaseEyeHeight * Vect(0,0,1)), Location + (BaseEyeHeight * Vect(0,0,1))))
+		{
+			switch(GetPawnAllianceType(VMDBufferPawn(Self).GetLastVMP()))
+			{
+				case ALLIANCE_Hostile:
+					VMDBufferPawn(Self).GetLastVMP().VMDModPlayerStress(-25,,, true);
+				break;
+				case ALLIANCE_Friendly:
+					VMDBufferPawn(Self).GetLastVMP().VMDModPlayerStress(25,,, false);
+				break;
+			}
+		}
+	}
 	
 	//MADDERS, 4/18/24: Weirdass fucking fix for unstable nihilum bullshit related to her death. Weird.
 	if (!IsA('AlexiaNovikova'))
