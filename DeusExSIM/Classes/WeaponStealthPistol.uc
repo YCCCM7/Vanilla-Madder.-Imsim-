@@ -42,14 +42,14 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 	if (Ammo10mmHEAT(AmmoType) != None)
 	{
 		HitDamage = Default.HitDamage;
-     		PenetrationHitDamage = 6;
+     		PenetrationHitDamage = 8;
      		RicochetHitDamage = 0;
 	}
 	else if (Ammo10mmGasCap(AmmoType) != None)
 	{
-		HitDamage = 6;
+		HitDamage = 8;
      		PenetrationHitDamage = 0;
-     		RicochetHitDamage = 6;
+     		RicochetHitDamage = 8;
 	}
 	else
 	{
@@ -107,8 +107,8 @@ defaultproperties
      EvolvedBelt="SS SMG"
      AimDecayMult=16.000000
      FiringSystemOperation=1
-     PenetrationHitDamage=5
-     RicochetHitDamage=3
+     PenetrationHitDamage=7
+     RicochetHitDamage=4
      ClipsLabel="MAGS"
      GrimeRateMult=0.800000
      
