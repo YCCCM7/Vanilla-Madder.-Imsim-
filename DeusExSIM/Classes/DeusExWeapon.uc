@@ -264,7 +264,8 @@ var travel int Last20mmCount;
 var float BloodRenderMult, GrimeRenderMult, WaterRenderMult;
 var travel float GrimeLevel, WaterLogLevel, GrimeRateMult;
 var travel byte HandSkinIndex[2], SkinSwapException[8], MuzzleFlashIndex;
-var bool bReloadFromEmpty, bReloadWasntEmpty, bLastShotJammed;
+var bool bLastShotJammed;
+var travel bool bReloadFromEmpty, bReloadWasntEmpty;
 
 var float ZoomedInTime;
 
@@ -3186,6 +3187,10 @@ function VMDHandlePrimaryAmmoEffects(Actor Other, Vector L, Vector N)
 	{
 		BlastMult = 1.0;
 		if ((GoverningSkill == class'SkillWeaponRifle') && (VMDHasSkillAugment('RifleAltAmmos')))
+		{
+			BlastMult = 1.5;
+		}
+		else if ((GoverningSkill == class'SkillWeaponPistol') && (VMDHasSkillAugment('PistolAltAmmos')))
 		{
 			BlastMult = 1.5;
 		}
@@ -7735,7 +7740,7 @@ simulated function TraceFire( float Accuracy )
 	TRange = AccurateRange;
 	if (VMDIsBulletWeapon())
 	{
-		if ((Owner != None) && (Owner.Region.Zone != None) && (Owner.Region.Zone.bWaterZone))
+		if (VMDIsWaterZone())
 		{
 			TRange *= 0.35;
 		}
@@ -10440,6 +10445,9 @@ simulated function ResetShake()
 function PlaySelect()
 {
 	local float Rate;
+	local VMDBufferPlayer VMP;
+	
+	VMP = VMDBufferPlayer(Owner);
 	
 	//MADDERS: Draw speed is affected by both skill augments (heavy weapons) and being underwater.
 	Rate = 1.0;
@@ -10454,6 +10462,11 @@ function PlaySelect()
 	if ((Concealability >= CONC_Visual) && (VMDHasSkillAugment('TagTeamSmallWeapons')))
 	{
 		Rate *= 1.5;
+	}
+	//MADDERS, 12/1/24: Increase weapon swap speed for untouchable, too.
+	if ((VMDHasSkillAugment('TagTeamDodgeRoll')) && (VMP != None) && (VMP.DodgeRollCooldownTimer >= VMP.DodgeRollCooldown - 2.5))
+	{
+		Rate *= 2.0;
 	}
 	
 	//MADDERS, boost sword draw speed to make it stop sucking.
@@ -10472,6 +10485,9 @@ function PlaySelect()
 simulated function TweenDown()
 {
 	local float Rate;
+	local VMDBufferPlayer VMP;
+	
+	VMP = VMDBufferPlayer(Owner);
 	
 	//MADDERS: Draw speed is affected by both skill augments (heavy weapons) and being underwater.
 	Rate = 1.0;
@@ -10486,6 +10502,11 @@ simulated function TweenDown()
 	if ((Concealability >= CONC_Visual) && (VMDHasSkillAugment('TagTeamSmallWeapons')))
 	{
 		Rate *= 1.5;
+	}
+	//MADDERS, 12/1/24: Increase weapon swap speed for untouchable, too.
+	if ((VMDHasSkillAugment('TagTeamDodgeRoll')) && (VMP != None) && (VMP.DodgeRollCooldownTimer >= VMP.DodgeRollCooldown - 2.5))
+	{
+		Rate *= 2.0;
 	}
 	
 	//MADDERS, boost sword draw speed to make it stop sucking.
