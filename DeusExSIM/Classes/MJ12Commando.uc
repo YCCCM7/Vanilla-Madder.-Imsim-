@@ -453,6 +453,7 @@ defaultproperties
      InitialInventory(7)=(Inventory=Class'DeusEx.WeaponAssaultGunDummy')
      BurnPeriod=0.000000
      GroundSpeed=200.000000
+     Health=200
      HealthHead=200
      HealthTorso=200
      HealthLegLeft=200
