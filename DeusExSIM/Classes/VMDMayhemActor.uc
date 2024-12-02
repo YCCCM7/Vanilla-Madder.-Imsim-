@@ -1022,7 +1022,7 @@ function class<Inventory> ObtainHighLevelPickup(VMDBufferPawn TP)
 			}
 		break;
 		case 6:
-			if (TMission > 4 || TP.IsA('HumanCivilian'))
+			if ((TMission > 4) && (!TP.IsA('HumanCivilian')))
 			{
 				Ret = class'WeaponLAW';
 			}
