@@ -19,7 +19,7 @@ function ProcessVMDChanges()
  	if ((Level.TimeSeconds > 5) && (!bCrateSummoned)) return;
  	
 	VMP = VMDBufferPlayer(GetPlayerPawn());
-	if (VMP != None)
+	if ((VMP != None) && (Owner == None))
 	{
 		AltSeed[0] = class'VMDStaticFunctions'.Static.DeriveActorSeed(Self, 5, True);
 		AltSeed[1] = class'VMDStaticFunctions'.Static.DeriveActorSeed(Self, 3, True);
@@ -47,7 +47,7 @@ function ProcessVMDChanges()
 		}
 	}
 	
- 	Super.ProcessVMDChanges();
+ 	Super(DeusExAmmo).ProcessVMDChanges();
  	
  	Seed = class'VMDStaticFunctions'.Static.DeriveActorSeed(Self);
  	if ((Owner == None) && (!bCrateSummoned))
