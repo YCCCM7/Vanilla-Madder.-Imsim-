@@ -427,6 +427,7 @@ function CommitMapFixing()
 							SP.Alliance = 'Gunther';
 							SP.ChangeAlly('Gunther', 1.0, true);
 							SP.ChangeAlly('UNATCO', 1.0, true);
+							GuntherHermann(SP).bAugsGuardDown = true;
 						}
 					}
 					
@@ -620,8 +621,8 @@ function CommitMapFixing()
 									}
 								}
 							}
+							VMP.VMDClearGenerousWeaponData();
 						}
-						VMP.VMDClearGenerousWeaponData();
 						
 						for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
 						{
@@ -926,6 +927,26 @@ function CommitMapFixing()
 									SP.InitialInventory[0].Inventory = class'VialCrack';
 								}
 							}
+						}
+						
+						//MADDERS, 11/18/24: Alternatively, Paul gives us some taser slugs for being a thoroughly cool dude.
+						if ((Flags.GetBool('AmbrosiaTagged')) && (!Flags.GetBool('BatteryParkSlaughter')) && (!Flags.GetBool('SubHostageMale_Dead')) && (!Flags.GetBool('SubHostageFemale_Dead')))
+						{
+							A = Spawn(Class'Datacube',,, Vect(14,-2972,114));
+							if (A != None)
+							{
+								Datacube(A).TextPackage = "VMDText";
+								if (VMP == None || !VMP.bAssignedFemale)
+								{
+									Datacube(A).TextTag = '03_PaulThanks';
+								}
+								else
+								{
+									Datacube(A).TextTag = '03_PaulThanksFemale';
+								}
+							}
+							A = Spawn(class'AmmoTaserSlug',,, Vect(-13,-2973,123), Rot(0,32768,0));
+							A = Spawn(class'AmmoTaserSlug',,, Vect(15,-2947,123), Rot(0,-16384,0));
 						}
 						
 						forEach AllActors(class'DeusExMover', DXM)
@@ -1401,18 +1422,6 @@ function CommitMapFixing()
 							}
 							A = Spawn(class'Ammo10mmHEAT',,, Vect(-227,1292,244));
 							A = Spawn(class'Ammo10mmHEAT',,, Vect(-227,1302,244));
-						}
-						//MADDERS, 11/18/24: Alternatively, Paul gives us some taser slugs for being a thoroughly cool dude.
-						else if ((Flags.GetBool('AmbrosiaTagged')) && (!Flags.GetBool('BatteryParkSlaughter')) && (!Flags.GetBool('SubHostageMale_Dead')) && (!Flags.GetBool('SubHostageFemale_Dead')))
-						{
-							A = Spawn(Class'Datacube',,, Vect(-336,1054,270));
-							if (A != None)
-							{
-								Datacube(A).TextPackage = "VMDText";
-								Datacube(A).TextTag = '03_PaulThanks';
-							}
-							A = Spawn(class'AmmoTaserSlug',,, Vect(-367,1054,279));
-							A = Spawn(class'AmmoTaserSlug',,, Vect(-351,1054,279));
 						}
 						
 						//MADDERS, 11/1/21: LDDP branching functionality.
@@ -1957,6 +1966,10 @@ function CommitMapFixing()
 								if (!Flags.GetBool('PaulDenton_Dead'))
 								{
 									SAT.SkillPointsAdded = 1000;
+								}
+								else
+								{
+									SAT.Destroy();
 								}
 							break;
 						}
@@ -2900,8 +2913,8 @@ function CommitMapFixing()
 									}
 								}
 							}
+							VMP.VMDClearGenerousWeaponData();
 						}
-						VMP.VMDClearGenerousWeaponData();
 						
 						forEach AllActors(class'PatrolPoint', Pat)
 						{
