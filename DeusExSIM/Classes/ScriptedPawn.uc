@@ -9441,12 +9441,12 @@ function Tick(float deltaTime)
 	}
 
 /*
-	if (bDisappear && (InStasis() || (LastRendered() > 5.0)))
+	if (bDisappear && (InStasis() || LastRendered() > 5.0))
 	{
 		Destroy();
 		return;
 	}
-
+	
 	if (PrePivotTime > 0)
 	{
 		if (deltaTime < PrePivotTime)
@@ -9608,7 +9608,7 @@ function Tick(float deltaTime)
 		UpdateStanding(deltaTime);
 
 	// this is UGLY!
-	if (bOnFire && (health > 0))
+	if ((bOnFire) && (health > 0))
 	{
 		stateName = GetStateName();
 		if ((stateName != 'Burning') && (stateName != 'TakingHit') && (stateName != 'RubbingEyes'))
@@ -9624,7 +9624,9 @@ function Tick(float deltaTime)
 		}
 
 		if (CheckEnemyPresence(deltaTime, bCheckPlayer, bCheckOther))
+		{
 			HandleEnemy();
+		}
 		else
 		{
 			if (VMDBufferPawn(Self) != None)
