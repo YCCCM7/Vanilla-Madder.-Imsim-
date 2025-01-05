@@ -87,11 +87,11 @@ function float VMDGetCorrectHitDamage( float In )
 	}
 	else if (AmmoDartFlare(AmmoType) != None)
 	{
-		return 15.0;
+		return 20.0;
 	}
 	else
 	{
-		return 15.0;
+		return 20.0;
 	}
 }
 
