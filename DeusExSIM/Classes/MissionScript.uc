@@ -103,10 +103,12 @@ function FirstFrame()
 		{
 			flagName = Player.rootWindow.StringToName(P.BindName$"_Dead");
 			if (flags.GetBool(flagName))
+			{
 				P.Destroy();
+			}
 		}
 	}
-
+	
 	// Transcended - Ported, fixes crash
 	if ((dxInfo != None) && (dxInfo.MissionNumber >= 0))
 	{
