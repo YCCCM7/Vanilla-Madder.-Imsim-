@@ -919,11 +919,11 @@ defaultproperties
      StrScrapLeft="%d"
      StrCellsLeft="%dx"
      
-     ReloadButtonPos=(X=199,Y=77)
+     ReloadButtonPos=(X=199,Y=91)
      ReloadButtonSize=(X=53,Y=15)
-     UnloadButtonPos=(X=199,Y=100)
+     UnloadButtonPos=(X=199,Y=107)
      UnloadButtonSize=(X=53,Y=15)
-     SwapButtonPos=(X=311,Y=123)
+     SwapButtonPos=(X=199,Y=75)
      SwapButtonSize=(X=53,Y=15)
      RepairButtonPos=(X=147,Y=259)
      RepairButtonSize=(X=53,Y=15)
