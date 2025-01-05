@@ -102,6 +102,12 @@ function PreTravel()
 			player.drugEffectTimer = 0;
 			player.StopPoison();
 			
+			if (Flags.GetBool('AnnaNavarre_Unconscious'))
+			{
+				Flags.SetBool('AnnaNavarre_Unconscious', False,, 6);
+				Flags.SetBool('AnnaNavarre_Dead', False,, 6);
+			}
+			
 			if (!Player.IsA('GreaselPlayer'))
 			{
 				for(count=0; count < 10; count++)
@@ -163,7 +169,13 @@ function Timer()
 			{
 				PlayerLocation = Player.Location;
 				PlayerRotation = Player.Rotation;
-
+				
+				if (Flags.GetBool('AnnaNavarre_Unconscious'))
+				{
+					Flags.SetBool('AnnaNavarre_Unconscious', False,, 6);
+					Flags.SetBool('AnnaNavarre_Dead', False,, 6);
+				}
+				
 				flags.SetBool('MS_PlayerCaptured', True,, 5);
 				Player.GoalCompleted('EscapeToBatteryPark');
 				if ((Level != None) && (Level.Game != None))
@@ -175,6 +187,12 @@ function Timer()
 			{				
 				if (localURL == "04_NYC_HOTEL")
 					CheckPaulWellbeing();
+				
+				if (Flags.GetBool('AnnaNavarre_Unconscious'))
+				{
+					Flags.SetBool('AnnaNavarre_Unconscious', False,, 6);
+					Flags.SetBool('AnnaNavarre_Dead', False,, 6);
+				}
 				
 				// Transcended - Ported
 				//== Clear out the object belt now; otherwise the player will see their items being "confiscated" when they wake up in prison
