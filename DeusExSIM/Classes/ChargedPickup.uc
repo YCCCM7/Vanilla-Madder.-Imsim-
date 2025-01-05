@@ -524,7 +524,10 @@ function VMDSignalCorpseLooting()
 	if ((DXP != None) && (DXP.SkillSystem != None))
 	{
 		LootLevel = DXP.SkillSystem.GetSkillLevel(class'SkillEnviro');
-		if (VMDHasSkillAugment('EnviroLooting')) LootLevel *= 2;
+		if (VMDHasSkillAugment('EnviroLooting'))
+		{
+			LootLevel *= 2;
+		}
 		ChargePenalty = (6.0 - LootLevel) / 6.0;
 		ChargePenalty = ChargePenalty * TMaxCharge;
 	}
