@@ -1483,6 +1483,9 @@ function CommitMapFixing()
 				case "04_NYC_HOTEL":
 					if (!bRevisionMapSet)
 					{
+						//MADDERS, 11/17/24: Spawn a phone here for consistency.
+						A = Spawn(class'Phone',,, Vect(-610,-3244,96), Rot(0,32768,0));
+						
 						//MADDERS, 11/1/21: LDDP branching functionality.
 						if ((Flags != None) && (Flags.GetBool('LDDPJCIsFemale')))
 						{
@@ -3867,6 +3870,24 @@ function CommitMapFixing()
 											PivAdd = vect(0, 0, 4);
 											FrameAdd[0] = vect(0, 0, 4);
 											FrameAdd[1] = vect(0, 0, 4);
+											DXM.SetLocation(DXM.Location + LocAdd);
+											DXM.PrePivot = DXM.PrePivot + PivAdd;
+											DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+											DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										}
+									break;
+									case 7:
+										//Base of 2784, 3672, 546
+										//BEST FIT IS 2784, 3669, 546.
+										//+++++++++++++++++++++++++++++++
+										//Ignoring Z.
+										//Rotation Yaw of 16384
+										if (MoverIsLocation(DXM, vect(2784,3672,546)))
+										{
+											LocAdd = vect(3, 0, 0);
+											PivAdd = vect(0, -3, 0);
+											FrameAdd[0] = vect(3, 0, 0);
+											FrameAdd[1] = vect(3, -6, 0);
 											DXM.SetLocation(DXM.Location + LocAdd);
 											DXM.PrePivot = DXM.PrePivot + PivAdd;
 											DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
