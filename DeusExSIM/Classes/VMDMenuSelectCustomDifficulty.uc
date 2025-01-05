@@ -364,9 +364,12 @@ function LoadPreset(int PresetIndex)
 			
 			EnableAllStealthModifiers();
 			EnableAllCombatModifiers();
-			DamageSlider.SetValue(6);
-			TimerSlider.SetValue(6);
-			HPSlider.SetValue(2); //Enemies have 1.25x health. Condemned special, baby.
+			//MADDERS, 12/4/24: These are going down to gallows levels. Shocking, I know.
+			//Mercs and energy shield damage type scaling is doing its job well, though.
+			DamageSlider.SetValue(5);
+			TimerSlider.SetValue(5);
+			//MADDERS, 12/4/24: To my surprise after further testing, I honestly think this setting is no longer necessary at all.
+			//HPSlider.SetValue(2); //Enemies have 1.25x health. Condemned special, baby.
 		break;
 	}
 	
@@ -1357,7 +1360,7 @@ defaultproperties
      strDescription(23)="The minimum infamy score required to begin spawning mercenaries, if they are enabled."
      strSetting(24)="Infamy Mines"
      varSetting(24)="bMayhemGrenadesEnabled"
-     strDescription(24)="If enabled, the Infamy system will begin placing various mines around as extra obstacles, in response to high Infamy score."
+     strDescription(24)="If enabled, the Infamy system will begin placing various mines around as extra obstacles, in response to high Infamy score. One mine will appear per mission at 75 or more infamy, and a second at 100 or more infamy."
      
      OverrideSettingCaps(25)=1
      strSetting(25)=" "
