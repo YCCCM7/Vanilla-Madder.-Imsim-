@@ -1284,9 +1284,8 @@ function CommitMapFixing()
 						A.SetCollisionSize(A.Default.CollisionRadius, A.Default.CollisionHeight);
 						
 						//4/13/23: Fix for terrie commander listening to narcs too often.
-						for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+						foreach AllActors(class'ScriptedPawn', SP)
 						{
-							SP = ScriptedPawn(TPawn);
 							if ((Terrorist(SP) != None) && (Terrorist(SP).BindName ~= "TerroristLeader"))
 							{
 								Terrorist(SP).bHateDistress = False;
@@ -3095,6 +3094,24 @@ function CommitMapFixing()
 											PivAdd = vect(0, 0, 4);
 											FrameAdd[0] = vect(0, 0, 4);
 											FrameAdd[1] = vect(0, 0, 4);
+											DXM.SetLocation(DXM.Location + LocAdd);
+											DXM.PrePivot = DXM.PrePivot + PivAdd;
+											DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+											DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										}
+									break;
+									case 7:
+										//Base of 2784, 3672, 546
+										//BEST FIT IS 2784, 3669, 546.
+										//+++++++++++++++++++++++++++++++
+										//Ignoring Z.
+										//Rotation Yaw of 16384
+										if (MoverIsLocation(DXM, vect(2784,3672,546)))
+										{
+											LocAdd = vect(3, 0, 0);
+											PivAdd = vect(0, -3, 0);
+											FrameAdd[0] = vect(3, 0, 0);
+											FrameAdd[1] = vect(3, -6, 0);
 											DXM.SetLocation(DXM.Location + LocAdd);
 											DXM.PrePivot = DXM.PrePivot + PivAdd;
 											DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];

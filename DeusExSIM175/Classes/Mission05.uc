@@ -321,6 +321,7 @@ function VMDDumpItems(out Inventory ContinueItem, DeusExPlayer Player, Inventory
 	local Inventory item, nextItem;
 	local SpawnPoint SP, LastSP;
 	local DeusExAmmo DXA;
+	local DeusExPickup DXP;
 	local DeusExWeapon DXw;
 	
 	item = StartInv;
@@ -348,6 +349,7 @@ function VMDDumpItems(out Inventory ContinueItem, DeusExPlayer Player, Inventory
 				Item.DropFrom(SP.Location + LocationMod);
 			}
 			DXA = DeusExAmmo(Item);
+			DXP = DeusExPickup(Item);
 			DXW = DeusExWeapon(Item);
 			
 			// restore any ammo amounts for a weapon to default

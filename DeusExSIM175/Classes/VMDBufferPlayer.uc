@@ -4229,9 +4229,14 @@ function bool VMDOtherIsName(Actor Other, string S)
 
 function int VMDGetBloodLevel()
 {
- 	local int Ret;
+ 	local int Ret, SkillLevel;
 	local float SmellMult;
  	
+	if (SkillSystem != None)
+	{
+		SkillLevel = SkillSystem.GetSkillLevel(class'SkillLockpicking');
+	}
+	
 	//Scale smell with our augment for it now.
 	SmellMult = 1.0;
 	if (HasSkillAugment("LockpickScent"))

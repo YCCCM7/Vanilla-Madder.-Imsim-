@@ -1679,7 +1679,13 @@ function float VMDGetWeaponSkill(string SkillCat)
 
 function bool VMDHasSkillAugment(String S)
 {
-	if (VMDBufferPlayer(Owner) == None) return false;
+	local VMDBufferPlayer VMP;
+	
+	VMP = VMDBufferPlayer(Owner);
+	if (VMP == None)
+	{
+		VMP = VMDBufferPlayer(GetPlayerPawn());
+	}
 	return VMDBufferPlayer(Owner).HasSkillAugment(S);
 }
 
