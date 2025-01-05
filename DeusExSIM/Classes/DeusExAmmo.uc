@@ -414,11 +414,18 @@ function Tick(float DT)
 
 function bool VMDHasSkillAugment(Name S)
 {
-	if (VMDBufferPlayer(Owner) == None)
+	local VMDBufferPlayer VMP;
+	
+	VMP = VMDBufferPlayer(Owner);
+	if (VMP == None)
+	{
+		VMP = VMDBufferPlayer(GetPlayerPawn());
+	}
+	if (VMP == None)
 	{
 		return class'VMDSkillAugmentManager'.Static.StaticSkillAugmentAssumed(S);
 	}
-	return VMDBufferPlayer(Owner).HasSkillAugment(S);
+	return VMP.HasSkillAugment(S);
 }
 
 //MADDERS, 12/22/22: Recommendations from Han on missing functions. These might resolve crashes.

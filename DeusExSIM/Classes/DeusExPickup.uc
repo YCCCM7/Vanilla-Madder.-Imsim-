@@ -1003,7 +1003,7 @@ function bool VMDHasSkillAugment(Name S)
 	{
 		return class'VMDSkillAugmentManager'.Static.StaticSkillAugmentAssumed(S);
 	}
-	return VMDBufferPlayer(Owner).HasSkillAugment(S);
+	return VMP.HasSkillAugment(S);
 }
 
 // ----------------------------------------------------------------------
