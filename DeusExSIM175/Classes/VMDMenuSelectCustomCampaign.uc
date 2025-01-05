@@ -101,6 +101,9 @@ function CreateCampaignIcon()
 
 function CreateCampaignLists()
 {
+	local int i;
+	local VMDMissionNugget BarfStruct;
+	
 	winScroll = CreateScrollAreaWindow(winClient);
 	
 	winScroll.SetPos(CampaignListPos.X, CampaignListPos.Y);
@@ -117,6 +120,28 @@ function CreateCampaignLists()
 	
 	// First erase the old list
 	CampaignList.DeleteAllRows();
+	
+	//MADDERS, 12/11/24: Patch for change in player bind name for Zodiac AI mod. Sigh.
+	for(i=0; i<ArrayCount(KnownMissions); i++)
+	{
+		if (GetCampaignStartingMapName(i) ~= "69_ZODIAC_INTRO")
+		{
+			BarfStruct.StartingMapName = GetCampaignStartingMapName(i);
+			BarfStruct.ListedName = GetCampaignListedName(i);
+			BarfStruct.InternalName = GetCampaignInternalName(i);
+			BarfStruct.PlayerBindName = GetCampaignPlayerBindName(i);
+			if (DynamicLoadObject("ZodiacAudioMission71.ConAudioMission71_0", class'Sound', true) != None)
+			{
+				BarfStruct.PlayerBindName = "";
+			}
+			BarfStruct.DatalinkID = GetCampaignDatalinkID(i);
+			BarfStruct.MissionDesc = GetCampaignMissionDesc(i);
+			BarfStruct.IconLoadID = GetCampaignIconLoadID(i);
+			BarfStruct.IconLoadID2 = GetCampaignIconLoadID2(i);
+			SetCampaignStructData(i, BarfStruct);
+			break;
+		}
+	}
 	
 	//MADDERS: Force the first entry every time. Ugly, but that's how we're doing it.
 	StoredCampaign = "VANILLA";
@@ -514,6 +539,51 @@ function SetCampaignData(float NewDiff)
 	StoredDifficulty = NewDiff;
 	SelectedIndex = 0;
 	UpdateInfo();
+}
+
+function string GetCampaignStartingMapName(int Index)
+{
+	return KnownMissions[Index].StartingMapName;
+}
+
+function string GetCampaignListedName(int Index)
+{
+	return KnownMissions[Index].ListedName;
+}
+
+function string GetCampaignInternalName(int Index)
+{
+	return KnownMissions[Index].InternalName;
+}
+
+function string GetCampaignPlayerBindName(int Index)
+{
+	return KnownMissions[Index].PlayerBindName;
+}
+
+function string GetCampaignDatalinkID(int Index)
+{
+	return KnownMissions[Index].DatalinkID;
+}
+
+function string GetCampaignMissionDesc(int Index)
+{
+	return KnownMissions[Index].MissionDesc;
+}
+
+function string GetCampaignIconLoadID(int Index)
+{
+	return KnownMissions[Index].IconLoadID;
+}
+
+function string GetCampaignIconLoadID2(int Index)
+{
+	return KnownMissions[Index].IconLoadID2;
+}
+
+function SetCampaignStructData(int Index, VMDMissionNugget NewNugget)
+{
+	KnownMissions[Index] = NewNugget;
 }
 
 defaultproperties
