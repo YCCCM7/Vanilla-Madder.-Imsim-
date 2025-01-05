@@ -871,7 +871,7 @@ function CraftCurrentItem()
 		else
 		{
 			VMP.VMDCraftingStartCrafting(TarItem, false, (ComplexityNeeded > 0), QuanMult);
-			AddTimer(0.1, True,, 'DoPop');
+			AddTimer(0.1, False,, 'DoPop');
 		}
 	}
 }
@@ -933,7 +933,7 @@ function BreakdownCurrentItem()
 		else
 		{
 			VMP.VMDCraftingStartBreakdown(TarItem, BreakdownQuan, ModifiedScrapGain, false, false, QuanMult);
-			AddTimer(0.1, True,, 'DoPop');
+			AddTimer(0.1, False,, 'DoPop');
 		}
 	}
 }
