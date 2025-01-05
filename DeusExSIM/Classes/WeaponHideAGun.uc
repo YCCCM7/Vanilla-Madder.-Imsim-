@@ -82,7 +82,7 @@ defaultproperties
      Concealability=CONC_All //MADDERS: We're keeping it, because why else would it be the HideAGun?
      ShotTime=0.120000
      reloadTime=0.200000
-     HitDamage=26
+     HitDamage=20
      maxRange=24000
      AccurateRange=14400
      BaseAccuracy=0.000000
