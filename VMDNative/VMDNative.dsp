@@ -68,7 +68,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "VMDNATIVE_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /Zp4 /MD /W4 /WX /vd0 /GX /O2 /I ".\Inc" /I "..\Headers\Core\Inc" /I "..\Headers\Engine\Inc" /I "..\Headers\Engine\Src" /I "..\Headers\Extension\Inc" /I "..\Headers\DeusEx\Inc" /I "..\Headers\Detours1998" /D "NDEBUG" /D ThisPackage=VMDNative /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_UNICODE" /D VMDNATIVE_API=__declspec(dllexport) /FR /FD
+# ADD CPP /nologo /Zp4 /MD /W4 /WX /vd0 /GX /O2 /I ".\Inc" /I "..\Headers\Core\Inc" /I "..\Headers\Engine\Inc" /I "..\Headers\Engine\Src" /I "..\Headers\Extension\Inc" /I "..\Headers\DeusEx\Inc" /D "NDEBUG" /D ThisPackage=VMDNative /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_UNICODE" /D VMDNATIVE_API=__declspec(dllexport) /FR /FD
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -97,6 +97,10 @@ SOURCE=.\Inc\AVMDHDSpaceFix.cpp
 # Begin Source File
 
 SOURCE=.\Inc\AVMDPathRebuilder.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Inc\AVMDUnlitFixer.cpp
 # End Source File
 # Begin Source File
 

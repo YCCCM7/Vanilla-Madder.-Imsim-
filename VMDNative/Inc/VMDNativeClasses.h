@@ -39,6 +39,13 @@ public:
     NO_DEFAULT_CONSTRUCTOR(AVMDHDSpacefix)
 };
 
+class VMDNATIVE_API AVMDUnlitFixer : public AActor
+{
+public:
+    DECLARE_FUNCTION(execPatchUnlitSurfaces);
+    DECLARE_CLASS(AVMDUnlitFixer,AActor,0)
+    NO_DEFAULT_CONSTRUCTOR(AVMDUnlitFixer)
+};
 
 class VMDNATIVE_API UKentiesUIFix : public UObject
 {
@@ -53,6 +60,7 @@ public:
 
 AUTOGENERATE_FUNCTION(UKentiesUIFix,2203,execApplyScaling);
 AUTOGENERATE_FUNCTION(UKentiesUIFix,2202,execAssertHook);
+AUTOGENERATE_FUNCTION(AVMDUnlitFixer,2207,execPatchUnlitSurfaces);
 AUTOGENERATE_FUNCTION(AVMDPathRebuilder,2206,execRedefinePaths);
 AUTOGENERATE_FUNCTION(AVMDPathRebuilder,2205,execScoutSetup);
 AUTOGENERATE_FUNCTION(AVMDPathRebuilder,2204,execAllowScoutToSpawn);
