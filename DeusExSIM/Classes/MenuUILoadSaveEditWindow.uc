@@ -32,7 +32,7 @@ event InitWindow()
 
 function bool FilterChar(out string chStr)
 {
-	return ((chStr != ";") || (!bReadOnly));
+	return (chStr != ";" || (!bReadOnly && chStr != ";"));
 }
 
 // ----------------------------------------------------------------------
