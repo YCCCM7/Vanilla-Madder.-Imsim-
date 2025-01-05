@@ -74,11 +74,6 @@ function FirstFrame()
 			{
 				POVCorpse(Player.InHand).Destroy();
 			}
-			if (Flags.GetBool('AnnaNavarre_Unconscious'))
-			{
-				Flags.SetBool('AnnaNavarre_Unconscious', False,, 6);
-				Flags.SetBool('AnnaNavarre_Dead', False,, 6);
-			}
 			
 			//MADDERS: Wipe relevant smells, so we don't cause any extra hijinks.
 			VMP = VMDBufferPlayer(Player);
