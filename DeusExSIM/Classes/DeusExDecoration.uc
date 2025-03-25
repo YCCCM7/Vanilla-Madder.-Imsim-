@@ -800,18 +800,24 @@ function Explode(vector HitLocation)
 	local ScorchMark s;
 	local ExplosionLight light;
 	local int i;
-
+	local float NoiseMult;
+	
 	// make sure we wake up when taking damage
 	bStasis = False;
-
+	
 	// alert NPCs that I'm exploding
-	AISendEvent('LoudNoise', EAITYPE_Audio, , explosionRadius * 16);
-
+	NoiseMult = 1.0;
+	if (VMDBufferDeco(Self) != None)
+	{
+		NoiseMult = VMDBufferDeco(Self).VMDOpenSpaceRadiusMult(True);
+	}
+	AISendEvent('LoudNoise', EAITYPE_Audio, , explosionRadius * 16 * NoiseMult);
+	
 	if (explosionRadius <= 128)
 		PlaySound(Sound'SmallExplosion1', SLOT_None,,, explosionRadius*16);
 	else
 		PlaySound(Sound'LargeExplosion1', SLOT_None,,, explosionRadius*16);
-
+	
 	// draw a pretty explosion
 	light = Spawn(class'ExplosionLight',,, HitLocation);
 	if (explosionRadius < 128)
@@ -829,7 +835,7 @@ function Explode(vector HitLocation)
 		Spawn(class'ExplosionLarge',,, HitLocation);
 		light.size = 8;
 	}
-
+	
 	// draw a pretty shock ring
 	ring = Spawn(class'ShockRing',,, HitLocation, rot(16384,0,0));
 	if (ring != None)
@@ -840,7 +846,7 @@ function Explode(vector HitLocation)
 	ring = Spawn(class'ShockRing',,, HitLocation, rot(0,16384,0));
 	if (ring != None)
 		ring.size = explosionRadius / 32.0;
-
+	
 	// spawn a mark
 	s = spawn(class'ScorchMark', Base,, Location-vect(0,0,1)*CollisionHeight, Rotation+rot(16384,0,0));
 	if (s != None)
@@ -848,12 +854,12 @@ function Explode(vector HitLocation)
 		s.DrawScale = FClamp(explosionDamage/30, 0.1, 3.0);
 		s.ReattachDecal();
 	}
-
+	
 	// spawn some rocks
 	for (i=0; i<explosionDamage/30+1; i++)
 		if (FRand() < 0.8)
 			spawn(class'Rockchip',,,HitLocation);
-
+	
 	GotoState('Exploding');
 }
 
