@@ -3,6 +3,69 @@
 //=============================================================================
 class HazMatSuit extends ChargedPickup;
 
+var localized string ReductionStr, ReductionStr2, ImmunityStr;
+
+simulated function bool UpdateInfo(Object winObject)
+{
+	local PersonaInfoWindow winInfo;
+	local DeusExPlayer player;
+	local String outText;
+	local float TDrainRate;
+	local int i, ReductionLevel, ReductionLevel2;
+	
+	winInfo = PersonaInfoWindow(winObject);
+	if (winInfo == None)
+		return False;
+	
+	player = DeusExPlayer(Owner);
+	
+	if (player != None)
+	{
+		TDrainRate = 4;
+		if (Player.SkillSystem != None) TDrainRate *= Player.SkillSystem.GetSkillLevelValue(SkillNeeded);
+		
+		ReductionLevel = int((1.0 - VMDConfigurePickupDamageMult('Radiation', 1, Owner.Location)) * 100.0);
+		ReductionLevel2 = int((1.0 - VMDConfigurePickupDamageMult('Poison', 1, Owner.Location)) * 100.0);
+		
+		//MADDERS, 1/8/21: Update charge stacks at all times.
+		ChargeStacks[NumCopies-1] = Charge;
+		
+		winInfo.SetTitle(itemName);
+		winInfo.SetText(Description $ winInfo.CR() $ winInfo.CR() $ ImmunityStr @ SprintF(ReductionStr, ReductionLevel) @ SprintF(ReductionStr2, ReductionLevel2) $ winInfo.CR() $ winInfo.CR());
+		
+		outText = ChargeRemainingLabel$winInfo.CR();
+		if (NumCopies > 1)
+		{
+			for (i=0; i<NumCopies; i++)
+			{
+				if (bLatentChargeCost)
+				{
+					outText = OutText$"#"$((i+1))@Int(VMDGetCurrentCharge(i) + 0.5) $ "%"@ChargeLabel@SprintF(StrSecondsLeft, int((Default.Charge / (10 * TDrainRate) * VMDGetCurrentCharge(i) / 100)+0.5));
+				}
+				else
+				{
+					outText = OutText$"#"$((i+1))@Int(VMDGetCurrentCharge(i) + 0.5) $ "%"@ChargeLabel;
+				}
+				if (i < (NumCopies-1)) OutText = OutText$winInfo.CR();
+			}
+		}
+		else
+		{
+			if (bLatentChargeCost)
+			{
+				outText = OutText$Int(VMDGetCurrentCharge(0) + 0.5) $ "%"@ChargeLabel@SprintF(StrSecondsLeft, int((Default.Charge / (10 * TDrainRate) * VMDGetCurrentCharge(0) / 100)+0.5));
+			}
+			else
+			{
+				outText = OutText$Int(VMDGetCurrentCharge(0) + 0.5) $ "%"@ChargeLabel;
+			}
+		}
+		winInfo.AppendText(outText);
+	}
+	
+	return True;
+}
+
 //
 // Reduces poison gas, tear gas, and radiation damage
 //
@@ -18,9 +81,10 @@ function float VMDConfigurePickupDamageMult(name DT, int HitDamage, Vector HitLo
 	Ret = 1.0;
 	
 	DXP = DeusExPlayer(Owner);
+	VMBP = VMDBufferPawn(Owner);
 	if ((VMBP != None) && (TSkill != None))
 	{
-		Ret = (TSkill.Default.LevelValues[VMBP.EnviroSkillLevel] + 0.75) / 2;
+		Ret = (TSkill.Default.LevelValues[VMBP.EnviroSkillLevel] + 1.0) / 2;
 		
 		switch(DT)
 		{
@@ -88,7 +152,7 @@ function VMDSignalDamageTaken(int Damage, name DamageType, vector HitLocation, b
 {
 	local bool bAugmentReduction;
 	local float SkillValue;
-	local DeusExPlayer DXP;
+	local VMDBufferPlayer VMP;
 	local VMDBufferPawn VMBP;
 	local class<Skill> TSkill;
 	
@@ -98,23 +162,23 @@ function VMDSignalDamageTaken(int Damage, name DamageType, vector HitLocation, b
 	TSkill = SkillNeeded;
 	
 	VMBP = VMDBufferPawn(Owner);
-	DXP = DeusExPlayer(Owner);
-	if (DXP != None)
+	VMP = VMDBufferPlayer(Owner);
+	if (VMP != None)
 	{
 		if (VMDHasSkillAugment('EnviroDurability'))
 		{
 			bAugmentReduction = true;
 		}
-		if (DXP.SkillSystem != None)
+		if (VMP.SkillSystem != None)
 		{
 			//MADDERS: Reduce erode rate slightly based on skill level.
 			if (bAugmentReduction)
 			{
-				SkillValue = 12.0 * (Sqrt(DXP.SkillSystem.GetSkillLevelValue(TSkill)));
+				SkillValue = 12.0 * (Sqrt(VMP.SkillSystem.GetSkillLevelValue(TSkill)));
 			}
 			else
 			{
-				SkillValue = 16.0 * (Sqrt(DXP.SkillSystem.GetSkillLevelValue(TSkill)));
+				SkillValue = 16.0 * (Sqrt(VMP.SkillSystem.GetSkillLevelValue(TSkill)));
 			}
 		}
 	}
@@ -138,7 +202,14 @@ function VMDSignalDamageTaken(int Damage, name DamageType, vector HitLocation, b
 		case 'PoisonEffect':
 		case 'Poison':
 		case 'Shocked':
-			Charge -= Damage * SkillValue;
+			if (VMP != None)
+			{
+				Charge -= Max(1, Damage * SkillValue * 0.5);
+			}
+			else
+			{
+				Charge -= Max(1, Damage * SkillValue);
+			}
 		break;
 		case 'EMP':
 			if (bAugmentReduction) Charge -= Damage*5;
@@ -247,7 +318,12 @@ defaultproperties
      largeIcon=Texture'DeusExUI.Icons.LargeIconHazMatSuit'
      largeIconWidth=46
      largeIconHeight=45
-     Description="A standard hazardous materials suit that protects against a full range of environmental hazards including radiation, fire, biochemical toxins, electricity, and EMP. Hazmat suits contain an integrated bacterial oxygen scrubber that degrades over time and thus should not be reused. At base, a hazmat suit reduces poison gas and radiation by 56%, and other hazards by 34%, but grants full immunity to blinding aerosols. Any user's skill fitting the suit, however, has a strong influence on its lifetime and effectiveness."
+     Description="A standard hazardous materials suit that protects against a full range of environmental hazards including radiation, fire, biochemical toxins, electricity, and EMP. Hazmat suits contain an integrated bacterial oxygen scrubber that degrades over time and thus should not be reused."
+     
+     ReductionStr="Reduces poison gas and radiation by %d%%."
+     ReductionStr2="Reduces other hazards by %d%%."
+     ImmunityStr="Grants full immunity to blinding aerosols."
+     
      beltDescription="HAZMAT"
      Texture=Texture'DeusExItems.Skins.ReflectionMapTex1'
      Mesh=LodMesh'DeusExItems.HazMatSuit'
