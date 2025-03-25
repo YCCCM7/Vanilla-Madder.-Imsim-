@@ -668,8 +668,15 @@ function InitializeInventory()
 					}
 					
 					//MADDERS: Don't let our ammos be swapped out. Plasma keeps fucking this up, somehow.
-					if ((Weapon(Inv) != None) && (DeusExAmmo(Weapon(Inv).AmmoType) != None)) DeusExAmmo(Weapon.AmmoType).bCrateSummoned = true;
-					if (DeusExAmmo(Inv) != None) DeusExAmmo(Inv).bCrateSummoned = true;
+					if ((Weapon(Inv) != None) && (DeusExAmmo(Weapon(Inv).AmmoType) != None))
+					{
+						DeusExAmmo(Weapon.AmmoType).bCrateSummoned = true;
+					}
+					
+					if (DeusExAmmo(Inv) != None) 
+					{
+						DeusExAmmo(Inv).bCrateSummoned = true;
+					}
 					
 					if (inv != None)
 					{
@@ -689,7 +696,9 @@ function InitializeInventory()
 				}
 			}
 			if (firstWeapon != None)
+			{
 				weapons[WeaponCount++] = firstWeapon;
+			}
 		}
 	}
 	for (i=0; i<Min(200, weaponCount); i++)
@@ -703,7 +712,12 @@ function InitializeInventory()
 				weapons[i].AmmoType = spawn(weapons[i].AmmoName);
 				if (Weapons[i].AmmoType != None)
 				{
-					weapons[i].AmmoType.InitialState='Idle2';
+					//MADDERS, 2/25/25: Nerf ammo count here.
+					if (WeaponHideAGun(Weapons[i]) != None)
+					{
+						Weapons[i].AmmoType.AmmoAmount = 2;
+					}
+					weapons[i].AmmoType.InitialState = 'Idle2';
 					weapons[i].AmmoType.GiveTo(Self);
 					weapons[i].AmmoType.SetBase(Self);
 				}
@@ -810,6 +824,8 @@ function bool SetEnemy(Pawn newEnemy, optional float newSeenTime,
 	
 	if ((Robot(NewEnemy) != None) && (Robot(NewEnemy).IsInState('Disabled'))) FlagGo = False;
 	else if ((Cat(Self) == None) && (VMDBufferPawn(NewEnemy) != None) && (VMDBufferPawn(NewEnemy).bInsignificant)) FlagGo = False;
+	//MADDERS, 3/12/25: Don't allow us to attack drones when scramblered.
+	else if ((bReverseAlliances) && (VMDMEGH(NewEnemy) != None || VMDSidd(NewEnemy) != None)) FlagGo = False;
 	
 	if (FlagGo)
 	{
@@ -3950,9 +3966,18 @@ function EHitLocation HandleDamage(int actualDamage, Vector hitLocation, Vector 
 					hitPos = HITLOC_RightArmFront;
 				}
 				
-				if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).VMDCanDropWeapon()))
+				if ((VMBP != None) && (VMBP.VMDCanDropWeapon()))
 				{
-					DisarmOdds = FDamage / float(VMDBufferPawn(Self).StartingHealthValues[3]);
+					DisarmOdds = FDamage / float(VMBP.StartingHealthValues[3]);
+					if ((VMDBufferPlayer(VMBP.LastInstigator) != None) && (DeusExWeapon(VMDBufferPlayer(VMBP.LastInstigator).InHand) != None) && (DeusExWeapon(VMDBufferPlayer(VMBP.LastInstigator).InHand).VMDIsMeleeWeapon()))
+					{
+						DisarmOdds *= 2.0;
+					}
+					else if ((VMDBufferPawn(VMBP.LastInstigator) != None) && (DeusExWeapon(VMDBufferPawn(VMBP.LastInstigator).Weapon) != None) && (DeusExWeapon(VMDBufferPawn(VMBP.LastInstigator).Weapon).VMDIsMeleeWeapon()))
+					{
+						DisarmOdds *= 2.0;
+					}
+					
 					if (FRand() < DisarmOdds)
 					{
 						if (VMDBufferPawn(Self).VMDDisarmWeapon())
@@ -5734,11 +5759,11 @@ function PlayRunningAndFiring()
 	local DeusExWeapon W;
 	local vector       v1, v2;
 	local float        dotp;
-
+	
 	bIsWalking = FALSE;
-
+	
 	W = DeusExWeapon(Weapon);
-
+	
 	if (W != None)
 	{
 		if (Region.Zone.bWaterZone)
@@ -6525,7 +6550,7 @@ function bool PlayBeginAttack()
 function PlayFiring()
 {
 	local DeusExWeapon W;
-
+	
 //	ClientMessage("PlayFiring()");
 
 	W = DeusExWeapon(Weapon);
@@ -10123,7 +10148,7 @@ function bool SwitchToBestWeapon()
 					Score += 1.0;
 				}
 				//At close ranges, don't tree melee as purely a downside.
-				else if ((CurWeapon.bHandToHand) && (CurWeapon.bInstantHit) && (EnemyRange <= IdealMeleeRange))
+				else if ((CurWeapon.bHandToHand) && (CurWeapon.bInstantHit) && (EnemyRange <= IdealMeleeRange) && (EnemyRobot == None))
 				{
 					CurFallbackLevel += 1;
 				}
@@ -10337,6 +10362,13 @@ function bool SwitchToBestWeapon()
 				{
 					VMDBufferPawn(Self).VMDStartSprinting();
 				}
+			}
+		}
+		else if (BestWeapon == None)
+		{
+			if ((DeusExWeapon(Weapon).AmmoType != None) && (DeusExWeapon(Weapon).AmmoType.AmmoAmount <= 0))
+			{
+				PlayOutOfAmmoSound();
 			}
 		}
 	}
@@ -13151,25 +13183,35 @@ State Seeking
 	
 	function bool GetNextLocation(out vector nextLoc)
 	{
-		local float   dist;
+		local bool    bDone, bLOS;
+		local float   dist, seekDistance;
+		local vector  HitLocation, HitNormal, diffVect;
 		local rotator rotation;
-		local bool    bDone;
-		local float   seekDistance;
 		local Actor   hitActor;
-		local vector  HitLocation, HitNormal;
-		local vector  diffVect;
-		local bool    bLOS;
+		local VMDBufferPawn VMBP;
+		
+		VMBP = VMDBufferPawn(Self);
 		
 		if (bSeekLocation)
 		{
 			if (SeekType == SEEKTYPE_Guess)
+			{
 				seekDistance = (200+FClamp(GroundSpeed*EnemyLastSeen*0.5, 0, 1000));
+			}
 			else
+			{
 				seekDistance = 300;
+			}
 		}
 		else
+		{
 			seekDistance = 60;
+		}
 		
+		if ((VMBP != None) && (VMBP.VMDGetGuessingFudge() > 0))
+		{
+			SeekDistance = 300;
+		}
 		dist  = VSize(Location-destLoc);
 		bDone = false;
 		bLOS  = false;
@@ -13177,20 +13219,27 @@ State Seeking
 		if (dist < seekDistance)
 		{
 			bLOS = true;
-			foreach TraceVisibleActors(Class'Actor', hitActor, hitLocation, hitNormal,
-			                           destLoc, Location+vect(0,0,1)*BaseEyeHeight)
+			foreach TraceVisibleActors(Class'Actor', hitActor, hitLocation, hitNormal, destLoc, Location+vect(0,0,1)*BaseEyeHeight)
 			{
 				if (hitActor != self)
 				{
 					if (hitActor == Level)
+					{
 						bLOS = false;
+					}
 					else if (IsPointInCylinder(hitActor, destLoc, 16, 16))
+					{
 						break;
-					else if (hitActor.bBlockSight && !hitActor.bHidden)
+					}
+					else if ((hitActor.bBlockSight) && (!hitActor.bHidden))
+					{
 						bLOS = false;
+					}
 				}
 				if (!bLOS)
+				{
 					break;
+				}
 			}
 		}
 		
@@ -13200,20 +13249,60 @@ State Seeking
 			{
 				rotation = Rotator(destLoc - Location);
 				if (seekDistance == 0)
+				{
 					nextLoc = destLoc;
-				else if (!AIDirectionReachable(destLoc, rotation.Yaw, rotation.Pitch, 0, seekDistance, nextLoc))
+					if (VMBP != None)
+					{
+						VMBP.ConsecutiveShittyPaths = 0;
+					}
+				}
+				else if ((VMBP != None) && (!AIDirectionReachable(destLoc, rotation.Yaw, rotation.Pitch, 0, seekDistance, nextLoc)))
+				{
+					//MADDERS, 3/16/25: Don't do this at close range, since it'll just backtrack and fuck up.
+					if (VSize(DestLoc - Location) < 160)
+					{
+						//For now, brute force towards destination.
+						NextLoc = DestLoc;
+						VMBP.ConsecutiveShittyPaths = 0;
+					}
+					else
+					{
+						MoveTarget = VMBP.VMDFindShittyPathTo(DestLoc, Location, 300); //FindPathTo(destLoc);
+						VMBP.ConsecutiveShittyPaths += 1;
+						if (MoveTarget == None || VMBP.ConsecutiveShittyPaths > 1)
+						{
+							bDone = true;
+						}
+						else
+						{
+							nextLoc = MoveTarget.Location;
+						}
+					}
+				}
+				else if (VMBP != None)
+				{
+					VMBP.ConsecutiveShittyPaths = 0;
+				}
+				
+				if ((!bDone) && (bDefendHome) && (!IsNearHome(nextLoc)))
+				{
 					bDone = true;
-				if (!bDone && bDefendHome && !IsNearHome(nextLoc))
-					bDone = true;
+				}
 				if (!bDone)  // hack, because Unreal's movement code SUCKS
 				{
 					diffVect = nextLoc - Location;
 					if (Physics == PHYS_Walking)
+					{
 						diffVect *= vect(1,1,0);
+					}
 					if (VSize(diffVect) < 20)
+					{
 						bDone = true;
+					}
 					else if (IsPointInCylinder(self, nextLoc, 10, 10))
+					{
 						bDone = true;
+					}
 				}
 			}
 			else
@@ -13233,15 +13322,55 @@ State Seeking
 				}
 			}
 		}
+		else if (VMBP != None && VMBP.VMDGetGuessingFudge() > 0 && VMDBufferPlayer(SeekPawn) != None)
+		{
+			//MADDERS, 3/16/25: Don't do this at close range, since it'll just backtrack and fuck up.
+			if (VSize(SeekPawn.Location - Location) < 160)
+			{
+				VMBP.ConsecutiveShittyPaths = 0;
+				NextLoc = SeekPawn.Location;
+			}
+			else
+			{
+				MoveTarget = VMBP.VMDFindShittyPathTo(SeekPawn.Location, Location, 300, true);
+				VMBP.ConsecutiveShittyPaths += 1;
+				if ((MoveTarget != None) && (VMBP.ConsecutiveShittyPaths < 2))
+				{
+					NextLoc = MoveTarget.Location;
+					diffVect = nextLoc - Location;
+					if (Physics == PHYS_Walking)
+					{
+						diffVect *= vect(1,1,0);
+					}
+					if (VSize(diffVect) < 20)
+					{
+						bDone = true;
+					}
+					else if (IsPointInCylinder(self, nextLoc, 10, 10))
+					{
+						bDone = true;
+					}
+				}
+				else
+				{
+					VMBP.ConsecutiveShittyPaths = 0;
+					bDone = true;
+				}
+			}
+		}
 		else
 		{
+			if (VMBP != None)
+			{
+				VMBP.ConsecutiveShittyPaths = 0;
+			}
 			bDone = true;
 		}
 		
 		return (!bDone);
 	}
 	
-	function bool PickDestination()
+	function PickDestination()
 	{
 		local bool bValid;
 		
@@ -13267,7 +13396,7 @@ State Seeking
 			}
 		}
 		
-		return (bValid);
+		//return (bValid);
 	}
 	
 	function bool PickDestinationBool()
@@ -13304,14 +13433,7 @@ State Seeking
 				VMP = VMDBufferPlayer(SeekPawn);
 				if ((VMBP != None) && (VMP != None))
 				{
-					if (PoisonCounter > 0)
-					{
-						TFudge = FClamp(VMBP.EnemyGuessingFudge + VMBP.PoisonGuessingFudge, 0.0, VMBP.MaxGuessingFudge);
-					}
-					else
-					{
-						TFudge = FClamp(VMBP.EnemyGuessingFudge, 0.0, VMBP.MaxGuessingFudge);
-					}
+					TFudge = VMBP.VMDGetGuessingFudge();
 					
 					if (TFudge > 0)
 					{
@@ -13360,7 +13482,14 @@ State Seeking
 						
 						if (!TryLocation(DestLoc))
 						{
-							DestLoc = OldLoc;
+							if (FindPathTo(DestLoc) != None)
+							{
+								DestLoc = FindPathTo(DestLoc).Location;
+							}
+							else
+							{
+								DestLoc = OldLoc;
+							}
 						}
 					}
 				}
@@ -13378,14 +13507,14 @@ State Seeking
 		local int             yaw;
 		local rotator         rot;
 		local float           yawCutoff;
-
+		
 		if (focus <= 0)
 			focus = 0.6;
-
+		
 		yawCutoff = int(32768*focus);
 		bestPoint = None;
 		bestScore = 0;
-
+		
 		foreach ReachablePathnodes(Class'NavigationPoint', navPoint, None, distance)
 		{
 			if (distance < 1)
@@ -13524,6 +13653,10 @@ State Seeking
 		if ((NextLabel != 'ContinueFromDoor') && (NextState != 'Seeking')) // Transcended - Don't stop while falling or opening doors
 		{
 			SeekLevel = 0;
+		}
+		if (VMDBufferPawn(Self) != None)
+		{
+			VMDBufferPawn(Self).ConsecutiveShittyPaths = 0;
 		}
 	}
 
@@ -14968,7 +15101,11 @@ State Attacking
 		else if (Weapon == None)
 		{
 			//MADDERS, 3/17/21: Don't do this anymore, as this gets weird with pickpocketing.
-			//bOutOfAmmo = True;
+			//MADDERS, 3/1/25: We're back thanks to a check for owning a weapon.
+			if (FindInventoryType(class'Weapon') != None)
+			{
+				bOutOfAmmo = True;
+			}
 			bNoWeapon = true;
 		}
 		else if (Weapon.ReloadCount > 0)
@@ -18536,19 +18673,25 @@ RubEyes:
 	PlayRubbingEyes();
 	if (VMDBufferPawn(Self) != None)
 	{
+		Acceleration = vect(0, 0, 0);
 		Sleep(5+VMDBufferPawn(Self).StunLengthModifier);
 	}
 	else
 	{
+		Acceleration = vect(0, 0, 0);
 		Sleep(10);
 	}
 RubEnd:
 	PlayRubbingEyesEnd();
 	FinishAnim();
 	if (HasNextState())
+	{
 		GotoNextState();
+	}
 	else
+	{
 		GotoState('Wandering');
+	}
 }
 
 
