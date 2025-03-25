@@ -345,7 +345,8 @@ defaultproperties
      MsgRechargedBot="%d points added to medbot's remaining healing."
      HealingLeft=600
      HitboxArchetype="Roller"
-          
+     bInsignificant=True
+     
      healAmount=300
      healRefreshTime=60
      mphealRefreshTime=30
