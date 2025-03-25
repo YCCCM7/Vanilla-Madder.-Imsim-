@@ -6,7 +6,7 @@ class MenuMainInGame extends MenuUIMenuWindow;
 
 var string TitleForced;
 var localized string TitleScreenMessage;
-var localized string GallowsSaveGameLabel, CondemnedSaveGameLabel, CondemnedLoadGameLabel;
+var localized string GallowsSaveGameLabel, CondemnedSaveGameLabel, CondemnedLoadGameLabel, CondemnedNoLoadGameLabel;
 
 // ----------------------------------------------------------------------
 // InitWindow()
@@ -28,6 +28,7 @@ event InitWindow()
 
 function UpdateButtonStatus()
 {
+	local string TarDir;
 	local DeusExLevelInfo info;
 	local VMDBufferPlayer VMP;
 	
@@ -53,8 +54,17 @@ function UpdateButtonStatus()
 	{
 		WinButtons[1].SetButtonText(CondemnedSaveGameLabel);
 		WinButtons[1].SetSensitivity(False);
-		WinButtons[2].SetButtonText(CondemnedLoadGameLabel);
-		WinButtons[2].SetSensitivity(False);
+		TarDir = GetConfig("Core.System", "SavePath")$"/Save9999";
+		if (class'VMDFileFinder'.Static.FindFileAt(TarDir))
+		{
+			WinButtons[2].SetButtonText(CondemnedLoadGameLabel);
+			WinButtons[2].SetSensitivity(False);
+		}
+		else
+		{
+			WinButtons[2].SetButtonText(CondemnedNoLoadGameLabel);
+			WinButtons[2].SetSensitivity(False);
+		}
 	}
 	else if ((VMP != None) && (class'VMDStaticFunctions'.Static.UseGallowsSaveGate(VMP)) && (VMP.GallowsSaveGateTimer > 1.0))
 	{
@@ -200,7 +210,8 @@ defaultproperties
      TitleScreenMessage="Return to Main Menu? All unsaved progress will be lost!"
      GallowsSaveGameLabel="Save Game (%ds)"
      CondemnedSaveGameLabel="CONDEMNED"
-     CondemnedLoadGameLabel="---------"
+     CondemnedLoadGameLabel="HAS SAVE"
+     CondemnedNoLoadGameLabel="NO SAVE"
      
      ButtonNames(0)="Main Menu"
      ButtonNames(1)="Save Game"
