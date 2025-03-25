@@ -17,7 +17,7 @@ defaultproperties
      Mass=0.160000
      bShowInfo=True
      AmmoAmount=4
-     MaxAmmo=40
+     MaxAmmo=48
      ItemName="Darts"
      ItemArticle="some"
      PickupViewMesh=LodMesh'DeusExItems.AmmoDart'
