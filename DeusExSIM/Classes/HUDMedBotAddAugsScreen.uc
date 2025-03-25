@@ -439,6 +439,11 @@ function InstallAugmentation()
 	}
 	else
 	{
+		if (Aug == None || Aug.bDeleteMe)
+		{
+			return;
+		}
+		
 		WinInfo.SetText(InstalledText);
 		player.AugmentationSystem.GivePlayerAugmentation(Aug.class);
 		
@@ -457,7 +462,7 @@ function InstallAugmentation()
 	}
 	
 	// Now Destroy the Augmentation cannister
-	if ((Player != None) && (AugCan != None) && (!AugCan.bDeleteMe))
+	if ((AugCan != None) && (!AugCan.bDeleteMe))
 	{
 		Player.DeleteInventory(AugCan);
 	}
@@ -475,8 +480,7 @@ function InstallAugmentation()
 	CreateAugmentationButtons();
 	
 	// Need to update the aug list
-	//PopulateAugCanList();
-	AddTimer(0.05, False,, 'PopulateAugCanList');
+	PopulateAugCanList();
 	
 	//Added this in because of my upgrade stuff -- Y|yukichigai
 	if (BtnInstall != None)
@@ -601,6 +605,8 @@ function InstallPendingAugmentationBarf()
 	InstallAugmentation();
 	
 	TAug.HotKeyNum = hkey;
+	//MADDERS, 3/10/25: Place this here to stop fucking around.
+	ClearAugmentationButtons();
 	Super.CreateAugmentationButtons();
 	selectedAug = None;
 	selectedAugButton = None;
