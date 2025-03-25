@@ -86,6 +86,7 @@ function bool ButtonActivated( Window buttonPressed )
 function CreateMenuButtons()
 {
 	local int buttonIndex;
+	local string TarDir;
 	local VMDBufferPlayer VMP;
 	
 	VMP = VMDBufferPlayer(Player);
@@ -99,30 +100,51 @@ function CreateMenuButtons()
 				ButtonDefaults[0].Action = MA_MenuScreen;
 				ButtonDefaults[0].Invoke = Class'MenuMainForceQuit';
 			}
-			if ((VMP != None) && (ButtonIndex == 1) && (class'VMDStaticFunctions'.Static.UseGallowsSaveGate(VMP)))
+			winButtons[buttonIndex] = MenuUIMenuButtonWindow(winClient.NewChild(Class'MenuUIMenuButtonWindow'));
+			
+			winButtons[buttonIndex].SetButtonText(ButtonNames[buttonIndex]);
+			winButtons[buttonIndex].SetPos(buttonXPos, buttonDefaults[buttonIndex].y);
+			winButtons[buttonIndex].SetWidth(buttonWidth);
+			
+			if ((VMP != None) && (class'VMDStaticFunctions'.Static.UseGallowsSaveGate(VMP)))
 			{
 				if (VMP.GallowsSaveGateTime > 1000)
 				{
 					if (Class.Name == 'MyMainMenu' || Class.Name == 'TCPMenuMain')
 					{
-						WinButtons[1].SetButtonText(SprintF(HackMainMenuText[1], int(VMP.GallowsSaveGateTimer+0.99)));
-						WinButtons[1].SetSensitivity(False);
+						if ((WinButtons[1] != None) && (ButtonIndex == 1))
+						{
+							WinButtons[1].SetButtonText(HackMainMenuText[2]);
+							WinButtons[1].SetSensitivity(False);
+						}
+						else if ((WinButtons[2] != None) && (ButtonIndex == 2))
+						{
+							TarDir = GetConfig("Core.System", "SavePath")$"/Save9999";
+							if (class'VMDFileFinder'.Static.FindFileAt(TarDir))
+							{
+								WinButtons[2].SetButtonText(HackMainMenuText[3]);
+								WinButtons[2].SetSensitivity(False);
+							}
+							else
+							{
+								WinButtons[2].SetButtonText(HackMainMenuText[4]);
+								WinButtons[2].SetSensitivity(False);
+							}
+						}
 					}
 				}
 				else if (VMP.GallowsSaveGateTimer > 1.0)
 				{
 					if (Class.Name == 'MyMainMenu' || Class.Name == 'TCPMenuMain')
 					{
-						WinButtons[1].SetButtonText(SprintF(HackMainMenuText[1], int(VMP.GallowsSaveGateTimer+0.99)));
-						WinButtons[1].SetSensitivity(False);
+						if ((WinButtons[1] != None) && (ButtonIndex == 1))
+						{
+							WinButtons[1].SetButtonText(SprintF(HackMainMenuText[1], int(VMP.GallowsSaveGateTimer+0.99)));
+							WinButtons[1].SetSensitivity(False);
+						}
 					}
 				}
 			}
-			winButtons[buttonIndex] = MenuUIMenuButtonWindow(winClient.NewChild(Class'MenuUIMenuButtonWindow'));
-			
-			winButtons[buttonIndex].SetButtonText(ButtonNames[buttonIndex]);
-			winButtons[buttonIndex].SetPos(buttonXPos, buttonDefaults[buttonIndex].y);
-			winButtons[buttonIndex].SetWidth(buttonWidth);
 		}
 		else
 		{
@@ -167,4 +189,6 @@ defaultproperties
      HackMainMenuText(0)="Main Menu"
      HackMainMenuText(1)="Save Game (%ds)"
      HackMainMenuText(2)="CONDEMNED"
+     HackMainMenuText(3)="HAS SAVE"
+     HackMainMenuText(4)="NO SAVE"
 }
