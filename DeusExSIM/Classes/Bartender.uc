@@ -5,6 +5,7 @@ class Bartender extends HumanCivilian;
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      FamiliarName="Bartender" // Transcended - Added
      CarcassType=Class'DeusEx.BartenderCarcass'
      WalkingSpeed=0.296000
