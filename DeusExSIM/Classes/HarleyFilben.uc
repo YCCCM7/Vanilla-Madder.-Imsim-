@@ -5,6 +5,7 @@ class HarleyFilben extends HumanCivilian;
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      CarcassType=Class'DeusEx.HarleyFilbenCarcass'
      WalkingSpeed=0.213333
      walkAnimMult=0.750000

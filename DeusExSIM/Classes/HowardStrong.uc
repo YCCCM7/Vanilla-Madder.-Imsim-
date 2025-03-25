@@ -5,6 +5,7 @@ class HowardStrong extends HumanCivilian;
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      CarcassType=Class'DeusEx.HowardStrongCarcass'
      WalkingSpeed=0.296000
      bImportant=True

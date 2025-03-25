@@ -5,6 +5,7 @@ class JordanShea extends HumanCivilian;
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      bAugsGuardDown=True
      Energy=75
      EnergyMax=75

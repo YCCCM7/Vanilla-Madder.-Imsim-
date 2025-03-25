@@ -5,6 +5,7 @@ class NathanMadison extends HumanCivilian;
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      CarcassType=Class'DeusEx.NathanMadisonCarcass'
      WalkingSpeed=0.213333
      bImportant=True

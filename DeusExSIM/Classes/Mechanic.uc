@@ -5,6 +5,7 @@ class Mechanic extends HumanCivilian;
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      CarcassType=Class'DeusEx.MechanicCarcass'
      WalkingSpeed=0.296000
      walkAnimMult=0.780000

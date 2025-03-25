@@ -42,6 +42,7 @@ function VMDRandomizeAppearance()
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      CarcassType=Class'DeusEx.SailorCarcass'
      WalkingSpeed=0.213333
      walkAnimMult=0.750000

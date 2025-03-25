@@ -5,6 +5,7 @@ class TiffanySavage extends HumanCivilian;
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      CarcassType=Class'DeusEx.TiffanySavageCarcass'
      WalkingSpeed=0.320000
      bImportant=True
