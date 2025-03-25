@@ -27,6 +27,7 @@ var HUDReceivedDisplay				receivedItems;
 var HUDMultiSkills					hms;
 
 //MADDERS ADDITIONS!
+var VMDHUDDroneIndicator DroneInd;
 var VMDHitIndicator HitInd;
 var VMDHUDSmellIcons Smell;
 var VMDHUDLightGem LightGem;
@@ -71,8 +72,11 @@ event InitWindow()
 	Smell = VMDHUDSmellIcons(NewChild(Class'VMDHUDSmellIcons'));
 	//Smell.Show(False);
 	
+	DroneInd = VMDHUDDroneIndicator(NewChild(class'VMDHUDDroneIndicator'));
+	//DroneInd.SetVisibility(False);
+	
 	LightGem = VMDHUDLightGem(NewChild(class'VMDHUDLightGem'));
-		
+	
 	// Create the InformationWindow
 	info = HUDInformationDisplay(NewChild(Class'HUDInformationDisplay', False));
 
@@ -145,6 +149,8 @@ event DescendantRemoved(Window descendant)
 	//MADDERS: Clear these, too.
 	else if (descendant == HitInd)
 		HitInd = None;
+	else if (descendant == DroneInd)
+		DroneInd = None;
 	else if (descendant == Smell)
 		Smell = None;
 	else if (descendant == LightGem)
@@ -185,6 +191,12 @@ function ConfigurationChanged()
 	if ((string(Class) ~= "FGRHK.MyGameHUD") && (!bNihilumSetup))
 	{
 		bNihilumSetup = true;
+		if (DroneInd == None)
+		{
+			//MADDERS, 2/24/25: Also have this now.
+			DroneInd = VMDHUDDroneIndicator(NewChild(Class'VMDHUDDroneIndicator'));
+			//DroneInd.SetVisibility(False);
+		}
 		if (HitInd == None)
 		{
 			//MADDERS: Have a hit indicator now!
@@ -201,6 +213,8 @@ function ConfigurationChanged()
 		{
 			LightGem = VMDHUDLightGem(NewChild(class'VMDHUDLightGem'));
 		}
+		AddTimer(0.01, True,, 'ClearConfiguring');
+		class'VMDNative.VMDNihilumCleaner'.Static.SilenceNihilum();
 	}
 	
 	if (ammo != None)
@@ -247,6 +261,12 @@ function ConfigurationChanged()
 	{
 		HitInd.QueryPreferredSize(qWidth, qHeight);
 		HitInd.ConfigureChild((width-qWidth)*0.5+0.5, (height-qHeight)*0.5+0.5, qWidth, qHeight);
+	}
+	
+	if (DroneInd != None)
+	{
+		DroneInd.QueryPreferredSize(qWidth, qHeight);
+		DroneInd.ConfigureChild((width-qWidth)*0.5 + 48, (Height-QHeight) * 0.5 - 48, qWidth, qHeight);
 	}
 	//MADDERS: Configure smells!
 	/*if (Smell != None)
@@ -575,11 +595,13 @@ function UpdateSettings( DeusExPlayer player )
 	VMP = VMDBufferPlayer(Player);
 	if (VMP != None)
 	{
+		//DroneInd.SetVisibility(Player.bDroneAllianceVisible);
 		Smell.SetVisibility(VMP.bSmellIndicatorVisible);
 		LightGem.SetVisibility(VMP.bLightGemVisible);
 	}
 	else
 	{
+		//DroneInd.SetVisibility(false);
 		Smell.SetVisibility(false);
 		LightGem.SetVisibility(false);
 	}
