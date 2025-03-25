@@ -5,6 +5,7 @@ class StantonDowd extends HumanCivilian;
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      CarcassType=Class'DeusEx.StantonDowdCarcass'
      WalkingSpeed=0.213333
      bImportant=True

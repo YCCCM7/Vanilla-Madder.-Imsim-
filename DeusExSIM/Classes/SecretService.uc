@@ -5,6 +5,7 @@ class SecretService extends HumanCivilian;
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      CarcassType=Class'DeusEx.SecretServiceCarcass'
      WalkingSpeed=0.213333
      walkAnimMult=0.750000

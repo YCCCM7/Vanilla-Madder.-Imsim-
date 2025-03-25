@@ -18,6 +18,7 @@ function GotoDisabledState(name damageType, EHitLocation hitPos)
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      bDoesntSniff=True
      SmellTypes(0)=None
      SmellTypes(1)=None
