@@ -1389,6 +1389,7 @@ function bool WillTakeStompDamage(Actor stomper)
 defaultproperties
 {
      bFearEMP=True
+     bCanGrabWeapons=False
      bCanClimbLadders=False
      bRobotVision=True
      bAerosolImmune=True
