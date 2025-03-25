@@ -1127,8 +1127,9 @@ function ResetFlags()
 				if (InStr(flagStringName, "SKTemp_") == -1)
 					DeusExPlayer(parentPawn).flagBase.DeleteFlag(lastFlagName, lastFlagType);
 			}
-
+			
 			lastFlagName = flagName;
+ 			lastFlagType = flagType;    // This is new
 
 		} until(lastFlagName == '')
 
@@ -1275,6 +1276,7 @@ function bool ShouldNegatePause(class<Window> InvokeClass)
 			case 'MenuMain':
 			case 'MenuMainInGame':
 			case 'VMDMenuAugsSelector':
+			case 'VMDMenuHealthSelector':
 			case 'VMDMenuSelectNGPlusOptions': //MADERS, 4/3/24: Best not die doing NG plus.
 			case 'MyMenuMain': //MADDERS, 3/25/24: Hello, Nihilum.
 			case 'MyMainMenu':
