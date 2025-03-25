@@ -50,7 +50,7 @@ defaultproperties
      DamageType=Flamed
      AccurateRange=320
      maxRange=320
-     bIgnoresNanoDefense=False //MADDERS: Used to be true.
+     bIgnoresNanoDefense=True //MADDERS: Used to be false, and true before that.
      ItemName="Fireball"
      ItemArticle="a"
      speed=1000.000000
