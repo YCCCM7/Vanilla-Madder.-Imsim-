@@ -438,46 +438,47 @@ function CreateAugmentationButtons()
 	defaultCount = 0;
 	
 	//MADDERS, 1/4/24: So aug overrides stop stacking buttons, thank you.
-	ClearAugmentationButtons();
+	//MADDERS, 3/10/25: This being called here causes issues if we AREN'T stacking buttons. Ugh.
+	//ClearAugmentationButtons();
 	
 	// Iterate through the augmentations, creating a unique button for each
 	anAug = player.AugmentationSystem.FirstAug;
-	while(anAug != None)
+	while((anAug != None) && (!AnAug.bDeleteMe))
 	{
 		if (( anAug.AugmentationName != "" ) && ( anAug.bHasIt ))
 		{
 			slotIndex = 0;
 			augX = augLocs[int(anAug.AugmentationLocation)].x;
 			augY = augLocs[int(anAug.AugmentationLocation)].y;
-
+			
 			// Show the highlight graphic for this augmentation slot as long
 			// as it's not the Default slot (for which there is no graphic)
-
+			
 			if (anAug.AugmentationLocation < arrayCount(augHighlightWindows))
 				augHighlightWindows[anAug.AugmentationLocation].Show();
-
+			
 			if (int(anAug.AugmentationLocation) == 2)			// Torso
 			{
 				slotIndex = torsoCount;
 				augY += (torsoCount++ * augSlotSpacingY);
 			}
-
+			
 			if (int(anAug.AugmentationLocation) == 5)			// Subdermal
 			{
 				slotIndex = skinCount;
 				augY += (skinCount++ * augSlotSpacingY);
 			}
-
+			
 			if (int(anAug.AugmentationLocation) == 6)			// Default
 				augX += (defaultCount++ * augSlotSpacingX);
-
+			
 			augItems[augCount] = CreateAugButton(anAug, augX, augY, slotIndex);
-
+			
 			// If the augmentation is active, make sure the button draws it 
 			// appropriately
-
+			
 			augItems[augCount].SetActive(VMDExtractActiveValue(anAug));
-				
+			
 			augCount++;
 		}
 
@@ -805,12 +806,14 @@ function ActivateAugmentation()
 function UseCell()
 {
 	local BioelectricCell bioCell;
-
+	
 	bioCell = BioelectricCell(player.FindInventoryType(Class'BioelectricCell'));
-
+	
 	if (bioCell != None)
+	{
 		bioCell.Activate();
-		
+	}
+	
 	UpdateBioCells();
 	EnableButtons();
 }
