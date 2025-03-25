@@ -668,14 +668,21 @@ function int HealPart(PersonaHealthRegionWindow region, optional float pointsToH
 
 	if (pointsToHeal == 0)
 		pointsToHeal = player.CalculateSkillHealAmount(medKit.healAmount);
-
+	
 	// Heal the selected body part by the number of 
 	// points available in the part
-
+	
 	ModMult = 1.0;
-	if ((VMDBufferPlayer(Player) != None) && (VMDBufferPlayer(Player).ModHealthMultiplier > 0))
+	if (VMDBufferPlayer(Player) != None)
 	{
-		ModMult = VMDBufferPlayer(Player).ModHealthMultiplier;
+		if (VMDBufferPlayer(Player).ModHealthMultiplier > 0)
+		{
+			ModMult *= VMDBufferPlayer(Player).ModHealthMultiplier;
+		}
+		if (VMDBufferPlayer(Player).KSHealthMult < 1.0)
+		{
+			ModMult *= VMDBufferPlayer(Player).KSHealthMult;
+		}
 	}
 	
 	// If our player is in a multiplayer game, heal across 3 hit locations
@@ -873,7 +880,7 @@ function VMDShowStatusInfo()
 		MayhemMod, MayhemForgive, THeal,
 		SmellUnits, SmellUnitsThresh[2], SkillLevel,
 		i;
-	local float OverdoseWeight, BurnTime, KSTime, KSTimeLeft, HungerTimeLeft, HungerPercent, SmellMults[2], DMult, SkillValue, SkillValue2, TMath;
+	local float OverdoseWeight, BurnTime, KSTime, KSTimeLeft, HungerTimeLeft, HungerPercent, SmellMults[2], DMult, DMult2, SkillValue, SkillValue2, TMath;
 	local string TStr[2], KSBarfStr[2], StressBarfStr;
 	local VMDBufferPlayer VMP;
 	local VMDFakeBuffAura Auras[6];
@@ -891,8 +898,17 @@ function VMDShowStatusInfo()
 	SkillValue2 = (SkillValue + 0.75) / 2;
 	
 	DMult = 1.0;
-	if (VMP.CombatDifficulty < 1.0) DMult = VMP.CombatDifficulty;
-		
+	DMult2 = 1.0;
+	if (VMP.CombatDifficulty < 1.0)
+	{
+		DMult = VMP.CombatDifficulty;
+		DMult2 = VMP.CombatDifficulty;
+	}
+	if (VMP.CombatDifficulty >= 1.0)
+	{
+		DMult2 = (VMP.CombatDifficulty ** (1.0 / 3));
+	}
+	
 	if (VMP.Level.NetMode != NM_Standalone)
 	{
 		BurnTime = Class'WeaponFlamethrower'.Default.MPBurnTime;
@@ -966,7 +982,7 @@ function VMDShowStatusInfo()
 	if (BurnTimeInt > 0)
 	{
 		TStr[0] = StrFireDesc[0];
-		TStr[1] = SprintF(StrFireDesc[1], BurnTimeInt, int(BurnDamage*2.0*DMult), BurnTimeInt);
+		TStr[1] = SprintF(StrFireDesc[1], BurnTimeInt, int(BurnDamage*2.0*DMult2), BurnTimeInt);
 		AddStatusListing(Texture'StatusIconFire', TStr[0]$CR()$TStr[1]);
 	}
 	//3. Nanovirus
@@ -1208,6 +1224,10 @@ function VMDShowStatusInfo()
 		{
 			SmellMults[0] = 1.25 + (0.25 * SkillLevel);
 			SmellMults[1] = 1.15 + (0.15 * SkillLevel);
+		}
+		if (VMP.IsA('MadIngramPlayer'))
+		{
+			SmellMults[1] *= 1.65;
 		}
 		
 		//9. If blood smell is too high, list it.
