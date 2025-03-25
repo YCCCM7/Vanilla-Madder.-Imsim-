@@ -132,7 +132,7 @@ function Deactivate()
 
 defaultproperties
 {
-     EnergyRate=25.000000
+     EnergyRate=20.000000
      MaxLevel=0
      Icon=Texture'DeusExUI.UserInterface.AugIconHeartLung'
      smallIcon=Texture'DeusExUI.UserInterface.AugIconHeartLung_Small'
