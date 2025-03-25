@@ -1191,6 +1191,35 @@ function VMDWeaponPostBeginPlayHook()
 		RotatedIcon = Texture'LargeSGParaIconRotated';
 		FiringSystemOperation = 2;
 	}
+	//8 damage assault gun? Are you on crack? How is this still unnerfed?
+	else if (IsA('WeaponTakaraGun'))
+	{
+		AmmoNames[0] = class'Ammo762mm';
+		NumFiringModes = 2;
+		FiringModes[0] = "Full Auto";
+		FiringModes[1] = "Semi Auto";
+		ModeNames[0] = "Full Auto";
+		ModeNames[1] = "Semi Auto";
+		OverrideAnimRate = 1.75;
+		
+		BulletHoleSize = 0.175;
+		SemiautoFireSound = Sound'AssaultGunSemi';
+		SilencedFireSound = Sound'AssaultGunFireSilenced';
+		AimDecayMult = 4.0;
+		AimFocusMult = 1.25;
+    		FiringSystemOperation = 1;
+		HitDamage = 5;
+    		PenetrationHitDamage = HitDamage * 0.8;
+    		RicochetHitDamage = HitDamage * 0.4;
+		
+		BoltStartSound = Sound'SawedOffShotgunReload';
+		BoltEndSound = Sound'RifleReloadEnd';
+		BoltActionDelay = 1.200000;
+		BoltStartSeq = 'ReloadBegin';
+		BoltDelaySeq = 'Reload';
+		BoltEndSeq = 'ReloadEnd';
+		BoltActionRate = 1.250000;
+	}
 }
 
 function VMDSignalDamageTaken(int Damage, name DamageType, vector HitLocation, bool bCheckOnly);
@@ -1498,6 +1527,23 @@ function VMDReloadCompleteHook()
 //Grenade launcher related, and also for mod support.
 function bool VMDHandleParallelAmmoFeed(class<Ammo> RelAmmoType, Ammo NewAmmo, int AmmoIndex)
 {
+	if (IsA('WeaponTakaraGun'))
+	{
+		if ((ClipCount >= 0) && (VMDIsQuickSwapAmmo(RelAmmoType)))
+		{
+			//MADDERS: Hack for 20mm preservation.
+			Last20mmCount = NewAmmo.AmmoAmount;
+			ClipCount -= NewAmmo.AmmoAmount;
+		}
+		else if ((RelAmmoType == class'Ammo762mm') && (VMDIsQuickSwapAmmoFA(AmmoType)))
+		{
+			//MADDERS: Hack for denying cycle ammo during firing.
+			if (VMDShotTimeProgression() < 1.0) return False;
+			
+			ClipCount += AmmoType.AmmoAmount;
+		}
+	}
+	
 	//MADDERS: This shouldn't be called normally. See WeaponAssaultGun for examples.
 	return false;
 }
@@ -1511,6 +1557,11 @@ function bool VMDHasSelectiveFiringObjection()
 
 function bool VMDHasParallelAmmoFeed()
 {
+	if (IsA('WeaponTakaraGun'))
+	{
+		return true;
+	}
+	
 	//MADDERS: This shouldn't be called normally. See WeaponAssaultGun for examples.
 	//20mm function overhaul is in there, so we're not fucking with that ick factor here.
 	
@@ -1686,7 +1737,7 @@ function bool VMDHasSkillAugment(String S)
 	{
 		VMP = VMDBufferPlayer(GetPlayerPawn());
 	}
-	return VMDBufferPlayer(Owner).HasSkillAugment(S);
+	return VMP.HasSkillAugment(S);
 }
 
 function string VMDGetPlayerCampaign()
@@ -2682,6 +2733,13 @@ function bool VMDHasReloadObjection()
 	if ((IsInState('NormalFire')) && (bSingleLoaded) && (ClipCount < ReloadCount))
 		return true;
 	
+	if (IsA('WeaponTakaraGun'))
+	{
+		//MADDERS: Cockblock 20mm reloads.
+		if (VMDIsQuickSwapAmmoFA(AmmoType))
+			return true;
+	}
+	
 	if ((VMDIsQuickSwapAmmoFA(AmmoType)) && (ClipCount < ReloadCount))
 		return true;
 	
@@ -2851,6 +2909,24 @@ function VMDAlertAmmoLoad( bool bInstant )
 
 function VMDAlertPostAmmoLoad( bool bInstant )
 {
+	if (IsA('WeaponTakaraGun'))
+	{
+		//MADDERS: Change our fire sound, operation type, and low ammo water mark.
+		if (Ammo762mm(AmmoType) != None)
+		{
+			SilencedFireSound = Default.SilencedFireSound;
+			bBoltAction = false;
+     			LowAmmoWaterMark = 30;
+		}
+		else
+		{
+			//MADDERS: Hack for silenced GL handling.
+ 			SilencedFireSound = Sound'AssaultGunFire20mm';
+			bBoltAction = true;
+    			LowAmmoWaterMark = 4;
+		}
+		ShotTime = Default.ShotTime;
+	}
 }
 
 simulated state DelayedReload

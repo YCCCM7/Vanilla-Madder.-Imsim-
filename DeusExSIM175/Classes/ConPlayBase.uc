@@ -1022,7 +1022,7 @@ log("  event.transferCount = " $ event.transferCount);
 		//----------------------
 		//MADDERS: Shoving some things around here.
 		//DeusExPlayer(transferTo).FindInventorySlot(giveItem)
-		if ((DeusExPlayer(transferTo) != None) && (FindAdvancedInventorySlot(DeusExPlayer(TransferTo), InvItemFrom, True)))
+		if ((DeusExPlayer(transferTo) != None) && (FindAdvancedInventorySlot(DeusExPlayer(TransferTo), InvItemFrom, False)))
 		{
 			itemsTransferred = 1;
 			giveItem.GiveTo(transferTo);

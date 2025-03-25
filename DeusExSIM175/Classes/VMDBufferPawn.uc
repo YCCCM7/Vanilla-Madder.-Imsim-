@@ -3099,6 +3099,7 @@ function CheckForHelmets()
  	{
   		case Texture'PinkMaskTex':
   		case Texture'GogglesTex1':
+		case Texture'ThugMale3Tex3':
    			bHasHelmet = False;
   		break;
   		default:

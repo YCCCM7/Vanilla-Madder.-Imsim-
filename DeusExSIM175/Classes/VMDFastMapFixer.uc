@@ -171,6 +171,21 @@ function CommitMapFixing()
 	
 	switch(GM)
 	{
+		case 16:
+			switch(MN)
+			{
+				//+++++++++++++++++++++++
+				//Utopia Maps
+				//UTOPIA_SUBWAY, AKA SUBWAY: Clean up shitty door.
+				case "SUBWAY":
+					A = FindActorBySeed(class'DeusExMover', 0);
+					if (A != None)
+					{
+						A.SetLocation(A.Location + Vect(0, 0, 10000));
+					}
+				break;
+			}
+		break;
 		case 66:
 			switch(MN)
 			{
@@ -178,15 +193,18 @@ function CommitMapFixing()
 				case "66_WHITEHOUSE_EXTERIOR":
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						switch(SF.Static.StripBaseActorSeed(DXM))
+						if (DXM.Class == Class'DeusExMover')
 						{
-							case 24:
-								DXM.MoveTime = 20;
-							break;
-							case 25:
-								DXM.MoveTime = 20;
-								DXM.SetCollision(False, False, False);
-							break;
+							switch(SF.Static.StripBaseActorSeed(DXM))
+							{
+								case 24:
+									DXM.MoveTime = 20;
+									break;
+								case 25:
+									DXM.MoveTime = 20;
+									DXM.SetCollision(False, False, False);
+								break;
+							}
 						}
 					}
 				break;
@@ -194,15 +212,18 @@ function CommitMapFixing()
 				case "66_WHITEHOUSE_STREETS":
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						switch(SF.Static.StripBaseActorSeed(DXM))
+						if (DXM.Class == Class'DeusExMover')
 						{
-							case 0:
-								DXM.MoveTime = 20;
-							break;
-							case 25:
-								DXM.MoveTime = 20;
-								DXM.SetCollision(False, False, False);
-							break;
+							switch(SF.Static.StripBaseActorSeed(DXM))
+							{
+								case 0:
+									DXM.MoveTime = 20;
+								break;
+								case 25:
+									DXM.MoveTime = 20;
+										DXM.SetCollision(False, False, False);
+								break;
+							}
 						}
 					}
 				break;

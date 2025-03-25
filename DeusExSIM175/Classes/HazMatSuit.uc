@@ -18,6 +18,7 @@ function float VMDConfigurePickupDamageMult(name DT)
 	Ret = 1.0;
 	
 	DXP = DeusExPlayer(Owner);
+	VMBP = VMDBufferPawn(Owner);
 	if ((VMBP != None) && (TSkill != None))
 	{
 		Ret = (TSkill.Default.LevelValues[VMBP.EnviroSkillLevel] + 1.0) / 2;

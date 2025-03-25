@@ -2082,6 +2082,105 @@ state LiteHackStanding expands Standing
 		
 		Super.EndState();
 	}
+
+Begin:
+	WaitForLanding();
+	if (!bUseHome)
+		Goto('StartStand');
+
+MoveToBase:
+	if (!IsPointInCylinder(self, HomeLoc, 16-CollisionRadius))
+	{
+		EnableCheckDestLoc(true);
+		while (true)
+		{
+			if (PointReachable(HomeLoc))
+			{
+				if (ShouldPlayWalk(HomeLoc))
+					PlayWalking();
+				MoveTo(HomeLoc, GetWalkingSpeed());
+				CheckDestLoc(HomeLoc);
+				break;
+			}
+			else
+			{
+				MoveTarget = FindPathTo(HomeLoc);
+				if (MoveTarget != None)
+				{
+					if (ShouldPlayWalk(MoveTarget.Location))
+						PlayWalking();
+					MoveToward(MoveTarget, GetWalkingSpeed());
+					CheckDestLoc(MoveTarget.Location, true);
+				}
+				else
+					break;
+			}
+		}
+		EnableCheckDestLoc(false);
+	}
+	TurnTo(Location+HomeRot);
+
+StartStand:
+	Acceleration=vect(0,0,0);
+	Goto('Stand');
+
+ContinueFromDoor:
+	Goto('MoveToBase');
+
+Stand:
+ContinueStand:
+	// nil
+	bStasis = False; //MADDERS, 2/9/25: Stop doing this for MEGH, as it turns off tick and breaks lite hacking.
+
+	PlayWaiting();
+	if (!bPlayIdle)
+		Goto('DoNothing');
+	Sleep(FRand()*14+8);
+
+Fidget:
+	if (FRand() < 0.5)
+	{
+		PlayIdle();
+		FinishAnim();
+	}
+	else
+	{
+		if (FRand() > 0.5)
+		{
+			PlayTurnHead(LOOK_Up, 1.0, 1.0);
+			Sleep(2.0);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+		else if (FRand() > 0.5)
+		{
+			PlayTurnHead(LOOK_Left, 1.0, 1.0);
+			Sleep(1.5);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.9);
+			PlayTurnHead(LOOK_Right, 1.0, 1.0);
+			Sleep(1.2);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+		else
+		{
+			PlayTurnHead(LOOK_Right, 1.0, 1.0);
+			Sleep(1.5);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.9);
+			PlayTurnHead(LOOK_Left, 1.0, 1.0);
+			Sleep(1.2);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+	}
+	if (FRand() < 0.3)
+		PlayIdleSound();
+	Goto('Stand');
+
+DoNothing:
+	// nil
 }
 
 

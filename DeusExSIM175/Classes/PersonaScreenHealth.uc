@@ -651,14 +651,21 @@ function int HealPart(PersonaHealthRegionWindow region, optional float pointsToH
 
 	if (pointsToHeal == 0)
 		pointsToHeal = player.CalculateSkillHealAmount(medKit.healAmount);
-
+	
 	// Heal the selected body part by the number of 
 	// points available in the part
-
+	
 	ModMult = 1.0;
-	if ((VMDBufferPlayer(Player) != None) && (VMDBufferPlayer(Player).ModHealthMultiplier > 0))
+	if (VMDBufferPlayer(Player) != None)
 	{
-		ModMult = VMDBufferPlayer(Player).ModHealthMultiplier;
+		if (VMDBufferPlayer(Player).ModHealthMultiplier > 0)
+		{
+			ModMult *= VMDBufferPlayer(Player).ModHealthMultiplier;
+		}
+		if (VMDBufferPlayer(Player).KSHealthMult < 1.0)
+		{
+			ModMult *= VMDBufferPlayer(Player).KSHealthMult;
+		}
 	}
 	
 	// If our player is in a multiplayer game, heal across 3 hit locations

@@ -285,6 +285,7 @@ function rotator RotationDir(ECleanDirection cleanDir);
 defaultproperties
 {
      HitboxArchetype="Cleanerbot"
+     bInsignificant=True
      
      majorDir=CLEANDIR_East
      EMPHitPoints=20

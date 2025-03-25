@@ -152,6 +152,20 @@ function bool CanReinforcePawn(VMDBufferPawn SP)
 		}
 		return true;
 	}
+	
+	//MADDERS, 2/27/25: These guys can spawn janky NPC placements, so don't reinforce.
+	if ((VMDGetMapName() == "UNDERGROUND_LAB2") && (SP.IsA('MJ12Troop')))
+	{
+		switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
+		{
+			case 3:
+			case 4:
+				return false;
+			break;
+		}
+		return true;
+	}
+	
 	//MADDERS, 11/4/22: Don't reinforce the ones that are a MAJOR dick move for completion of the level.
 	//Rest is fair game.
 	if ((VMDGetMapName() == "05_NYC_UNATCOMJ12LAB") && (SP.IsA('MJ12Troop')))

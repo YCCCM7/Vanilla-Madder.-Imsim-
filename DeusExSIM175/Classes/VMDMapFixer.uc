@@ -209,6 +209,7 @@ function DumbAllReactions(ScriptedPawn SP)
 	SP.bFearDistress = False;
 	SP.bFearAlarm = False;
 	SP.bFearProjectiles = False;
+	SP.bHateShot = False; //MADDERS, 2/27/25: Common point of issue.
 }
 
 //MADDERS, 12/21/23: Having our cake and eating it, too. When DX rando chair size creates jank, undo it selectively.
@@ -418,7 +419,7 @@ function CommitMapFixing()
 						}
 						/*forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -656,7 +657,7 @@ function CommitMapFixing()
 						
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -714,7 +715,7 @@ function CommitMapFixing()
 
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -729,6 +730,62 @@ function CommitMapFixing()
 						CreateHallucination(vect(-258, 1265, 290), 0, false);
 					}
 				break;
+				//JH1_RITTERPARK: Alex freaks out.
+				case "JH1_RITTERPARK":
+					forEach AllActors(class'NanoKey', Key)
+					{
+						switch(SF.Static.StripBaseActorSeed(Key))
+						{
+							case 0:
+								Key.SetLocation(Vect(-131,456,-2089));
+							break;
+						}
+					}
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (AlexJacobson(SP) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(SP))
+							{
+								case 0:
+									DumbAllReactions(SP);
+								break;
+							}
+						}
+					}
+				break;
+				//01_APARTMENTBUILDING: Bad mover positions, bad encroach types.
+				case "01_APARTMENTBUILDING":
+					forEach AllActors(class'DeusExMover', DXM)
+					{
+						if (DXM.Class == Class'DeusExMover')
+						{
+							switch(SF.Static.StripBaseActorSeed(DXM))
+							{
+								case 54:
+								case 55:
+								case 57:
+									DXM.MoverEncroachType = ME_IgnoreWhenEncroach;
+								break;
+								case 58:
+								case 61:
+									DXM.MoverEncroachType = ME_IgnoreWhenEncroach;
+									DXM.KeyPos[1].X *= -1;
+								break;
+							}
+							DXM.bMadderPatched = true;
+						}
+					}
+				break;
+				//01_TECHFORCEHQ: Chair inside desk. Sigh.
+				case "01_TECHFORCEHQ":
+					A = FindActorBySeed(class'OfficeChair', 18);
+					if (A != None)
+					{
+						A.SetRotation(Rot(0, 16384, 0));
+						A.SetLocation(Vect(-148, -966, -2534));
+					}
+				break;
 			}
 		break;
 		case 2:
@@ -741,7 +798,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -831,7 +888,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -898,7 +955,7 @@ function CommitMapFixing()
 						
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -974,7 +1031,7 @@ function CommitMapFixing()
 						}
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -1130,7 +1187,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -1194,7 +1251,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -1225,7 +1282,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -1406,7 +1463,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -1496,7 +1553,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -1647,7 +1704,7 @@ function CommitMapFixing()
 						//Busted pivots ahoy.
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if (DXM != None)
+							if (DXM.Class == Class'DeusExMover')
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -1762,7 +1819,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -1866,7 +1923,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -1956,7 +2013,7 @@ function CommitMapFixing()
 						
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2039,6 +2096,12 @@ function CommitMapFixing()
 								SP.bReactLoudNoise = false;
 							}
 						}
+						
+						A = FindActorBySeed(class'Button1', 0);
+						if (A != None)
+						{
+							A.Event = 'JocksElevatorTop';
+						}
 					}
 				break;
 				//06_HONGKONG_WANCHAI_UNDERWORLD: Fix credits count on counter lady.
@@ -2068,7 +2131,7 @@ function CommitMapFixing()
 								
 								if (Sailor(SP) != None)
 								{
-									switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
+									switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
 									{
 										case 4:
 											SP.FamiliarName = "Misha";
@@ -2118,7 +2181,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2175,7 +2238,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2459,7 +2522,7 @@ function CommitMapFixing()
 						
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(SF.Static.StripBaseActorSeed(DXM))
 								{
@@ -2506,7 +2569,7 @@ function CommitMapFixing()
 						
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2577,7 +2640,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2611,7 +2674,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2726,7 +2789,7 @@ function CommitMapFixing()
 						
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2745,7 +2808,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2766,7 +2829,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2814,7 +2877,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2869,7 +2932,7 @@ function CommitMapFixing()
 						}
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2908,7 +2971,7 @@ function CommitMapFixing()
 						}
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2941,7 +3004,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -2990,7 +3053,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -3027,7 +3090,7 @@ function CommitMapFixing()
 						forEach AllActors(class'Actor', A)
 						{
 							DXM = DeusExMover(A);
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM != None) && (DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -3078,7 +3141,7 @@ function CommitMapFixing()
 					{
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -3175,7 +3238,7 @@ function CommitMapFixing()
 						}
 						forEach AllActors(class'DeusExMover', DXM)
 						{
-							if ((DXM != None) && (!DXM.bMadderPatched))
+							if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 							{
 								switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 								{
@@ -3297,11 +3360,48 @@ function CommitMapFixing()
 					}
 				break;
 				
+				//BEDROOM/BEDROOM_REMAKE: Alex freaks out.
+				case "BEDROOM":
+				case "BEDROOM_REMAKE":
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (AlexJacobson(SP) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(SP))
+							{
+								case 0:
+									DumbAllReactions(SP);
+								break;
+							}
+						}
+					}
+				break;
+				
 				//+++++++++++++++++++++++
 				//CARONE Maps
 				
 				//16_HOTELCARONE_INTRO: Mission number hack? Yeet.
 				case "16_HOTELCARONE_INTRO":
+					//MADDERS, 3/2/25: All this alcohol is fucked up.
+					A = FindActorBySeed(class'WineBottle', 0);
+					if (A != None)
+					{
+						A.SetPhysics(PHYS_None);
+						A.SetRotation(Rot(-16384,0,0));
+					}
+					A = FindActorBySeed(class'LiquorBottle', 1);
+					if (A != None)
+					{
+						A.SetPhysics(PHYS_None);
+						A.SetRotation(Rot(0,-4892,-16384));
+					}
+					A = FindActorBySeed(class'LiquorBottle', 2);
+					if (A != None)
+					{
+						A.SetPhysics(PHYS_None);
+						A.SetRotation(Rot(0,-11424,-16384));
+					}
+					
 					if (!GetFlagBool('mapdone'))
 					{
 						LI.MissionNumber = 15;
@@ -3321,7 +3421,7 @@ function CommitMapFixing()
 					}
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						if ((DXM != None) && (!DXM.bMadderPatched))
+						if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 						{
 							switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 							{
@@ -3333,8 +3433,47 @@ function CommitMapFixing()
 								case 96:
 									DXM.MoverEncroachType = ME_IgnoreWhenEncroach;
 								break;
+								case 112:
+									//Base of 1280, -5076, -5600
+									//Needed of 1280, -5080, -5600
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									if (MoverIsLocation(DXM, vect(1280,-5076,-5600)))
+									{
+										LocAdd = vect(0, -4, 0);
+										PivAdd = vect(0, -4, 0);
+										FrameAdd[0] = vect(0, -4, 0);
+										FrameAdd[1] = vect(0, -4, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+									}
+								break;
 							}
 							DXM.bMadderPatched = true;
+						}
+					}
+					forEach AllActors(class'SkillAwardTrigger', SAT)
+					{
+						switch(SF.Static.StripBaseActorSeed(SAT))
+						{
+							case 2:
+								SAT.AwardMessage = "Toilet girl is safe";
+							break;
+						}
+					}
+					forEach AllActors(class'Actor', A)
+					{
+						if (LightSwitch(A) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(A))
+							{
+								case 1:
+									A.SetRotation(Rot(0, 32768, 0));
+								break;
+							}
 						}
 					}
 					forEach AllActors(class'ScriptedPawn', SP)
@@ -3390,11 +3529,28 @@ function CommitMapFixing()
 						}
 					}
 				break;
+				//16_HOTELCARONE_DXD: Fix this stupid newspaper.
+				case "16_HOTELCARONE_DXD":
+					forEach AllActors(class'Actor', A)
+					{
+						if (NewspaperOpen(A) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(A))
+							{
+								case 2:
+									A.SetLocation(Vect(651, -1122, -1051));
+									A.SetBase(FindActorBySeed(class'CoffeeTable', 0));
+									A.SetPhysics(PHYS_None);
+								break;
+							}
+						}
+					}
+				break;
 				//16_THE_HQ: Broken door pivots galore.
 				case "16_THE_HQ":
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						if ((DXM != None) && (!DXM.bMadderPatched))
+						if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 						{
 							switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 							{
@@ -3492,6 +3648,18 @@ function CommitMapFixing()
 				break;
 				//16_FATAL_WEAPON: Bad teleporter size. Sigh.
 				case "16_FATAL_WEAPON":
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (AlexJacobson(SP) != None || MargaretWilliams(SP) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(SP))
+							{
+								case 0:
+									DumbAllReactions(SP);
+								break;
+							}
+						}
+					}
 					forEach AllActors(class'MapExit', MapEx)
 					{
 						if (MapEx != None)
@@ -3502,6 +3670,27 @@ function CommitMapFixing()
 								case 1:
 								case 2:
 									MapEx.SetCollisionSize(65, MapEx.CollisionHeight);
+								break;
+							}
+						}
+					}
+				break;
+			}
+		break;
+		case 17:
+			switch(MN)
+			{
+				//WAREHOUSE/WAREHOUSE_REMAKE: Alex freaks out.
+				case "WAREHOUSE":
+				case "WAREHOUSE_REMAKE":
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (AlexJacobson(SP) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(SP))
+							{
+								case 0:
+									DumbAllReactions(SP);
 								break;
 							}
 						}
@@ -3536,7 +3725,7 @@ function CommitMapFixing()
 				case "21_OTEMACHIKU":
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						if ((DXM != None) && (!DXM.bMadderPatched))
+						if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 						{
 							PivAdd = vect(0,0,0);
 							LocAdd = vect(0,0,0);
@@ -3602,6 +3791,15 @@ function CommitMapFixing()
 							SP.bProjTarget = false;
 							SP.bBlockPlayers = false;
 						}
+						else if (Chef(SP) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(SP))
+							{
+								case 0:
+									SP.SetLocation(Vect(3333, -2481, -448));
+								break;
+							}
+						}
 					}
 				break;
 				//21_TMGComplex: Fix this rogue turret.
@@ -3626,7 +3824,7 @@ function CommitMapFixing()
 					}*/
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						if ((DXM != None) && (!DXM.bMadderPatched))
+						if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 						{
 							switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 							{
@@ -3647,6 +3845,25 @@ function CommitMapFixing()
 						VMP.SetInstantSpeechVolume(byte(float(VMP.ConsoleCommand("get ini:Engine.Engine.AudioDevice SpeechVolume"))));
 					}
 				break;
+				//21_WEST_SHINJUKU: Bad cop placement in some circumstances.
+				case "21_WEST_SHINJUKU":
+					//MADDERS, 5/31/22: We can step on these filler cleaner bots. JFC.
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (Cop(SP) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(SP))
+							{
+								case 6:
+									SP.SetLocation(Vect(1884, -1046, 128));
+								break;
+								case 20:
+									SP.SetLocation(Vect(476, -1046, 128));
+								break;
+							}
+						}
+					}
+				break;
 			}
 		break;
 		case 22:
@@ -3658,7 +3875,31 @@ function CommitMapFixing()
 					forEach AllActors(class'Actor', A)
 					{
 						DXM = DeusExMover(A);
-						if (DXM != None)
+						if (WineBottle(A) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(A))
+							{
+								case 18:
+								case 19:
+								case 20:
+								case 21:
+									A.SetLocation(A.Location + Vect(0,0,9));
+								break;
+							}
+						}
+						else if (LiquorBottle(A) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(A))
+							{
+								case 13:
+								case 14:
+								case 15:
+								case 16:
+									A.SetLocation(A.Location + Vect(0,0,6));
+								break;
+							}
+						}
+						else if ((DXM != None) && (DXM.Class == Class'DeusExMover'))
 						{
 							switch(SF.Static.StripBaseActorSeed(DXM))
 							{
@@ -3688,6 +3929,17 @@ function CommitMapFixing()
 						else if (GordonQuick(A) != None)
 						{
 							A.Destroy();
+						}
+					}
+				break;
+				//22_TOKYO_DISCO: Broke door pivot. Also, give Quick the boot.
+				case "22_TOKYO_DISCO":
+					//MADDERS: Stop making us killable. This is also a vanilla issue.
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (MaggieChow(SP) != None)
+						{
+							DumbAllReactions(SP);
 						}
 					}
 				break;
@@ -3838,7 +4090,7 @@ function CommitMapFixing()
 					//Broken door pivot to doggo room
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						if (DXM != None)
+						if (DXM.Class == Class'DeusExMover')
 						{
 							switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 							{
@@ -3882,7 +4134,7 @@ function CommitMapFixing()
 					//Busted pivots ahoy.
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						if (DXM != None)
+						if (DXM.Class == Class'DeusExMover')
 						{
 							switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 							{
@@ -3955,11 +4207,43 @@ function CommitMapFixing()
 						}
 					}
 				break;
+				case "22_OTEMACHIRETURN":
+					VMP.InHand = None;
+					VMP.InHandPending = None;
+					
+					//MADDERS, 5/31/22: Bad chef placement.
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (Chef(SP) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(SP))
+							{
+								case 0:
+									SP.SetLocation(Vect(3333, -2481, -448));
+								break;
+							}
+						}
+					}
+				break;
 			}
 		break;
 		case 50:
 			switch(MN)
 			{
+				//50_OMEGA_VOL2: Killing boss in under 10 seconds (possible with some builds) results in elevator breaking.
+				//Add artificial delay to the secondary dispatcher to fix it.
+				case "50_OMEGAVOL2":
+					A = FindActorBySeed(class'Dispatcher', 8);
+					if (A != None)
+					{
+						Dispatcher(A).OutDelays[6] = 0.0;
+					}
+					A = FindActorBySeed(class'Dispatcher', 9);
+					if (A != None)
+					{
+						Dispatcher(A).OutDelays[0] = 6.1;
+					}
+				break;
 				case "50_OMEGAVOL3":
 					forEach AllActors(class'Mover', TMov)
 					{
@@ -3995,6 +4279,38 @@ function CommitMapFixing()
 						}
 					}
 				break;
+				case "UNDERGROUND_LAB2":
+					forEach AllActors(class'DeusExMover', DXM)
+					{
+						if (DXM.Class == class'DeusExMover')
+						{
+							switch(SF.Static.StripBaseActorSeed(DXM))
+							{
+								case 11:
+									DXM.KeyRot[1].Yaw = -16384;
+									DXM.MoverEncroachType = ME_IgnoreWhenEncroach;
+								break;
+								case 12:
+									DXM.KeyRot[1].Yaw = -24576;
+									DXM.MoverEncroachType = ME_IgnoreWhenEncroach;
+								break;
+							}
+						}
+					}
+					
+					//MADDERS, 3/2/25: Stupid bullshit abound, these are using attach tag, and not movertag.
+					//Mapper error causes bad movement.
+					A = FindActorBySeed(class'Switch1', 8);
+					if (A != None)
+					{
+						A.bCollideWorld = false;
+					}
+					A = FindActorBySeed(class'Switch1', 9);
+					if (A != None)
+					{
+						A.bCollideWorld = false;
+					}
+				break;
 			}
 		break;
 		case 58:
@@ -4024,6 +4340,346 @@ function CommitMapFixing()
 				break;
 			}
 		break;
+		case 61:
+			switch(MN)
+			{
+				//61_HONGKONG_TIANBAOHOTEL: Infighting from bad alliances.
+				case "61_HONGKONG_TIANBAOHOTEL":
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (SP.Alliance == 'Yoon')
+						{
+							SP.ChangeAlly('LumPath', 1, True);
+						}
+					}
+				break;
+			}
+		case 66:
+			switch(MN)
+			{
+				//66_WHITEHOUSE_STREETS: Takara needs a new ammo type for her fucked up, unbugged gun.
+				case "66_WHITEHOUSE_STREETS":
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (SP.IsA('LienTakara'))
+						{
+							VMDBufferPawn(SP).AddToInitialInventory(class'Ammo762mm', 5);
+						}
+					}
+				break;
+				//CORRUPTION: Arsenal of supremely fucked up doors.
+				case "CORRUPTION":
+					forEach AllActors(class'DeusExMover', DXM)
+					{
+						if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
+						{
+							switch(SF.Static.StripBaseActorSeed(DXM))
+							{
+								case 1:
+									//Base of -1772, -856, 1064
+									//BEST FIT IS -1772, -852, 984
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									//FUDGING NON-PIVOT BY 2 Y!
+									if (MoverIsLocation(DXM, vect(-1772,-856,1064)))
+									{
+										LocAdd = vect(0, 6, 0);
+										PivAdd = vect(0, 4, 0);
+										FrameAdd[0] = vect(0, 6, 0);
+										FrameAdd[1] = vect(0, 6, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = 16384;
+									}
+								break;
+								case 2:
+									//Base of 808, -1880, 1064
+									//BEST FIT IS 808, -1886, 984
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									//FUDGING NON-PIVOT BY 2 Y!
+									if (MoverIsLocation(DXM, vect(808,-1880,1064)))
+									{
+										LocAdd = vect(0, -6, 0);
+										PivAdd = vect(0, -8, 0);
+										FrameAdd[0] = vect(0, -6, 0);
+										FrameAdd[1] = vect(0, -6, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = -16384;
+									}
+								break;
+								case 4:
+									//Base of -1792, -1888, 1056
+									//BEST FIT IS -1784, -1886, 984
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									//FUDGING NON-PIVOT BY 2 Y!
+									if (MoverIsLocation(DXM, vect(-1792,-1888,1056)))
+									{
+										LocAdd = vect(8, 2, 0);
+										PivAdd = vect(8, 0, 0);
+										FrameAdd[0] = vect(8, 2, 0);
+										FrameAdd[1] = vect(8, 2, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = -16384;
+									}
+								break;
+								case 6:
+									//OPEN FRAME OF: -1184, -2368, 1440
+									//Base of -1184, -2368, 1440
+									//BEST FIT IS -1180, -2360, 1360
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									//STARTS ON FRAME 1! EW!
+									//FUDGING NON-PIVOT BY 2 Y!
+									if (MoverIsLocation(DXM, vect(-1184,-2368,1440)))
+									{
+										DXM.Trigger(None, None);
+										LocAdd = vect(4, 10, 0);
+										PivAdd = vect(4, 8, 0);
+										FrameAdd[0] = vect(4, 10, 0);
+										FrameAdd[1] = vect(4, 10, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = 16384;
+									}
+								break;
+								case 7:
+									//Base of -768, -1524, 1440
+									//BEST FIT IS -772, -1536, 1360
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									//FUDGING NON-PIVOT BY 16 X AND 8 Y!
+									if (MoverIsLocation(DXM, vect(-768,-1524,1440)))
+									{
+										LocAdd = vect(12, -4, 0);
+										PivAdd = vect(-4, -12, 0);
+										FrameAdd[0] = vect(12, -4, 0);
+										FrameAdd[1] = vect(12, -4, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = 16384;
+									}
+								break;
+								case 8:
+									//Base of 156, -2336, 1440
+									//BEST FIT IS 152, -2332, 1360
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 32768
+									//FUDGING NON-PIVOT BY 2 Y!
+									if (MoverIsLocation(DXM, vect(156,-2336,1440)))
+									{
+										LocAdd = vect(-4, 6, 0);
+										PivAdd = vect(4, -4, 0);
+										FrameAdd[0] = vect(-4, 6, 0);
+										FrameAdd[1] = vect(-4, 6, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = -16384;
+									}
+								break;
+								case 9:
+									//Base of 40, -1808, 1440
+									//BEST FIT IS 40, -1816, 1360
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									//FUDGING NON-PIVOT BY 2 Y!
+									if (MoverIsLocation(DXM, vect(40,-1808,1440)))
+									{
+										LocAdd = vect(0, -6, 0);
+										PivAdd = vect(0, -8, 0);
+										FrameAdd[0] = vect(0, -6, 0);
+										FrameAdd[1] = vect(0, -6, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = -16384;
+									}
+								break;
+								case 10:
+									//Base of -1024, -2208, 1440
+									//BEST FIT IS -1024, -2220, 1360
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									//FUDGING NON-PIVOT BY 16 X AND 8 Y!
+									if (MoverIsLocation(DXM, vect(-1024,-2208,1440)))
+									{
+										LocAdd = vect(16, -4, 0);
+										PivAdd = vect(0, -12, 0);
+										FrameAdd[0] = vect(16, -4, 0);
+										FrameAdd[1] = vect(16, -4, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = 16384;
+									}
+								break;
+								case 11:
+									//Base of -12, -2180, 1440
+									//BEST FIT IS -4, -2180, 1360
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 16384
+									if (MoverIsLocation(DXM, vect(-12,-2180,1440)))
+									{
+										LocAdd = vect(8, 0, 0);
+										PivAdd = vect(0, -8, 0);
+										FrameAdd[0] = vect(8, 0, 0);
+										FrameAdd[1] = vect(8, 0, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = -16384;
+									}
+								break;
+								case 23:
+									//Base of 816, -856, 1064
+									//BEST FIT IS 816, -850, 984
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									if (MoverIsLocation(DXM, vect(816,-856,1064)))
+									{
+										LocAdd = vect(0, 4, 0);
+										PivAdd = vect(0, 4, 0);
+										FrameAdd[0] = vect(0, 4, 0);
+										FrameAdd[1] = vect(0, 4, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = 16384;
+									}
+								break;
+								case 22:
+									//Base of -992, 560, 1056
+									//BEST FIT IS -988, 558, 984
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									//FUDGING NON-PIVOT BY 2 Y!
+									if (MoverIsLocation(DXM, vect(-992,560,1056)))
+									{
+										LocAdd = vect(4, 0, 0);
+										PivAdd = vect(4, -2, 0);
+										FrameAdd[0] = vect(4, 0, 0);
+										FrameAdd[1] = vect(4, 0, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = 16384;
+									}
+								break;
+								case 24:
+									//Base of -492, 560, 1056
+									//BEST FIT IS -488, 558, 984
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									//FUDGING NON-PIVOT BY 2 Y!
+									if (MoverIsLocation(DXM, vect(-492,560,1056)))
+									{
+										LocAdd = vect(4, 0, 0);
+										PivAdd = vect(4, -2, 0);
+										FrameAdd[0] = vect(4, 0, 0);
+										FrameAdd[1] = vect(4, 0, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = 16384;
+									}
+								break;
+								case 25:
+									//Base of 20, 560, 1056
+									//BEST FIT IS 24, 558, 984
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0
+									//FUDGING NON-PIVOT BY 2 Y!
+									if (MoverIsLocation(DXM, vect(20,560,1056)))
+									{
+										LocAdd = vect(4, 0, 0);
+										PivAdd = vect(4, -2, 0);
+										FrameAdd[0] = vect(4, 0, 0);
+										FrameAdd[1] = vect(4, 0, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = 16384;
+									}
+								break;
+								case 26:
+									//Base of -1160, 340, 1120
+									//BEST FIT IS -1148, 340, 984
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 16384
+									if (MoverIsLocation(DXM, vect(-1160,340,1120)))
+									{
+										LocAdd = vect(12, 0, 0);
+										PivAdd = vect(0, -12, 0);
+										FrameAdd[0] = vect(12, 0, 0);
+										FrameAdd[1] = vect(12, 0, 0);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.KeyRot[1].Yaw = -16384;
+									}
+								break;
+							}
+							DXM.bMadderPatched = true;
+						}
+					}
+				break;
+			}
+		break;
+		case 67:
+			switch(MN)
+			{
+				//67_DYNAMENE_EXTERIOR: Add vending machines so we don't starve, thanks.
+				case "67_DYNAMENE_EXTERIOR":
+					A = Spawn(class'VendingMachine',,, Vect(105, 1831, 690), Rot(0, 32768, 0));
+					VendingMachine(A).SetPropertyText("SkinColor", "SC_Snack");
+					VendingMachine(A).BeginPlay();
+					A = Spawn(class'VendingMachine',,, Vect(105, 1781, 690), Rot(0, 32768, 0));
+				break;
+				//67_DYNAMENE_OUTERSECTION: More vending machines, these ones are goofier.
+				case "67_DYNAMENE_OUTERSECTION":
+					A = Spawn(class'VendingMachine',,, Vect(-97, 441, 50), Rot(0, -16384, 0));
+					VendingMachine(A).SetPropertyText("SkinColor", "SC_Snack");
+					VendingMachine(A).BeginPlay();
+					A = Spawn(class'VendingMachine',,, Vect(161, 441, 50), Rot(0, -16384, 0));
+				break;
+			}
 		case 70:
 			switch(MN)
 			{
@@ -4061,13 +4717,204 @@ function CommitMapFixing()
 				case "71_ZODIAC_LANGLEY_CIAHQ":
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						if ((DXM != None) && (!DXM.bMadderPatched))
+						if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 						{
 							switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 							{
 								case 1:
 									DXM.bHighlight = false;
 							break;
+							}
+							DXM.bMadderPatched = true;
+						}
+					}
+				break;
+				//71_WHITEHOUSE: 10mm ammo inside the floor.
+				case "71_WHITEHOUSE":
+					forEach AllActors(class'Actor', A)
+					{
+						if (Ammo10mm(A) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(A))
+							{
+								case 2:
+									A.SetLocation(Vect(3507, 5598, 268));
+								break;
+							}
+						}
+						else if (Ammo10mmGasCap(A) != None)
+						{
+							switch(SF.Static.StripBaseActorSeed(A))
+							{
+								case 0:
+									A.SetLocation(Vect(3507, 5598, 268));
+								break;
+							}
+						}
+					}
+				break;
+				//71_CANYON: Horrendously fucked up doors.
+				case "71_CANYON":
+					forEach AllActors(class'DeusExMover', DXM)
+					{
+						if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
+						{
+							switch(SF.Static.StripBaseActorSeed(DXM))
+							{
+								case 0:
+								//Base of -897, -712, -1492
+									//BEST FIT IS -899, -712, -1364
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of -16384, Roll of 32768
+									//180-ing ROLL!
+									if (MoverIsLocation(DXM, vect(-897,-712,-1492)))
+									{
+										LocAdd = vect(-4, 0, 128);
+										PivAdd = vect(0, 4, 0);
+										FrameAdd[0] = vect(-4, 0, 128);
+										FrameAdd[1] = vect(-4, 0, 128);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.SetRotation(DXM.Rotation + Rot(0, 0, 32768));
+										DXM.KeyRot[0].Roll += 32768;
+										DXM.KeyRot[1].Roll += 32768;
+									}
+								break;
+								case 2:
+									//Base of -1440, -24, -1492
+									//BEST FIT IS -1440, -22, -1364
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 32768, Roll of 32768
+									//180-ing ROLL!
+									if (MoverIsLocation(DXM, vect(-1440,-24,-1492)))
+									{
+										LocAdd = vect(0, 4, 128);
+										PivAdd = vect(0, 4, 0);
+										FrameAdd[0] = vect(0, 4, 128);
+										FrameAdd[1] = vect(0, 4, 128);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.SetRotation(DXM.Rotation + Rot(0, 0, 32768));
+										DXM.KeyRot[0].Roll += 32768;
+										DXM.KeyRot[1].Roll += 32768;
+									}
+								break;
+								case 20:
+									//Base of -627, -1520, -1364
+									//BEST FIT IS -625, -1520, -1236
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Pitch of 32768, Yaw of -16384, Roll of 0
+									//180-ing ROLL!
+									if (MoverIsLocation(DXM, vect(-627,-1520,-1364)))
+									{
+										LocAdd = vect(4, 0, -128);
+										PivAdd = vect(0, 4, 0);
+										FrameAdd[0] = vect(4, 0, -128);
+										FrameAdd[1] = vect(4, 0, -128);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.SetRotation(DXM.Rotation + Rot(0, 0, 32768));
+										DXM.KeyRot[0].Roll += 32768;
+										DXM.KeyRot[1].Roll += 32768;
+									}
+								break;
+								case 23:
+									//Base of -1203, -1632, -1364
+									//BEST FIT IS -1205, -1632, -1364
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Pitch of 32768, Yaw of -16384, Roll of 0
+									//180-ing ROLL!
+									if (MoverIsLocation(DXM, vect(-1203,-1632,-1364)))
+									{
+										LocAdd = vect(-4, 0, -128);
+										PivAdd = vect(0, -4, 0);
+										FrameAdd[0] = vect(-4, 0, -128);
+										FrameAdd[1] = vect(-4, 0, -128);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.SetRotation(DXM.Rotation + Rot(0, 0, 32768));
+										DXM.KeyRot[0].Roll += 32768;
+										DXM.KeyRot[1].Roll += 32768;
+									}
+								break;
+								case 32:
+									//Base of -1312, -24, -1496
+									//BEST FIT IS -1312, -22, -1364
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0, Roll of 32768
+									//180-ing ROLL!
+									if (MoverIsLocation(DXM, vect(-1312,-24,-1496)))
+									{
+										LocAdd = vect(0, 4, 136);
+										PivAdd = vect(0, -4, 0);
+										FrameAdd[0] = vect(0, 4, 136);
+										FrameAdd[1] = vect(0, 4, 136);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.SetRotation(DXM.Rotation + Rot(0, 0, 32768));
+										DXM.KeyRot[0].Roll += 32768;
+										DXM.KeyRot[1].Roll += 32768;
+									}
+								break;
+								case 36:
+									//Base of -743, -752, -1492
+									//BEST FIT IS -743, -750, -1364
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Yaw of 0, Roll of 32768
+									//180-ing ROLL!
+									if (MoverIsLocation(DXM, vect(-743,-752,-1492)))
+									{
+										LocAdd = vect(0, 4, 128);
+										PivAdd = vect(0, -4, 0);
+										FrameAdd[0] = vect(0, 4, 128);
+										FrameAdd[1] = vect(0, 4, 128);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.SetRotation(DXM.Rotation + Rot(0, 0, 32768));
+										DXM.KeyRot[0].Roll += 32768;
+										DXM.KeyRot[1].Roll += 32768;
+									}
+								break;
+								case 39:
+									//Base of -627, -1648, -1492
+									//BEST FIT IS -625, -1648, -1492
+									//+++++++++++++++++++++++++++++++
+									//Ignoring Z.
+									//Rotation Pitch of 32768, Yaw of -16384, Roll of 0
+									//180-ing ROLL!
+									if (MoverIsLocation(DXM, vect(-627,-1648,-1492)))
+									{
+										LocAdd = vect(4, 0, 128);
+										PivAdd = vect(0, 4, 0);
+										FrameAdd[0] = vect(4, 0, 128);
+										FrameAdd[1] = vect(4, 0, 128);
+										DXM.SetLocation(DXM.Location + LocAdd);
+										DXM.PrePivot = DXM.PrePivot + PivAdd;
+										DXM.KeyPos[0] = DXM.KeyPos[0] + FrameAdd[0];
+										DXM.KeyPos[1] = DXM.KeyPos[1] + FrameAdd[1];
+										DXM.SetRotation(DXM.Rotation + Rot(0, 0, 32768));
+										DXM.KeyRot[0].Roll += 32768;
+										DXM.KeyRot[1].Roll += 32768;
+									}
+								break;
 							}
 							DXM.bMadderPatched = true;
 						}
@@ -4080,7 +4927,22 @@ function CommitMapFixing()
 			{
 				//72_MUTATIONS1/3: Turrets are intended to be active, but are not. Fix this.
 				case "72_MUTATIONS1":
-				case "72_MUTATIONS3":
+					A = FindActorBySeed(class'Vase1', 0);
+					if (A != None)
+					{
+						A.SetLocation(Vect(153, 3900, -38));
+						A.SetBase(FindActorBySeed(class'CoffeeTable', 1));
+						A.SetPhysics(PHYS_None);
+					}
+					
+					//MADDERS, 2/28/25: Fix civvies losing their shit all the time.
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (HumanCivilian(SP) != None)
+						{
+							DumbAllReactions(SP);
+						}
+					}
 					forEach AllActors(class'AutoTurret', ATur)
 					{
 						if (ATur != None)
@@ -4089,11 +4951,48 @@ function CommitMapFixing()
 						}
 					}
 				break;
+				//72_MUTATIONS1/3: Turrets are intended to be active, but are not. Fix this.
+				case "72_MUTATIONS3":
+					//MADDERS, 2/28/25: Fix civvies losing their shit all the time.
+					//Also, MJ12 dude is our friend and gets mad too easy..
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (HumanCivilian(SP) != None)
+						{
+							DumbAllReactions(SP);
+						}
+						else if ((MJ12Troop(SP) != None) && (SP.Alliance == 'MJ12Friend'))
+						{
+							SP.bReactProjectiles = false;
+							SP.bHateShot = false;
+						}
+					}
+					forEach AllActors(class'AutoTurret', ATur)
+					{
+						if (ATur != None)
+						{
+							ATur.bActive = true;
+						}
+					}
+				break;
+				case "72_MUTATIONS2":
+				case "72_MUTATIONS4":
+				case "72_MUTATIONS5":
+				case "72_MUTATIONS6":
+					//MADDERS, 2/28/25: Fix civvies losing their shit all the time.
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (HumanCivilian(SP) != None)
+						{
+							DumbAllReactions(SP);
+						}
+					}
+				break;
 				//72_ZODIAC_BUENOSAIRES: Hiding portrait, in-line with prior changes.
 				case "72_ZODIAC_BUENOSAIRES":
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						if ((DXM != None) && (!DXM.bMadderPatched))
+						if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 						{
 							switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(DXM))
 							{
@@ -4300,6 +5199,22 @@ function CommitMapFixing()
 							{
 								SP.bReactLoudNoise = false;
 							}
+						}
+					}
+				break;
+			}
+		break;
+		case 77:
+			switch(MN)
+			{
+				//77_ZODIAC_ENDGAME1: Paul has sunglasses. Get that shit out of here.
+				case "77_ZODIAC_ENDGAME1":
+					forEach AllActors(class'ScriptedPawn', SP)
+					{
+						if (PaulDenton(SP) != None)
+						{
+							SP.Multiskins[6] = SP.Default.Multiskins[6];
+							SP.Multiskins[7] = SP.Default.Multiskins[7];
 						}
 					}
 				break;

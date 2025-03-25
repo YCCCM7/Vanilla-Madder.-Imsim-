@@ -329,6 +329,7 @@ defaultproperties
      MsgRepairbotKillswitch="Despite your instincts, you know recharging your reserves so heavily would be suicide"
      RechargeLeft=150
      HitboxArchetype="Roller"
+     bInsignificant=True
      
      chargeAmount=75
      chargeRefreshTime=60
