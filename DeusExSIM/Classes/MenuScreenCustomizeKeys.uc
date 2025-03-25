@@ -14,10 +14,10 @@ struct S_KeyDisplayItem
 	var localized String DisplayName;
 };
 
-var localized string	FunctionText[65];
-var string				MenuValues1[65];
-var string				MenuValues2[65];
-var string				AliasNames[65];
+var localized string	FunctionText[66];
+var string				MenuValues1[66];
+var string				MenuValues2[66];
+var string				AliasNames[66];
 var string				PendingCommands[100];
 var localized S_KeyDisplayItem    keyDisplayNames[71];
 var localized string			  NoneText;
@@ -619,12 +619,13 @@ defaultproperties
      FunctionText(56)="Toggle Firing Mode"
      FunctionText(57)="Issue Drone Order"
      FunctionText(58)="Controller-Friendly Aug Menu"
-     FunctionText(59)="(Mutations) Show Level Map"
-     FunctionText(60)="Show Multiplayer Scores"
-     FunctionText(61)="Send Message To Team"
-     FunctionText(62)="Send Message To All"
-     FunctionText(63)="Activate Multiplayer Skill Menu"
-     FunctionText(64)="Show Multiplayer Kill Details"
+     FunctionText(59)="Controller-Friendly Health Menu"
+     FunctionText(60)="(Mutations) Show Level Map"
+     FunctionText(61)="Show Multiplayer Scores"
+     FunctionText(62)="Send Message To Team"
+     FunctionText(63)="Send Message To All"
+     FunctionText(64)="Activate Multiplayer Skill Menu"
+     FunctionText(65)="Show Multiplayer Kill Details"
      AliasNames(0)="ParseLeftClick|Fire"
      AliasNames(1)="ParseRightClick"
      AliasNames(2)="DropItem"
@@ -684,12 +685,13 @@ defaultproperties
      AliasNames(56)="ToggleFiringMode"
      AliasNames(57)="IssueDroneOrder"
      AliasNames(58)="OpenControllerAugWindow"
-     AliasNames(59)="ShowMap"
-     AliasNames(60)="ShowScores"
-     AliasNames(61)="TeamTalk"
-     AliasNames(62)="Talk"
-     AliasNames(63)="BuySkills"
-     AliasNames(64)="KillerProfile"
+     AliasNames(59)="OpenControllerHealthWindow"
+     AliasNames(60)="ShowMap"
+     AliasNames(61)="ShowScores"
+     AliasNames(62)="TeamTalk"
+     AliasNames(63)="Talk"
+     AliasNames(64)="BuySkills"
+     AliasNames(65)="KillerProfile"
      keyDisplayNames(0)=(inputKey=IK_LeftMouse,displayName="Left Mouse Button")
      keyDisplayNames(1)=(inputKey=IK_RightMouse,displayName="Right Mouse Button")
      keyDisplayNames(2)=(inputKey=IK_MiddleMouse,displayName="Middle Mouse Button")
