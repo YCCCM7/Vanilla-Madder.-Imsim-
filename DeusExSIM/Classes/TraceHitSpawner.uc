@@ -7,7 +7,7 @@ var float HitDamage;
 var bool bPenetrating; // shot that hit was a penetrating shot
 var bool bHandToHand;  // shot that hit was hand to hand
 var bool bInstantHit;
-var Name damageType;
+var Name damageType, ImpactedMaterial;
 
 var DeusExDecal Hole;
 var float BulletHoleSize;
@@ -301,6 +301,48 @@ simulated function SpawnEffects(Actor Other, float Damage)
 			}
 		}
 	}
+	
+	//MADDERS, 2/20/25: We don't draw decals on glass, only the other side. Durr.
+	/*if ((bPenetrating) && (!bHandToHand) && (bInstantHit) && (ImpactedMaterial == 'Glass') && (Other == Level))
+	{
+            	hole = spawn(class'CrackMark', Other,, Location+Vector(Rotation), Rotation);
+		
+		if (hole != None)
+		{
+			hole.remoteRole = ROLE_None;
+			if ((mov.bBreakable) && (mov.minDamageThreshold <= Damage))
+			{
+				forEach RadiusActors(class'DeusExDecal', DXD, 6, Location+Vector(Rotation))
+				{
+					if (DXD != Hole)
+					{
+						switch(DXD.Texture)
+						{
+							case Texture'FlatFXTex7':
+							case Texture'FlatFXTex8':
+							case Texture'FlatFXTex29':
+							case Texture'FlatFXTex30':
+								CrackCount++;
+							break;
+							default:
+							break;
+						}
+					}
+				}
+				
+				if (FRand() < 0.5)
+				{
+					hole.Texture = Texture'FlatFXTex29';
+				}
+				else
+				{
+					hole.Texture = Texture'FlatFXTex30';
+				}
+				hole.DrawScale = 0.1;
+				hole.ReattachDecal();
+			}
+		}			
+	}*/
 }
 
 defaultproperties
