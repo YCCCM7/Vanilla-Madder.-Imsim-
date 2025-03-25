@@ -246,6 +246,7 @@ var localized string MessageTooDirty, MessageTooWet, msgNoAmmo,
 //How much damage do we do on impact, if secondary?
 var travel int PenetrationHitDamage, RicochetHitDamage;
 var float BulletholeSize, MinimumTracerDist;
+var name LastHitTextureGroup;
 
 //Bolt function
 var bool bBoltAction;
@@ -1097,32 +1098,16 @@ simulated function VMDUpdateTiltEffects(float DT)
   		UseVec = UseVec * TAF * UVM;
   		
 		TXChunk = UseVec.X * 6144 * 0.01;
-		if (TXChunk%1.0 > 0.0)
-		{
-			if (FRand() < TXChunk%1.0)
-			{
-				TXChunk = (TXChunk - (TXChunk%1.0)) + Sign(TXChunk);
-			}
-			else
-			{
-				TXChunk = TXChunk - (TXChunk%1.0);
-			}
-		}
-  		VMP.ViewRotation.Yaw += TXChunk;
+		TXChunk += VMP.TiltEffectYawFloat;
+		VMP.TiltEffectYawFloat = TXChunk % 1.0;
+		
+  		VMP.ViewRotation.Yaw += int(TXChunk);
 		
 		TYChunk = UseVec.Y * 6144 * 0.01;
-		if (TYChunk%1.0 > 0.0)
-		{
-			if (FRand() < TYChunk%1.0)
-			{
-				TYChunk = (TYChunk - (TYChunk%1.0)) + Sign(TYChunk);
-			}
-			else
-			{
-				TYChunk = TYChunk - (TYChunk%1.0);
-			}
-		}
-  		TPitch = VMP.ViewRotation.Pitch + TYChunk;
+		TYChunk += VMP.TiltEffectPitchFloat;
+		VMP.TiltEffectPitchFloat = TYChunk % 1.0;
+		
+  		TPitch = VMP.ViewRotation.Pitch + int(TYChunk);
   		if ((TPitch > 18000) && (TPitch < 32768)) TPitch = 18000;
 		else if ((TPitch >= 32768) && (TPitch < 49152)) TPitch = 49152;
   		VMP.ViewRotation.Pitch = TPitch;
@@ -1309,6 +1294,8 @@ function VMDScopeInFurther()
 
 function VMDWeaponPostBeginPlayHook()
 {
+	local int i;
+	
 	//MADDERS, 4/12/21: Nice try, Zodiac. You're not my real dad.
 	if (IsA('WeaponC4'))
 	{
@@ -1317,7 +1304,7 @@ function VMDWeaponPostBeginPlayHook()
 		LeftPlayerViewMesh = None;
 	}
 	//MADDERS, 4/14/21: Next up: Rotating joshua with non-fucked ricochet/penetration interference
-	if (IsA('WeaponJoshua'))
+	else if (IsA('WeaponJoshua'))
 	{
 		bCanRotateInInventory = true;
 		RotatedIcon = Texture'LargeIconJoshuaRotated';
@@ -1325,12 +1312,13 @@ function VMDWeaponPostBeginPlayHook()
 		RicochetHitDamage = 0;
 	}
 	//MADDERS, 4/15/21: Next up: Rotating HC Laser
-	if (IsA('WeaponHCLaser'))
+	else if (IsA('WeaponHCLaser'))
 	{
 		bCanRotateInInventory = true;
 		RotatedIcon = Texture'LargeIconHCLaserRotated';
 	}
-	if (IsA('WeaponA17') || IsA('WeaponAssault17'))
+	//This gun needs more reason to be used, at 4x2 in size.
+	else if (IsA('WeaponA17') || IsA('WeaponAssault17'))
 	{
 		SemiautoFireSound = Sound'AssaultGunSemi';
 		SilencedFireSound = Sound'AssaultGunFireSilenced';
@@ -1351,7 +1339,8 @@ function VMDWeaponPostBeginPlayHook()
 		RotatedIcon = Texture'LargeSGAssaultIconRotated';
 		FiringSystemOperation = 1;
 	}
-	if (IsA('WeaponM249DXN') || IsA('WeaponPara17'))
+	//M249 got nerfed into a wet noodle that takes up a garbage truck's space.
+	else if (IsA('WeaponM249DXN') || IsA('WeaponPara17'))
 	{
 		OverrideAnimRate = 4.0;
 		PenetrationHitDamage = HitDamage * 0.75;
@@ -1359,6 +1348,63 @@ function VMDWeaponPostBeginPlayHook()
 		bCanRotateInInventory = true;
 		RotatedIcon = Texture'LargeSGParaIconRotated';
 		FiringSystemOperation = 2;
+	}
+	//Pistol can't talk alt ammos or be used by drones. Fix that.
+	else if (IsA('WeaponWaltherDXN') || IsA('WeaponBRGlock'))
+	{
+		bDroneCapableWeapon = true;
+ 		AmmoNames[0] = Class'Ammo10mm';
+		AmmoNames[1] = Class'Ammo10mmGasCap';
+		AmmoNames[2] = Class'Ammo10mmHEAT';
+		if (Ammo10mmHEAT(AmmoType) != None)
+		{
+			HitDamage = Default.HitDamage;
+	     		PenetrationHitDamage = HitDamage * 0.8;
+	     		RicochetHitDamage = HitDamage * 0.0;
+		}
+		else if (Ammo10mmGasCap(AmmoType) != None)
+		{
+			HitDamage = Default.HitDamage * 0.75;
+	     		PenetrationHitDamage = HitDamage * 0.0;
+     			RicochetHitDamage = HitDamage * 1.0;
+		}
+		else
+		{
+			HitDamage = Default.HitDamage;
+	     		PenetrationHitDamage = HitDamage * 0.6;
+	     		RicochetHitDamage = HitDamage * 0.3;
+		}
+	}
+	//8 damage assault gun? Are you on crack? How is this still unnerfed?
+	else if (IsA('WeaponTakaraGun'))
+	{
+		AmmoNames[0] = class'Ammo762mm';
+		NumFiringModes = 2;
+		FiringModes[0] = "Full Auto";
+		FiringModes[1] = "Semi Auto";
+		ModeNames[0] = "Full Auto";
+		ModeNames[1] = "Semi Auto";
+		OverrideAnimRate = 1.75;
+		
+		BulletHoleSize = 0.175;
+		SemiautoFireSound = Sound'AssaultGunSemi';
+		SilencedFireSound = Sound'AssaultGunFireSilenced';
+		maxRange = 9600;
+		AccurateRange = 2400;
+		AimDecayMult = 4.0;
+		AimFocusMult = 1.25;
+    		FiringSystemOperation = 1;
+		HitDamage = 5;
+    		PenetrationHitDamage = HitDamage * 0.8;
+    		RicochetHitDamage = HitDamage * 0.4;
+		
+		BoltStartSound = Sound'SawedOffShotgunReload';
+		BoltEndSound = Sound'RifleReloadEnd';
+		BoltActionDelay = 1.200000;
+		BoltStartSeq = 'ReloadBegin';
+		BoltDelaySeq = 'Reload';
+		BoltEndSeq = 'ReloadEnd';
+		BoltActionRate = 1.250000;
 	}
 }
 
@@ -1695,6 +1741,26 @@ function VMDReloadCompleteHook()
 //Grenade launcher related, and also for mod support.
 function bool VMDHandleParallelAmmoFeed(class<Ammo> RelAmmoType, Ammo NewAmmo, int AmmoIndex)
 {
+	//Special case: Give hotswap to Takara's gun in Nihilum.
+	if (IsA('WeaponTakaraGun'))
+	{
+		if ((ClipCount >= 0) && (VMDIsQuickSwapAmmo(RelAmmoType)))
+		{
+			//MADDERS: Hack for 20mm preservation.
+			Last20mmCount = NewAmmo.AmmoAmount;
+			ClipCount -= NewAmmo.AmmoAmount;
+		}
+		else if ((RelAmmoType == class'Ammo762mm') && (VMDIsQuickSwapAmmoFA(AmmoType)))
+		{
+			//MADDERS: Hack for denying cycle ammo during firing.
+			if (VMDShotTimeProgression() < 1.0) return False;
+			
+			ClipCount += AmmoType.AmmoAmount;
+		}
+		
+		return true;
+	}
+	
 	//MADDERS: This shouldn't be called normally. See WeaponAssaultGun for examples.
 	return false;
 }
@@ -1708,6 +1774,12 @@ function bool VMDHasSelectiveFiringObjection()
 
 function bool VMDHasParallelAmmoFeed()
 {
+	//MADDERS, 3/1/25: Allow hot swap for nihilum.
+	if (IsA('WeaponTakaraGun'))
+	{
+		return true;
+	}
+	
 	//MADDERS: This shouldn't be called normally. See WeaponAssaultGun for examples.
 	//20mm function overhaul is in there, so we're not fucking with that ick factor here.
 	
@@ -2316,8 +2388,9 @@ function bool VMDAngleMeansRicochet(Vector HitLocation, Vector A, Vector B, name
 			return false;
 		break;
 		//MADDERS, 1/15/21: Bullets bounce off of bulletproof glass.
+		//MADDERS, 2/20/25: Removing this, since it confuses AI in some edge cases, making them waste all their ammo.
 		case 'Glass':
-			if (Other == Level) return true;
+			//if (Other == Level) return true;
 			return false;
 		break;
 	}
@@ -2510,21 +2583,28 @@ function float VMDGetCorrectHitDamage( float In )
 		}
 	}
 	//MADDERS, 4/16/24: Un-nerf this a bit, since the Paratrooper rifle has become immensely fucking useless in modern nihilum.
-	if (IsA('WeaponM249DXN') || IsA('WeaponPara17'))
+	else if (IsA('WeaponM249DXN') || IsA('WeaponPara17'))
 	{
 		In += 2.0;
 	}
 	
 	//MADDERS, 7/24/21: List proper LAM damage on mutations.
-	if ((IsA('WeaponLAM')) && (VMDGetPlayerCampaign() ~= "Mutations" || VMDGetPlayerCampaign() ~= "Hotel Carone"))
+	else if ((IsA('WeaponLAM')) && (VMDGetPlayerCampaign() ~= "Mutations" || VMDGetPlayerCampaign() ~= "Hotel Carone"))
 	{
 		In *= (500.0 / HitDamage);
 	}
 	
 	//MADDERS, 10/23/22: Upped from 0.5 to 0.6, so we do 3 damage instead of 2.
-	if ((VMDMEGH(Owner) != None) && (!VMDMegh(Owner).bMeleeBuff) && (VMDIsMeleeWeapon()))
+	if ((VMDMEGH(Owner) != None) && (VMDIsMeleeWeapon()))
 	{
-		In *= 0.6;
+		if (!VMDMegh(Owner).bMeleeBuff)
+		{
+			In *= 0.8;
+		}
+		else
+		{
+			In *= 1.2;
+		}
 	}
 	
 	//MADDERS, 3/19/23: 
@@ -2929,6 +3009,14 @@ function bool VMDHasReloadObjection()
 	if ((IsInState('NormalFire')) && (bSingleLoaded) && (ClipCount < ReloadCount))
 		return true;
 	
+	//Nihilum, more consistent hot swapping.
+	if (IsA('WeaponTakaraGun'))
+	{
+		//MADDERS: Cockblock 20mm reloads.
+		if (VMDIsQuickSwapAmmoFA(AmmoType))
+			return true;
+	}
+	
 	if ((VMDIsQuickSwapAmmoFA(AmmoType)) && (ClipCount < ReloadCount))
 		return true;
 	
@@ -3112,6 +3200,47 @@ function VMDAlertAmmoLoad( bool bInstant )
 
 function VMDAlertPostAmmoLoad( bool bInstant )
 {
+	if (IsA('WeaponWaltherDXN') || IsA('WeaponBRGlock'))
+	{
+		if (Ammo10mmHEAT(AmmoType) != None)
+		{
+			HitDamage = Default.HitDamage;
+	     		PenetrationHitDamage = HitDamage * 0.8;
+	     		RicochetHitDamage = HitDamage * 0.0;
+		}
+		else if (Ammo10mmGasCap(AmmoType) != None)
+		{
+			HitDamage = Default.HitDamage * 0.75;
+	     		PenetrationHitDamage = HitDamage * 0.0;
+     			RicochetHitDamage = HitDamage * 1.0;
+		}
+		else
+		{
+			HitDamage = Default.HitDamage;
+	     		PenetrationHitDamage = HitDamage * 0.6;
+	     		RicochetHitDamage = HitDamage * 0.3;
+		}
+	}
+	
+	//Grenade launcher behavior for nihilum.
+	if (IsA('WeaponTakaraGun'))
+	{
+		//MADDERS: Change our fire sound, operation type, and low ammo water mark.
+		if (Ammo762mm(AmmoType) != None)
+		{
+			SilencedFireSound = Default.SilencedFireSound;
+			bBoltAction = false;
+     			LowAmmoWaterMark = 30;
+		}
+		else
+		{
+			//MADDERS: Hack for silenced GL handling.
+ 			SilencedFireSound = Sound'AssaultGunFire20mm';
+			bBoltAction = true;
+    			LowAmmoWaterMark = 4;
+		}
+		ShotTime = Default.ShotTime;
+	}
 }
 
 simulated state DelayedReload
@@ -4593,7 +4722,19 @@ simulated function float CalculateAccuracy()
 		
 		if ((VMDIsBulletWeapon()) && (WeaponRifle(Self) == None) && (VMDMEGH(ScriptedPawn(Owner).Enemy) != None || VMDSIDD(ScriptedPawn(Owner).Enemy) != None))
 		{
-			Accuracy -= 0.2 + (FMax(-0.2, ScriptedPawn(Owner).BaseAccuracy));
+			if (VMDBountyHunter(Owner) != None)
+			{
+				Accuracy += 0.2;
+			}
+			else
+			{
+				Accuracy -= 0.1 + (FMax(-0.1, ScriptedPawn(Owner).BaseAccuracy));
+			}
+		}
+		
+		if (VMDIsWeaponName("HideAGun"))
+		{
+			Accuracy = 0.3;
 		}
 	}
 	else
@@ -7002,6 +7143,7 @@ function SpawnEffects(Vector HitLocation, Vector HitNormal, Actor Other, float D
 		hitSpawner.damageType = damageType;
 		if (VMDIsBulletWeapon())
 		{
+			HitSpawner.ImpactedMaterial = LastHitTextureGroup;
 			hitSpawner.BulletHoleSize = BulletHoleSize;
 			HitSpawner.VMDAlertDamageChange();
 		}
@@ -7863,6 +8005,8 @@ simulated function TraceFire( float Accuracy )
 				}
 			}
 		}
+		
+		LastHitTextureGroup = TexGroup;
 		
 		// randomly draw a tracer for relevant ammo types
 		// don't draw tracers if we're zoomed in with a scope - looks stupid
