@@ -3,6 +3,7 @@
 //=============================================================================
 class AugAqualung extends VMDBufferAugmentation;
 
+var travel bool FakebIsActive; //MADDERS, 2/23/25: Thanks, I hate it.
 var float mult, pct;
 
 var float mpAugValue;
@@ -14,8 +15,52 @@ function Tick(float DT)
  	
 	if (Player != None)
 	{
- 		if ((!bIsActive) && (Player.HeadRegion.Zone.bWaterZone) && (!bDisabled)) Activate();
- 		else if (((bIsActive) && (!Player.HeadRegion.Zone.bWaterZone)) || ((bIsActive) && (bDisabled))) Deactivate();
+ 		if ((!FakebIsActive) && (!bDisabled) && (Player.Region.Zone != None) && (Player.Region.Zone.bWaterZone))
+		{
+			FakeActivate();
+		}
+ 		else if (FakebIsActive && (bDisabled || Player.Region.Zone == None || !Player.Region.Zone.bWaterZone))
+		{
+			FakeDeactivate();
+		}
+	}
+}
+
+function bool IncLevel()
+{
+	local bool Ret;
+	
+	Ret = Super.IncLevel();
+	if ((Ret) && (!bDisabled))
+	{
+		FakeActivate();
+	}
+	return Ret;
+}
+
+function FakeActivate()
+{
+	if (Player != None)
+	{
+		FakebIsActive = true;
+		mult = class'VMDStaticFunctions'.Static.GetPlayerSwimDurationMult(Player);
+		pct = Player.swimTimer / Player.swimDuration;
+		Player.UnderWaterTime = LevelValues[CurrentLevel];
+		Player.swimDuration = Player.UnderWaterTime * mult;
+		Player.swimTimer = Player.swimDuration * pct;
+	}
+}
+
+function FakeDeactivate()
+{
+	if (Player != None)
+	{
+		FakebIsActive = false;
+		mult = class'VMDStaticFunctions'.Static.GetPlayerSwimDurationMult(Player);
+		pct = Player.swimTimer / Player.swimDuration;
+		Player.UnderWaterTime = Player.Default.UnderWaterTime;
+		Player.swimDuration = Player.UnderWaterTime * mult;
+		Player.swimTimer = Player.swimDuration * pct;
 	}
 }
 
@@ -77,7 +122,7 @@ simulated function PreBeginPlay()
 //------------------------------------------
 function float VMDConfigureLungMod(bool bWater)
 {
-	if (!bIsActive)
+	if (bDisabled)
 	{
 		return 0;
 	}
@@ -107,7 +152,9 @@ defaultproperties
      //MADDERS: Don't spam this on/off noise. Yikes.
      ActivateSound=None
      DeActivateSound=None
+     LoopSound=None
      bPassive=True
+     bSenselessBind=True //Why would you NOT want this?
      
      AdvancedDescription="Soda lime exostructures imbedded in the alveoli of the lungs convert CO2 to O2, extending the time an agent can remain underwater."
      AdvancedDescLevels(0)="TECH ONE: An agent can go %d%% longer without breathing."
@@ -117,16 +164,16 @@ defaultproperties
      
      mpAugValue=240.000000
      mpEnergyDrain=10.000000
-     EnergyRate=10.000000
+     EnergyRate=0.000000
      Icon=Texture'DeusExUI.UserInterface.AugIconAquaLung'
      smallIcon=Texture'DeusExUI.UserInterface.AugIconAquaLung_Small'
      AugmentationName="Aqualung"
      Description="Soda lime exostructures imbedded in the alveoli of the lungs convert CO2 to O2, extending the time an agent can remain underwater.|n|nTECH ONE: An agent can go 50% longer without breathing.|n|nTECH TWO: An agent can go 200% longer without breathing.|n|nTECH THREE: An agent can go 500% longer without breathing.|n|nTECH FOUR: An agent can stay underwater nearly indefinitely, at 1100% longer."
      MPInfo="When active, you can stay underwater 12 times as long and swim twice as fast.  Energy Drain: Low"
-     LevelValues(0)=30.000000
-     LevelValues(1)=60.000000
-     LevelValues(2)=120.000000
-     LevelValues(3)=240.000000
+     LevelValues(0)=25.000000
+     LevelValues(1)=50.000000
+     LevelValues(2)=100.000000
+     LevelValues(3)=200.000000
      AugmentationLocation=LOC_Torso
      MPConflictSlot=9
 }
