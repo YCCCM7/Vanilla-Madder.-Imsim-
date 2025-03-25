@@ -72,6 +72,10 @@ var bool bMayhemSuspect, bMayhemPayback;
 //MADDERS, 8/11/23: Unconscious detection stuff. Crude, but workable.
 var bool bKOEmitCarcass;
 
+//MADDERS, 2/20/25: Build blood smell over time.
+var float BloodSmellLevel;
+var VMDSmellManager BloodSmell;
+
 //MADDERS, 8/26/23: Save this so our weight is consistent.
 var float BaseMass;
 
@@ -698,8 +702,9 @@ function InitFor(Actor Other)
 function PostBeginPlay()
 {
 	local int i, j;
-	local Inventory inv;
 	local DeusExAmmo DXA;
+	local Inventory inv;
+	local VMDSmellManager TManager;
 	
 	bCollideWorld = true;
 	
@@ -756,6 +761,8 @@ function PostBeginPlay()
 	
 	VMDUpdateMassBuoyancy();
 	
+	BloodSmell = Spawn(class'VMDSmellManager', Self,, Location);
+	
 	Super.PostBeginPlay();
 }
 
@@ -807,6 +814,22 @@ function Destroyed()
 
 function Tick(float deltaSeconds)
 {
+	local float OldSmellLevel;
+	
+	if ((BloodSmellLevel < 30) && (KillerAlliance == 'Player') && (!bNotDead))
+	{
+		OldSmellLevel = BloodSmellLevel;
+		BloodSmellLevel += DeltaSeconds;
+		if ((BloodSmellLevel >= 10) && (OldSmellLevel < 10))
+		{
+			BloodSmell.InitNodes('PlayerBloodSmell', 3, 0.75, 280, true);
+		}
+		else if ((BloodSmellLevel >= 30) && (OldSmellLevel < 30))
+		{
+			BloodSmell.InitNodes('PlayerBloodSmell', 5, 0.75, 480, true); //MADDERS, 2/22/25: Don't do strong, it fucks with AI states.
+		}
+	}
+	
 	//MADDERS: Blood clouds suck ass at following carcasses, so force their hand.
 	if (BloodCloud != None)
 	{
