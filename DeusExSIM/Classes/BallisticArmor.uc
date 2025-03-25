@@ -3,6 +3,69 @@
 //=============================================================================
 class BallisticArmor extends ChargedPickup;
 
+var localized string ReductionStr, ReductionStr2;
+
+simulated function bool UpdateInfo(Object winObject)
+{
+	local PersonaInfoWindow winInfo;
+	local DeusExPlayer player;
+	local String outText;
+	local float TDrainRate;
+	local int i, ReductionLevel, ReductionLevel2;
+	
+	winInfo = PersonaInfoWindow(winObject);
+	if (winInfo == None)
+		return False;
+	
+	player = DeusExPlayer(Owner);
+	
+	if (player != None)
+	{
+		TDrainRate = 4;
+		if (Player.SkillSystem != None) TDrainRate *= Player.SkillSystem.GetSkillLevelValue(SkillNeeded);
+		
+		ReductionLevel = int((1.0 - VMDConfigurePickupDamageMult('Shot', 1, Owner.Location)) * 100.0);
+		ReductionLevel2 = int((1.0 - VMDConfigurePickupDamageMult('Exploded', 1, Owner.Location)) * 100.0);
+		
+		//MADDERS, 1/8/21: Update charge stacks at all times.
+		ChargeStacks[NumCopies-1] = Charge;
+		
+		winInfo.SetTitle(itemName);
+		winInfo.SetText(Description $ winInfo.CR() $ winInfo.CR() $ SprintF(ReductionStr, ReductionLevel) @ SprintF(ReductionStr2, ReductionLevel2) $ winInfo.CR() $ winInfo.CR());
+		
+		outText = ChargeRemainingLabel$winInfo.CR();
+		if (NumCopies > 1)
+		{
+			for (i=0; i<NumCopies; i++)
+			{
+				if (bLatentChargeCost)
+				{
+					outText = OutText$"#"$((i+1))@Int(VMDGetCurrentCharge(i) + 0.5) $ "%"@ChargeLabel@SprintF(StrSecondsLeft, int((Default.Charge / (10 * TDrainRate) * VMDGetCurrentCharge(i) / 100)+0.5));
+				}
+				else
+				{
+					outText = OutText$"#"$((i+1))@Int(VMDGetCurrentCharge(i) + 0.5) $ "%"@ChargeLabel;
+				}
+				if (i < (NumCopies-1)) OutText = OutText$winInfo.CR();
+			}
+		}
+		else
+		{
+			if (bLatentChargeCost)
+			{
+				outText = OutText$Int(VMDGetCurrentCharge(0) + 0.5) $ "%"@ChargeLabel@SprintF(StrSecondsLeft, int((Default.Charge / (10 * TDrainRate) * VMDGetCurrentCharge(0) / 100)+0.5));
+			}
+			else
+			{
+				outText = OutText$Int(VMDGetCurrentCharge(0) + 0.5) $ "%"@ChargeLabel;
+			}
+		}
+		winInfo.AppendText(outText);
+	}
+	
+	return True;
+}
+
 //
 // Reduces ballistic damage
 //
@@ -21,7 +84,7 @@ function float VMDConfigurePickupDamageMult(name DT, int HitDamage, Vector HitLo
 	DXP = DeusExPlayer(Owner);
 	if ((VMBP != None) && (TSkill != None))
 	{
-		Ret = (TSkill.Default.LevelValues[VMBP.EnviroSkillLevel] + 0.75) / 2;
+		Ret = (TSkill.Default.LevelValues[VMBP.EnviroSkillLevel] + 1.0) / 2;
 		
 		switch(DT)
 		{
@@ -112,11 +175,34 @@ function VMDSignalDamageTaken(int Damage, name DamageType, vector HitLocation, b
 	{
 		case 'Shot':
 		case 'AutoShot':
-			Charge -= Damage * SkillValue;
+			if (VMP != None)
+			{
+				Charge -= Max(1, Damage * SkillValue * 0.5);
+			}
+			else
+			{
+				Charge -= Max(1, Damage * SkillValue);
+			}
 		break;
 		case 'Sabot':
+			if (VMP != None)
+			{
+				Charge -= Max(1, Damage * 2 * SkillValue * 0.5);
+			}
+			else
+			{
+				Charge -= Max(1, Damage * 2 * SkillValue);
+			}
+		break;
 		case 'Exploded':
-			Charge -= Damage * 2 * SkillValue;
+			if (VMP != None)
+			{
+				Charge -= Max(1, Damage * 2 * SkillValue * 0.5);
+			}
+			else
+			{
+				Charge -= Max(1, Damage * 2 * SkillValue);
+			}
 		break;
 		case 'Shocked':
 		case 'EMP':
@@ -201,7 +287,9 @@ defaultproperties
      largeIcon=Texture'DeusExUI.Icons.LargeIconArmorBallistic'
      largeIconWidth=34
      largeIconHeight=49
-     Description="Ballistic armor is manufactured from electrically sensitive polymer sheets that intrinsically react to the violent impact of a bullet or an explosion by 'stiffening' in response and absorbing the majority of the damage.  These polymer sheets must be charged before use; after the charge has dissipated they lose their reflexive properties and should be discarded. At base, ballistic armor reduces small arms and autoturret fire by 56%, but armor piercing rounds and explosives by a mere 34%. Any user's skill fitting the armor, however, has a strong influence on its lifetime and effectiveness."
+     Description="Ballistic armor is manufactured from electrically sensitive polymer sheets that intrinsically react to the violent impact of a bullet or an explosion by 'stiffening' in response and absorbing the majority of the damage.  These polymer sheets must be charged before use; after the charge has dissipated they lose their reflexive properties and should be discarded."
+     ReductionStr="Reduces small arms, blades, and autoturret fire by %d%%."
+     ReductionStr2="Reduces armor piercing rounds, blunt attacks, and explosives by only %d%%."
      beltDescription="BAL ARMOR"
      Mesh=LodMesh'DeusExItems.BallisticArmor'
      CollisionRadius=11.500000
