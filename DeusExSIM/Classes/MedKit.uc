@@ -76,6 +76,8 @@ function VMDRunMedkitShellEffects(VMDBufferPlayer VMP)
 			VMP.ClientMessage(VMP.MedkitUsedDescs[1]);
 		}
 	}
+	
+ 	VMP.VMDRegisterFoodEaten(0, "Medkit");
 }
 
 // ----------------------------------------------------------------------
@@ -120,8 +122,6 @@ state Activated
 				{
 					player.HealPlayer(healAmount, True);
 				}
-				
- 				VMP.VMDRegisterFoodEaten(0, "Medkit");
 				
 			 	// Medkits kill all status effects when used in multiplayer
 			 	if ( player.Level.NetMode != NM_Standalone )
