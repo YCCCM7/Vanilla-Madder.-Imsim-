@@ -286,6 +286,8 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 	
 	VMDInitializeSubsystems();
 	
+	//BARF! TESTING!
+	AssignedID = 0;
 	//Bark bind name work.
 	HunterBarkBindName = "MJ12Revenant"$string(AssignedID+1);
 	

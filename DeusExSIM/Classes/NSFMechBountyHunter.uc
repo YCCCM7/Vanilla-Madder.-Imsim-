@@ -51,7 +51,16 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 	FaceIndices[1] = -1;
 	FaceIndices[2] = -1;
 	TClothing = Rand(2);
-	TSkin = Rand(12);
+	
+	//Don't use facemasks when in trench coats. It looks awful.
+	if (TClothing == 0)
+	{
+		TSkin = 5 + Rand(7);
+	}
+	else
+	{
+		TSkin = Rand(12);
+	}
 	TFrames = Rand(2);
 	TLenses = Rand(4);
 	switch(TClothing)
@@ -282,7 +291,18 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 				FaceTex = Texture'MiscTex6';
 			}
 		break;
-		case 4: //Gruffer, uncooth guy.
+		case 4: //Eastern asian type appearance, but clean cut like a younger lad.
+			//UPDATE: Instead, do one with a mask, because it looks cooler IDK.
+			if (DefaultAugs[1] != None)
+			{
+				FaceTex = Texture'VMDMiscTex7Augged';
+			}
+			else
+			{
+				FaceTex = Texture'MiscTex7';
+			}
+		break;
+		case 5: //Gruffer, uncooth guy.
 			if (DefaultAugs[1] != None)
 			{
 				FaceTex = Texture'VMDJunkieMale2Tex0Augged';
@@ -292,7 +312,7 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 				FaceTex = Texture'JunkieMale2Tex0';
 			}
 		break;
-		case 5: //Short haired black dude.
+		case 6: //Short haired black dude.
 			if (DefaultAugs[1] != None)
 			{
 				FaceTex = Texture'VMDBumMale9Tex0Augged';
@@ -302,7 +322,7 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 				FaceTex = Texture'BumMale9Tex0';
 			}
 		break;
-		case 6: //Bald guy.
+		case 7: //Bald guy.
 			if (DefaultAugs[1] != None)
 			{
 				FaceTex = Texture'VMDMikeKaplanTex2Augged';
@@ -312,7 +332,7 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 				FaceTex = Texture'MikeKaplanTex2';
 			}
 		break;
-		case 7: //Seasoned, similarly gruff kind of guy.
+		case 8: //Seasoned, similarly gruff kind of guy.
 			if (DefaultAugs[1] != None)
 			{
 				FaceTex = Texture'VMDSkinTex17Augged';
@@ -322,7 +342,7 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 				FaceTex = Texture'SkinTex17';
 			}
 		break;
-		case 8: //Clean, professional looking dude.
+		case 9: //Clean, professional looking dude.
 			if (DefaultAugs[1] != None)
 			{
 				FaceTex = Texture'VMDSkinTex23Augged';
@@ -332,7 +352,7 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 				FaceTex = Texture'SkinTex23';
 			}
 		break;
-		case 9: //Similarly clean, but slicked blonde guy.
+		case 10: //Similarly clean, but slicked blonde guy.
 			if (DefaultAugs[1] != None)
 			{
 				FaceTex = Texture'VMDSkinTex47Augged';
@@ -342,7 +362,7 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 				FaceTex = Texture'SkinTex47';
 			}
 		break;
-		case 10: //Ethnically ambiguous, beanie, suave moustache. Leon looking mother fucker.
+		case 11: //Ethnically ambiguous, beanie, suave moustache. Leon looking mother fucker.
 			if (DefaultAugs[1] != None)
 			{
 				FaceTex = Texture'VMDThugMale2Tex3Augged';
@@ -350,17 +370,6 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 			else
 			{
 				FaceTex = Texture'ThugMale2Tex3';
-			}
-		break;
-		case 11: //Eastern asian type appearance, but clean cut like a younger lad.
-			//UPDATE: Instead, do one with a mask, because it looks cooler IDK.
-			if (DefaultAugs[1] != None)
-			{
-				FaceTex = Texture'VMDMiscTex7Augged';
-			}
-			else
-			{
-				FaceTex = Texture'MiscTex7';
 			}
 		break;
 	}
@@ -479,6 +488,8 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 	
 	VMDInitializeSubsystems();
 	
+	//BARF! TESTING!
+	AssignedID = 2;
 	//Bark bind name work.
 	HunterBarkBindName = "NSFBountyHunter"$string(AssignedID+1);
 	
