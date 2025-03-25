@@ -3629,6 +3629,8 @@ function Landed(vector HitNormal)
 	RollRed = 1.0;
 	if (VMP != None)
 	{
+		VMP.bJumpDucked = false;
+		
 		//MADDERS, 11/23/24: Play dodge roll sound when we land.
 		if (VMP.DodgeRollTimer > 0)
 		{
@@ -4053,7 +4055,7 @@ function HandleWalking()
 			//MADDERS, 7/13/24: Play a new sound for jump duck.
 			if (Physics == PHYS_Falling)
 			{
-				if ((!VMP.bJumpDucked) && (CollisionHeight > 30)) 
+				if ((!VMP.bJumpDucked) && (!VMP.VMDUsingLadder()) && (CollisionHeight > 30)) 
 				{
 					if ((VMP != None) && (VMP.bJumpDuckFeedbackNoise))
 					{
@@ -4071,7 +4073,6 @@ function HandleWalking()
 					}
 				}
 				VMP.bJumpDucked = true;
-				VMP.JumpDuckResetTimer = VMP.JumpDuckResetTime;
 			}
 			bIsCrouching = True;
 			bDuck = 1;
@@ -4256,41 +4257,45 @@ function bool SetBasedPawnSize(float newRadius, float newHeight)
 	local vector centerDelta, lookDir, upDir;
 	local float  deltaEyeHeight;
 	local Decoration savedDeco;
-
+	
 	if (newRadius < 0)
 		newRadius = 0;
 	if (newHeight < 0)
 		newHeight = 0;
-
+	
 	oldRadius = CollisionRadius;
 	oldHeight = CollisionHeight;
-
+	
 	if ( Level.NetMode == NM_Standalone )
 	{
 		if ((oldRadius == newRadius) && (oldHeight == newHeight))
 			return true;
 	}
-
+	
 	centerDelta    = vect(0, 0, 1)*(newHeight-oldHeight);
 	deltaEyeHeight = GetDefaultCollisionHeight() - Default.BaseEyeHeight;
-
+	
 	if ( Level.NetMode != NM_Standalone )
 	{
 		if ((oldRadius == newRadius) && (oldHeight == newHeight) && (BaseEyeHeight == newHeight - deltaEyeHeight))
 			return true;
 	}
-
+	
 	if (CarriedDecoration != None)
 		savedDeco = CarriedDecoration;
-
+	
 	bSuccess = false;
 	if ((newHeight <= CollisionHeight) && (newRadius <= CollisionRadius))  // shrink
 	{
 		SetCollisionSize(newRadius, newHeight);
 		if (Move(centerDelta))
+		{
 			bSuccess = true;
+		}
 		else
+		{
 			SetCollisionSize(oldRadius, oldHeight);
+		}
 	}
 	else
 	{
@@ -4300,7 +4305,7 @@ function bool SetBasedPawnSize(float newRadius, float newHeight)
 			bSuccess = true;
 		}
 	}
-
+	
 	if (bSuccess)
 	{
 		// make sure we don't lose our carried decoration
@@ -4309,7 +4314,7 @@ function bool SetBasedPawnSize(float newRadius, float newHeight)
 			savedDeco.SetPhysics(PHYS_None);
 			savedDeco.SetBase(Self);
 			savedDeco.SetCollision(False, False, False);
-
+			
 			// reset the decoration's location
 			lookDir = Vector(Rotation);
 			lookDir.Z = 0;				
@@ -4317,12 +4322,12 @@ function bool SetBasedPawnSize(float newRadius, float newHeight)
 			upDir.Z = CollisionHeight / 2;		// put it up near eye level
 			savedDeco.SetLocation(Location + upDir + (0.5 * CollisionRadius + CarriedDecoration.CollisionRadius) * lookDir);
 		}
-
+		
 //		PrePivotOffset  = vect(0, 0, 1)*(GetDefaultCollisionHeight()-newHeight);
 		PrePivot        -= centerDelta;
 //		DesiredPrePivot -= centerDelta;
 		BaseEyeHeight   = newHeight - deltaEyeHeight;
-
+		
 		if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).bAssignedFemale))
 		{
 			if (PrePivot.Z ~= 4.5)
@@ -4563,12 +4568,11 @@ state PlayerWalking
 							}
 							
 							bFreshJumpDuck = true;
-							VMP.JumpDuckResetTimer = VMP.JumpDuckResetTime;
 							VMP.bJumpDucked = true;
 							bJumpDuck = true;
 						}
 					}
-					else if (!VMP.VMDUsingLadder())
+					else if (!VMP.VMDUsingLadder() || bool(bDuck))
 					{
 						bJumpDuck = true;
 					}
@@ -4726,9 +4730,13 @@ state PlayerWalking
 			}
 			
 			if ( Level.NetMode != NM_Standalone )
+			{
 				SetBasedPawnSize(Default.CollisionRadius, 30.0);
+			}
 			else
+			{
 				SetBasedPawnSize(Default.CollisionRadius, 16);
+			}
 			
 			// check to see if we could stand up if we wanted to
 			checkpoint = Location;
@@ -4785,7 +4793,7 @@ state PlayerWalking
 			if (HealthTorso < 67)
 				newSpeed -= (defSpeed/2) * 0.05;
 		}
-
+		
 		// let the player pull themselves along with their hands even if both of
 		// their legs are blown off
 		if ((HealthLegLeft < 1) && (HealthLegRight < 1))
@@ -4803,7 +4811,7 @@ state PlayerWalking
 //			newSpeed = defSpeed * 1.8;		// DEUS_EX CNN - uncomment to speed up crouch
 			bIsWalking = True;
 		}
-
+		
 		// CNN - Took this out because it sucks ASS!
 		// if the legs are seriously damaged, increase the head bob
 		// (unless the player has turned it off)
@@ -4815,7 +4823,7 @@ state PlayerWalking
 			else
 				Bob = Default.Bob;
 		}
-*/
+*/		
 		// slow the player down if he's carrying something heavy
 		// Like a DEAD BODY!  AHHHHHH!!!
 		if (CarriedDecoration != None)
@@ -5802,6 +5810,26 @@ state Dying
 				if  ( Level.NetMode != NM_Standalone )
 				{
 					// Don't fade to black in multiplayer
+				}
+				else if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).VMDUsingBlacklessRenderDevice()))
+				{
+					whiteVec.X = time / 16.0;
+					whiteVec.Y = time / 16.0;
+					whiteVec.Z = time / 16.0;
+					CameraRotation.Pitch = -16384;
+					CameraRotation.Yaw = (time * 8192.0) % 65536;
+					ViewDist = 32 + time * 32;
+					InstantFog = whiteVec;
+					InstantFlash = 0.5;
+					ViewFlash(1.0);
+					
+					if (Time >= 16)
+					{
+						if ((MenuUIWindow(DeusExRootWindow(rootWindow).GetTopWindow()) == None) && (ToolWindow(DeusExRootWindow(rootWindow).GetTopWindow()) == None))
+						{
+							ConsoleCommand("OPEN DXONLY");
+						}
+					}
 				}
 				else
 				{
@@ -8343,7 +8371,7 @@ function DropDecoration()
 		GetAxes(Rotation, X, Y, Z);
 		
 		// if we are highlighting something, try to place the object on the target
-		if ((FrobTarget != None) && !FrobTarget.IsA('Pawn'))
+		if ((FrobTarget != None) && (!FrobTarget.IsA('Pawn')))
 		{
 			CarriedDecoration.Velocity = vect(0,0,0);
 			
@@ -8368,7 +8396,9 @@ function DropDecoration()
 				{
 					AugMult = AugmentationSystem.GetAugLevelValue(class'AugMuscle');
 					if (AugMult == -1.0)
-						AugMult = 1.0;
+					{
+						AugMult = 1.0;	
+					}
 				}
 			}
 			
@@ -8396,7 +8426,7 @@ function DropDecoration()
 			
 			// scale it based on the mass
 			velscale = FClamp(CarriedDecoration.Mass / 20.0, 1.0, 40.0);
-
+			
 			CarriedDecoration.Velocity /= velscale;
 			dropVect = Location + (CarriedDecoration.CollisionRadius + CollisionRadius + 4) * X;
 			dropVect.Z += BaseEyeHeight;
@@ -8407,20 +8437,20 @@ function DropDecoration()
 				VMDBufferDeco(CarriedDecoration).bSwappedCollision = false;
 			}
 		}
-
+		
 		// is anything blocking the drop point? (like thin doors)
 		if (FastTrace(dropVect))
 		{
 			CarriedDecoration.SetCollision(True, True, True);
 			CarriedDecoration.bCollideWorld = True;
-
+			
 			// check to see if there's space there
 			extent.X = CarriedDecoration.CollisionRadius;
 			extent.Y = CarriedDecoration.CollisionRadius;
 			extent.Z = 1;
 			hitActor = Trace(HitLocation, HitNormal, dropVect, CarriedDecoration.Location, True, extent);
 			
-			if ((hitActor == None) && CarriedDecoration.SetLocation(dropVect))
+			if ((hitActor == None) && (CarriedDecoration.SetLocation(dropVect)))
 			{
 				bSuccess = True;
 			}
@@ -8438,15 +8468,19 @@ function DropDecoration()
 			CarriedDecoration.SetBase(None);
 			CarriedDecoration.SetPhysics(PHYS_Falling);
 			CarriedDecoration.Instigator = Self;
-
+			
 			// turn off translucency
 			CarriedDecoration.Style = CarriedDecoration.Default.Style;
 			CarriedDecoration.bUnlit = CarriedDecoration.Default.bUnlit;
 			if (CarriedDecoration.IsA('DeusExDecoration'))
+			{
 				DeusExDecoration(CarriedDecoration).ResetScaleGlow();
+			}
 			
 			if (DeusExCarcass(CarriedDecoration) == None)
+			{
 				CarriedDecoration.SetRotation(Rotator(CarriedDecoration.Velocity)); // Transcended - Added
+			}
 			
 			CarriedDecoration = None;
 		}
@@ -8495,7 +8529,9 @@ function DropDecoration()
 					{
 						AugMult = AugmentationSystem.GetAugLevelValue(class'AugMuscle');
 						if (AugMult == -1.0)
+						{
 							AugMult = 1.0;
+						}
 					}
 				}
 				
@@ -8568,12 +8604,15 @@ function DropDecoration()
 		}
 		if (!bSuccess)
 		{
-			TDeco.Event = '';
-			TDeco.Contents = None;
-			TDeco.Content2 = None;
-			TDeco.Content3 = None;
-			TDeco.FragType = None;
-			TDeco.Destroy();
+			if (TDeco != None)
+			{
+				TDeco.Event = '';
+				TDeco.Contents = None;
+				TDeco.Content2 = None;
+				TDeco.Content3 = None;
+				TDeco.FragType = None;
+				TDeco.Destroy();
+			}
 			ClientMessage(CannotDropHere);
 		}
 	}
@@ -15913,4 +15952,5 @@ defaultproperties
      BindName="JCDenton"
      FamiliarName="JC Denton"
      UnfamiliarName="JC Denton"
+     bNoFlash=False
 }
