@@ -961,17 +961,22 @@ function DrawTargetAugmentation(GC gc)
 	
 	//MADDERS flags.
 	local bool bShowHealth, FlagWeaponDrawn, FlagGivesAShit, bPickupTagged, bLightValid, bDoorValid, bShowFocuser;
+	local int DroneAlliance;
 	local Actor closeTarget, crosshairTarget;
 	local Inventory TItem, LastPickup;
 	local DeusExRootWindow Root;
+	local Robot TRobot;
 	local ScriptedPawn pawn;
 	local VMDBufferPawn PawnHookPawn;
+	local VMDBufferPlayer VMP;
 	
 	local bool BarfRevealed, BarfDamRevealed, BarfDamaged, BarfBreakable;
 	local int BarfThreshold;
 	local float BarfStrength, BarfOrigStrength;
 	
 	crossColor.R = 255; crossColor.G = 255; crossColor.B = 255;
+	
+	VMP = VMDBufferPlayer(Player);
 	
 	// Transcended - check 3125 feet in front of the player (was 500)
 	target = TraceLOS(50000,AimLocation);
@@ -1014,9 +1019,42 @@ function DrawTargetAugmentation(GC gc)
 			bDoorValid = ((BarfRevealed) && (BarfBreakable));
 		}
 	}
+	
+	Root = DeusExRootWindow(GetRootWindow());
+	Root.HUD.DroneInd.bDesiredVisibility = False;
+	Root.HUD.DroneInd.bTickEnabled = True;
 	if ((target != None) && (bLightValid) && (bDoorValid))
 	{
 		GetTargetReticleColor(target, crossColor);
+		
+		if ((Root != None) && (Root.HUD != None) && (Root.HUD.DroneInd != None) && (VMP != None) && (VMP.bDroneAllianceVisible))
+		{
+			forEach VMP.AllActors(class'Robot', TRobot)
+			{
+				if (TRobot.IsA('VMDMEGH') || TRobot.IsA('VMDSIDD'))
+				{
+					break;
+				}
+			}
+			
+			if (TRobot != None)
+			{
+				DroneAlliance = -3;
+				if (DeusExCarcass(Target) != None)
+				{
+					DroneAlliance = VMP.VMDGetDroneAllianceStatus(DeusExCarcass(Target).Alliance);
+				}
+				else if ((ScriptedPawn(Target) != None) && (VMDMEGH(Target) == None) && (VMDSIDD(Target) == None))
+				{
+					DroneAlliance = VMP.VMDGetDroneAllianceStatus(ScriptedPawn(Target).Alliance);
+				}
+				
+				if (DroneAlliance > -3)
+				{
+					Root.HUD.DroneInd.ShowTex(DroneAlliance);
+				}
+			}
+		}
 		
 		if ((DeusExPlayer(target) != None) && (bTargetActive))
 		{
@@ -1056,7 +1094,6 @@ function DrawTargetAugmentation(GC gc)
 			}
 		}
 		
-		Root = DeusExRootWindow(GetRootWindow());
 		bShowFocuser = true;
 		if ((Root != None) && (Root.HUD != None) && (!Root.HUD.IsVisible())) bShowFocuser = false;
 		else if ((VMDBufferPlayer(Player) != None) && (!VMDBufferPlayer(Player).bAimFocuserVisible)) bShowFocuser = false;
