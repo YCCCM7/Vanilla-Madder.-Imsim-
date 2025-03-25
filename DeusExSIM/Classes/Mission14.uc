@@ -128,6 +128,10 @@ function Timer()
 		{
 			RocketLaunchEffects();
 		}
+		else
+		{
+			HideTimerWindow();
+		}
 		
 		// when HowardStrong is dead, unhide the helicopter
 		if (!flags.GetBool('MS_UnhideHelicopter'))
@@ -193,7 +197,7 @@ function RocketLaunchEffects()
 		{
 			TTimer = DeusExRootWindow(Player.RootWindow).HUD.Timer;
 			TTimer.Time -= 1;
-			Flags.SetInt('VMDShipBlowUpTime', int(TTimer.Time + 0.99),, 10);
+			Flags.SetInt('VMDRocketLaunchTime', int(TTimer.Time + 0.99),, 10);
 			if (TTimer.Time <= 0)
 			{
 				if (!Flags.GetBool('VMDStartedRocketSequence'))
@@ -223,6 +227,20 @@ function RocketLaunchEffects()
 			TTimer.Message = "Rocket Launch";
 			TTimer.bIntegerDisplay = true;
 			RocketLaunchEffects();
+		}
+	}
+}
+
+function HideTimerWindow()
+{
+	local TimerDisplay TTimer;
+	
+	if ((Player != None) && (DeusExRootWindow(Player.RootWindow) != None) && (DeusExRootWindow(Player.RootWindow).HUD != None))
+	{
+		TTimer = DeusExRootWindow(Player.RootWindow).HUD.Timer;
+		if (TTimer != None)
+		{
+			TTimer.Show(False);
 		}
 	}
 }
