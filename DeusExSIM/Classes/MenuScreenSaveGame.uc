@@ -338,7 +338,8 @@ function GenerateNewSnapShot()
 
 function NewSaveGame()
 {
-	local String timeString;
+	local int FreeSave;
+	local String timeString, TarDir;
 	local DeusExSaveInfo saveInfo;
 	local GameDirectory saveDir;
 	
@@ -385,7 +386,13 @@ function NewSaveGame()
 	
 	TChunker = Player.TruePlayerName$","@MissionLocation@"("$TDiff$")"$TNGPlus;
 	
-	newSaveRowID = lstGames.AddRow(TChunker $ ";" $ timeString $ ";9999999999;;-2");
+	//MADDERS, 3/12/25: Turns out saving to 9999 makes the next one generate at 1000. Love to see it.
+	//So, instead we're gonna be finding it with our own native code, and using THAT ID.
+	//newSaveRowID = lstGames.AddRow(TChunker $ ";" $ timeString $ ";9999999999;;-2");
+	TarDir = GetConfig("Core.System", "SavePath");
+	FreeSave = class'VMDFileFinder'.Static.GetLatestSaveDir(TarDir);
+	Log("MADDERS: FREE SAVE?"@FreeSave);
+	NewSaveRowID = lstGames.AddRow(TChunker $ ";" $ TimeString $ ";9999999999;;"$FreeSave);
 	
 	lstGames.SetRow(newSaveRowID);
 	MoveEditControl(newSaveRowID, True);
