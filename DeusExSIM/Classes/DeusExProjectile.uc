@@ -56,6 +56,13 @@ var float StickAmmoRate;
 var Pawn AggressiveExplodedOwner; 
 var bool bHitFakeBackdrop;		// Have we hit a brush face with a fakebackdrop flag, and therefore should not spawn effects?
 
+//MADDERS, 2/19/25: The things I do for Zodiac C4, I swear.
+var bool bSticky, bStuckToWorld, bStuckToActor;
+var Vector StickOffset;
+var Rotator StuckToRotation, StickRotation;
+
+var Actor StuckTo;
+
 // network replication
 replication
 {
@@ -67,6 +74,59 @@ replication
 //--------------------
 //VMD Functions.
 //--------------------
+simulated function VMDStickTo(Actor Other)
+{
+	if (Other == None || Other == Owner || !bSticky) return;
+	
+	bFixedRotationDir = True;
+	SetPhysics(PHYS_None);
+	
+        if (Other.IsA('Brush') || Other == Level)
+	{
+		if (IsA('C4_Projectile'))
+		{
+			BlastRadius *= 1.5;
+		}
+		
+		SetBase(Other);
+        	bStuckToWorld = True;
+		bCollideWorld = False;
+		return;
+	}
+	
+	bStuckToActor = true;
+	StuckTo = Other;
+	StickOffset = (Location - Other.Location) * 0.5;
+	StuckToRotation = Other.Rotation;
+	StickRotation = Rotation;
+	
+	if (IsA('C4_Projectile'))
+	{
+		BlastRadius *= 1.5;
+		SetTimer(0.016, True);
+	}
+}
+
+function VMDStopSticking()
+{
+	bSticky = False;
+	StuckTo = None;
+	bStuckToActor = False;
+	bStuckToWorld = False;
+	bCollideWorld = True;
+	if (Region.Zone.bWaterZone)
+	{
+		Destroy();
+	}
+	else
+	{
+		Speed = 0;
+		Velocity = Vect(0,0,0);
+		Acceleration = Vect(0,0,0);
+		SetPhysics(PHYS_Falling);
+	}
+}
+
 //MADDERS, 8/29/23: Sometimes our allies don't understand what's going on very well. Use this to send some shit out.
 function VMDUseAIEventSender(Pawn NewInstigator, Name NewName, EAIEventType NewType, float NewVolume, float NewRadius)
 {
@@ -174,7 +234,8 @@ function VMDApplySpeedMult(float NewMult)
 	//MADDERS, 7/22/21: Use this as a hook for making C4 sticky when thrown. Bouncing, it is useless.
 	if ((IsA('C4_Projectile')) && (Physics == PHYS_Falling))
 	{
-		bStickToWall = True;
+		//bStickToWall = True;
+		bSticky = True;
 	}
 }
 
@@ -632,6 +693,17 @@ simulated function Tick(float deltaTime)
 	
    	if ((Role < ROLE_Authority) && (bAggressiveExploded))
       		Explode(Location, vect(0,0,1));
+	
+ 	if ((StuckTo != None) && (!StuckTo.bDeleteMe))
+ 	{
+		TRot = (StuckTo.Rotation - StuckToRotation);
+  		SetRotation(TRot + StickRotation);
+  		SetLocation(StuckTo.Location + (StickOffset >> TRot));
+ 	}
+	else if (bStuckToActor || bStuckToWorld)
+	{
+		VMDStopSticking();
+	}
 }
 
 function Timer()
@@ -951,69 +1023,83 @@ auto simulated state Flying
 {
 	simulated function ProcessTouch (Actor Other, Vector HitLocation)
 	{
-		if (bStuck)
-			return;
-		
-		//MADDERS: Stop grenades from insta-blowing up on corpses!
-		if ((Carcass(Other) != None) && (ThrownProjectile(Self) != None) && (bExplodes)) return;
-		
-		if ((Other != instigator) && (DeusExProjectile(Other) == None) && (Other != Owner))
+		if (bSticky)
 		{
-			if (VMDBufferPawn(Other) != None)
+			VMDStickTo(Other);
+		}
+		else if ((!bStuckToActor) && (!bStuckToWorld))
+		{
+			if (bStuck)
+				return;
+			
+			//MADDERS: Stop grenades from insta-blowing up on corpses!
+			if ((Carcass(Other) != None) && (ThrownProjectile(Self) != None) && (bExplodes)) return;
+			
+			if ((Other != instigator) && (DeusExProjectile(Other) == None) && (Other != Owner))
 			{
-				VMDBufferPawn(Other).LastWeaponDamageSkillMult = LastWeaponDamageSkillMult;
-				if (StuckAmmoClass != None)
+				if (VMDBufferPawn(Other) != None)
 				{
-					VMDBufferPawn(Other).AddStuckAmmoUnit(StuckAmmoClass, StickAmmoRate, 1);
+					VMDBufferPawn(Other).LastWeaponDamageSkillMult = LastWeaponDamageSkillMult;
+					if (StuckAmmoClass != None)
+					{
+						VMDBufferPawn(Other).AddStuckAmmoUnit(StuckAmmoClass, StickAmmoRate, 1);
+					}
+					if (bClosedSystemHit) VMDBufferPawn(Other).bClosedSystemHit = bClosedSystemHit;
 				}
-				if (bClosedSystemHit) VMDBufferPawn(Other).bClosedSystemHit = bClosedSystemHit;
-			}
-			
-			damagee = Other;
-			Explode(HitLocation, Normal(HitLocation-damagee.Location));
-			
-         		// DEUS_EX AMSD Spawn blood server side only
-         		if (Role == ROLE_Authority)
-			{
-            			if (damagee.IsA('Pawn') && !damagee.IsA('Robot') && bBlood)
-               				SpawnBlood(HitLocation, Normal(HitLocation-damagee.Location));
+				
+				damagee = Other;
+				Explode(HitLocation, Normal(HitLocation-damagee.Location));
+				
+         			// DEUS_EX AMSD Spawn blood server side only
+         			if (Role == ROLE_Authority)
+				{
+            				if (damagee.IsA('Pawn') && !damagee.IsA('Robot') && bBlood)
+               					SpawnBlood(HitLocation, Normal(HitLocation-damagee.Location));
+				}
 			}
 		}
 	}
 	simulated function HitWall(vector HitNormal, actor Wall)
 	{
-		if (bStickToWall)
+		if (bSticky)
 		{
-			Velocity = vect(0,0,0);
-			Acceleration = vect(0,0,0);
-			SetPhysics(PHYS_None);
-			bStuck = True;
-			
-			// MBCODE: Do this only on server side
-			if ( Role == ROLE_Authority )
+			VMDStickTo(Wall);
+		}
+		else if ((!bStuckToActor) && (!bStuckToWorld))
+		{
+			if (bStickToWall)
 			{
-            			if (Level.NetMode != NM_Standalone)
-               				SetTimer(5.0,False);
-
-				if (Wall.IsA('Mover'))
+				Velocity = vect(0,0,0);
+				Acceleration = vect(0,0,0);
+				SetPhysics(PHYS_None);
+				bStuck = True;
+				
+				// MBCODE: Do this only on server side
+				if ( Role == ROLE_Authority )
 				{
-					SetBase(Wall);
-					Wall.TakeDamage(Damage, Pawn(Owner), Wall.Location, MomentumTransfer*Normal(Velocity), damageType);
+	            			if (Level.NetMode != NM_Standalone)
+	               				SetTimer(5.0,False);
+	
+					if (Wall.IsA('Mover'))
+					{
+						SetBase(Wall);
+						Wall.TakeDamage(Damage, Pawn(Owner), Wall.Location, MomentumTransfer*Normal(Velocity), damageType);
+					}
 				}
 			}
+			
+			if (Wall.IsA('BreakableGlass'))
+				bDebris = False;
+			
+			SpawnEffects(Location, HitNormal, Wall);
+			
+			Super.HitWall(HitNormal, Wall);
 		}
-		
-		if (Wall.IsA('BreakableGlass'))
-			bDebris = False;
-		
-		SpawnEffects(Location, HitNormal, Wall);
-		
-		Super.HitWall(HitNormal, Wall);
 	}
 	simulated function Explode(vector HitLocation, vector HitNormal)
 	{
 		local bool bDestroy;
-		local float rad;
+		local float rad, NoiseMult;
 		
 		local Pawn OldInstigator;
 		local DeusExPlayer DXP;
@@ -1095,12 +1181,14 @@ auto simulated state Flying
       		{
          		if (ImpactSound != None)
          		{
-				VMDUseAIEventSender(GetPlayerPawn(), 'LoudNoise', EAITYPE_Audio, 2.0, blastRadius*24);
-           			AISendEvent('LoudNoise', EAITYPE_Audio, 2.0, blastRadius*24);
+				NoiseMult = VMDOpenSpaceRadiusMult();
+				VMDUseAIEventSender(GetPlayerPawn(), 'LoudNoise', EAITYPE_Audio, 2.0, blastRadius*24*NoiseMult);
+				AISendEvent('LoudNoise', EAITYPE_Audio, 2.0, blastRadius*24*NoiseMult);
 				
-            			if ((bExplodes) && (OldInstigator == None))
+	     			if ((bExplodes) && (OldInstigator == None))
 				{
-               				AISendEvent('WeaponFire', EAITYPE_Audio, 2.0, blastRadius*5);
+					NoiseMult = VMDOpenSpaceRadiusMult(DamageType == 'Exploded');
+					AISendEvent('WeaponFire', EAITYPE_Audio, 2.0, blastRadius*5*NoiseMult);
 				}
          		}
       		}
@@ -1134,6 +1222,55 @@ auto simulated state Flying
 			StartSoundSnap = PlaySound(SpawnSound, SLOT_None,,,,VMDGetFirePitch());
 		}
 	}
+}
+
+function float VMDOpenSpaceRadiusMult(optional bool bStrongScale)
+{
+	if (!bStrongScale)
+	{
+		return FMax(1.0, Sqrt(Max(1, VMDOpenSpaceLevel())) / 3.33);
+	}
+	else
+	{
+		return FMax(1.0, Sqrt(Max(1, VMDOpenSpaceLevel())) / 2);
+	}
+}
+
+function int VMDOpenSpaceLevel(optional bool bPlayerRelevant)
+{
+	local Vector TStart, TEnds[14], HL, HN;
+	local int Ret, i;
+	
+	if ((bPlayerRelevant) && (PlayerPawn(Owner) == None)) return 1;
+	if (Owner == None) return 1;
+	
+	Ret = 1;
+	TStart = Owner.Location;
+	
+	//COORD BARF: Cardinal directions.
+	TEnds[0] = TStart + vect(3,0,0) * 64;
+	TEnds[1] = TStart + vect(6,0,0) * 64;
+	TEnds[2] = TStart - vect(3,0,0) * 64;
+	TEnds[3] = TStart - vect(6,0,0) * 64;
+	TEnds[4] = TStart + vect(0,3,0) * 64;
+	TEnds[5] = TStart + vect(0,6,0) * 64;
+	TEnds[6] = TStart - vect(0,3,0) * 64;
+	TEnds[7] = TStart - vect(0,6,0) * 64;
+	
+	//Diagonal, and then vertical because fuck it. Why not?
+	TEnds[8] = TStart + vect(6,6,0) * 64;
+	TEnds[9] = TStart + vect(-6,6,0) * 64;
+	TEnds[10] = TStart - vect(-6,-6,0) * 64;
+	TEnds[11] = TStart - vect(6,-6,0) * 64;
+	TEnds[12] = TStart + vect(0,0,2) * 64;
+	TEnds[13] = TStart + vect(0,0,-2) * 64;
+	
+	for (i=0; i<14; i++)
+	{
+		if (FastTrace(TStart, TEnds[i])) Ret++;
+	}
+	
+	return Ret;
 }
 
 function CheckIfHitFakeBackDrop()
