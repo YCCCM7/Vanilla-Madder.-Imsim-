@@ -360,9 +360,9 @@ defaultproperties
      UseLoopTilt(0)=(X=-5.000000,Y=-2.500000)
      UseLoopTilt(1)=(X=5.000000,Y=-2.500000)
      UseLoopTilt(2)=(X=-5.000000,Y=-2.500000)
-     UseLoopTilt(3)=(X=3.750000,Y=50.625000)
+     UseLoopTilt(3)=(X=3.750000,Y=8.125000)
      UseLoopTilt(4)=(X=-5.000000,Y=-2.500000)
-     UseLoopTilt(5)=(X=6.667000,Y=30.334000)
+     UseLoopTilt(5)=(X=6.250000,Y=10.833000)
      UseLoopTiltIndices=6
      UseLoopTiltTimer(0)=0.000000
      UseLoopTiltTimer(1)=0.150000
