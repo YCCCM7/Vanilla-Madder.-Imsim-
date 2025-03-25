@@ -59,21 +59,21 @@ simulated function Tick(float deltaTime)
 	local bool bTransCheck;
 	
 	time += deltaTime;
-
+	
 	if ( Role == ROLE_Authority )
 	{
 		Super.Tick(deltaTime);
 
 		if (bDisabled)
 			return;
-
+		
 		if ( (Owner == None) && ((Level.NetMode == NM_DedicatedServer) || (Level.NetMode == NM_ListenServer)) )
 		{
 			// Owner has logged out
 			bDisabled = True;
 			team = -1;
 		}
-
+		
 		if (( Owner != None ) && (DeusExPlayer(Owner) != None ))
 		{
 			if ( TeamDMGame(DeusExPlayer(Owner).DXGame) != None )
@@ -86,7 +86,7 @@ simulated function Tick(float deltaTime)
 				}
 			}
 		}
-
+		
 		// check for proximity
 		if (bProximityTriggered)
 		{
@@ -377,18 +377,38 @@ function Frob(Actor Frobber, Inventory frobWith)
 
 simulated function Timer()
 {
-	if ( Role == ROLE_Authority )
+	local Rotator TRot;
+	
+	if (IsA('C4_Projectile'))
 	{
-		if (bProximityTriggered)
-			bArmed = True;
-		else
+		if ((StuckTo != None) && (!StuckTo.bDeleteMe))
 		{
-			if ( !bDisabled )
-				bDoExplode = True;
+			TRot = (StuckTo.Rotation - StuckToRotation);
+			SetRotation(TRot + StickRotation);
+			SetLocation(StuckTo.Location + (StickOffset >> TRot));
+		}
+		else if (bStuckToActor || bStuckToWorld)
+		{
+			VMDStopSticking();
 		}
 	}
-	if ( bDoExplode )
-			Explode(Location, Vector(Rotation));
+	else
+	{
+		if ( Role == ROLE_Authority )
+		{
+			if (bProximityTriggered)
+				bArmed = True;
+			else
+			{
+				if ( !bDisabled )
+					bDoExplode = True;
+			}
+		}
+		if ( bDoExplode )
+		{
+				Explode(Location, Vector(Rotation));
+		}
+	}
 }
 
 simulated function TakeDamage(int Damage, Pawn instigatedBy, Vector HitLocation, Vector Momentum, name damageType)
@@ -612,10 +632,10 @@ auto simulated state Flying
 	}
 	simulated function Explode(vector HitLocation, vector HitNormal)
 	{
-		local ShockRing ring;
+		local float dist, NoiseMult;
 		local DeusExPlayer player;
 		local Pawn curPawn;
-		local float dist;
+		local ShockRing ring;
 
 		// flash the screen white based on how far away the explosion is
 		
@@ -667,23 +687,23 @@ auto simulated state Flying
 		PlayImpactSound();
 		
 		if ( AISoundLevel > 0.0 )
-			AISendEvent('LoudNoise', EAITYPE_Audio, 2.0, AISoundLevel*blastRadius*16);
+		{
+			NoiseMult = VMDOpenSpaceRadiusMult();
+			AISendEvent('LoudNoise', EAITYPE_Audio, 2.0, AISoundLevel*blastRadius*16*NoiseMult);
+		}
 		
 		GotoState('Exploding');
 	}
 	simulated function HitWall (vector HitNormal, actor HitWall)
 	{
+		local float volume, NoiseMult;
 		local Rotator rot;
-		local float   volume;
 		
-		if (IsA('C4_Projectile'))
+		if (bSticky)
 		{
-			Velocity = vect(0,0,0);
-			Acceleration = vect(0,0,0);
-			SetPhysics(PHYS_None);
-			bStuck = True;
+			VMDStickTo(HitWall);
 		}
-		else
+		else if ((!bStuckToActor) && (!bStuckToWorld))
 		{
 			// Transcended - Allow grenades to break windows or weak doors
 			if ((HitWall.IsA('DeusExMover')) && (speed > 400))
@@ -715,7 +735,10 @@ auto simulated state Flying
 					// I know this is a little cheesy, but certain grenade types should
 					// not alert AIs unless they are really really close - CNN
 					if (AISoundLevel > 0.0)
-						AISendEvent('LoudNoise', EAITYPE_Audio, volume, AISoundLevel*256);
+					{
+						NoiseMult = VMDOpenSpaceRadiusMult();
+						AISendEvent('LoudNoise', EAITYPE_Audio, volume, AISoundLevel*256*NoiseMult);
+					}
 					
 					SetPhysics(PHYS_None, HitWall);
 					if (Physics == PHYS_None)
@@ -763,7 +786,7 @@ auto simulated state Flying
 		{
 			Super.SupportActor(StandingActor);
 			
-			if ((StandingActor != None) && (ThrownProjectile(StandingActor) == None || VSize(StandingActor.Velocity) > 20))
+			if ((StandingActor != None) && (ThrownProjectile(StandingActor) == None)) // || VSize(StandingActor.Velocity) > 20
 			{
 				if ((bStuck) && (Base == None || DeusExMover(Base) != None))
 				{
