@@ -39,6 +39,8 @@ function bool WillTakeStompDamage(actor stomper)
 
 defaultproperties
 {
+     //MADDERS, 3/15/25: Don't trust us worth a damn until stated otherwise.
+     bCanGrabWeapons=False
      //MADDERS, 6/9/23: This doesn't really concern us, actually.
      bReactLoudNoise=False
      bReactCarcass=False
