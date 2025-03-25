@@ -250,6 +250,7 @@ function BeginPlay()
 		break;
 		case SC_Snack:
 			Skin = Texture'VendingMachineTex2';
+			bAdvancedUse = False;
 		break;
 	}
 	
