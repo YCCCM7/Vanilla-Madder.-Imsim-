@@ -477,34 +477,16 @@ simulated function VMDUpdateTiltEffects(float DT)
   		UseVec = UseVec * TAF * UVM;
 		
 		TXChunk = UseVec.X * 6144 * 0.01;
-		if (TXChunk%1.0 > 0.0)
-		{
-			if (FRand() < TXChunk%1.0)
-			{
-				TXChunk = (TXChunk - (TXChunk%1.0)) + Sign(TXChunk);
-			}
-			else
-			{
-				TXChunk = TXChunk - (TXChunk%1.0);
-			}
-		}
-  		VMP.ViewRotation.Yaw += TXChunk;
+		TXChunk += VMP.TiltEffectYawFloat;
+		VMP.TiltEffectYawFloat = TXChunk % 1.0;
+		
+  		VMP.ViewRotation.Yaw += int(TXChunk);
 		
 		TYChunk = UseVec.Y * 6144 * 0.01;
+		TYChunk += VMP.TiltEffectPitchFloat;
+		VMP.TiltEffectPitchFloat = TYChunk % 1.0;
 		
-		if (TYChunk%1.0 > 0.0)
-		{
-			if (FRand() < TYChunk%1.0)
-			{
-				TYChunk = (TYChunk - (TYChunk%1.0)) + Sign(TYChunk);
-			}
-			else
-			{
-				TYChunk = TYChunk - (TYChunk%1.0);
-			}
-		}
-		
-  		TPitch = VMP.ViewRotation.Pitch + TYChunk;
+  		TPitch = VMP.ViewRotation.Pitch + int(TYChunk);
   		if ((TPitch > 18000) && (TPitch < 32768)) TPitch = 18000;
 		else if ((TPitch >= 32768) && (TPitch < 49152)) TPitch = 49152;
   		VMP.ViewRotation.Pitch = TPitch;
