@@ -869,6 +869,7 @@ ContinueFromDoor:
 defaultproperties
 {
      bCanClimbLadders=False
+     bCanGrabWeapons=False
      bDoesntSniff=True
      SmellTypes(0)=PlayerFoodSmell
      SmellTypes(1)=StrongPlayerFoodSmell
