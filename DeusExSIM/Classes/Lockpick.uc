@@ -205,7 +205,7 @@ defaultproperties
      UseLoopTilt(0)=(X=3.0000000,Y=-7.500000)
      UseLoopTilt(1)=(X=15.000000,Y=-3.000000)
      UseLoopTilt(2)=(X=-15.000000,Y=3.000000)
-     UseLoopTilt(3)=(X=-4.500000,Y=11.250000)
+     UseLoopTilt(3)=(X=-3.000000,Y=7.50000)
      UseLoopTiltIndices=4
      UseLoopTiltTimer(0)=0.000000
      UseLoopTiltTimer(1)=0.250000
