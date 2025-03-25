@@ -10,14 +10,6 @@ function ReplaceWithHeat()
  	local DeusExAmmo Rep;
 	local DeusExPlayer DXP;
 	
-	forEach AllActors(class'DeusExPlayer', DXP)
-	{
-		if ((DXP != None) && (DXP.IsA('MadIngramPlayer')))
-		{
-			return;
-		}
-	}
-	
  	TVect = vect(0, 0, 20);
  	SetCollision(False, False, False);
  	if (!SetLocation(Location + TVect)) TVect = vect(0,0,0);
@@ -37,14 +29,6 @@ function ReplaceWithGasCap()
  	local DeusExAmmo Rep;
 	local DeusExPlayer DXP;
  	
-	forEach AllActors(class'DeusExPlayer', DXP)
-	{
-		if ((DXP != None) && (DXP.IsA('MadIngramPlayer')))
-		{
-			return;
-		}
-	}
-	
  	TVect = vect(0, 0, 20);
  	SetCollision(False, False, False);
  	if (!SetLocation(Location + TVect)) TVect = vect(0,0,0);
