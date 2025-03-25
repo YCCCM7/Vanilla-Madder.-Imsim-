@@ -418,6 +418,7 @@ defaultproperties
      MsgBlindDuration="%s (Blinded, %d seconds)"
      LastVisibilityThreshold=-1.000000
      bCanClimbLadders=False
+     bCanGrabWeapons=False
      bDoesntSniff=True
      SmellTypes(0)=
      SmellTypes(1)=

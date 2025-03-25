@@ -258,6 +258,8 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 	
 	VMDInitializeSubsystems();
 	
+	//BARF! TESTING!
+	AssignedID = 2;
 	//Bark bind name work.
 	HunterBarkBindName = "MJ12CyborgBountyHunter"$string(AssignedID+1);
 	
@@ -852,13 +854,14 @@ defaultproperties
      HelmetDamageThreshold=50
      ArmorDamageThreshold=100
      bRobotVision=True
-     Energy=50 //NOTE: These guys have small energy capacity for augs because this is the portion of their enery not used for their suit.
+     Energy=50 //NOTE: These guys have small energy capacity for augs because this is the portion of their energy not used for their suit.
      EnergyMax=50
      MedkitHealthLevel=150
      SprintSound=Sound'DeusExSounds.Augmentation.AugLoop'
      MsgBlindDuration="%s (Blinded, %d seconds)"
      LastVisibilityThreshold=-1.000000
      bCanClimbLadders=False
+     bCanGrabWeapons=False
      bDoesntSniff=True
      SmellTypes(0)=
      SmellTypes(1)=
