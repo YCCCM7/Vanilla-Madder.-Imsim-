@@ -281,6 +281,9 @@ event bool VirtualKeyPressed(EInputKey key, bool bRepeat)
 		{
 			switch(key)
 			{
+				case IK_8:
+					btnkeys[9].PressButton(); //If Shift + 8 do * for Americans and others.
+				break;
 				case IK_3:
 					btnKeys[11].PressButton(); //If Shift + 3 do # for Americans and others.
 				break;
