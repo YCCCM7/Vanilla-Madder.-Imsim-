@@ -387,6 +387,8 @@ function VMDDumpItems(out Inventory ContinueItem, DeusExPlayer Player, Inventory
 			}
 			else if (DXW != None)
 			{
+				DXw.bReloadWasntEmpty = True; //MADDERS, 2/23/25: No empty mags when reloading from unloaded weapons in armory.
+				
 				DXW.bRotatedInInventory = false;
 				if (DXW.bLasing) DXW.LaserOff();
 				if (DXW.bZoomed) DXW.ScopeOff();
