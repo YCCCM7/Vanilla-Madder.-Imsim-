@@ -6,12 +6,26 @@ class SierraRocket extends DeusExProjectile;
 var ParticleGenerator fireGen;
 var ParticleGenerator smokeGen;
 
-var bool bSticky, bStuckToWorld;
 var float FuseTime, FuseLength, BeepTime;
 
-var Actor StuckTo;
-var Vector StickOffset;
-var Rotator StuckToRotation, StickRotation;
+simulated function VMDStickTo(Actor Other)
+{
+	if (Other == None || Other == Owner || !bSticky) return;
+	
+	Super.VMDStickTo(Other);
+	
+	if (smokeGen != None)
+	{
+		smokeGen.DelayedDestroy();
+	}
+	if (fireGen != None)
+	{
+		fireGen.DelayedDestroy();
+	}
+	
+	PlaySound(Sound'DeusExSounds.Weapons.LAMSelect');
+	AmbientSound = None;
+}
 
 function PlayBeepSound( float Range, float Pitch, float volume )
 {
@@ -25,19 +39,12 @@ simulated function Tick(float DeltaTime)
 	
  	Super.Tick(DeltaTime);
 	
-	if ((VSize(Velocity) < 20 || Target == None) && (!bStuckToWorld) && (StuckTo == None))
+	if ((VSize(Velocity) < 20 || Target == None) && (!bStuckToWorld) && (!bStuckToActor))
 	{
 		Destroy();
 	}
 	
- 	if (StuckTo != None)
- 	{
-		TRot = (StuckTo.Rotation - StuckToRotation);
-  		SetRotation(TRot + StickRotation);
-  		SetLocation(StuckTo.Location + (StickOffset >> TRot));
- 	}
-	
-	if (bStuckToWorld || StuckTo != None)
+	if (bStuckToWorld || bStuckToActor)
 	{
 		FuseTime += DeltaTime;
 		if (FuseTime < FuseLength)
@@ -66,59 +73,11 @@ simulated function Tick(float DeltaTime)
 		else
 		{
 			bSticky = False;
-			bStuckToWorld = false;
+			bStuckToWorld = False;
+			bStuckToActor = False;
 			StuckTo = None;
 			FuseTime = -10000;
 			Explode(Location, Vector(Rotation));
-		}
-	}
-}
-
-simulated function StickTo(Actor Other)
-{
-	if (Other == None || Other == Owner || !bSticky) return;
-	
-	bFixedRotationDir = True;
-	SetPhysics(PHYS_None);
-	PlaySound(Sound'DeusExSounds.Weapons.LAMSelect');
-	
-	if (smokeGen != None)
-	{
-		smokeGen.DelayedDestroy();
-	}
-	if (fireGen != None)
-	{
-		fireGen.DelayedDestroy();
-	}
-	
-        if (Other.IsA('Brush') || Other == Level)
-	{
-        	bStuckToWorld = True;
-		return;
-	}
-	
-	AmbientSound = None;
-	StuckTo = Other;
-	StickOffset = (Location - Other.Location) * 0.5;
-	StuckToRotation = Other.Rotation;
-	StickRotation = Rotation;
-}
-
-auto simulated state Flying
-{
-	simulated function HitWall (vector HitNormal, actor Other)
-	{
-		if (bSticky)
-		{
-			StickTo(Other);
-		}
-	}
-	
-	simulated function ProcessTouch(actor Other, vector HitLocation)
-	{
-		if (bSticky)
-		{
-			StickTo(Other);
 		}
 	}
 }
@@ -132,6 +91,8 @@ function ZoneChange(ZoneInfo NewZone)
   		SetPhysics(PHYS_Falling);
   		Velocity.Z *= -1;
   		Velocity.Z *= 0.75;
+		bStuckToWorld = False;
+		bStuckToActor = False;
   		StuckTo = None;
   		StickOffset = vect(0,0,0);
   		StickRotation = rot(0,0,0);
