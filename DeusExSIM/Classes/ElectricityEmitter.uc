@@ -20,6 +20,8 @@ var float lastDamageTime;
 var float lastFlickerTime;
 var bool bAlreadyInitialized;		// has this item been init'ed yet?
 
+var vector VMDEndTraceOffset; //MADDERS, 2/15/25: Hack for fixing wonky emitters.
+
 function CalcTrace(float deltaTime)
 {
 	local vector StartTrace, EndTrace, HitLocation, HitNormal, loc;
@@ -34,11 +36,12 @@ function CalcTrace(float deltaTime)
 		rot.Pitch = Int((0.5 - FRand()) * randomAngle);
 		rot.Yaw = Int((0.5 - FRand()) * randomAngle);
 		rot.Roll = Int((0.5 - FRand()) * randomAngle);
-
+		
 		StartTrace = Location;
 		EndTrace = Location + 5000 * vector(Rotation + rot);
+		EndTrace += VMDEndTraceOffset;
 		HitActor = None;
-
+		
 		foreach TraceTexture(class'Actor', target, texName, texGroup, texFlags, HitLocation, HitNormal, EndTrace, StartTrace)
 		{
 			if ((target.DrawType == DT_None) || target.bHidden)
@@ -55,18 +58,22 @@ function CalcTrace(float deltaTime)
 				break;
 			}
 		}
-
+		
 		lastDamageTime += deltaTime;
-
+		
 		// shock whatever gets in the beam
 		if ((HitActor != None) && (lastDamageTime >= damageTime))
 		{
 			HitActor.TakeDamage(damageAmount, Instigator, HitLocation, vect(0,0,0), 'Shocked');
 			lastDamageTime = 0;
 		}
-
+		
 		if (LaserIterator(RenderInterface) != None)
-			LaserIterator(RenderInterface).AddBeam(0, Location, Rotation + rot, VSize(Location - HitLocation));
+		{
+			//MADDERS, 2/15/25: Improves rendering acccuracy of impact location, while also reflecting custom tweaks. Huh.
+			//LaserIterator(RenderInterface).AddBeam(0, Location, Rotation + rot, VSize(Location - HitLocation));
+			LaserIterator(RenderInterface).AddBeam(0, Location, Rotator(HitLocation - Location), VSize(Location - HitLocation));
+		}
 	}
 }
 
