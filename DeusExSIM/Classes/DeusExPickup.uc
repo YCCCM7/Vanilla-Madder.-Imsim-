@@ -841,7 +841,44 @@ function VMDSignalDropUpdate(DeusExPickup Dropped, DeusExPickup Parent)
 	}
 }
 function VMDSignalPickupUpdate();
-function VMDUpdatePropertiesHook();
+function VMDUpdatePropertiesHook()
+{
+	if (IsA('NoodleCup'))
+	{
+		SmellType = "Food";
+		SmellUnits = 150;
+	}
+	else if (IsA('Fries'))
+	{
+		SmellType = "Food";
+		SmellUnits = 150;
+	}
+	else if (IsA('CoffeeCup'))
+	{
+		SmellType = "Food";
+		SmellUnits = 50;
+	}
+	else if (IsA('BurgerSodaCan'))
+	{
+		SmellType = "Food";
+		SmellUnits = 100;
+	}
+	else if (IsA('Burger'))
+	{
+		SmellType = "Food";
+		SmellUnits = 200;
+	}
+	else if (IsA('Beans'))
+	{
+		SmellType = "Food";
+		SmellUnits = 200;
+	}
+	else if (IsA('KetchupBar'))
+	{
+		SmellType = "Food";
+		SmellUnits = 150;
+	}
+}
 
 //MADDERS: Configure our damage reduction!
 function float VMDConfigurePickupDamageMult(name DT, int HitDamage, Vector HitLocation)
@@ -1004,6 +1041,13 @@ function bool VMDHasSkillAugment(Name S)
 		return class'VMDSkillAugmentManager'.Static.StaticSkillAugmentAssumed(S);
 	}
 	return VMP.HasSkillAugment(S);
+}
+
+function PostBeginPlay()
+{
+	Super.PostBeginPlay();
+	
+	VMDUpdatePropertiesHook();
 }
 
 // ----------------------------------------------------------------------
