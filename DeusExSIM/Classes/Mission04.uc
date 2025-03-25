@@ -150,13 +150,15 @@ function Timer()
 	local pawn curPawn;
 	local JCDouble JCDouble;
 	
+	local DeusExRootWindow DXRW;
+	local Inventory TItem;
 	local VMDBufferPlayer VMP;
 	local name UseTag;
 	local bool bConvoWon;
 
 	Super.Timer();
 	
-	if (Flags == None) return;
+	if (Flags == None || Player == None) return;
 	VMP = VMDBufferPlayer(Player);
 	
 	// do this for every map in this mission
@@ -183,7 +185,7 @@ function Timer()
 					Level.Game.SendPlayer(Player, "05_NYC_UNATCOMJ12Lab");
 				}
 			}
-			if (Player.IsInState('Dying') && !Player.IsAnimating()) // Transcended - Allow death animation to finish so it's not on the same frame they die
+			if ((Player.IsInState('Dying')) && (!Player.IsAnimating())) // Transcended - Allow death animation to finish so it's not on the same frame they die
 			{				
 				if (localURL == "04_NYC_HOTEL")
 					CheckPaulWellbeing();
@@ -198,31 +200,44 @@ function Timer()
 				//== Clear out the object belt now; otherwise the player will see their items being "confiscated" when they wake up in prison
 				if (!Player.IsA('GreaselPlayer'))
 				{
-					for(count=0; count < 10; count++)
+					DXRW = DeusExRootWindow(Player.RootWindow);
+					if ((DXRW != None) && (DXRW.HUD != None) && (DXRW.HUD.Belt != None))
 					{
-						if(DeusExRootWindow(Player.rootWindow).hud.belt.objects[count].GetItem() != None && !DeusExRootWindow(Player.rootWindow).hud.belt.objects[count].GetItem().IsA('NanoKeyRing'))
+						for(count=0; count < 10; count++)
 						{
-							DeusExRootWindow(Player.rootWindow).hud.belt.objects[count].GetItem().bInObjectBelt = False;
-							DeusExRootWindow(Player.rootWindow).hud.belt.objects[count].GetItem().beltPos = -1;
+							if (DXRW.HUD.Belt.Objects[count] != None)
+							{
+								TItem = DXRW.HUD.Belt.Objects[count].GetItem();
+								if ((TItem != None) && (!TItem.IsA('NanoKeyRing')))
+								{
+									TItem.bInObjectBelt = False;
+									TItem.beltPos = -1;
+								}
+							}
 						}
+						DXRW.HUD.Belt.ClearBelt();
 					}
-					DeusExRootWindow(Player.rootWindow).hud.belt.ClearBelt();
 				}
 				flags.SetBool('MS_PlayerCaptured', True,, 5);
 				Player.GoalCompleted('EscapeToBatteryPark');
-				Level.Game.SendPlayer(Player, "05_NYC_UNATCOMJ12Lab");
+				if ((Level != None) && (Level.Game != None))
+				{
+					Level.Game.SendPlayer(Player, "05_NYC_UNATCOMJ12Lab");
+				}
 			}
 			// Spawn a copy of JC where he was
-			else if (player.IsInState('Interpolating') && !flags.GetBool('MS_ClonePlaced'))
+			else if ((player.IsInState('Interpolating')) && (!flags.GetBool('MS_ClonePlaced')))
 			{
 				JCDouble = Spawn(class'JCDouble', None,, PlayerLocation, PlayerRotation);
 				if (JCDouble != None)
+				{
 					JCDouble.SetOrders('Standing',, True);
+				}
 				flags.SetBool('MS_ClonePlaced', True,, 5);
 			}
 		}
 	}
-
+	
 	if (localURL == "04_NYC_HOTEL")
 	{
 		// check to see if the player has killed either Sandra or Gilbert
@@ -231,14 +246,14 @@ function Timer()
 			count = 0;
 			foreach AllActors(class'SandraRenton', Sandra)
 				count++;
-
+			
 			foreach AllActors(class'GilbertRenton', Gilbert)
 				count++;
-
+			
 			foreach AllActors(class'SandraRentonCarcass', SandraCarc)
 				if ((SandraCarc != None) && (SandraCarc.KillerBindName == "JCDenton"))
 					count = 0;
-
+			
 			foreach AllActors(class'GilbertRentonCarcass', GilbertCarc)
 				if ((GilbertCarc != None) && (GilbertCarc.KillerBindName == "JCDenton"))
 					count = 0;
@@ -248,7 +263,7 @@ function Timer()
 				flags.SetBool('PlayerKilledRenton', True,, 5);
 				foreach AllActors(class'Actor', A, 'RentonsHatePlayer')
 				{
-					if ((A != None) && (!bDeleteMe) && (Player != None))
+					if ((A != None) && (!A.bDeleteMe) && (Player != None))
 					{
 						A.Trigger(Self, Player);
 					}
@@ -256,19 +271,19 @@ function Timer()
 			}
 		}
 		
-		if (!flags.GetBool('M04RaidTeleportDone') &&
-			flags.GetBool('ApartmentEntered'))
+		if ((!flags.GetBool('M04RaidTeleportDone')) && (flags.GetBool('ApartmentEntered')))
 		{
 			if (flags.GetBool('NSFSignalSent'))
 			{
 				foreach AllActors(class'ScriptedPawn', pawn)
 				{
-					if (Pawn != None)
+					if (pawn.IsA('UNATCOTroop') || pawn.IsA('MIB'))
 					{
-						if (pawn.IsA('UNATCOTroop') || pawn.IsA('MIB'))
-							pawn.EnterWorld();
-						else if (pawn.IsA('SandraRenton') || pawn.IsA('GilbertRenton') || pawn.IsA('HarleyFilben') || Pawn.IsA('JojoFine'))
-							pawn.LeaveWorld();
+						pawn.EnterWorld();
+					}
+					else if (pawn.IsA('SandraRenton') || pawn.IsA('GilbertRenton') || pawn.IsA('HarleyFilben') || Pawn.IsA('JojoFine'))
+					{
+						pawn.LeaveWorld();
 					}
 				}
 				
@@ -298,7 +313,7 @@ function Timer()
 				
 				foreach AllActors(class'PaulDenton', Paul)
 				{
-					if ((Player != None) && (Paul != None))
+					if (Paul != None)
 					{
 						UseTag = 'TalkedToPaulAfterMessage';
 						if ((VMP != None) && (VMP.bAssignedFemale) && (VMP.bAllowFemaleVoice) && (!VMP.bDisableFemaleVoice))
@@ -318,7 +333,7 @@ function Timer()
 							Paul.AddToInitialInventory(class'WeaponSword', 1);
 							Paul.AddToInitialInventory(class'BioelectricCell', 15);
 							Paul.AddToInitialInventory(class'Medkit', 15);
-							if ((VMDBufferPlayer(Player) != None) && (VMDBufferPlayer(Player).bPaulMortalEnabled))
+							if ((VMP != None) && (VMP.bPaulMortalEnabled))
 							{
 								Paul.bInvincible = false;
 							}
@@ -335,12 +350,13 @@ function Timer()
 				{
 					foreach AllActors(class'ScriptedPawn', pawn)
 					{
-						if (Pawn != None)
+						if (pawn.IsA('UNATCOTroop') || pawn.IsA('MIB'))
 						{
-							if (pawn.IsA('UNATCOTroop') || pawn.IsA('MIB'))
-								pawn.LeaveWorld();
-							else if (pawn.IsA('SandraRenton') || pawn.IsA('GilbertRenton') || pawn.IsA('HarleyFilben') || Pawn.IsA('JojoFine'))
-								pawn.EnterWorld();
+							pawn.LeaveWorld();
+						}
+						else if (pawn.IsA('SandraRenton') || pawn.IsA('GilbertRenton') || pawn.IsA('HarleyFilben') || Pawn.IsA('JojoFine'))
+						{
+							pawn.EnterWorld();
 						}
 					}
 				}
@@ -354,7 +370,7 @@ function Timer()
 			{
 				foreach AllActors(class'ScriptedPawn', pawn)
 				{
-					if ((Pawn != None) && (pawn.IsA('MIB')))
+					if (pawn.IsA('MIB'))
 					{
 						pawn.bInvincible = False;
 					}
@@ -364,18 +380,13 @@ function Timer()
 		}
 		
 		// unhide the correct JoJo
-		if (!flags.GetBool('MS_JoJoUnhidden') &&
-			(flags.GetBool('SandraWaitingForJoJoBarks_Played') ||
-			flags.GetBool('GilbertWaitingForJoJoBarks_Played')))
+		if (!flags.GetBool('MS_JoJoUnhidden') && (flags.GetBool('SandraWaitingForJoJoBarks_Played') || flags.GetBool('GilbertWaitingForJoJoBarks_Played')))
 		{
 			if (!flags.GetBool('JoJoFine_Dead'))
 			{
 				foreach AllActors(class'ScriptedPawn', pawn, 'JoJoUpstairs')
 				{
-					if (Pawn != None)
-					{
-						pawn.EnterWorld();
-					}
+					pawn.EnterWorld();
 				}
 				flags.SetBool('MS_JoJoUnhidden', True,, 5);
 			}
@@ -391,10 +402,7 @@ function Timer()
 			{
 				foreach AllActors(class'ScriptedPawn', pawn, 'JoJoUpstairs')
 				{
-					if (Pawn != None)
-					{
-						pawn.EnterWorld();
-					}
+					pawn.EnterWorld();
 				}
 				flags.SetBool('MS_JoJoUnhidden', True,, 5);
 			}
@@ -407,20 +415,14 @@ function Timer()
 			{
 				foreach AllActors(class'Actor', A, 'GilbertAttacksJoJo')
 				{
-					if ((A != None) && (Player != None))
-					{
-						A.Trigger(Self, Player);
-					}
+					A.Trigger(Self, Player);
 				}
 			}
 			else
 			{
 				foreach AllActors(class'Actor', A, 'JoJoAttacksGilbert')
 				{
-					if ((A != None) && (Player != None))
-					{
-						A.Trigger(Self, Player);
-					}
+					A.Trigger(Self, Player);
 				}
 			}
 			
@@ -432,10 +434,7 @@ function Timer()
 		{
 			foreach AllActors(class'Actor', A, 'SandraLeaves')
 			{
-				if ((A != None) && (Player != None))
-				{
-					A.Trigger(Self, Player);
-				}
+				A.Trigger(Self, Player);
 			}
 			flags.SetBool('MS_JoJo2Triggered', True,, 5);
 		}
@@ -445,10 +444,7 @@ function Timer()
 		{
 			foreach AllActors(class'Actor', A, 'JoJoAttacksGilbert')
 			{
-				if ((A != None) && (Player != None))
-				{
-					A.Trigger(Self, Player);
-				}
+				A.Trigger(Self, Player);
 			}
 			flags.SetBool('MS_JoJo3Triggered', True,, 5);
 		}
@@ -466,7 +462,7 @@ function Timer()
 				flags.SetBool('MS_Dish1Rotated', True,, 5);
 			}
 		}
-
+		
 		// rotate the dish when the computer sets the flag
 		if (!flags.GetBool('MS_Dish2Rotated'))
 		{
@@ -478,7 +474,7 @@ function Timer()
 				flags.SetBool('MS_Dish2Rotated', True,, 5);
 			}
 		}
-
+		
 		// rotate the dish when the computer sets the flag
 		if (!flags.GetBool('MS_Dish3Rotated'))
 		{
@@ -490,7 +486,7 @@ function Timer()
 				flags.SetBool('MS_Dish3Rotated', True,, 5);
 			}
 		}
-
+		
 		// set a flag when all dishes are rotated
 		if (!flags.GetBool('CanSendSignal'))
 		{
@@ -499,7 +495,7 @@ function Timer()
 				flags.GetBool('Dish3InPosition'))
 				flags.SetBool('CanSendSignal', True,, 5);
 		}
-
+		
 		// count non-living troops
 		if (!flags.GetBool('MostWarehouseTroopsDead'))
 		{
@@ -511,7 +507,7 @@ function Timer()
 			if (count <= 2)
 				flags.SetBool('MostWarehouseTroopsDead', True);
 		}
-
+		
 		// Transcended - Set the troops to look around for JC when patrolling.
 		if (!flags.GetBool('M04TroopsSuspicious') && flags.GetBool('NSFSignalSent'))
 		{
