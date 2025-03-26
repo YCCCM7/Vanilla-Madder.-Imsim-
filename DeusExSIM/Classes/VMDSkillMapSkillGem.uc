@@ -8,7 +8,8 @@ var VMDPersonaScreenSkills SkillScreen;
 var bool bTalentsEnabled;
 
 //Default data
-var Texture SkillIcons[11], LevelBorders[4], LockedLevelBorders[4], HighlightLevelBorders[4], LevelLabels[4], PointsLeftLabels[8];
+var Texture SkillIcons[11], LevelBorders[4], LockedLevelBorders[4], HighlightLevelBorders[4], LevelLabels[4], PointsLeftLabels[8],
+		UntrainedPurchaseFrames[16], TrainedPurchaseFrames[16], AdvancedPurchaseFrames[16], MasterPurchaseFrames[16];
 var Color ColWhite, ColPoints;
 var string SkillTypes[11];
 var class<Skill> SkillType;
@@ -20,6 +21,7 @@ var int CurSkillLevel, TalentPointsLeft;
 var bool bSpecialized;
 
 var int SkillPointsLeft, NextLevelCost;
+var float PurchaseProgress;
 var string SkillName, SkillDesc, LevelDescs[4];
 
 //Draw scale barf
@@ -38,8 +40,8 @@ var VMDNonStaticSkillTalentFunctions LastRef;
 
 event DrawWindow(GC gc)
 {
-	local Texture TLabel, TBorder, TSkill, TPoints;
-	local int ScaleOffX, ScaleOffY;
+	local Texture TLabel, TBorder, TPurchaseBorder, TSkill, TPoints;
+	local int ScaleOffX, ScaleOffY, TFrame;
 	local float UnivScale, HackModX, HackModY;
 	
 	TSkill = SkillIcons[SkillIconIndex];
@@ -71,11 +73,39 @@ event DrawWindow(GC gc)
 	
 	UnivScale = CurDrawScale*ZoomRenderScale;
 	
+	if (PurchaseProgress > 0)
+	{
+		TFrame = Clamp(int(PurchaseProgress * 16.0), 0, 15);
+		if (CurSkillLevel == 0)
+		{
+			TBorder = UntrainedPurchaseFrames[TFrame];
+		}
+		else if (CurSkillLevel == 1)
+		{
+			TBorder = TrainedPurchaseFrames[TFrame];
+		}
+		else if (CurSkillLevel == 2)
+		{
+			TBorder = AdvancedPurchaseFrames[TFrame];
+		}
+		else if (CurSkillLevel == 3)
+		{
+			TBorder = MasterPurchaseFrames[TFrame];
+		}
+	}
 	if (TBorder != None)
 	{
 		GC.SetTileColor(ColButtonFace);
 		GC.DrawStretchedTexture(0+ScaleOffX, 0+ScaleOffY, 32*UnivScale, 32*UnivScale, 0, 0, 32, 32, TBorder);
 	}
+	
+	TPurchaseBorder = HighlightLevelBorders[CurSkillLevel];
+	if ((TPurchaseBorder != None) && (PurchaseProgress > 0))
+	{
+		//GC.SetTileColor(ColButtonFace);
+		//GC.DrawStretchedTexture(0+ScaleOffX, 0+ScaleOffY, 32*UnivScale, 32*UnivScale, 0, 0, 32, 32, TPurchaseBorder);
+	}
+	
 	if (TSkill != None)
 	{
 		GC.SetTileColor(ColWhite);
@@ -424,6 +454,72 @@ defaultproperties
      HighlightLevelBorders(1)=Texture'SkillGemTrainedHighlight'
      HighlightLevelBorders(2)=Texture'SkillGemAdvancedHighlight'
      HighlightLevelBorders(3)=Texture'SkillGemMasterHighlight'
+     
+     UntrainedPurchaseFrames(0)=Texture'SkillGemUntrainedLocked'
+     UntrainedPurchaseFrames(1)=Texture'SkillGemUntrainedPurchase01'
+     UntrainedPurchaseFrames(2)=Texture'SkillGemUntrainedPurchase02'
+     UntrainedPurchaseFrames(3)=Texture'SkillGemUntrainedPurchase03'
+     UntrainedPurchaseFrames(4)=Texture'SkillGemUntrainedPurchase04'
+     UntrainedPurchaseFrames(5)=Texture'SkillGemUntrainedPurchase05'
+     UntrainedPurchaseFrames(6)=Texture'SkillGemUntrainedPurchase06'
+     UntrainedPurchaseFrames(7)=Texture'SkillGemUntrainedPurchase07'
+     UntrainedPurchaseFrames(8)=Texture'SkillGemUntrainedPurchase08'
+     UntrainedPurchaseFrames(9)=Texture'SkillGemUntrainedPurchase09'
+     UntrainedPurchaseFrames(10)=Texture'SkillGemUntrainedPurchase10'
+     UntrainedPurchaseFrames(11)=Texture'SkillGemUntrainedPurchase11'
+     UntrainedPurchaseFrames(12)=Texture'SkillGemUntrainedPurchase12'
+     UntrainedPurchaseFrames(13)=Texture'SkillGemUntrainedPurchase13'
+     UntrainedPurchaseFrames(14)=Texture'SkillGemUntrainedPurchase14'
+     UntrainedPurchaseFrames(15)=Texture'SkillGemUntrainedPurchase15'
+     TrainedPurchaseFrames(0)=Texture'SkillGemTrainedLocked'
+     TrainedPurchaseFrames(1)=Texture'SkillGemTrainedPurchase01'
+     TrainedPurchaseFrames(2)=Texture'SkillGemTrainedPurchase02'
+     TrainedPurchaseFrames(3)=Texture'SkillGemTrainedPurchase03'
+     TrainedPurchaseFrames(4)=Texture'SkillGemTrainedPurchase04'
+     TrainedPurchaseFrames(5)=Texture'SkillGemTrainedPurchase05'
+     TrainedPurchaseFrames(6)=Texture'SkillGemTrainedPurchase06'
+     TrainedPurchaseFrames(7)=Texture'SkillGemTrainedPurchase07'
+     TrainedPurchaseFrames(8)=Texture'SkillGemTrainedPurchase08'
+     TrainedPurchaseFrames(9)=Texture'SkillGemTrainedPurchase09'
+     TrainedPurchaseFrames(10)=Texture'SkillGemTrainedPurchase10'
+     TrainedPurchaseFrames(11)=Texture'SkillGemTrainedPurchase11'
+     TrainedPurchaseFrames(12)=Texture'SkillGemTrainedPurchase12'
+     TrainedPurchaseFrames(13)=Texture'SkillGemTrainedPurchase13'
+     TrainedPurchaseFrames(14)=Texture'SkillGemTrainedPurchase14'
+     TrainedPurchaseFrames(15)=Texture'SkillGemTrainedPurchase15'
+     AdvancedPurchaseFrames(0)=Texture'SkillGemAdvancedLocked'
+     AdvancedPurchaseFrames(1)=Texture'SkillGemAdvancedPurchase01'
+     AdvancedPurchaseFrames(2)=Texture'SkillGemAdvancedPurchase02'
+     AdvancedPurchaseFrames(3)=Texture'SkillGemAdvancedPurchase03'
+     AdvancedPurchaseFrames(4)=Texture'SkillGemAdvancedPurchase04'
+     AdvancedPurchaseFrames(5)=Texture'SkillGemAdvancedPurchase05'
+     AdvancedPurchaseFrames(6)=Texture'SkillGemAdvancedPurchase06'
+     AdvancedPurchaseFrames(7)=Texture'SkillGemAdvancedPurchase07'
+     AdvancedPurchaseFrames(8)=Texture'SkillGemAdvancedPurchase08'
+     AdvancedPurchaseFrames(9)=Texture'SkillGemAdvancedPurchase09'
+     AdvancedPurchaseFrames(10)=Texture'SkillGemAdvancedPurchase10'
+     AdvancedPurchaseFrames(11)=Texture'SkillGemAdvancedPurchase11'
+     AdvancedPurchaseFrames(12)=Texture'SkillGemAdvancedPurchase12'
+     AdvancedPurchaseFrames(13)=Texture'SkillGemAdvancedPurchase13'
+     AdvancedPurchaseFrames(14)=Texture'SkillGemAdvancedPurchase14'
+     AdvancedPurchaseFrames(15)=Texture'SkillGemAdvancedPurchase15'
+     MasterPurchaseFrames(0)=Texture'SkillGemMasterPurchaseLocked'
+     MasterPurchaseFrames(1)=Texture'SkillGemMasterPurchase01'
+     MasterPurchaseFrames(2)=Texture'SkillGemMasterPurchase02'
+     MasterPurchaseFrames(3)=Texture'SkillGemMasterPurchase03'
+     MasterPurchaseFrames(4)=Texture'SkillGemMasterPurchase04'
+     MasterPurchaseFrames(5)=Texture'SkillGemMasterPurchase05'
+     MasterPurchaseFrames(6)=Texture'SkillGemMasterPurchase06'
+     MasterPurchaseFrames(7)=Texture'SkillGemMasterPurchase07'
+     MasterPurchaseFrames(8)=Texture'SkillGemMasterPurchase08'
+     MasterPurchaseFrames(9)=Texture'SkillGemMasterPurchase09'
+     MasterPurchaseFrames(10)=Texture'SkillGemMasterPurchase10'
+     MasterPurchaseFrames(11)=Texture'SkillGemMasterPurchase11'
+     MasterPurchaseFrames(12)=Texture'SkillGemMasterPurchase12'
+     MasterPurchaseFrames(13)=Texture'SkillGemMasterPurchase13'
+     MasterPurchaseFrames(14)=Texture'SkillGemMasterPurchase14'
+     MasterPurchaseFrames(15)=Texture'SkillGemMasterPurchase15'
+     
      LevelLabels(0)=Texture'GemLevelLabel0'
      LevelLabels(1)=Texture'GemLevelLabel1'
      LevelLabels(2)=Texture'GemLevelLabel2'
