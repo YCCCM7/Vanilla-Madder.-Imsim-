@@ -77,7 +77,7 @@ simulated event RenderOverlays( Canvas Can )
  	{
 		//MADDERS: Toggle light state based on reload/ammo state, same with effect type but also with ammos.
 		LightBrightness = 128;
-		if ((IsInState('Reload')) || (ClipCount >= ReloadCount) || (AmmoType == None) || (AmmoType.AmmoAmount <= 0))
+		if (VMDOwnerIsCloaked() || IsInState('Reload') || ClipCount >= ReloadCount || AmmoType == None || AmmoType.AmmoAmount <= 0)
 		{
 			TTex = Texture'BlackMaskTex';
 			LightBrightness = 0;
@@ -93,10 +93,15 @@ simulated event RenderOverlays( Canvas Can )
     			TTex = Texture'Effects.Fire.Wepn_PRifle_SFX';
   		}
   		
+		if (VMDOwnerIsCloaked())
+		{
+			Multiskins[2] = TTex;
+		}
   		MultiSkins[1] = TTex;
   		Super.RenderOverlays(Can);
   		
   		MultiSkins[1] = Default.Multiskins[1];
+		MultiSkins[2] = Default.Multiskins[2];
  	}
  	else
  	{
@@ -154,6 +159,8 @@ defaultproperties
      EvolvedBelt="HERE, CATCH!"
      AimDecayMult=15.000000
      ThirdPersonScale=1.25
+     SkinSwapException(1)=1
+     SkinSwapException(2)=1
      
      //MADDERS: Shotgun info.
      MinSpreadAcc=0.112500
