@@ -911,6 +911,23 @@ static function bool VMDIsWeaponSensitiveMap(Actor A, optional bool bMorallyGrey
 	}
 }
 
+static function bool VMDIsBountyHunterExceptionMap(Actor A, optional bool bMorallyGrey)
+{
+	local string TName;
+	
+	TName = VMDGetMapName(A);
+	switch(TName)
+	{
+		//These locations are found to play badly, outright.
+		case "06_HONGKONG_HELIBASE":
+			return true;
+		break;
+		default:
+			return false;
+		break;
+	}
+}
+
 //444444444444444444444444444444
 //SKILL AUGMENT TREE SETUP
 //444444444444444444444444444444
