@@ -70,6 +70,55 @@ function bool VMDPlausiblyDeniableNoise()
 	return (i > 1);
 }
 
+function float VMDOpenSpaceRadiusMult(optional bool bStrongScale)
+{
+	if (!bStrongScale)
+	{
+		return FMax(1.0, Sqrt(Max(1, VMDOpenSpaceLevel())) / 3.33);
+	}
+	else
+	{
+		return FMax(1.0, Sqrt(Max(1, VMDOpenSpaceLevel())) / 2);
+	}
+}
+
+function int VMDOpenSpaceLevel(optional bool bPlayerRelevant)
+{
+	local Vector TStart, TEnds[14], HL, HN;
+	local int Ret, i;
+	
+	if ((bPlayerRelevant) && (PlayerPawn(Owner) == None)) return 1;
+	if (Owner == None) return 1;
+	
+	Ret = 1;
+	TStart = Owner.Location;
+	
+	//COORD BARF: Cardinal directions.
+	TEnds[0] = TStart + vect(3,0,0) * 64;
+	TEnds[1] = TStart + vect(6,0,0) * 64;
+	TEnds[2] = TStart - vect(3,0,0) * 64;
+	TEnds[3] = TStart - vect(6,0,0) * 64;
+	TEnds[4] = TStart + vect(0,3,0) * 64;
+	TEnds[5] = TStart + vect(0,6,0) * 64;
+	TEnds[6] = TStart - vect(0,3,0) * 64;
+	TEnds[7] = TStart - vect(0,6,0) * 64;
+	
+	//Diagonal, and then vertical because fuck it. Why not?
+	TEnds[8] = TStart + vect(6,6,0) * 64;
+	TEnds[9] = TStart + vect(-6,6,0) * 64;
+	TEnds[10] = TStart - vect(-6,-6,0) * 64;
+	TEnds[11] = TStart - vect(6,-6,0) * 64;
+	TEnds[12] = TStart + vect(0,0,2) * 64;
+	TEnds[13] = TStart + vect(0,0,-2) * 64;
+	
+	for (i=0; i<14; i++)
+	{
+		if (FastTrace(TStart, TEnds[i])) Ret++;
+	}
+	
+	return Ret;
+}
+
 singular function DripWater(float deltaTime)
 {
 	local float  dripPeriod;
