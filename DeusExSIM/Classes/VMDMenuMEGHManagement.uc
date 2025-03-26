@@ -10,15 +10,15 @@ struct VMDButtonPos {
 
 var MenuUIActionButtonWindow DoneButton,  TurnOffButton;
 
-var VMDMenuUIActionButtonWindow ReloadButton, UnloadButton, SwapButton, RepairButton, RechargeButton, SyringeButton;
+var VMDMenuUIActionButtonWindow CustomNameEditButton, ReloadButton, UnloadButton, SwapButton, RepairButton, RechargeButton, SyringeButton;
 
 var localized string DoneButtonText, TurnOffButtonText,
-			ReloadButtonText, UnloadButtonText, SwapButtonText, EquipButtonText, UnequipButtonText, RepairButtonText, RechargeButtonText,
-			StrHealthTitle, StrHealthDesc, StrEMPHealthTitle, StrEMPHealthDesc, StrScrap, StrCells,
+			CustomNameEditButtonText, ReloadButtonText, UnloadButtonText, SwapButtonText, EquipButtonText, UnequipButtonText, RepairButtonText, RechargeButtonText,
+			StrHealthTitle, StrHealthDesc, StrEMPHealthTitle, StrEMPHealthDesc, StrScrap, StrCells, StrAutoReload, 
 			StrMagCount, StrAmmoLeft, StrNoWeapon, StrScrapLeft, StrCellsLeft,
 			GiveSyringeButtonText, TakeSyringeButtonText, StrSyringesLeft;
 
-var bool bCanRepair, bCanRecharge, bCanReload, bCanUnload, bCanSwap;
+var bool bCanRepair, bCanRecharge, bCanReload, bCanUnload, bCanSwap, bAutoReload;
 var int LastDroneHealth, LastDroneEMPHealth, LastCellCount, LastScrapCount, LastScrapCost,
 			LastReloadCount, LastClipCount, LastCurrentAmmo, LastAmmoLeft;
 
@@ -31,10 +31,11 @@ var class<DeusExWeapon> LastWeapon;
 var MenuUIEditWindow CustomNameEntry;
 var MenuUIHelpWindow WinInfoWeaponName, MagCountLabel, AmmoLeftLabel, ScrapLeftLabel, CellsLeftLabel, SyringesLeftLabel;
 var VMDMenuUIInfoWindow WinInfoHealth, WinInfoEMPHealth;
+var PersonaCheckBoxWindow  ChkAutoReload;
 
-var VMDButtonPos ReloadButtonPos, ReloadButtonSize, UnloadButtonPos, UnloadButtonSize, SwapButtonPos, SwapButtonSize,
+var VMDButtonPos ReloadButtonPos, ReloadButtonSize, UnloadButtonPos, UnloadButtonSize, SwapButtonPos, SwapButtonSize, AutoReloadCheckboxPos,
 			RepairButtonPos, RepairButtonSize, RechargeButtonPos, RechargeButtonSize,
-			CustomNamePos, CustomNameSize, HealthPos, HealthSize, EMPHealthPos, EMPHealthSize,
+			CustomNamePos, CustomNameSize, CustomNameEditButtonPos, CustomNameEditButtonSize, HealthPos, HealthSize, EMPHealthPos, EMPHealthSize,
 			WeaponNamePos, WeaponNameSize,  MagCountPos, MagCountSize, AmmoLeftPos, AmmoLeftSize,
 			ScrapIconPos, CellsIconPos, WeaponIconPos,
 			ScrapLeftPos, ScrapLeftSize, CellsLeftPos, CellsLeftSize,
@@ -122,7 +123,7 @@ event InitWindow()
 function CreateNameEditWindow()
 {
 	CustomNameEntry = CreateMenuEditWindow(CustomNamePos.X, CustomNamePos.Y, CustomNameSize.X, 28, winClient);
-	CustomNameEntry.SetSensitivity(True);
+	CustomNameEntry.SetSensitivity(False);
 }
 
 function CreateInfoWindows()
@@ -231,6 +232,11 @@ function CreateIconWindows()
 
 function CreateButtons()
 {
+	CustomNameEditButton = VMDMenuUIActionButtonWindow(WinClient.NewChild(Class'VMDMenuUIActionButtonWindow'));
+	CustomNameEditButton.SetButtonText(CustomNameEditButtonText);
+	CustomNameEditButton.SetPos(CustomNameEditButtonPos.X, CustomNameEditButtonPos.Y);
+	CustomNameEditButton.SetWidth(CustomNameEditButtonSize.X);
+	
 	ReloadButton = VMDMenuUIActionButtonWindow(WinClient.NewChild(Class'VMDMenuUIActionButtonWindow'));
 	ReloadButton.SetButtonText(ReloadButtonText);
 	ReloadButton.SetPos(ReloadButtonPos.X, ReloadButtonPos.Y);
@@ -272,6 +278,7 @@ function UpdateInfo()
 	local bool bHasTalent, bHasBuff;
 	local int EMPMargin, SkillLevel, LastMaxAmmo, TMaxHealth, NumSyringes;
 	local float CraftCostTweak;
+	local ColorTheme theme;
 	
 	local Inventory TInv;
 	local BioelectricCell TCell;
@@ -294,7 +301,7 @@ function UpdateInfo()
 	}
 	
 	CF = GetCF();
-	if ((CF != None) && (VMP != None) && (VMP.SkillSystem != None) && (Megh != None))
+	if ((CF != None) && (VMP != None) && (VMP.SkillSystem != None))
 	{
 		bHasTalent = VMP.HasSkillAugment('ElectronicsCrafting');
 		bHasBuff = VMP.HasSkillAugment('ElectronicsDroneArmor');
@@ -341,8 +348,14 @@ function UpdateInfo()
 		DXW = Megh.FirstWeapon();
 		if (DXW != None)
 		{
-			WeaponIcon.SetBackground(DXW.Icon);
-			WinInfoWeaponName.SetText(DXW.ItemName);
+			if (WeaponIcon != None)
+			{
+				WeaponIcon.SetBackground(DXW.Icon);
+			}
+			if (WinInfoWeaponName != None)
+			{
+				WinInfoWeaponName.SetText(DXW.ItemName);
+			}
 			
 			LastReloadCount = DXW.ReloadCount;
 			LastClipCount = DXW.ClipCount;
@@ -367,16 +380,28 @@ function UpdateInfo()
 		}
 		else
 		{
-			WeaponIcon.SetBackground(Texture'PinkMaskTex');
-			WinInfoWeaponName.SetText(StrNoWeapon);
+			if (WeaponIcon != None)
+			{
+				WeaponIcon.SetBackground(Texture'PinkMaskTex');
+			}
+			if (WinInfoWeaponName != None)
+			{
+				WinInfoWeaponName.SetText(StrNoWeapon);
+			}
 		}
 		
-		WinInfoHealth.Clear();
-		WinInfoHealth.SetTitle(SprintF(StrHealthTitle, LastDroneHealth));
-		WinInfoHealth.SetText(SprintF(StrHealthDesc, LastScrapCost));
-		WinInfoEMPHealth.Clear();
-		WinInfoEMPHealth.SetTitle(SprintF(StrEMPHealthTitle, LastDroneEMPHealth));
-		WinInfoEMPHealth.SetText(StrEMPHealthDesc);
+		if (WinInfoHealth != None)
+		{
+			WinInfoHealth.Clear();
+			WinInfoHealth.SetTitle(SprintF(StrHealthTitle, LastDroneHealth));
+			WinInfoHealth.SetText(SprintF(StrHealthDesc, LastScrapCost));
+		}
+		if (WinInfoEMPHealth != None)
+		{
+			WinInfoEMPHealth.Clear();
+			WinInfoEMPHealth.SetTitle(SprintF(StrEMPHealthTitle, LastDroneEMPHealth));
+			WinInfoEMPHealth.SetText(StrEMPHealthDesc);
+		}
 		
 		bCanRepair = true;
 		if (LastDroneHealth >= 100) bCanRepair = false;
@@ -404,6 +429,36 @@ function UpdateInfo()
 	{
   		AddTimer(0.1, True,, 'DoPop');
  	}
+	
+	if ((ChkAutoReload == None) && (Megh.bCanHack))
+	{
+		ChkAutoReload = PersonaCheckBoxWindow(winClient.NewChild(Class'PersonaCheckBoxWindow'));
+		
+		bAutoReload = Megh.bAutoReload;
+		
+		ChkAutoReload.SetText(StrAutoReload);
+		ChkAutoReload.SetToggle(bAutoReload);
+		ChkAutoReload.SetPos(AutoReloadCheckboxPos.X, AutoReloadCheckboxPos.Y);
+		//ChkAutoReload.SetWindowAlignments(HALIGN_Right, VALIGN_Top, 13, 180);
+		
+		if (Player.ThemeManager != None)
+		{
+			Theme = player.ThemeManager.GetCurrentMenuColorTheme();
+			
+			if (Theme != None)
+			{
+				ChkAutoReload.colText = theme.GetColorFromName('MenuColor_ButtonTextNormal');
+				ChkAutoReload.colButtonFace = theme.GetColorFromName('MenuColor_ButtonFace');
+				
+				ChkAutoReload.SetTextColors(ChkAutoReload.colText, ChkAutoReload.colText, ChkAutoReload.colText, ChkAutoReload.colText, ChkAutoReload.colText, ChkAutoReload.colText);
+				ChkAutoReload.SetCheckboxColor(ChkAutoReload.colText);
+			}
+		}
+	}
+	else if (ChkAutoReload != None)
+	{
+		Megh.bAutoReload = ChkAutoReload.GetToggle();
+	}
 	
 	if (Megh.bCanHeal)
 	{
@@ -596,6 +651,11 @@ function bool ButtonActivated( Window buttonPressed )
 			bHandled = true;
 		break;
 		
+		case CustomNameEditButton:
+			CustomNameEntry.SetSensitivity(True);
+			CustomNameEditButton.SetSensitivity(False);
+		break;
+		
 		case ReloadButton:
 			AttemptReload();
 		break;
@@ -674,7 +734,7 @@ function AttemptSyringeRefund()
 
 function AttemptUnequip()
 {
-	if (Megh == None)
+	if (Megh == None || !Megh.VMDMeghCanDropWeapon())
 	{
 		return;
 	}
@@ -938,10 +998,13 @@ defaultproperties
      WeaponNameSize=(X=124,Y=12)
      MagCountPos=(X=324,Y=102)
      MagCountSize=(X=101,Y=24)
-     AmmoLeftPos=(X=324,Y=126)
-     AmmoLeftSize=(X=81,Y=24)
+     AmmoLeftPos=(X=324,Y=117)
+     AmmoLeftSize=(X=81,Y=18)
+     AutoReloadCheckboxPos=(X=313,Y=108)
      CustomNamePos=(X=191,Y=16)
-     CustomNameSize=(X=188,Y=32)
+     CustomNameSize=(X=144,Y=32)
+     CustomNameEditButtonPos=(X=337,Y=17)
+     CustomNameEditButtonSize=(X=53,Y=15)
      ScrapLeftPos=(X=32,Y=243)
      ScrapLeftSize=(X=49,Y=12)
      CellsLeftPos=(X=236,Y=243)
@@ -963,6 +1026,7 @@ defaultproperties
      SyringeButtonPos=(X=199,Y=151)
      SyringeButtonSize=(X=53,Y=15)
      
+     CustomNameEditButtonText="Edit"
      ReloadButtonText="Reload"
      UnloadButtonText="Unload"
      EquipButtonText="Equip"
@@ -974,6 +1038,7 @@ defaultproperties
      TakeSyringeButtonText="Take"
      StrSyringesLeft="%d Syringe(s)"
      
+     StrAutoReload="Auto Reload"
      StrNoWeapon="No weapon"
      
      Title="M.E.G.H. Management"
