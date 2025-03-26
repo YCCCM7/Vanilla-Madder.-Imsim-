@@ -3,7 +3,7 @@
 //=============================================================================
 class VMDSmellManager extends VMDBufferDeco;
 
-var bool bSmellActive, bNeedNodeUpdate;
+var bool bSmellActive, bNeedNodeUpdate, bIgnoreAfterSmell, bNonPlayerSource;
 var Name SmellType;
 var float SmellRadius, SmellUpdateTime, SmellTimer;
 var int SmellArraySize, LastArray;
@@ -19,7 +19,10 @@ function Destroyed()
  	
  	for(i=0; i<SmellArraySize; i++)
  	{
-  		if (Nodes[i] != None) Nodes[i].Destroy();
+  		if (Nodes[i] != None)
+		{
+			Nodes[i].Destroy();
+		}
  	}
  	
  	Super.Destroyed();
@@ -85,8 +88,20 @@ function Tick(float DT)
 { 
  	Super.Tick(DT);
  	
- 	if (Owner == None) return;
- 	
+ 	if (Owner == None)
+	{
+		if (bNonPlayerSource)
+		{
+			Destroy();
+		}
+		return;
+ 	}
+	
+	if ((Region.Zone != None) && (Region.Zone.bWaterZone) && (bNonPlayerSource))
+	{
+		Destroy();
+	}
+	
  	if (bNeedNodeUpdate)
  	{
   		UpdateNodes();
