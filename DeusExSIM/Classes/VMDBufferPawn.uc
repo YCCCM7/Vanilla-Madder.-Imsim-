@@ -6,7 +6,7 @@ class VMDBufferPawn extends ScriptedPawn
 
 //++++++++++++++++++++++++
 //MADDERS ADDITIONS!
-var(MADDERS) int AttackStateLaps;
+var(MADDERS) int AttackStateLaps, ConsecutiveShittyPaths;
 
 var bool bSetupBuffedHealth, bAppliedSpecial, bAppliedSpecial2, bBuffedVision, bBuffedSenses, bBuffedAccuracy; //Already better health scaling than &%)*. God save us all
 var int MedkitHealthLevel; //MADDERS, 12/27/23: In some special cases, we may have a special threshold.
@@ -45,6 +45,7 @@ var float VMDClearTargetTime, LastTickDelta;
 var bool bDoesntSniff, bRobotVision;
 var name SmellTypes[10];
 var name LastSmellType;
+var VMDSmellManager IgnoredSmells[20];
 var localized string FakeBarkSniffing;
 var localized string MessagePickpocketingSuccess, MessagePickpocketingFailure, MessagePickpocketingSpotted;
 
@@ -105,6 +106,7 @@ var Pawn LastDamager; //Use this for not doing spam headshot calls. Yeet.
 
 var Actor LastSoughtExtinguisher;
 var FireExtinguisher ActiveExtinguisher;
+var bool bCanGrabWeapons;
 var DeusExWeapon LastSoughtWeapon;
 var bool bMayhemSuspect, bAntiMayhemSuspect; //Flag our corpse with this when it's placed. Also give us good boy points if we're alive after we're done.
 
@@ -180,6 +182,84 @@ var() bool bRecognizeMovedObjects; // Notice objects that have been moved into s
 var bool bJustTurned; //MADDERS, 11/29/21: Technically G-Flex, but whatever.
 
 var DeusExPlayer localPlayer;
+
+function NavigationPoint VMDFindShittyPathTo(Vector Destination, Vector Start, float SearchRadius, optional bool bNeedFastTrace)
+{
+	local int i;
+	local float TDist, BestDist;
+	local Vector RadCenter, AddLevel, UseLevel;
+	local NavigationPoint TPoint, BestPoint;
+	
+	AddLevel = Destination - Start;
+	UseLevel = AddLevel;
+	TDist = 100;
+	for (i=0; i<4; i++)
+	{
+		RadCenter = Start + (UseLevel * (float(i+1) / 4.0));
+		forEach RadiusActors(class'NavigationPoint', TPoint, SearchRadius, RadCenter)
+		{
+			TDist = VSize(Location - TPoint.Location);
+			if ((TDist > BestDist) && (!bNeedFastTrace || FastTrace(TPoint.Location, Destination)) && (ActorReachable(TPoint)))
+			{
+				BestDist = TDist;
+				BestPoint = TPoint;
+			}
+		}
+	}
+	
+	if (BestPoint == None || BestDist < SearchRadius * 0.5)
+	{
+		UseLevel = AddLevel >> Rot(0, 4096, 0);
+		for (i=0; i<4; i++)
+		{
+			RadCenter = Start + (UseLevel * (float(i+1) / 4.0));
+			forEach RadiusActors(class'NavigationPoint', TPoint, SearchRadius, RadCenter)
+			{
+				TDist = VSize(Location - TPoint.Location);
+				if ((TDist > BestDist) && (!bNeedFastTrace || FastTrace(TPoint.Location, Destination)) && (ActorReachable(TPoint)))
+				{
+					BestDist = TDist;
+					BestPoint = TPoint;
+				}
+			}
+		}
+		if (BestPoint == None || BestDist < SearchRadius * 0.5)
+		{
+			UseLevel = AddLevel >> Rot(0, -4096, 0);
+			for (i=0; i<4; i++)
+			{
+				RadCenter = Start + (UseLevel * (float(i+1) / 4.0));
+				forEach RadiusActors(class'NavigationPoint', TPoint, SearchRadius, RadCenter)
+				{
+					TDist = VSize(Location - TPoint.Location);
+					if ((TDist > BestDist) && (!bNeedFastTrace || FastTrace(TPoint.Location, Destination)) && (ActorReachable(TPoint)))
+					{
+						BestDist = TDist;
+						BestPoint = TPoint;
+					}
+				}
+			}
+		}
+	}
+	
+	return BestPoint;
+}
+
+function float VMDGetGuessingFudge()
+{
+	local float Ret;
+	
+	if (PoisonCounter > 0)
+	{
+		Ret = FClamp(EnemyGuessingFudge + PoisonGuessingFudge, 0.0, MaxGuessingFudge);
+	}
+	else
+	{
+		Ret = FClamp(EnemyGuessingFudge, 0.0, MaxGuessingFudge);
+	}
+	
+	return Ret;
+}
 
 function Actor VMDFindTurretComputer()
 {
@@ -1481,7 +1561,14 @@ Done:
 	}
 	else
 	{
-		GoToState('Standing');
+		if (VMDMEGH(Self) != None)
+		{
+			FollowOrders();
+		}
+		else
+		{
+			GoToState('Standing');
+		}
 	}
 
 ContinueRun:
@@ -1532,7 +1619,8 @@ function VMDGrabWeapon(DeusExWeapon DXW)
 		}
 	}
 	
-	if ((!bLoadedAmmo) && (LastSoughtWeapon.PickupAmmoCount > 0))
+	//MADDERS, 2/22/25: Don't shoot and use ammo we don't own, bonus round. Very important for MEGH.
+	if ((!bLoadedAmmo) && (LastSoughtWeapon.PickupAmmoCount > 0 || (LastSoughtWeapon.AmmoType != None && LastSoughtWeapon.AmmoType.Owner != Self)))
 	{
 		LastSoughtWeapon.AmmoType = spawn(LastSoughtWeapon.AmmoName);
 		if (LastSoughtWeapon.AmmoType != None)
@@ -1560,6 +1648,12 @@ function DeusExWeapon VMDFindClosestFreeWeapon(optional bool bDiscludeMelee)
 	//MADDERS, 11/0/24: A little late, but don't grab weapons if we're just honestly afraid and not fighting back.
 	if (Enemy == None || GetPawnAllianceType(Enemy) != ALLIANCE_Hostile) return None;
 	
+	//MADDERS, 3/15/25: Even later, decide who can or can't grab weapons on an individual basis.
+	if (!bCanGrabWeapons)
+	{
+		return None;
+	}
+	
 	BestDistance = 9999;
 	EyePos = Location + (Vect(0,0,1) * BaseEyeHeight);
 	
@@ -1567,6 +1661,12 @@ function DeusExWeapon VMDFindClosestFreeWeapon(optional bool bDiscludeMelee)
 	{
 		if ((VSize(DXW.Velocity) < 20) && (DXW.Physics != PHYS_Falling) && (FastTrace(EyePos, DXW.Location)))
 		{
+			//MADDERS, 3/15/25: Skip over this shit because it's bad to be grabbing.
+			if (DXW.VMDConfigureInvSlotsX(None) > 90 || DXW.Default.Mesh == LODMesh'TestBox')
+			{
+				continue;
+			}
+			
 			//MADDERS, 8/7/24: I know it's slower this way, but I get tired of debugging chunky bois in weird situations, and the performance hit is virtually immeasurable anyways.
 			FlagOwnerValid = (DXW.Owner == None || DeusExCarcass(DXW.Owner) != None);
 			FlagMeleePassed = (!DXW.VMDIsMeleeWeapon() || !bDiscludeMelee);
@@ -3078,6 +3178,18 @@ function bool AddToInitialInventory(class<Inventory> NewClass, int NewCount, opt
 	
 	if (!bInitialized)
 	{
+		//MADDERS, 2/25/25: Stop conflicts between plasma rifle and PS20, now that we cap PS20 ammo. You don't need both.
+		if (class<WeaponHideAGun>(NewClass) != None)
+		{
+			for(i=0; i<ArrayCount(InitialInventory); i++)
+			{
+				if (InitialInventory[i].Inventory == class'WeaponPlasmaRifle')
+				{	
+					return false;
+				}
+			}
+		}
+		
 		for(i=0; i<ArrayCount(InitialInventory); i++)
 		{
 			if ((InitialInventory[i].Inventory == NewClass) && (!bAllowDuplicates))
@@ -3178,9 +3290,24 @@ function bool AddToInitialInventory(class<Inventory> NewClass, int NewCount, opt
 				}
 				
 				//MADDERS: Don't let our ammos be swapped out. Plasma keeps fucking this up, somehow.
-				if ((Weapon(Inv) != None) && (DeusExAmmo(Weapon(Inv).AmmoType) != None)) DeusExAmmo(Weapon.AmmoType).bCrateSummoned = true;
-				if (DeusExAmmo(Inv) != None) DeusExAmmo(Inv).bCrateSummoned = true;
-				if (DeusExPickup(Inv) != None) DeusExPickup(Inv).NumCopies = TCopies;
+				if ((Weapon(Inv) != None) && (DeusExAmmo(Weapon(Inv).AmmoType) != None))
+				{
+					DeusExAmmo(Weapon.AmmoType).bCrateSummoned = true;
+				}
+				else if (WeaponHideAGun(Inv) != None)
+				{
+					WeaponHideAGun(Inv).PickupAmmoCount = 2;
+				}
+				
+				if (DeusExAmmo(Inv) != None)
+				{
+					DeusExAmmo(Inv).bCrateSummoned = true;
+				}
+				
+				if (DeusExPickup(Inv) != None)
+				{
+					DeusExPickup(Inv).NumCopies = TCopies;
+				}
 				
 				if (inv != None)
 				{
@@ -3266,13 +3393,114 @@ function SpoofBarkLine(DeusExPlayer DXP, string SpoofLine, optional float Displa
 	}
 }
 
-function HandleSmell(Name event, EAIEventState state, VMDBufferPlayer Player)
+function VMDAddSmellException(VMDSmellManager TManager)
+{
+	local int i;
+	
+	for(i=0; i<ArrayCount(IgnoredSmells); i++)
+	{
+		if (IgnoredSmells[i] == TManager)
+		{
+			break;
+		}
+		if (IgnoredSmells[i] == None || IgnoredSmells[i].bDeleteMe)
+		{
+			IgnoredSmells[i] = TManager;
+			break;
+		}
+	}
+}
+
+function bool VMDSmellsAreEquivalent(name Smell1, name Smell2)
+{
+	switch(Smell1)
+	{
+		case 'PlayerSmell':
+		case 'PlayerAnimalSmell':
+			if (Smell2 == 'PlayerSmell' || Smell2 == 'PlayerAnimalSmell')
+			{
+				return true;
+			}
+		break;
+		case 'PlayerFoodSmell':
+		case 'StrongPlayerFoodSmell':
+			if (Smell2 == 'PlayerFoodSmell' || Smell2 == 'StrongPlayerFoodSmell')
+			{
+				return true;
+			}
+		break;
+		case 'PlayerBloodSmell':
+		case 'StrongPlayerBloodSmell':
+			if (Smell2 == 'PlayerBloodSmell' || Smell2 == 'StrongPlayerBloodSmell')
+			{
+				return true;
+			}
+		break;
+		case 'PlayerZymeSmell':
+			if (Smell2 == 'PlayerZymeSmell')
+			{
+				return true;
+			}
+		break;
+		case 'PlayerSmokeSmell':
+		case 'StrongPlayerSmokeSmell':
+			if (Smell2 == 'PlayerSmokeSmell' || Smell2 == 'StrongPlayerSmokeSmell')
+			{
+				return true;
+			}
+		break;
+	}
+	return false;
+}
+
+function bool VMDShouldIgnoreSmell(VMDSmellManager TManager, Name SmellType)
+{
+	local int i;
+	
+	if (DeusExCarcass(TManager.Owner) != None)
+	{
+		if (DeusExCarcass(TManager.Owner).bAnimalCarcass)
+		{
+			return true;
+		}
+		//MADDERS, 2/25/25: Only care about our faction's dead bodies, to minimize AI disruption from smells.
+		if ((!VMDPawnIsLawEnforcement()) && (DeusExCarcass(TManager.Owner).Alliance != Alliance))
+		{
+			return true;
+		}
+	}
+	
+	for(i=0; i<ArrayCount(IgnoredSmells); i++)
+	{
+		if (IgnoredSmells[i] != None)
+		{
+			if (IgnoredSmells[i] == TManager)
+			{
+				return true;
+			}
+			else if (VMDSmellsAreEquivalent(TManager.SmellType, IgnoredSmells[i].SmellType) && (VSize(TManager.Location - IgnoredSmells[i].Location) > CollisionRadius * 3) && (VSize(TManager.Location - IgnoredSmells[i].Location) < TManager.CollisionRadius * 1.2))
+			{
+				return true;
+			}
+			else if ((i == ArrayCount(IgnoredSmells)-1) && (IgnoredSmells[i] != None))
+			{
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+function HandleSmell(Name event, EAIEventState state, Actor SmellOwner)
 {
 	local float GSpeed;
 	//React
 	local Actor bestActor;
 	local Pawn  instigator;
 	local DeusExRootWindow Root;
+	local VMDBufferPlayer Player, VMP;
+	local VMDSmellManager TManager;
 	
 	GSpeed = 1.0;
 	if ((Level != None) && (Level.Game != None))
@@ -3280,14 +3508,26 @@ function HandleSmell(Name event, EAIEventState state, VMDBufferPlayer Player)
 		GSpeed = Level.Game.GameSpeed;
 	}
 	
+	Player = VMDBufferPlayer(SmellOwner);
+	VMP = GetLastVMP();
+	TManager = VMDSmellManager(SmellOwner);
+	if (VMP == None)
+	{
+		return;
+	}
+	if ((TManager != None) && (VMDShouldIgnoreSmell(TManager, TManager.SmellType)))
+	{
+		return;
+	}
+	
 	if ((state == EAISTATE_Begin || state == EAISTATE_Pulse) && (!IsInCombatesqueState()))
 	{
-		if ((Player != None) && (!Player.IsInState('Dying')) && (EnemiesOrNeutralLeft() > 0))
+		if ((VMP != None) && (!VMP.IsInState('Dying')) && (EnemiesOrNeutralLeft() > 0))
 		{
 			//MADDERS: Being seen covered in blood
 			if (LastSmellType == 'PlayerStrongBloodSmell' || (LastSmellType == 'PlayerZymeSmell' && VMDPawnIsLawEnforcement()))
 			{
-				Player.AISendEvent('MegaFutz', EAITYPE_Audio, 5.0, 384);
+				SmellOwner.AISendEvent('MegaFutz', EAITYPE_Audio, 5.0, 384);
 			}
 			
 			if ((SmellSniffCooldown <= 0) && (!Default.bImportant) && (!bInvincible) && (!bInsignificant) && (!bDoesntSniff))
@@ -3295,7 +3535,7 @@ function HandleSmell(Name event, EAIEventState state, VMDBufferPlayer Player)
 				//MADDERS: Always give sniff for hostile reactions, but give a short cooldown.
 				//Rarely give a sniff for neutral reactions, and add a longer cooldown.
 				//Never do this for allies, but still parse the blood doodad.
-				switch (GetPawnAllianceType(Player))
+				switch (GetPawnAllianceType(VMP))
 				{
 					case ALLIANCE_Hostile:
 						SmellSniffCooldown = 5.0;
@@ -3318,21 +3558,25 @@ function HandleSmell(Name event, EAIEventState state, VMDBufferPlayer Player)
 				}
 				
 				//MADDERS: Visual feedback, too, please.
-				SpoofBarkLine(Player, FakeBarkSniffing);
+				SpoofBarkLine(VMP, FakeBarkSniffing);
 			}
 			
-			if (IsValidEnemy(Player))
+			if (Player == None || IsValidEnemy(Player))
 			{
 				//MADDERS, 11/30/20: Close smell = attack. Cheaty, but so is the player swoocing around with smell at point blank.
-				if (VSize(Player.Location - Location) < CollisionRadius * 3)
+				if ((Player != None) && (VSize(Player.Location - Location) < CollisionRadius * 3))
 				{
 					Enemy = Player;
 					GoToState('Attacking');
 				}
 				else
 				{
+					if ((TManager != None) && (TManager.bIgnoreAfterSmell))
+					{
+						VMDAddSmellException(TManager);
+					}
 					//Carcass? Guess?
-					SetSeekLocation(Player, Player.Location, SEEKTYPE_None); //Guess
+					SetSeekLocation(VMP, SmellOwner.Location, SEEKTYPE_None); //Guess
 					HandleEnemy();
 				}
 			}
@@ -6238,6 +6482,7 @@ function CheckForHelmets()
   		case Texture'PinkMaskTex':
   		case Texture'GogglesTex1':
 		case Texture'VMDTechGogglesTex1':
+		case Texture'ThugMale3Tex3':
    			bHasHelmet = False;
   		break;
   		default:
@@ -6354,6 +6599,7 @@ function Vector SitPosition(Seat seatActor, int slot);
 
 defaultproperties
 {
+     bCanGrabWeapons=True
      bCanClimbLadders=True
      LadderJumpZMult=1.000000
      DifficultyVisionRangeMult=1.000000
