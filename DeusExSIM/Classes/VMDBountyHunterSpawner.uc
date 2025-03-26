@@ -27,7 +27,13 @@ function Tick(float DT)
 		else if (TweakTimer > -10)
  		{
  	 		TweakTimer = -30;
-			SpawnHunters();
+			
+			//MADDERS, 2/25/25: If we failed to spawn any hunters due to excluding factors, just mark this map to not spawn any going forward.
+			//The reason we do this is so that loading your game won't invoke more spawns.
+			if (!SpawnHunters())
+			{
+				Spawn(class'VMDBountyHunterDeathFlag',,, Location);
+			}
 	 	}
 	}
 }
@@ -69,10 +75,10 @@ function float FakeRand(int Ceil)
 	return Ret;
 }
 
-function SpawnHunters()
+function bool SpawnHunters()
 {
 	local bool bDebug;
-	local int TMission, SpawnStrength, HideListSize, TIndex, SpawnAttempts, StartingID, i, j;
+	local int TMission, SpawnStrength, HideListSize, TIndex, SpawnAttempts, StartingID, i, j, SpawnedHunters;
 	local float TOdds;
 	local Vector BaseLoc, TLoc;
 	local Rotator TRot;
@@ -93,14 +99,18 @@ function SpawnHunters()
 	bDebug = false;
 	if (!bDebug)
 	{
-		if (VMP == None || !VMP.bMayhemSystemEnabled) return;
-		if (VMP.MayhemFactor < VMP.SavedHunterThreshold || !VMP.bBountyHuntersEnabled) return;
+		if (VMP == None || !VMP.bMayhemSystemEnabled) return false;
+		if (VMP.MayhemFactor < VMP.SavedHunterThreshold || !VMP.bBountyHuntersEnabled) return false;
 	}
 	
 	if (class'VMDStaticFunctions'.Static.VMDIsWeaponSensitiveMap(Self, true))
 	{
 		if (bDebug) BroadcastMessage("SENSITIVE MAP! NO COVERAGE!");
-		return;
+		return false;
+	}
+	else if (class'VMDStaticFunctions'.Static.VMDIsBountyHunterExceptionMap(Self, true))
+	{
+		return false;
 	}
 	
 	InitRandData(VMP);
@@ -140,18 +150,18 @@ function SpawnHunters()
 			//Condition 1 for bad map: We have hunters.
 			if (VMDBountyHunter(VMBP) != None)
 			{
-				return;
+				return true;
 			}
 			
 			//Condition 2 for bad map: We have an alliance who doesn't like us hanging out.
 			switch(VMBP.Alliance)
 			{
 				case 'Player': //Player alliance, save for MEGH and SIDD, indicates pacifist map.
-					if (VMDMEGH(VMBP) == None && VMDSIDD(VMBP) == None)
+					if ((VMDMEGH(VMBP) == None) && (VMDSIDD(VMBP) == None))
 					{
 						if (bDebug) BroadcastMessage("PLAYER DUDES COCKBLOCKING US");
 						
-						return;
+						return false;
 					}
 				break;
 				case 'UNATCO': //UNATCO before Denton's fully gone rogue doesn't want us poking around.
@@ -159,7 +169,7 @@ function SpawnHunters()
 					{
 						if (bDebug) BroadcastMessage("UNATCO DUDES COCKBLOCKING US");
 						
-						return;
+						return false;
 					}
 				break;
 				case 'NSF': //NSF after Denton's gone rogue are gonna make dropping in a pickle.
@@ -167,7 +177,7 @@ function SpawnHunters()
 					{
 						if (bDebug) BroadcastMessage("NSF DUDES COCKBLOCKING US");
 						
-						return;
+						return false;
 					}
 				break;
 			}
@@ -193,6 +203,8 @@ function SpawnHunters()
 	{
 		SpawnStrength = 10;
 	}
+	
+	SpawnStrength = Min(VMP.SavedHunterQuantity, SpawnStrength);
 	
 	if (SpawnStrength > 0)
 	{
@@ -235,12 +247,18 @@ function SpawnHunters()
 				if (FastTrace(BaseLoc, TLoc))
 				{
 					THunters[i] = Spawn(HunterClass,,, TLoc, THide.Rotation);
+					if (THunters[i] != None)
+					{
+						SpawnedHunters += 1;
+						THunters[i].AssignedID = StartingID + i;
+						THunters[i].InitializeBountyHunter(i, VMP, TMission);
+					}
 				}
 				
 				if ((i == 0) && (THunters[i] == None))
 				{
 					if (bDebug) BroadcastMessage("FAILED BASE HUNTER SPAWN AT"@THide);
-					return;
+					return false;
 				}
 				else if ((i > 0) && (THunters[i] == None))
 				{
@@ -257,23 +275,25 @@ function SpawnHunters()
 						
 						if (THunters[i] != None)
 						{
+							SpawnedHunters += 1;
+							THunters[i].AssignedID = StartingID + i;
+							THunters[i].InitializeBountyHunter(i, VMP, TMission);
 							break;
 						}
 						else if (j == (SpawnAttempts-1))
 						{
 							if (bDebug) BroadcastMessage("FAILED SECONDARY HUNTER SPAWN AT"@THide@"HIS NUMBER WAS"@(i+1));
-							return;
+							return true;
 						}
 					}
 				}
-				
-				if (THunters[i] != None)
-				{
-					THunters[i].AssignedID = StartingID + i;
-					THunters[i].InitializeBountyHunter(i, VMP, TMission);
-				}
 			}
 		}
+	}
+	
+	if (SpawnedHunters <= 0)
+	{
+		return false;
 	}
 }
 
