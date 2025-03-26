@@ -42,7 +42,7 @@ defaultproperties
      bAutomatic=True
      bHandToHand=False
      //HandSkinIndex=0
-     OverrideAnimRate=1.500000
+     OverrideAnimRate=2.650000
      OverrideReloadAnimRate=2.000000
      OverrideNumProj=1
      EvolvedName="Cricketer"
