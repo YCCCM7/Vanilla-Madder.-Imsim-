@@ -18,6 +18,7 @@ defaultproperties
      AimDecayMult=8.000000
      OverrideReloadAnimRate=1.350000
      
+     bNameCaseSensitive=False
      LowAmmoWaterMark=1
      GoverningSkill=Class'DeusEx.SkillWeaponHeavy'
      NoiseLevel=2.000000

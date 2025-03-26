@@ -22,6 +22,7 @@ defaultproperties
      LockedSound=Sound'DeusExSounds.Weapons.GEPGunLock'
      TrackingSound=Sound'DeusExSounds.Weapons.GEPGunTrack'
      
+     bNameCaseSensitive=False
      LowAmmoWaterMark=1
      GoverningSkill=Class'DeusEx.SkillWeaponHeavy'
      NoiseLevel=2.000000
