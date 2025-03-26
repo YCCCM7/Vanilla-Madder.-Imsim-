@@ -170,6 +170,7 @@ function PopulateItemsList()
 			}
 			TTile = VMDMenuHousingFoodTile(WinTile.NewChild(class'VMDMenuHousingFoodTile'));
 			TTile.SetItem(GetValidatedSummonFromIndex(i));
+			TTile.FoodWindow = Self;
 			
 			TileSet[CurTileCount] = TTile;
 			CurTileCount++;
