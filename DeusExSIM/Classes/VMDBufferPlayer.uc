@@ -52,6 +52,7 @@ var travel float TaseDuration; //Tasing. Yay.
 var travel float HUDEMPTimer, HUDScramblerTimer; //Re-enable after this time.
 var bool bLastSplashWasSelf, bLastSplashWasDrone; //Used for self EMP skill augment, but it has other uses in theory.
 var float LastWeaponDamageSkillMult, FloatDamageValues[6]; //Same as starting health values, but with no health brand health var.
+var float TiltEffectPitchFloat, TiltEffectYawFloat;
 
 var localized string MsgNeedMoreTools, MsgNoTools, MsgNeedMorePicks, MsgNoPicks, MsgDontHaveKey,
 			MsgNoArmsToCarry, MsgCraving, MsgNewHabit, MsgKickedHabit, MsgHungerReduced,
@@ -68,8 +69,7 @@ var float TaseTimer, OverdoseTimer;
 var bool bRollAchieved, bWasFallRoll, bJumpDucked, bLastTouchingLadder;
 var int RollDir, VMDDodgeDir; //1 = forward, -1 = backward. 2 = right, -2 = left. Yay.
 var float RollCooldown, RollTimer, RollDuration, LastDuckTimer, RollTapMax, RollCapAccel,
-		DodgeRollCooldown, DodgeRollTimer, DodgeRollDuration, DodgeRollCapAccel,
-		JumpDuckResetTimer, JumpDuckResetTime;
+		DodgeRollCooldown, DodgeRollTimer, DodgeRollDuration, DodgeRollCapAccel;
 var Rotator VMDRollModifier;
 var travel float RollCooldownTimer, DodgeRollCooldownTimer;
 
@@ -209,11 +209,13 @@ var() globalconfig int DoorFrobLockpick; //5/3/24: Similar to above, but more fl
 var() globalconfig bool bElectronicsDrawMultitool; //5/9/24: The above option's buddy.
 var() globalconfig bool bUpdateVanillaSkins; //10/20/24: For those who prefer the OG ones or have rando? Speculative, but sure.
 var() globalconfig bool bJumpDuckFeedbackNoise; //11/27/24: Some people find this annoying.
+var() globalconfig bool bClassicSkillPurchasing; //2/19/25: For those who hate the new, modern means.
+var() globalconfig bool bAugControllerShowEnergyPoints; //2/25/25: For DX rando players, primarily.
 var() bool BarfStartupFullscreen, BarfUseDirectInput; //6/24/24: Purely temporary variables. Used in options menu as a metric.
 var() globalconfig int CustomUIScale;
 var() globalconfig float TacticalRollTime;
 
-var() globalconfig bool bAimFocuserVisible, bHUDVisible, bFrobDisplayBordersVisible, bLogVisible, bSmellIndicatorVisible, bLightGemVisible, bSkillNotifierVisible;
+var() globalconfig bool bAimFocuserVisible, bDroneAllianceVisible, bHUDVisible, bFrobDisplayBordersVisible, bLogVisible, bSmellIndicatorVisible, bLightGemVisible, bSkillNotifierVisible;
 var bool VSyncBarf;
 var int BarfAugDisplayVisibility, FOVLevelBarf, FPSCapBarf, RenderDeviceBarf, BarfUIScale;
 
@@ -275,9 +277,9 @@ var(MADDERSDIFF) travel float EnemyROFWeight, EnemyAccuracyMod,
 				EnemyHearingRangeMult, EnemyVisionRangeMult, EnemyVisionStrengthMult, EnemyGuessingFudge; 
 
 var(MADDERSDIFF) travel int SaveGateCombatThreshold, SavedMayhemForgiveness, SavedGateBreakThreshold, SavedLootSwapSeverity,
-				SavedNakedSolutionReductionRate, SavedNakedSolutionMissionEnd, SavedHunterThreshold,
+				SavedNakedSolutionReductionRate, SavedNakedSolutionMissionEnd, SavedHunterQuantity, SavedHunterThreshold,
 				BarfLootReduction,
-				BarfCombatThreshold, BarfStartingMayhem, BarfHunterThreshold, BarfMayhemForgiveness, BarfGateBreakThreshold, BarfLootSwapSeverity,
+				BarfCombatThreshold, BarfStartingMayhem, BarfHunterQuantity, BarfHunterThreshold, BarfMayhemForgiveness, BarfGateBreakThreshold, BarfLootSwapSeverity,
 				BarfSaveGateTime,
 				BarfROFWeight, BarfAccuracyMod,
 				BarfReactionSpeedMult, BarfSurprisePeriodMax, EnemyExtraSearchSteps,
@@ -332,12 +334,14 @@ var VMDFakeRadarMarker FirstRadarMark;
 var localized string StrDroneNameTerrain, MsgNoDroneGrid, MsgDroneCollision;
 
 //9/2/22: TRAVEL VARS ON DRONE!
-var travel bool bHadMEGH, bDroneHealthBuffed, bDroneHasHeal, bDroneReconMode;
+var travel bool bHadMEGH, bDroneHealthBuffed, bDroneHasHeal, bDroneReconMode, bDroneAutoReload;
 var travel int DroneHealth, DroneEMPHitPoints, DroneAmmoLeft,
 		DroneWeaponModSilencer, DroneWeaponModScope, DroneWeaponModLaser, DroneWeaponModEvolution;
 var travel float DroneWeaponModBaseAccuracy, DroneWeaponModReloadCount, DroneWeaponModAccurateRange,
 		DroneWeaponModReloadTime, DroneWeaponModRecoilStrength;
 var travel string DroneCustomName, DroneGunClass;
+
+var travel name StoredDroneAlliances[128], StoredDroneHostilities[128]; //Remember all the goods and bads we have.
 
 //11/17/24: Store some given weapon info, as a misc thing.
 var travel string LastGenerousWeaponClass;
@@ -1034,8 +1038,33 @@ singular function DripWater(float deltaTime)
 // Deus Ex: Transcended end [HACKZ]
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+exec function ShowProp(string NewProp)
+{
+	local DeusExRootWindow root;
+	
+	if (!bCheatsEnabled)
+		return;
+	
+	root = DeusExRootWindow(rootWindow);
+	if (root != None)
+	{
+		if (root.actorDisplay != None)
+		{
+			if (NewProp == "")
+			{
+				root.actorDisplay.ShowCustomProp(false);
+			}
+			else
+			{
+				root.actorDisplay.CustomProp = NewProp;
+				root.actorDisplay.ShowCustomProp(true);
+			}
+		}
+	}
+}
+
 //Testing function for rebuilding AI pathing in real time.
-exec function BrendanFraser()
+function VMDRebuildPaths()
 {
 	local NavigationPoint TPoint;
 	local Pawn TScout;
@@ -1188,7 +1217,7 @@ exec function SpawnTestHunters(name Type, int Amount, name Alliance, name Enemy)
 		case 'Cyborg':
 			HuntClass = class'MJ12CyborgBountyHunter';
 		break;
-		case 'MIB':
+		case 'MJ12Troop':
 		case 'Nanoaug':
 		case 'Revenant':
 			HuntClass = class'MJ12NanoAugBountyHunter';
@@ -1223,6 +1252,22 @@ exec function SpawnTestHunters(name Type, int Amount, name Alliance, name Enemy)
 		}
 	}
 }
+
+/*exec function FindMapFiles(optional string TestDir)
+{
+	if (TestDir == "")
+	{
+		TestDir = "..\\Maps\\*.dx";
+	}
+	
+	Log("TEST DIR?"@TestDir);
+	class'VMDFileFinder'.Static.FindMapFiles(TestDir);
+}*/
+
+/*exec function FindModFiles()
+{
+	class'VMDFileFinder'.Static.GenerateModDirectories();
+}*/
 
 exec function TestWarcrimes()
 {
@@ -1763,6 +1808,22 @@ function bool HasAnyMegh()
 	return false;
 }
 
+function bool VMDUsingBlacklessRenderDevice()
+{
+	local string GetDevice, GetVal;
+	
+	GetDevice = CAPS(GetConfig("Engine.Engine", "GameRenderDevice"));
+	switch(GetDevice)
+	{
+		case "D3D10Drv.D3D10RenderDevice":
+		case "D3D11Drv.D3D11RenderDevice":
+			return true;
+		break;
+	}
+	
+	return false;
+}
+
 //MADDERS, 11/18/24: Used in M09 script. If we have reason to believe our precaching is gonna lag like crazy, don't flush.
 function bool VMDIsFlushGoodIdea()
 {
@@ -1820,6 +1881,7 @@ function VMDClearDroneData()
 	bDroneHealthBuffed = false;
 	bDroneHasHeal = false;
 	bDroneReconMode = false;
+	bDroneAutoReload = false;
 	
 	DroneHealth = 0;
 	DroneEMPHitPoints = 0;
@@ -1838,6 +1900,125 @@ function VMDClearDroneData()
 	
 	DroneCustomName = "";
 	DroneGunClass = "";
+}
+
+function VMDAddDroneAlliance(name NewAlliance)
+{
+	local int i;
+	
+	//Step 1: Purge all hostilities. We're friends now.
+	for (i=0; i<ArrayCount(StoredDroneHostilities); i++)	
+	{
+		if (StoredDroneHostilities[i] == NewAlliance)
+		{
+			StoredDroneHostilities[i] = 'BLANK'; //Hack for travel export.
+		}
+		else if (StoredDroneHostilities[i] == '')
+		{
+			break;
+		}
+	}
+	
+	//Step 2. Make sure this isn't redundant.
+	for(i=0; i<ArrayCount(StoredDroneAlliances); i++)
+	{
+		if (StoredDroneAlliances[i] == NewAlliance)
+		{
+			break;
+		}
+	}
+	//Step 3. Apply this to the first open space.
+	for(i=0; i<ArrayCount(StoredDroneHostilities); i++)
+	{
+		if (StoredDroneAlliances[i] == '' || StoredDroneAlliances[i] == 'BLANK')
+		{
+			StoredDroneAlliances[i] = NewAlliance;
+			break;
+		}
+	}
+}
+
+function VMDAddDroneHostility(name NewHostility)
+{
+	local int i;
+	
+	//Step 1: Purge all alliances. We're not friends anymore.
+	for (i=0; i<ArrayCount(StoredDroneAlliances); i++)	
+	{
+		if (StoredDroneAlliances[i] == NewHostility)
+		{
+			StoredDroneAlliances[i] = 'BLANK'; //Hack for travel export.
+		}
+		else if (StoredDroneAlliances[i] == '')
+		{
+			break;
+		}
+	}
+	
+	//Step 2. Make sure this isn't redundant.
+	for(i=0; i<ArrayCount(StoredDroneHostilities); i++)
+	{
+		if (StoredDroneHostilities[i] == NewHostility)
+		{
+			return;
+		}
+	}
+	//Step 3. Apply this to the first open space.
+	for(i=0; i<ArrayCount(StoredDroneHostilities); i++)
+	{
+		if (StoredDroneHostilities[i] == '' || StoredDroneHostilities[i] == 'BLANK')
+		{
+			StoredDroneHostilities[i] = NewHostility;
+			break;
+		}
+	}
+}
+
+function int VMDGetDroneAllianceStatus(name TarAlliance)
+{
+	local int i;
+	
+	if (TarAlliance == '' || TarAlliance == 'Player' || TarAlliance == 'PlayerDrone')
+	{
+		return -2;
+	}
+	
+	for(i=0; i<ArrayCount(StoredDroneHostilities); i++)
+	{
+		if (StoredDroneHostilities[i] == TarAlliance)
+		{
+			return -1;
+		}
+	}
+	for(i=0; i<ArrayCount(StoredDroneAlliances); i++)
+	{
+		if (StoredDroneAlliances[i] == TarAlliance)
+		{
+			return 1;
+		}
+	}
+	
+	return 0;
+}
+
+function name VMDGetDroneAlliance(int TarIndex)
+{
+	return StoredDroneAlliances[TarIndex];
+}
+
+function name VMDGetDroneHostility(int TarIndex)
+{
+	return StoredDroneHostilities[TarIndex];
+}
+
+function int VMDGetMaxDroneAlliances()
+{
+	return ArrayCount(StoredDroneAlliances);
+}
+
+function int VMDGetMaxDroneHostilities()
+{
+	return ArrayCount(StoredDroneHostilities);
 }
 
 function VMDPackUpDrones()
@@ -1893,6 +2074,7 @@ function VMDPackUpDrones()
 		bDroneHealthBuffed = TMegh.bHealthBuffed;
 		bDroneHasHeal = TMegh.bHasHeal;
 		bDroneReconMode = TMegh.bReconMode;
+		bDroneAutoReload = TMegh.bAutoReload;
 		
 		bArmorTalent = HasSkillAugment('ElectronicsDroneArmor');
 		
@@ -1934,7 +2116,6 @@ function VMDPackUpDrones()
 		DroneHealth = Clamp(TMegh.Health, 1, MaxHealthPoints);
 		DroneEMPHitPoints = Clamp(TMegh.EMPHitPoints, 1, MaxEMPPoints);
 		DroneCustomName = TMegh.CustomName;
-		
 		DXW = TMegh.FirstWeapon();
 		if (DXW != None)
 		{
@@ -1977,6 +2158,7 @@ function VMDEmergencyPackUpDrones(VMDMegh TMegh)
 		bDroneHealthBuffed = TMegh.bHealthBuffed;
 		bDroneHasHeal = TMegh.bHasHeal;
 		bDroneReconMode = TMegh.bReconMode;
+		bDroneAutoReload = TMegh.bAutoReload;
 		
 		DroneHealth = TMegh.Health;
 		DroneEMPHitPoints = TMegh.EMPHitPoints;
@@ -2031,6 +2213,8 @@ function bool VMDUnpackDrones()
 		MissionNumber = DXLI.MissionNumber;
 	}
 	
+	//MADDERS NOTE, 3/1/25: We can't read skill augments yet in TravelPostAccept. Fuck's sake.
+	//Instead, don't cap, only set a floor for health values.
 	bArmorTalent = HasSkillAugment('ElectronicsDroneArmor');
 	
 	if (VMDGetMissionNumber() < 5)
@@ -2079,8 +2263,10 @@ function bool VMDUnpackDrones()
 				TMegh2.bDroneHealthBuff = bDroneHealthBuffed;
 				TMegh2.bDroneHealing = bDroneHasHeal;
 				TMegh2.bDroneReconMode = false;
-				TMegh2.DroneHealth = Clamp(DroneHealth, 1, MaxHealthPoints);
+				TMEgh2.bDroneAutoReload = bDroneAutoReload;
+				//TMegh2.DroneHealth = Clamp(DroneHealth, 1, MaxHealthPoints);
 				//TMegh2.DroneEMPHealth = Clamp(DroneEMPHitPoints, 1, MaxEMPPoints);
+				TMegh2.DroneHealth = Max(1, DroneHealth);
 				TMegh2.DroneEMPHealth = DroneEMPHitPoints;
 				TMegh2.CustomName = DroneCustomName;
 				bWon = true;
@@ -2133,9 +2319,6 @@ function bool VMDUnpackDrones()
 						DXW.bHasEvolution = true;
 						DXW.VMDUpdateEvolution();
 					}
-					
-					DXW.GiveTo(TMegh);
-					DXW.SetBase(TMegh);
 				}
 			}
 		}
@@ -2151,12 +2334,14 @@ function bool VMDUnpackDrones()
 				TMegh.bHealthBuffed = bDroneHealthBuffed;
 				TMegh.bHasHeal = bDroneHasHeal;
 				
-				TMegh.Health = Clamp(DroneHealth, 1, MaxHealthPoints);
-				//TMegh.EMPHitPoints = Clamp(DroneEMPHitPoints, 1, MaxEMPPoints);				
+				//TMegh.Health = Clamp(DroneHealth, 1, MaxHealthPoints);
+				//TMegh.EMPHitPoints = Clamp(DroneEMPHitPoints, 1, MaxEMPPoints);
+				TMegh.Health = Max(1, DroneHealth);				
 				TMegh.EMPHitPoints = DroneEMPHitPoints;				
 				TMegh.CustomName = DroneCustomName;
 				
 				TMegh.bReconMode = bDroneReconMode;
+				TMegh.bAutoReload = bDroneAutoReload;
 				
 				//TMegh.UpdateTalentEffects(Self);
 				TMegh.bQueueTalentUpdate = true;
@@ -2285,6 +2470,20 @@ exec function OpenControllerAugWindow()
 	}
 }
 
+exec function OpenControllerHealthWindow()
+{
+ 	local DeusExRootWindow Root;
+	local VMDMenuHealthSelector TarWindow;
+	
+	if (RestrictInput()) return;
+	
+  	Root = DeusExRootWindow(RootWindow);
+    	if (Root != None)
+  	{
+   		TarWindow = VMDMenuHealthSelector(Root.InvokeMenuScreen(Class'VMDMenuHealthSelector', bRealTimeControllerAugs));
+	}
+}
+
 //MADDERS, 8/29/22: New drone order command. Cheers.
 exec function IssueDroneOrder()
 {
@@ -2295,9 +2494,12 @@ exec function IssueDroneOrder()
 	
 	local Actor HitActor;
 	local Computers Comp;
+	local DeusExCarcass DXC;
 	local DeusExDecoration DXD;
+	local DeusExWeapon DXW;
 	local NavigationPoint PN, BestPN;
 	local ScriptedPawn SP;
+	local VMDMegh TMegh;
 	local VMDFakePathNode FakePN;
 	
 	if (RestrictInput()) return;
@@ -2306,44 +2508,58 @@ exec function IssueDroneOrder()
 	TraceStart = Location + vect(0,0,1) * BaseEyeHeight;
 	TraceEnd = TraceStart + 4096 * Vector(ViewRotation);
 	
+	forEach AllActors(class'VMDMegh', TMegh) break;
+	
 	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart,true);
 	OrderLocation = HitLocation;
-	if (HitActor == Level || Mover(HitActor) != None || Carcass(HitActor) != None)
+	if (HitActor == Level || Mover(HitActor) != None || (DeusExCarcass(HitActor) != None && DeusExCarcass(HitActor).Alliance == ''))
 	{
-		ForEach RadiusActors(class'NavigationPoint', PN, 320, HitLocation)
+		ForEach RadiusActors(class'DeusExWeapon', DXW, 40, HitLocation)
 		{
-			TDist = VSize(HitLocation - PN.Location);
-			if ((BestPN == None || TDist < BestDist) && (FastTrace(HitLocation, PN.Location)))
+			if ((!DXW.bHidden) && (DXW.bDisplayableInv) && (TMegh != None) && (TMegh.FirstWeapon() == None || TMegh.VMDMeghCanDropWeapon()) && (TMegh.VMDDroneCanEquipWeapon(DXW)))
 			{
-				BestPN = PN;
-				BestDist = TDist;
+				OrderTargetName = DXW.ItemName;
+				bWon = InvokeDroneOrderMenu(DXW, OrderLocation, OrderTargetName, 9);
 			}
 		}
 		
-		bTerrainStuff = true;
-		OrderTargetName = StrDroneNameTerrain;
-		if (BestPN == None)
+		if (!bWon)
 		{
-			FakePN = Spawn(class'VMDFakePathNode',,, OrderLocation);
-			if (FakePN != None)
+			ForEach RadiusActors(class'NavigationPoint', PN, 320, HitLocation)
 			{
-				bWon = InvokeDroneOrderMenu(FakePN, OrderLocation, OrderTargetName, 0);
+				TDist = VSize(HitLocation - PN.Location);
+				if ((BestPN == None || TDist < BestDist) && (FastTrace(HitLocation, PN.Location)))
+				{
+					BestPN = PN;
+					BestDist = TDist;
+				}
 			}
-		}
-		else
-		{
-			FakePN = Spawn(class'VMDFakePathNode',,, OrderLocation);
-			if (FakePN != None)
+			
+			bTerrainStuff = true;
+			OrderTargetName = StrDroneNameTerrain;
+			if (BestPN == None)
 			{
-				bWon = InvokeDroneOrderMenu(FakePN, OrderLocation, OrderTargetName, 1);
+				FakePN = Spawn(class'VMDFakePathNode',,, OrderLocation);
+				if (FakePN != None)
+				{
+					bWon = InvokeDroneOrderMenu(FakePN, OrderLocation, OrderTargetName, 0);
+				}
 			}
 			else
 			{
-				bWon = InvokeDroneOrderMenu(BestPN, OrderLocation, OrderTargetName, 1);
+				FakePN = Spawn(class'VMDFakePathNode',,, OrderLocation);
+				if (FakePN != None)
+				{
+					bWon = InvokeDroneOrderMenu(FakePN, OrderLocation, OrderTargetName, 1);
+				}
+				else
+				{
+					bWon = InvokeDroneOrderMenu(BestPN, OrderLocation, OrderTargetName, 1);
+				}
 			}
 		}
 	}
-	else if ((ScriptedPawn(HitActor) != None) && (!HitActor.IsA('VMDMegh')) && (!HitActor.IsA('VMDSidd')))
+	else if ((ScriptedPawn(HitActor) != None) && (!HitActor.IsA('VMDMEGH')) && (!HitActor.IsA('VMDSIDD')))
 	{
 		SP = ScriptedPawn(HitActor);
 		OrderTargetName = SP.UnfamiliarName;
@@ -2364,6 +2580,13 @@ exec function IssueDroneOrder()
 		{
 			bWon = InvokeDroneOrderMenu(SP, OrderLocation, OrderTargetName, 4);
 		}
+	}
+	else if ((DeusExCarcass(HitActor) != None) && (DeusExCarcass(HitActor).Alliance != ''))
+	{
+		DXC = DeusExCarcass(HitActor);
+		OrderTargetName = DXC.ItemName;
+		
+		bWon = InvokeDroneOrderMenu(DXC, OrderLocation, OrderTargetName, 8);
 	}
 	else if (DeusExDecoration(HitActor) != None)
 	{
@@ -2424,6 +2647,8 @@ function bool InvokeDroneOrderMenu(Actor OrderAct, Vector OrderLocation, string 
 	//5: Breakable Decoration
 	//6: Invuln Decoration
 	//7: Computer
+	//8: Carcass
+	//9: Weapon
 	
 	if (OrderAct == None) return false;
 	
@@ -2450,7 +2675,7 @@ function bool InvokeDroneOrderMenu(Actor OrderAct, Vector OrderLocation, string 
 	if ((TMegh == None) && (UseSidd == None)) return false;
 	
 	//If we only have a turret, and the turret can't do anything with the actor, give up.
-	if ((TMegh == None) && (OrderContext < 2 ||OrderContext > 5))
+	if ((TMegh == None) && (OrderContext != 8) && (OrderContext < 2 || OrderContext > 5))
 	{
 		return false;
 	}
@@ -2610,6 +2835,33 @@ function bool InvokeDroneOrderMenu(Actor OrderAct, Vector OrderLocation, string 
 					if (bAddStartPatrol)
 					{
 						TarWindow.AddNewOrder("Start Patrol");
+					}
+					if (bAddRecon)
+					{
+						TarWindow.AddNewOrder("Toggle Recon");
+					}
+					TarWindow.AddNewOrder("Cancel");
+				break;
+				//Carcass
+				case 8:
+					TarWindow.AddNewOrder("Mark Ally");
+					TarWindow.AddNewOrder("Mark Enemy");
+					if (bAddRegroup)
+					{
+						TarWindow.AddNewOrder("Regroup");
+					}
+					if (bAddRecon)
+					{
+						TarWindow.AddNewOrder("Toggle Recon");
+					}
+					TarWindow.AddNewOrder("Cancel");
+				break;
+				//Weapon
+				case 9:
+					TarWindow.AddNewOrder("Equip Weapon");
+					if (bAddRegroup)
+					{
+						TarWindow.AddNewOrder("Regroup");
 					}
 					if (bAddRecon)
 					{
@@ -3731,6 +3983,11 @@ function bool VMDHasForwardPressureObjection()
 	if (IsInState('Conversation')) return true;
 	
 	return false;
+}
+
+exec function SetMusicTrack(byte NewTrack)
+{
+	ClientSetMusic(Level.Song, NewTrack, 255, MTRAN_Fade);
 }
 
 function UpdateDynamicMusic(float deltaTime)
@@ -5014,8 +5271,11 @@ function Inventory DonateNGItem(class<Inventory> ItemClass, optional string Star
 		
 		for(i=0; i<ArrayCount(BeltItems); i++)
 		{
-			BeltItems[i].bInObjectBelt = true;
-			BeltItems[i].BeltPos = i;
+			if (BeltItems[i] != None)
+			{
+				BeltItems[i].bInObjectBelt = true;
+				BeltItems[i].BeltPos = i;
+			}
 		}
 	}
 	
@@ -8551,6 +8811,12 @@ function bool UpdateLastTouchingLadder()
 	
 	bLastTouchingLadder = false;
 	
+	//MADDERS, 3/15/25: We're not touching ladders underwater. Save processing power easily.
+	if (Physics == PHYS_Swimming)
+	{
+		return false;
+	}
+	
 	// MADDERS, 8/4/24: Here we are again. More stupid solutions because native functionality doesn't work.
 	// In this case, using even a SINGLE axis of extents in this function will cause a GPF in the game...
 	// So fuck it. Do lots of mini traces, looking for ladder association.
@@ -8573,6 +8839,8 @@ function bool UpdateLastTouchingLadder()
 			break;
 		}
 	}
+	
+	return bLastTouchingLadder;
 }
 
 
@@ -8619,6 +8887,11 @@ function UpdateSmells()
  	{
 		SmellMults[0] = 1.25 + (0.25 * SkillLevel); //1.5;
 		SmellMults[1] = 1.15 + (0.15 * SkillLevel); //1.34;
+	}
+	
+	if (IsA('MadIngramPlayer'))
+	{
+		SmellMults[1] *= 1.65;
 	}
 	
  	UpdateBloodSmell();
@@ -9042,6 +9315,54 @@ function VMDPreTravelHook()
 	VMDCountMayhemNodes();
 }
 
+exec function VMDNihilumDontFlushMainMenu()
+{
+	local DeusExRootWindow root;
+	local DeusExLevelInfo info;
+	local MissionEndgame Script;
+	local class<MenuMain> TLoad;
+	
+	if (bIgnoreNextShowMenu)
+	{
+		bIgnoreNextShowMenu = False;
+		return;
+	}
+	
+	info = GetLevelInfo();
+	
+	VMDBufferPlayer(GetPlayerPawn()).VMDShowMainMenuHook();
+	
+	if ((info != None) && (info.MissionNumber == 68)) 
+	{
+		bIgnoreNextShowMenu = True;
+		PostIntro();
+	}
+	else if ((info != None) && (info.MissionNumber == 68))
+	{
+		foreach AllActors(class'MissionEndgame', Script)
+		{
+			break;
+		}
+		
+		if (Script != None)
+		{
+			Script.FinishCinematic();
+		}
+	}
+	else
+	{
+		root = DeusExRootWindow(rootWindow);
+		if (root != None)
+		{
+			TLoad = class<MenuMain>(DynamicLoadObject("FGRHK.MyMainMenu", class'Class', false));
+			if (TLoad != None)
+			{
+				root.InvokeMenu(TLoad);
+			}
+		}
+	}
+}
+
 function VMDShowMainMenuHook()
 {
 	//MADDERS: Always call this for enforcing consistency.
@@ -9342,6 +9663,11 @@ function VMDTravelPostAcceptHook()
 			SmellMults[1] = 1.15 + (0.15 * SkillLevel); //1.34;
 		}
 		
+		if (IsA('MagIngramPlayer'))
+		{
+			SmellMults[0] *= 1.65;
+		}
+		
 		if (BloodSmellLevel >= 90*SmellMults[0])
 		{
 			if (bSmellsEnabled)
@@ -9599,12 +9925,29 @@ function VMDCheckFastMapFixer()
 
 function VMDCheckMapFixer()
 {
+	local string MissionBit;
+	local DeusExLevelInfo DXLI;
 	local VMDMapFixer VMF;
+	local class<VMDMapFixer> LoadType;
 	
 	forEach AllActors(class'VMDMapFixer', VMF) break;
 	if (VMF != None) return;
 	
-	VMF = Spawn(class'VMDMapFixer');
+	forEach AllActors(Class'DeusExLevelInfo', DXLI) break;
+	if (DXLI != None)
+	{
+		MissionBit = string(DXLI.MissionNumber);
+		if (DXLI.MissionNumber < 10)
+		{
+			MissionBit = "0"$DXLI.MissionNumber;
+		}
+		
+		LoadType = class<VMDMapFixer>(DynamicLoadObject("DeusEx.VMDMapFixerM"$MissionBit, class'Class', true));
+		if (LoadType != None)
+		{
+			VMF = Spawn(LoadType);
+		}
+	}
 }
 
 function VMDCheckSkinUpdater()
@@ -10119,18 +10462,9 @@ function VMDRunTickHook( float DT )
 			SwimTimer += DT*4.5*BreathMod;
 		}
 	}
-	if (JumpDuckResetTimer > 0)
-	{
-		if ((Physics != PHYS_Falling) && (!VMDUsingLadder()))
-		{
-			JumpDuckResetTimer -= DT;
-		}
-		else
-		{
-			JumpDuckResetTimer = JumpDuckResetTime;
-		}
-	}
-	else
+	
+	//MADDERS, 2/10/25: Overhauling some old garbage, use this check instead.
+	if (VMDUsingLadder() || !IsInState('PlayerWalking'))
 	{
 		bJumpDucked = false;
 	}
@@ -10807,6 +11141,12 @@ function VMDResetPlayerNewGamePlus()
 	bNGPlusTravel = True;
 	//FlagBase.SetBool('VMDDoingNGPlus', True,, -1);
 	
+	for(i=0; i<ArrayCount(StoredDroneAlliances); i++)
+	{
+		StoredDroneAlliances[i] = '';
+		StoredDroneHostilities[i] = '';
+	}
+	
 	if (!bNGPlusKeepInventory)
 	{
 		//MADDERS, 3/25/24: Keep our shit in Nihilum, thank you very much.
@@ -11419,7 +11759,7 @@ defaultproperties
      
      MsgScrapAdded="%d scrap added"
      MsgScrapFull="You can't hold any more scrap"
-     MsgChemicalsAdded="%d chemicals added"
+     MsgChemicalsAdded="%d chemical(s) added"
      MsgChemicalsFull="You can't hold any more chemicals"
      MsgSkillUpgradeAvailable="Upgrade now available for %d!"
      
@@ -11524,6 +11864,7 @@ defaultproperties
      
      //8/25/23: New HUD element control. Default is to keep them on, though, of course.
      bAimFocuserVisible=True
+     bDroneAllianceVisible=True
      bHUDVisible=True
      bFrobDisplayBordersVisible=True
      bLogVisible=True
@@ -11582,6 +11923,7 @@ defaultproperties
      GallowsSaveGateTime=-1.000000
      SaveGateCombatThreshold=2
      BarfHunterThreshold=5
+     SavedHunterQuantity=1
      SavedHunterThreshold=125
      SavedMayhemForgiveness=-25
      SavedGateBreakThreshold=-50
@@ -11598,7 +11940,6 @@ defaultproperties
      
      KSHealMult=1.000000
      HungerCap=2400.000000
-     JumpDuckResetTime=0.100000
      RollCooldown=10.000000
      RollDuration=0.700000
      RollTapMax=0.150000
