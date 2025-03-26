@@ -117,6 +117,149 @@ function UnRandoSeat(Seat TargetSeat)
 	}
 }
 
+function RemoveDoubleActors(class<Actor> CheckType)
+{
+	local int i, j, TID,
+		IDCounts1[1024], IDCounts2[1024], IDCounts3[1024], IDCounts4[1024], IDCounts5[1024], IDCounts6[1024], IDCounts7[1024], IDCounts8[1024];
+	local Actor A;
+	local class<Actor> IDTypes[8];
+	
+	forEach AllActors(CheckType, A)
+	{
+		TID = class'VMDStaticFunctions'.Static.StripBaseActorSeed(A);
+		
+		for (i=0; i<ArrayCount(IDTypes); i++)
+		{
+			if (IDTypes[i] == A.Class)
+			{
+				break;
+			}
+			else if (IDTypes[i] == None)
+			{
+				IDTypes[i] = A.Class;
+				break;
+			}
+			else if (i == ArrayCount(IDTypes)-1)
+			{
+				Log("TOO MANY TYPES OF "@CheckType$"! ("$A.Class$")");
+				i = -1;
+				break;
+			}
+		}
+		
+		if (TID > 1023)
+		{
+			Log("ERROR! TOO MANY"@A.Class$"S!"@TID);
+		}
+		else
+		{
+			switch(i)
+			{
+				case 0:
+					IDCounts1[TID] += 1;
+				break;
+				case 1:
+					IDCounts2[TID] += 1;
+				break;
+				case 2:
+					IDCounts3[TID] += 1;
+				break;
+				case 3:
+					IDCounts4[TID] += 1;
+				break;
+				case 4:
+					IDCounts5[TID] += 1;
+				break;
+				case 5:
+					IDCounts6[TID] += 1;
+				break;
+				case 6:
+					IDCounts7[TID] += 1;
+				break;
+				case 7:
+					IDCounts8[TID] += 1;
+				break;
+			}
+		}
+	}
+	
+	for(i=0; i<ArrayCount(IDCounts1); i++)
+	{
+		if (IDCounts1[i] > 1)
+		{
+			A = FindActorBySeed(IDTypes[0], i);
+			if (A != None)
+			{
+				Log("DESTROYING"@IDTypes[0]@"#"$j$"!");
+				A.Destroy();
+			}
+		}
+		if (IDCounts2[i] > 1)
+		{
+			A = FindActorBySeed(IDTypes[1], i);
+			if (A != None)
+			{
+				Log("DESTROYING"@IDTypes[1]@"#"$j$"!");
+				A.Destroy();
+			}
+		}
+		if (IDCounts3[i] > 1)
+		{
+			A = FindActorBySeed(IDTypes[2], i);
+			if (A != None)
+			{
+				Log("DESTROYING"@IDTypes[2]@"#"$j$"!");
+				A.Destroy();
+			}
+		}
+		if (IDCounts4[i] > 1)
+		{
+			A = FindActorBySeed(IDTypes[3], i);
+			if (A != None)
+			{
+				Log("DESTROYING"@IDTypes[3]@"#"$j$"!");
+				A.Destroy();
+			}
+		}
+		if (IDCounts5[i] > 1)
+		{
+			A = FindActorBySeed(IDTypes[4], i);
+			if (A != None)
+			{
+				Log("DESTROYING"@IDTypes[4]@"#"$j$"!");
+				A.Destroy();
+			}
+		}
+		if (IDCounts6[i] > 1)
+		{
+			A = FindActorBySeed(IDTypes[5], i);
+			if (A != None)
+			{
+				Log("DESTROYING"@IDTypes[5]@"#"$j$"!");
+				A.Destroy();
+			}
+		}
+		if (IDCounts7[i] > 1)
+		{
+			A = FindActorBySeed(IDTypes[6], i);
+			if (A != None)
+			{
+				Log("DESTROYING"@IDTypes[6]@"#"$j$"!");
+				A.Destroy();
+			}
+		}
+		if (IDCounts8[i] > 1)
+		{
+			A = FindActorBySeed(IDTypes[7], i);
+			if (A != None)
+			{
+				Log("DESTROYING"@IDTypes[7]@"#"$j$"!");
+				A.Destroy();
+			}
+		}
+	}
+}
+
 //MADDERS: We got a whole fucking orgy of things to fix. Switch/case to save power like a mother fucker.
 function CommitMapFixing()
 {
@@ -128,6 +271,7 @@ function CommitMapFixing()
 	local DeusExWeapon DXW;
 	local Inventory TInv;
 	local ScriptedPawn SP;
+	local VMDBufferPlayer VMP;
 	
 	//Door stuff.
 	local vector FrameAdd[8], LocAdd, PivAdd, TestLoc;
@@ -150,9 +294,15 @@ function CommitMapFixing()
 	local FlagBase Flags;
 	
 	SF = class'VMDStaticFunctions';
-	if ((DeusExPlayer(GetPlayerPawn()) != None) && (DeusExPlayer(GetPlayerPawn()).FlagBase != None))
+	VMP = VMDBufferPlayer(GetPlayerPawn());
+	if (VMP == None)
 	{
-		Flags = DeusExPlayer(GetPlayerPawn()).FlagBase;
+		return;
+	}
+	
+	if (VMP.FlagBase != None)
+	{
+		Flags = VMP.FlagBase;
 	}
 	
  	forEach AllActors(Class'DeusExLevelInfo', LI) break;
@@ -171,6 +321,30 @@ function CommitMapFixing()
 	
 	switch(GM)
 	{
+		case 16:
+			switch(MN)
+			{
+				//+++++++++++++++++++++++
+				//Utopia Maps
+				//UTOPIA_SUBWAY, AKA SUBWAY: Clean up shitty door.
+				case "SUBWAY":
+					A = FindActorBySeed(class'DeusExMover', 0);
+					if (A != None)
+					{
+						A.SetLocation(A.Location + Vect(0, 0, 10000));
+					}
+				break;
+			}
+		break;
+		case 21:
+			switch(MN)
+			{
+				//21_KABUKICHO: Paths crash if not rebuilt. Out of date?
+				case "21_KABUKICHO":
+					VMP.VMDRebuildPaths();
+				break;
+			}
+		break;
 		case 66:
 			switch(MN)
 			{
@@ -178,15 +352,18 @@ function CommitMapFixing()
 				case "66_WHITEHOUSE_EXTERIOR":
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						switch(SF.Static.StripBaseActorSeed(DXM))
+						if (DXM.Class == Class'DeusExMover')
 						{
-							case 24:
-								DXM.MoveTime = 20;
-							break;
-							case 25:
-								DXM.MoveTime = 20;
-								DXM.SetCollision(False, False, False);
-							break;
+							switch(SF.Static.StripBaseActorSeed(DXM))
+							{
+								case 24:
+									DXM.MoveTime = 20;
+								break;
+								case 25:
+									DXM.MoveTime = 20;
+									DXM.SetCollision(False, False, False);
+								break;
+							}
 						}
 					}
 				break;
@@ -194,15 +371,18 @@ function CommitMapFixing()
 				case "66_WHITEHOUSE_STREETS":
 					forEach AllActors(class'DeusExMover', DXM)
 					{
-						switch(SF.Static.StripBaseActorSeed(DXM))
+						if (DXM.Class == Class'DeusExMover')
 						{
-							case 0:
-								DXM.MoveTime = 20;
-							break;
-							case 25:
-								DXM.MoveTime = 20;
-								DXM.SetCollision(False, False, False);
-							break;
+							switch(SF.Static.StripBaseActorSeed(DXM))
+							{
+								case 0:
+									DXM.MoveTime = 20;
+								break;
+								case 25:
+									DXM.MoveTime = 20;
+									DXM.SetCollision(False, False, False);
+								break;
+							}
 						}
 					}
 				break;
