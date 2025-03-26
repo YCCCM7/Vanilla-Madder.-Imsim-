@@ -53,9 +53,84 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="VMDAugControllerAugCase" FILE="Textures\AugControllerAugCase.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="VMDAugControllerAugHighlight" FILE="Textures\AugControllerAugHighlight.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="VMDAugControllerMenu" FILE="Textures\AugControllerMenu.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDAugControllerMenuEnergyCase" FILE="Textures\AugControllerMenuEnergyCase.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="VMDNextAugPageIcon" FILE="Textures\NextAugPageIcon.pcx" GROUP=UI
 #exec TEXTURE IMPORT NAME="VMDPrevAugPageIcon" FILE="Textures\PrevAugPageIcon.pcx" GROUP=UI
 #exec TEXTURE IMPORT NAME="VMDCloseAugPageIcon" FILE="Textures\CloseAugPageIcon.pcx" GROUP=UI
+
+//=============================
+//New Controller Health Menu. This one IS a first.
+//=============================
+
+//Male
+#exec TEXTURE IMPORT NAME="VMDHCHeadHighlight" FILE="Textures\HCHeadHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCHeadStandard" FILE="Textures\HCHeadStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCHeadRimHighlight" FILE="Textures\HCHeadRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCHeadRimStandard" FILE="Textures\HCHeadRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHCTorsoHighlight" FILE="Textures\HCTorsoHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCTorsoStandard" FILE="Textures\HCTorsoStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCTorsoRimHighlight" FILE="Textures\HCTorsoRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCTorsoRimStandard" FILE="Textures\HCTorsoRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHCRightArmHighlight" FILE="Textures\HCRightArmHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCRightArmStandard" FILE="Textures\HCRightArmStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCRightArmRimHighlight" FILE="Textures\HCRightArmRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCRightArmRimStandard" FILE="Textures\HCRightArmRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHCLeftArmHighlight" FILE="Textures\HCLeftArmHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCLeftArmStandard" FILE="Textures\HCLeftArmStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCLeftArmRimHighlight" FILE="Textures\HCLeftArmRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCLeftArmRimStandard" FILE="Textures\HCLeftArmRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHCRightLegHighlight" FILE="Textures\HCRightLegHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCRightLegStandard" FILE="Textures\HCRightLegStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCRightLegRimHighlight" FILE="Textures\HCRightLegRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCRightLegRimStandard" FILE="Textures\HCRightLegRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHCLeftLegHighlight" FILE="Textures\HCLeftLegHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCLeftLegStandard" FILE="Textures\HCLeftLegStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCLeftLegRimHighlight" FILE="Textures\HCLeftLegRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCLeftLegRimStandard" FILE="Textures\HCLeftLegRimStandard.pcx" GROUP=UI FLAGS=2
+
+//Female
+#exec TEXTURE IMPORT NAME="VMDHCFemHeadHighlight" FILE="Textures\HCFemHeadHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemHeadStandard" FILE="Textures\HCFemHeadStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemHeadRimHighlight" FILE="Textures\HCFemHeadRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemHeadRimStandard" FILE="Textures\HCFemHeadRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHCFemTorsoHighlight" FILE="Textures\HCFemTorsoHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemTorsoStandard" FILE="Textures\HCFemTorsoStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemTorsoRimHighlight" FILE="Textures\HCFemTorsoRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemTorsoRimStandard" FILE="Textures\HCFemTorsoRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHCFemRightArmHighlight" FILE="Textures\HCFemRightArmHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemRightArmStandard" FILE="Textures\HCFemRightArmStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemRightArmRimHighlight" FILE="Textures\HCFemRightArmRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemRightArmRimStandard" FILE="Textures\HCFemRightArmRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHCFemLeftArmHighlight" FILE="Textures\HCFemLeftArmHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemLeftArmStandard" FILE="Textures\HCFemLeftArmStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemLeftArmRimHighlight" FILE="Textures\HCFemLeftArmRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemLeftArmRimStandard" FILE="Textures\HCFemLeftArmRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHCFemRightLegHighlight" FILE="Textures\HCFemRightLegHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemRightLegStandard" FILE="Textures\HCFemRightLegStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemRightLegRimHighlight" FILE="Textures\HCFemRightLegRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemRightLegRimStandard" FILE="Textures\HCFemRightLegRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHCFemLeftLegHighlight" FILE="Textures\HCFemLeftLegHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemLeftLegStandard" FILE="Textures\HCFemLeftLegStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemLeftLegRimHighlight" FILE="Textures\HCFemLeftLegRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCFemLeftLegRimStandard" FILE="Textures\HCFemLeftLegRimStandard.pcx" GROUP=UI FLAGS=2
+
+//Universal
+#exec TEXTURE IMPORT NAME="VMDHCAnyHighlight" FILE="Textures\HCAnyHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCAnyStandard" FILE="Textures\HCAnyStandard.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCAnyRimHighlight" FILE="Textures\HCAnyRimHighlight.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHCAnyRimStandard" FILE="Textures\HCAnyRimStandard.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHealthControllerMedkitSquare" FILE="Textures\HealthControllerMedkitSquare.pcx" GROUP=UI FLAGS=2
 
 //=============================
 //Drone Markers
@@ -64,6 +139,12 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="VMDPatrolPointerLit" FILE="Textures\PatrolPointerLit.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="VMDFriendlyReconMarker" FILE="Textures\FriendlyReconMarker.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="VMDHostileReconMarker" FILE="Textures\HostileReconMarker.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDMEGHReconMarker" FILE="Textures\MEGHReconMarker.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDHUDIconDroneFriendly" FILE="Textures\HUDIconDroneFriendly.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHUDIconDroneHostile" FILE="Textures\HUDIconDroneHostile.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHUDIconDroneNeutral" FILE="Textures\HUDIconDroneNeutral.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDHUDIconDroneNoAlliance" FILE="Textures\HUDIconDroneNoAlliance.pcx" GROUP=UI FLAGS=2
 
 //=============================
 //Appearance Screen
