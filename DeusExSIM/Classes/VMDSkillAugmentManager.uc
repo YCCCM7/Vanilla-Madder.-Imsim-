@@ -930,7 +930,7 @@ defaultproperties
      SkillAugmentSkillRequired(38)=class'SkillTech'
      //7.) Helidrone armor, but at more cost.
      SkillAugmentNames(39)="Reinforced Plating"
-     SkillAugmentDescs(39)="~The price of crafting MEGH is increased by 50%.|n~Its overall health is increased by 200%.|n*This upgrade is applied to existing drones automatically."
+     SkillAugmentDescs(39)="~The price of crafting MEGH is increased by 50%.|n~Its overall health is increased by 200%.|n~It gains bonus protection against AOE damage.|n*This upgrade is applied to existing drones automatically."
      SkillAugmentIDs(39)=ElectronicsDroneArmor
      SkillAugmentAssumed(39)=0
      SkillAugmentLevel(39)=1
@@ -1293,7 +1293,7 @@ defaultproperties
      SecondarySkillAugmentSkillRequired(72)=class'SkillComputer'
      //2.) Drone can do a mini-hack on security consoles.
      SkillAugmentNames(73)="Illegal Modules"
-     SkillAugmentDescs(73)="~MEGH gains access to 'litehack' software, and can hack into a security console.|n*MEGH will stay behind, and keep all cameras and turrets on the grid suppressed until assigned to another task."
+     SkillAugmentDescs(73)="~MEGH gains an auto-reload option, to minimize micromanagement.|n~MEGH gains access to 'litehack' software, and can hack into a security console.|n*MEGH will stay behind, and keep all cameras and turrets on the grid suppressed until assigned to another task."
      SkillAugmentIDs(73)=TagTeamLitehack
      SkillAugmentAssumed(73)=0
      SkillAugmentLevel(73)=1
@@ -1305,7 +1305,7 @@ defaultproperties
      SecondarySkillAugmentSkillRequired(73)=class'SkillComputer'
      //3.) Melee module.
      SkillAugmentNames(74)="Britware"
-     SkillAugmentDescs(74)="~Using some software you found online (admittedly from some unusual sources), you can boost MEGH's melee damage by 66%.|n*It has some quirky side-effects."
+     SkillAugmentDescs(74)="~Using some software you found online (admittedly from some unusual sources), you can boost MEGH's melee damage by 50%.|n*It has some quirky side-effects."
      SkillAugmentIDs(74)=TagTeamMeleeSkillware
      SkillAugmentAssumed(74)=0
      SkillAugmentLevel(74)=1
