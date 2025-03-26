@@ -39,21 +39,24 @@ event bool MouseButtonPressed(float pointX, float pointY, EInputKey button,
 	
 	bResult = False;
 	
-	if (button == IK_RightMouse)
+	if ((NGSkillScreen != None) && (NGSkillScreen.VMP.bClassicSkillPurchasing))
 	{
-		if ((NGSkillScreen != None) && (TalentPointsLeft[1] >= PointsCost) && (LastState == 1) && (SkillRequirements[1] != None))
+		if (button == IK_RightMouse)
 		{
-			NGSkillScreen.AttemptAlternatePurchase(Self);
+			if ((NGSkillScreen != None) && (TalentPointsLeft[1] >= PointsCost) && (LastState == 1) && (SkillRequirements[1] != None))
+			{
+				NGSkillScreen.AttemptAlternatePurchase(Self);
+			}
+			bResult = True;
 		}
-		bResult = True;
-	}
-	if (button == IK_MiddleMouse)
-	{
-		if ((NGSkillScreen != None) && (TalentPointsLeft[0] >= 1) && (TalentPointsLeft[1] >= 1) && (LastState == 1) && (SkillRequirements[0] != None) && (SkillRequirements[1] != None) && (PointsCost == 2))
+		if (button == IK_MiddleMouse)
 		{
-			NGSkillScreen.AttemptComboPurchase(Self);
+			if ((NGSkillScreen != None) && (TalentPointsLeft[0] >= 1) && (TalentPointsLeft[1] >= 1) && (LastState == 1) && (SkillRequirements[0] != None) && (SkillRequirements[1] != None) && (PointsCost == 2))
+			{
+				NGSkillScreen.AttemptComboPurchase(Self);
+			}
+			bResult = True;
 		}
-		bResult = True;
 	}
 	return bResult;
 }
