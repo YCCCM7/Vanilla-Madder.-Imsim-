@@ -3,9 +3,9 @@
 //=============================================================================
 class VMDFakeRadarMarker extends VMDTechnicalActors;
 
-var bool bPlayerAlly;
+var bool bPlayerAlly, bMEGHReminder;
 var float TimeLeft;
-var Texture AllyTexture, EnemyTexture;
+var Texture AllyTexture, EnemyTexture, MEGHTexture;
 
 var ScriptedPawn ReconTarget;
 var VMDBufferPlayer RenderPlayer;
@@ -46,7 +46,12 @@ simulated event RenderOverlays( canvas Canvas )
 		return;
 	}
 	
-	if (bPlayerAlly)
+	if (bMEGHReminder)
+	{
+		DrawScale = 0.1;
+		Texture = MEGHTexture;
+	}
+	else if (bPlayerAlly)
 	{
 		Texture = AllyTexture;
 	}
@@ -68,7 +73,7 @@ defaultproperties
      
      AllyTexture=Texture'VMDFriendlyReconMarker'
      EnemyTexture=Texture'VMDHostileReconMarker'
-     //DrawScale=0.031250
+     MEGHTexture=Texture'VMDMEGHReconMarker'
      DrawScale=0.200000
      TimeLeft=2.000000
      Lifespan=2.500000
