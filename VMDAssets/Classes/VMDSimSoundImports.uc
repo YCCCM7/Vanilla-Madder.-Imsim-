@@ -35,6 +35,8 @@ class VMDSimSoundImports extends VMDSimImportsParent abstract;
 
 #exec AUDIO IMPORT FILE="Sounds\RollCooldownReset.wav" NAME="RollCooldownReset" GROUP="Player"
 
+#exec AUDIO IMPORT FILE="Sounds\VMDBuySkillRamp.wav" NAME="VMDBuySkillRamp" GROUP="UI"
+
 //Sound from Bogie for smelling those smelly smells. The ones that smell... Smelly.
 #exec AUDIO IMPORT FILE="Sounds\SmellSniff.wav" NAME="SmellSniff" GROUP="Generic"
 
