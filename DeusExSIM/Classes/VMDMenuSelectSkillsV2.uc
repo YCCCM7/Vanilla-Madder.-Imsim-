@@ -100,9 +100,18 @@ var int HoverTicks;
 
 var localized string TipSpecialized, TipTalentPointsLeft, TipCanUpgradeFor,
 			TipLevel, TipSkillPointCost, TipCurLevelDesc, TipNextLevelDesc,
-			TipMapControls, TipSkillGemControls, TipTalentGemControlsTriple, TipTalentGemControlsDouble, TipTalentGemControlsSingle, TipJumpGemControls;
+			TipMapControls, TipSkillGemControls,
+				TipTalentGemControlsTriple, TipTalentGemControlsDouble, TipTalentGemControlsSingle,
+				TipSkillGemControlsClassic, TipTalentGemControlsTripleClassic, TipTalentGemControlsDoubleClassic, TipTalentGemControlsSingleClassic,
+				TipJumpGemControls;
 
 var VMDNonStaticSkillTalentFunctions LastRef;
+
+//---------------------
+//PURCHASE OVERHAUL
+var bool bPurchasing;
+var int PurchaseRampSoundID, LastPurchaseType;
+var Window PurchaseTarget;
 
 // ----------------------------------------------------------------------
 // CreateTitleWindow()
@@ -519,8 +528,11 @@ function bool ButtonActivated( Window buttonPressed )
 	{
 		if ((SG.CurSkillLevel < 3) && (VMP.SkillPointsTotal-VMP.SkillPointsSpent >= SG.NextLevelCost))
 		{
-			SelectedSkillGem = SG;
-			ConfirmWithMessageBox(CB_BuySkill);
+			if (VMP.bClassicSkillPurchasing)
+			{
+				SelectedSkillGem = SG;
+				ConfirmWithMessageBox(CB_BuySkill);
+			}
 		}
 		else
 		{
@@ -531,8 +543,11 @@ function bool ButtonActivated( Window buttonPressed )
 	{
 		if ((TG.TalentPointsLeft[0] >= TG.PointsCost) && (TG.LastState == 1) && (TG.SkillRequirements[0] != None))
 		{
-			SelectedTalentGem = TG;
-			ConfirmWithMessageBox(CB_BuyPrimary);
+			if (VMP.bClassicSkillPurchasing)
+			{
+				SelectedTalentGem = TG;
+				ConfirmWithMessageBox(CB_BuyPrimary);
+			}
 		}
 		else
 		{
@@ -720,14 +735,161 @@ event bool BoxOptionSelected(Window button, int buttonNumber)
 	return true;
 }
 
+function StopPurchaseRampSound()
+{
+	if (PurchaseRampSoundID > 0)
+	{
+		VMP.StopSound(PurchaseRampSoundID);
+	}
+	PurchaseRampSoundID = 0;
+}
+
+function ResetPurchaseRampSound()
+{
+	StopPurchaseRampSound();
+	PurchaseRampSoundID = VMP.PlaySound(sound'VMDBuySkillRamp');
+}
+
+function StopPurchasing()
+{
+	StopPurchaseRampSound();
+	bPurchasing = false;
+	LastPurchaseType = -1;
+	if (PurchaseTarget != None)
+	{
+		PurchaseTarget.SetPropertyText("PurchaseProgress", "0.0");
+		PurchaseTarget = None;
+	}
+}
+
 // ----------------------------------------------------------------------
 // Latent updates.
 // ----------------------------------------------------------------------
 
 event Tick(float DT)
 {
-	local float CurX, CurY;
 	local bool bUpdateTreePos;
+	local float CurX, CurY, TProg;
+	local VMDSkillMapSkillGem SG;
+	local VMDSkillMapTalentGem TG;
+	
+	SG = VMDSkillMapSkillGem(HoverTarget);
+	TG = VMDSkillMapTalentGem(HoverTarget);
+	if (VMP == None || !VMP.bClassicSkillPurchasing)
+	{
+		if ((Root.IsKeyDown(IK_LeftMouse)) && (Root.IsKeyDown(IK_RightMouse)))
+		{
+			if (TG != None)
+			{
+				if ((PurchaseTarget != TG || LastPurchaseType != 2) && (TG.TalentPointsLeft[0] >= 1) && (TG.TalentPointsLeft[1] >= 1) && (TG.LastState == 1) && (TG.SkillRequirements[0] != None) && (TG.SkillRequirements[1] != None) && (TG.PointsCost == 2))
+				{
+					ResetPurchaseRampSound();
+					LastPurchaseType = 2;
+					bPurchasing = true;
+					PurchaseTarget = HoverTarget;
+					HoverTarget.SetPropertyText("PurchaseProgress", "0.0");
+				}
+			}
+			else if (PurchaseTarget != None)
+			{
+				StopPurchasing();
+			}
+		}
+		else if (Root.IsKeyDown(IK_LeftMouse))
+		{
+			if (SG != None)
+			{
+				if ((PurchaseTarget != SG || LastPurchaseType != 0) && (SG.CurSkillLevel < 3) && (VMP.SkillPointsTotal-VMP.SkillPointsSpent >= SG.NextLevelCost))
+				{
+					ResetPurchaseRampSound();
+					LastPurchaseType = 0;
+					bPurchasing = true;
+					PurchaseTarget = HoverTarget;
+					HoverTarget.SetPropertyText("PurchaseProgress", "0.0");
+				}
+			}
+			else if (TG != None)
+			{
+				if ((PurchaseTarget != TG || LastPurchaseType != 0) && (TG.TalentPointsLeft[0] >= TG.PointsCost) && (TG.LastState == 1) && (TG.SkillRequirements[0] != None))
+				{
+					ResetPurchaseRampSound();
+					LastPurchaseType = 0;
+					bPurchasing = true;
+					PurchaseTarget = HoverTarget;
+					HoverTarget.SetPropertyText("PurchaseProgress", "0.0");
+				}
+			}
+			else if (PurchaseTarget != None)
+			{
+				StopPurchasing();
+			}
+		}
+		else if (Root.IsKeyDown(IK_RightMouse))
+		{
+			if (TG != None)
+			{
+				if ((PurchaseTarget != TG || LastPurchaseType != 1) && (TG.TalentPointsLeft[1] >= TG.PointsCost) && (TG.LastState == 1) && (TG.SkillRequirements[1] != None))
+				{
+					ResetPurchaseRampSound();
+					LastPurchaseType = 1;
+					bPurchasing = true;
+					PurchaseTarget = HoverTarget;
+					HoverTarget.SetPropertyText("PurchaseProgress", "0.0");
+				}
+			}
+			else if (PurchaseTarget != None)
+			{
+				StopPurchasing();
+			}
+		}
+		else if (PurchaseTarget != None)
+		{
+			StopPurchasing();
+		}
+		
+		if ((PurchaseTarget != None) && (bPurchasing))
+		{
+			TProg = float(PurchaseTarget.GetPropertyText("PurchaseProgress"));
+			TProg += DT * 1.33;
+			if (TProg >= 1.0)
+			{
+				StopPurchaseRampSound();
+				if (VMDSkillMapSkillGem(PurchaseTarget) != None)
+				{
+					VMDSkillMapSkillGem(PurchaseTarget).RelSkill.IncLevel();
+					PlaySkillUpgradeSound();
+					UpdatePointsLeft();
+				}
+				else if (VMDSkillMapTalentGem(PurchaseTarget) != None)
+				{
+					if (LastPurchaseType == 0)
+					{
+						VMP.BuySkillAugment(VMDSkillMapTalentGem(PurchaseTarget).TalentID);
+						PlaySkillUpgradeSound();
+					}
+					else if (LastPurchaseType == 1)
+					{
+						VMP.BuySkillAugment(VMDSkillMapTalentGem(PurchaseTarget).TalentID, true);
+						PlaySkillUpgradeSound();
+					}
+					else if (LastPurchaseType == 2)
+					{
+						VMP.BuySkillAugment(VMDSkillMapTalentGem(PurchaseTarget).TalentID,, true);
+						PlaySkillUpgradeSound();
+					}
+					SelectedTalentGem = None;
+					UpdatePointsLeft();
+				}
+				PurchaseTarget.SetPropertyText("PurchaseProgress", "0.0");
+				bPurchasing = false;
+				//PurchaseTarget = None;
+			}
+			else
+			{
+				PurchaseTarget.SetPropertyText("PurchaseProgress", string(TProg));
+			}
+		}
+	}
 	
 	if (Root.IsKeyDown(IK_A) || Root.IsKeydown(IK_Left))
 	{
@@ -885,7 +1047,14 @@ function UpdateHoverTip(Window HT)
 		if (RenderString != "")
 		{
 			MouseTip.SetPos(MouseTipPos.X, MouseTipPos.Y);
-			MouseTip.SetNote(TipSkillGemControls, false);
+			if (VMP.bClassicSkillPurchasing)
+			{
+				MouseTip.SetNote(TipSkillGemControlsClassic, false);
+			}
+			else
+			{
+				MouseTip.SetNote(TipSkillGemControls, false);
+			}
 		}
 		
 		MaxWidth = 248;
@@ -903,16 +1072,37 @@ function UpdateHoverTip(Window HT)
 			{
 				if (TG.PointsCost == 2)
 				{
-					MouseTip.SetNote(TipTalentGemControlsTriple, false);
+					if (VMP.bClassicSkillPurchasing)
+					{
+						MouseTip.SetNote(TipTalentGemControlsTripleClassic, false);
+					}
+					else
+					{
+						MouseTip.SetNote(TipTalentGemControlsTriple, false);
+					}
 				}
 				else
 				{
-					MouseTip.SetNote(TipTalentGemControlsDouble, false);
+					if (VMP.bClassicSkillPurchasing)
+					{
+						MouseTip.SetNote(TipTalentGemControlsDoubleClassic, false);
+					}
+					else
+					{
+						MouseTip.SetNote(TipTalentGemControlsDouble, false);
+					}
 				}
 			}
 			else
 			{
-				MouseTip.SetNote(TipTalentGemControlsSingle, false);
+				if (VMP.bClassicSkillPurchasing)
+				{
+					MouseTip.SetNote(TipTalentGemControlsSingleClassic, false);
+				}
+				else
+				{
+					MouseTip.SetNote(TipTalentGemControlsSingle, false);
+				}
 			}
 		}
 		
@@ -1404,9 +1594,13 @@ defaultproperties
      TipCurLevelDesc="Current level:"
      TipNextLevelDesc="Next level:"
      TipSkillGemControls="LMB: Purchase"
-     TipTalentGemControlsTriple="LMB: Unlock | RMB: Unlock With Secondary | MMB: Unlock With Both"
-     TipTalentGemControlsDouble="LMB: Unlock | RMB: Unlock With Secondary"
-     TipTalentGemControlsSingle="LMB: Unlock"
+     TipTalentGemControlsTriple="Hold LMB: Unlock | Hold RMB: Unlock With Secondary | Hold LMB + RMB: Unlock With Both"
+     TipTalentGemControlsDouble="Hold LMB: Unlock | Hold RMB: Unlock With Secondary"
+     TipTalentGemControlsSingle="Hold LMB: Unlock"
+     TipSkillGemControlsClassic="LMB: Purchase"
+     TipTalentGemControlsTripleClassic="LMB: Unlock | RMB: Unlock With Secondary |MMB: Unlock With Both"
+     TipTalentGemControlsDoubleClassic="LMB: Unlock | RMB: Unlock With Secondary"
+     TipTalentGemControlsSingleClassic="LMB: Unlock"
      TipJumpGemControls="LMB: Jump To"
      TipMapControls="WASD or Click & Drag: Navigate"
      
