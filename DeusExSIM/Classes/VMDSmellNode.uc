@@ -90,7 +90,14 @@ singular function Touch( actor Other )
 				if (VSize(VMBP.Location - Location) < EffectiveRange * 1.2)
 				{
    					VMBP.LastSmellType = SmellType;
-   					VMBP.HandleSmell('Smell', EAISTATE_Begin, FirstPlayer());
+					if (SmellOwner.bNonPlayerSource)
+					{
+						VMBP.HandleSmell('Smell', EAIState_Begin, SmellOwner);
+					}
+					else
+					{
+	   					VMBP.HandleSmell('Smell', EAISTATE_Begin, FirstPlayer());
+					}
  				}
   				break;
   			}
