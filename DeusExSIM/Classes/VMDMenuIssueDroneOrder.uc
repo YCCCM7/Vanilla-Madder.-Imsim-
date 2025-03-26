@@ -9,7 +9,9 @@ var string ButtonCommands[8], OrderTargetName;
 var VMDBufferPlayer OrderPlayer;
 var MenuUIMenuButtonWindow CommandsList[8], ObjectNameDisplay;
 
-var localized string StrAddPatrol, StrCancel, StrDestroy, StrDisengageRecon, StrEngageRecon, StrGuard, StrHeal, StrIgnore, StrMarkAlly, StrMarkEnemy, StrLiteHack, StrMoveTo, StrOppress, StrRegroup, StrStartPatrol;
+var localized string StrAddPatrol, StrCancel, StrDestroy, StrDisengageRecon, StrEngageRecon, StrEquipWeapon, StrGuard, StrHeal, StrIgnore, StrMarkAlly, StrMarkEnemy, StrLiteHack, StrMoveTo, StrOppress, StrRegroup, StrStartPatrol;
+
+var EInputKey ExtraCloseKey;
 
 struct Empty {};
 
@@ -22,6 +24,46 @@ struct GraftedHCComputerSecurityRef extends Empty
 {
     var Actor Value; 
 };
+
+function BuildKeyBindings()
+{
+	local int i, j, UsePos, Pos, Pos2;
+	local string KeyName, Alias;
+	
+	// Now loop through all the keynames and generate
+	// human-readable versions of keys that are mapped.
+	for ( i=0; i<255; i++ )
+	{
+		KeyName = player.ConsoleCommand ( "KEYNAME "$i );
+		if ( KeyName != "" )
+		{
+			Alias = player.ConsoleCommand( "KEYBINDING "$KeyName );
+			if ( Alias != "" )
+			{
+				Pos = InStr(Alias, " " );
+				Pos2 = InStr(Alias, "|"); //MADDERS, read muticommands' primary purpose.
+				
+				UsePos = Pos;
+				if (Pos == -1 || (Pos2 > -1 && Pos2 < Pos))
+				{
+					UsePos = Pos2;
+				}
+				if (UsePos != -1)
+				{
+					Alias = Left(Alias, UsePos);
+				}
+				
+				if (Alias ~= "IssueDroneOrder")
+				{
+					//MADDERS, 8/27/23: Both int and GetEnum tell me type mismatch.
+					//Suck on my SetPropertyText, nerd.
+					SetPropertyText( "ExtraCloseKey", string(GetEnum(enum'EInputKey', i)) );
+					break;
+				}
+			}
+		}
+	}
+}
 
 function bool GetReconStatus()
 {
@@ -149,6 +191,18 @@ function AddNewOrder(string NewOrderType)
 				CommandsList[NumButtons].SetPos(StartX, StartY + (ButtonHeightOffset * (NumButtons-1)));
 				CommandsList[NumButtons].SetWidth(ButtonWidth);
 				CommandsList[NumButtons].SetButtonText((NumButtons+1)$"."@StrDestroy);
+				
+				NumButtons++;
+			}
+		break;
+		case "EQUIP WEAPON": //Grab a gat.
+			if (TMegh != None)
+			{
+				ButtonCommands[NumButtons] = NewOrderType;
+				CommandsList[NumButtons] = MenuUIMenuButtonWindow(winClient.NewChild(Class'MenuUIMenuButtonWindow'));
+				CommandsList[NumButtons].SetPos(StartX, StartY + (ButtonHeightOffset * (NumButtons-1)));
+				CommandsList[NumButtons].SetWidth(ButtonWidth);
+				CommandsList[NumButtons].SetButtonText((NumButtons+1)$"."@StrEquipWeapon);
 				
 				NumButtons++;
 			}
@@ -563,7 +617,7 @@ function ExecuteDroneOrder(string TarOrderType)
 			//Do nothing lmao.
 		break;
 		case "DESTROY":
-			if ((TMegh != None) && (DeusExDecoration(OrderActor) != None))
+			if ((TMegh != None) && (DeusExDecoration(OrderActor) != None) && (!OrderActor.bDeleteMe))
 			{
 				if (LastDest == None)
 				{
@@ -579,7 +633,7 @@ function ExecuteDroneOrder(string TarOrderType)
 					}
 				}
 			}
-			if ((UseSIDD != None) && (DeusExDecoration(OrderActor) != None))
+			if ((UseSIDD != None) && (DeusExDecoration(OrderActor) != None) && (!OrderActor.bDeleteMe))
 			{
 				if (LastDest == None)
 				{
@@ -599,9 +653,24 @@ function ExecuteDroneOrder(string TarOrderType)
 				}
 			}
 		break;
-		case "GUARD": //Follow a unit and take any damage directed towards it as a declaration of war
-			if ((TMegh != None) && (VMDBufferPawn(OrderActor) != None))
+		case "EQUIP WEAPON":
+			if ((TMegh != None) && (DeusExWeapon(OrderActor) != None) && (!OrderActor.bDeleteMe) && (OrderActor.Owner == None))
 			{
+				if (TMegh != None)
+				{
+					if (TMegh.FirstWeapon() != None)
+					{
+						TMegh.VMDMeghDropWeapon();
+					}
+					TMegh.MEGHIssueOrder('VMDPickingUpWeapon', OrderActor,, true);
+					bWon = true;
+				}
+			}
+		break;
+		case "GUARD": //Follow a unit and take any damage directed towards it as a declaration of war
+			if ((TMegh != None) && (VMDBufferPawn(OrderActor) != None) && (!OrderActor.bDeleteMe))
+			{
+				OrderPlayer.VMDAddDroneAlliance(ScriptedPawn(OrderActor).Alliance);
 				TMegh.ChangeAlly(ScriptedPawn(OrderActor).Alliance, 1, true);
 				
 				if ((TMegh.IsInState('Attacking')) && (TMegh.Enemy != None) && (TMegh.Enemy.Alliance == ScriptedPawn(OrderActor).Alliance))
@@ -628,8 +697,9 @@ function ExecuteDroneOrder(string TarOrderType)
 			}
 		break;
 		case "HEAL": //Heal with medigel. Both medigel and talent required.
-			if (TMegh != None)
+			if ((TMegh != None) && (OrderActor != None) && (!OrderActor.bDeleteMe))
 			{
+				OrderPlayer.VMDAddDroneAlliance(ScriptedPawn(OrderActor).Alliance);
 				TMegh.ChangeAlly(ScriptedPawn(OrderActor).Alliance, 1, true);
 				
 				if ((TMegh.IsInState('Attacking')) && (TMegh.Enemy != None) && (TMegh.Enemy.Alliance == ScriptedPawn(OrderActor).Alliance))
@@ -656,8 +726,9 @@ function ExecuteDroneOrder(string TarOrderType)
 			}
 		break;
 		case "IGNORE": //Stop attacking this faction
-			if (TMegh != None)
+			if ((TMegh != None) && (OrderActor != None) && (!OrderActor.bDeleteMe))
 			{
+				OrderPlayer.VMDAddDroneAlliance(ScriptedPawn(OrderActor).Alliance);
 				TMegh.ChangeAlly(ScriptedPawn(OrderActor).Alliance, 1, true);
 				
 				if ((TMegh.IsInState('Attacking')) && (TMegh.Enemy != None) && (TMegh.Enemy.Alliance == ScriptedPawn(OrderActor).Alliance))
@@ -670,6 +741,7 @@ function ExecuteDroneOrder(string TarOrderType)
 			}
 			if (UseSidd != None)
 			{
+				OrderPlayer.VMDAddDroneAlliance(ScriptedPawn(OrderActor).Alliance);
 				forEach OrderPlayer.AllActors(class'VMDSidd', TSidd)
 				{
 					if ((TSidd != None) && (!TSidd.IsInState('Dying')) && (TSidd.EMPHitPoints > 0))
@@ -686,7 +758,7 @@ function ExecuteDroneOrder(string TarOrderType)
 			}
 		break;
 		case "LITE HACK": //Hack into a PC and disrupt it. Talent required.
-			if (TMegh != None)
+			if ((TMegh != None) && (OrderActor != None) && (!OrderActor.bDeleteMe))
 			{
 				TMegh.MEGHIssueOrder('LiteHacking', OrderActor);
 				
@@ -694,88 +766,185 @@ function ExecuteDroneOrder(string TarOrderType)
 			}
 		break;
 		case "MARK ALLY": //Forgive transgressions, make them forgive the drone, in turn. Cease attacks.
-			if (TMegh != None)
+			if ((ScriptedPawn(OrderActor) != None) && (!OrderActor.bDeleteMe))
 			{
-				TMegh.ChangeAlly(ScriptedPawn(OrderActor).Alliance, 1, true);
-				
-				if ((TMegh.IsInState('Attacking')) && (TMegh.Enemy != None) && (TMegh.Enemy.Alliance == ScriptedPawn(OrderActor).Alliance))
+				if (TMegh != None)
 				{
-					TMegh.MEGHIssueOrder('MeghFollowing', OrderPlayer,, true);
-				}
-				
-				//Our defining feature is the ability to make peace with this entity in a mutual sense.
-				forEach OrderPlayer.AllActors(class'ScriptedPawn', SP)
-				{
-					if ((SP != None) && (SP.Alliance == ScriptedPawn(OrderActor).Alliance))
+					OrderPlayer.VMDAddDroneAlliance(ScriptedPawn(OrderActor).Alliance);
+					TMegh.ChangeAlly(ScriptedPawn(OrderActor).Alliance, 1, true);
+					
+					if ((TMegh.IsInState('Attacking')) && (TMegh.Enemy != None) && (TMegh.Enemy.Alliance == ScriptedPawn(OrderActor).Alliance))
 					{
-						SP.ChangeAlly(TMegh.Alliance, 1, true);
-						if (SP.Enemy == TMegh)
+						TMegh.MEGHIssueOrder('MeghFollowing', OrderPlayer,, true);
+					}
+					
+					//Our defining feature is the ability to make peace with this entity in a mutual sense.
+					forEach OrderPlayer.AllActors(class'ScriptedPawn', SP)
+					{
+						if ((SP != None) && (SP.Alliance == ScriptedPawn(OrderActor).Alliance))
 						{
-							SP.SetEnemy(None);
+							SP.ChangeAlly(TMegh.Alliance, 1, true);
+							if (SP.Enemy == TMegh)
+							{
+								SP.SetEnemy(None);
+							}
+						}
+					}
+					bWon = true;
+				}
+				if (UseSidd != None)
+				{
+					OrderPlayer.VMDAddDroneAlliance(ScriptedPawn(OrderActor).Alliance);
+					forEach OrderPlayer.AllActors(class'VMDSidd', TSidd)
+					{
+						if ((TSidd != None) && (!TSidd.IsInState('Dying')) && (TSidd.EMPHitPoints > 0))
+						{
+							TSidd.ChangeAlly(ScriptedPawn(OrderActor).Alliance, 1, true);
+							
+							//Our defining feature is the ability to make peace with this entity in a mutual sense.
+							forEach OrderPlayer.AllActors(class'ScriptedPawn', SP)
+							{
+								if ((SP != None) && (SP.Alliance == ScriptedPawn(OrderActor).Alliance))
+								{
+									SP.ChangeAlly(TSidd.Alliance, 1, true);
+									if (SP.Enemy == TSidd)
+									{
+										SP.SetEnemy(None);
+									}
+								}
+							}
+							bWon = true;
 						}
 					}
 				}
-				bWon = true;
 			}
-			if (UseSidd != None)
+			else if ((DeusExCarcass(OrderActor) != None) && (!OrderActor.bDeleteMe))
 			{
-				forEach OrderPlayer.AllActors(class'VMDSidd', TSidd)
+				if (TMegh != None)
 				{
-					if ((TSidd != None) && (!TSidd.IsInState('Dying')) && (TSidd.EMPHitPoints > 0))
+					OrderPlayer.VMDAddDroneAlliance(DeusExCarcass(OrderActor).Alliance);
+					TMegh.ChangeAlly(DeusExCarcass(OrderActor).Alliance, 1, true);
+					
+					if ((TMegh.IsInState('Attacking')) && (TMegh.Enemy != None) && (TMegh.Enemy.Alliance == DeusExCarcass(OrderActor).Alliance))
 					{
-						TSidd.ChangeAlly(ScriptedPawn(OrderActor).Alliance, 1, true);
-						
-						//Our defining feature is the ability to make peace with this entity in a mutual sense.
-						forEach OrderPlayer.AllActors(class'ScriptedPawn', SP)
+						TMegh.MEGHIssueOrder('MeghFollowing', OrderPlayer,, true);
+					}
+					
+					//Our defining feature is the ability to make peace with this entity in a mutual sense.
+					forEach OrderPlayer.AllActors(class'ScriptedPawn', SP)
+					{
+						if ((SP != None) && (SP.Alliance == DeusExCarcass(OrderActor).Alliance))
 						{
-							if ((SP != None) && (SP.Alliance == ScriptedPawn(OrderActor).Alliance))
+							SP.ChangeAlly(TMegh.Alliance, 1, true);
+							if (SP.Enemy == TMegh)
 							{
-								SP.ChangeAlly(TSidd.Alliance, 1, true);
-								if (SP.Enemy == TSidd)
-								{
-									SP.SetEnemy(None);
-								}
+								SP.SetEnemy(None);
 							}
 						}
-						bWon = true;
+					}
+					bWon = true;
+				}
+				if (UseSidd != None)
+				{
+					OrderPlayer.VMDAddDroneAlliance(DeusExCarcass(OrderActor).Alliance);
+					forEach OrderPlayer.AllActors(class'VMDSidd', TSidd)
+					{
+						if ((TSidd != None) && (!TSidd.IsInState('Dying')) && (TSidd.EMPHitPoints > 0))
+						{
+							TSidd.ChangeAlly(DeusExCarcass(OrderActor).Alliance, 1, true);
+							
+							//Our defining feature is the ability to make peace with this entity in a mutual sense.
+							forEach OrderPlayer.AllActors(class'ScriptedPawn', SP)
+							{
+								if ((SP != None) && (SP.Alliance == DeusExCarcass(OrderActor).Alliance))
+								{
+									SP.ChangeAlly(TSidd.Alliance, 1, true);
+									if (SP.Enemy == TSidd)
+									{
+										SP.SetEnemy(None);
+									}
+								}
+							}
+							bWon = true;
+						}
 					}
 				}
 			}
 		break;
 		case "MARK ENEMY": //Mark faction as bad guys, and start an attack
-			if (TMegh != None)
+			if ((ScriptedPawn(OrderActor) != None) && (!OrderActor.bDeleteMe))
 			{
-				TMegh.ChangeAlly(ScriptedPawn(OrderActor).Alliance, -1, true);
-				TMegh.IncreaseAgitation(ScriptedPawn(OrderActor), 1.0);
-				
-				if ((!TMegh.IsInState('MeghPatrolling')) && (!TMegh.bReconMode))
+				if (TMegh != None)
 				{
-					TMegh.MEGHIssueOrder('Attacking', OrderActor);
-				}
-				
-				bWon = true;
-			}
-			if (UseSidd != None)
-			{
-				forEach OrderPlayer.AllActors(class'VMDSidd', TSidd)
-				{
-					if ((TSidd != None) && (!TSidd.IsInState('Dying')) && (TSidd.EMPHitPoints > 0))
+					OrderPlayer.VMDAddDroneHostility(ScriptedPawn(OrderActor).Alliance);
+					TMegh.ChangeAlly(ScriptedPawn(OrderActor).Alliance, -1, true);
+					TMegh.IncreaseAgitation(ScriptedPawn(OrderActor), 1.0);
+					
+					if ((!TMegh.IsInState('MeghPatrolling')) && (!TMegh.bReconMode))
 					{
-						TSidd.ChangeAlly(ScriptedPawn(OrderActor).Alliance, -1, true);
-						TSidd.IncreaseAgitation(ScriptedPawn(OrderActor), 1.0);
-						
-						if ((!TSidd.IsInState('MeghPatrolling')) && (!TSidd.bReconMode))
+						TMegh.MEGHIssueOrder('Attacking', OrderActor);
+					}
+					
+					bWon = true;
+				}
+				if (UseSidd != None)
+				{
+					OrderPlayer.VMDAddDroneHostility(ScriptedPawn(OrderActor).Alliance);
+					forEach OrderPlayer.AllActors(class'VMDSidd', TSidd)
+					{
+						if ((TSidd != None) && (!TSidd.IsInState('Dying')) && (TSidd.EMPHitPoints > 0))
 						{
-							TSidd.SIDDIssueOrder('Attacking', OrderActor);
+							TSidd.ChangeAlly(ScriptedPawn(OrderActor).Alliance, -1, true);
+							TSidd.IncreaseAgitation(ScriptedPawn(OrderActor), 1.0);
+							
+							if ((!TSidd.IsInState('MeghPatrolling')) && (!TSidd.bReconMode))
+							{
+								TSidd.SIDDIssueOrder('Attacking', OrderActor);
+							}
+							
+							bWon = true;
 						}
-						
-						bWon = true;
+					}
+				}
+			}
+			else if ((DeusExCarcass(OrderActor) != None) && (!OrderActor.bDeleteMe))
+			{
+				if (TMegh != None)
+				{
+					OrderPlayer.VMDAddDroneHostility(DeusExCarcass(OrderActor).Alliance);
+					TMegh.ChangeAlly(DeusExCarcass(OrderActor).Alliance, -1, true);
+					TMegh.IncreaseAgitation(DeusExCarcass(OrderActor), 1.0);
+					
+					if ((!TMegh.IsInState('MeghPatrolling')) && (!TMegh.bReconMode))
+					{
+						TMegh.MEGHIssueOrder('Attacking', OrderActor);
+					}
+					
+					bWon = true;
+				}
+				if (UseSidd != None)
+				{
+					OrderPlayer.VMDAddDroneHostility(DeusExCarcass(OrderActor).Alliance);
+					forEach OrderPlayer.AllActors(class'VMDSidd', TSidd)
+					{
+						if ((TSidd != None) && (!TSidd.IsInState('Dying')) && (TSidd.EMPHitPoints > 0))
+						{
+							TSidd.ChangeAlly(DeusExCarcass(OrderActor).Alliance, -1, true);
+							TSidd.IncreaseAgitation(DeusExCarcass(OrderActor), 1.0);
+							
+							if ((!TSidd.IsInState('MeghPatrolling')) && (!TSidd.bReconMode))
+							{
+								TSidd.SIDDIssueOrder('Attacking', OrderActor);
+							}
+							
+							bWon = true;
+						}
 					}
 				}
 			}
 		break;
 		case "MOVE TO": //Go here, or where this thing is.
-			if (TMegh != None)
+			if ((TMegh != None) && (OrderActor != None) && (!OrderActor.bDeleteMe))
 			{
 				TMegh.MEGHIssueOrder('RunningTo', OrderActor);
 				
@@ -784,13 +953,14 @@ function ExecuteDroneOrder(string TarOrderType)
 			}
 		break;
 		case "OPPRESS": //Beat dudes with baton
-			if ((TMegh != None) && (TMegh.FirstWeapon() != None) && (VMDBufferPawn(OrderActor) != None))
+			if ((TMegh != None) && (TMegh.FirstWeapon() != None) && (VMDBufferPawn(OrderActor) != None) && (!OrderActor.bDeleteMe))
 			{
 				switch(TMegh.FirstWeapon().Class.Name)
 				{
 					case 'WeaponBaton':
 					case 'WeaponPeppergun':
 					case 'WeaponGasGrenade':
+						OrderPlayer.VMDAddDroneHostility(ScriptedPawn(OrderActor).Alliance);
 						TMegh.ChangeAlly(ScriptedPawn(OrderActor).Alliance, -1, true);
 						TMegh.IncreaseAgitation(ScriptedPawn(OrderActor), 1.0);
 						
@@ -873,12 +1043,12 @@ function ExecuteDroneOrder(string TarOrderType)
 		OrderPlayer.PlaySound(Sound'Menu_Cancel', SLOT_None);
 	}
 	
-	if ((!bUsedFake) && (VMDFakePathNode(OrderActor) != None))
+	if ((!bUsedFake) && (VMDFakePathNode(OrderActor) != None) && (!OrderActor.bDeleteMe))
 	{
 		OrderActor.Destroy();
 	}
 	
-	AddTimer(0.1, false,, 'ForcePopWindow');
+	AddTimer(0.01, false,, 'ForcePopWindow');
 }
 
 function VMDFakePatrolPoint GetClosestPatrolPoint(VMDMegh TMegh)
@@ -958,7 +1128,7 @@ function InitWindow()
 	 	WinTitle.Show(False);
 	 	WinTitle = None;
 	}
-	AddTimer(0.04, false,, 'AddObjectName');
+	AddTimer(0.01, false,, 'AddObjectName');
 }
 
 function bool ButtonActivated( Window buttonPressed )
@@ -987,6 +1157,13 @@ function bool ButtonActivated( Window buttonPressed )
 	}
 	
 	return bHandled;
+}
+
+function CreateControls()
+{
+	Super.CreateControls();
+	
+	BuildKeyBindings(); //8/27/23: We can now read inputs as they are mapped in real time. Yay.
 }
 
 event bool VirtualKeyPressed(EInputKey Key, bool bRepeat)
@@ -1044,6 +1221,9 @@ event bool VirtualKeyPressed(EInputKey Key, bool bRepeat)
 		case IK_Escape:
 			return Super(PersonaScreenBaseWindow).VirtualKeyPressed(key, bRepeat);
 		break;
+		case ExtraCloseKey:
+			AddTimer(0.01, false,, 'ForcePopWindow');
+		break;
 	}
 	
  	return True;
@@ -1061,6 +1241,7 @@ defaultproperties
      StrDestroy="Destroy"
      StrDisengageRecon="Combat Mode"
      StrEngageRecon="Spotter Mode"
+     StrEquipWeapon="Equip Weapon"
      StrGuard="Guard"
      StrHeal="Heal"
      StrIgnore="Ignore"
