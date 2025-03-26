@@ -630,7 +630,7 @@ defaultproperties
      SpecializationDescs(3)="The use and resistance to LAM's, EMP grenades, gas grenades, and scrambler grenades."
      SpecializationDescs(4)="The power and utility of batons, crowbars, knives, pepper spray, shurikens, and other low tech weapons."
      SpecializationDescs(5)="The ease with which an agent bypasses locks and subvert other problems."
-     SpecializationDescs(6)="The ease with which an agent performs mechanical crafting and bypasses electronic hardware. This should not be confused with hacking computers."
+     SpecializationDescs(6)="The ease with which an agent performs mechanical crafting (such as making ammo or drones) and bypasses electronic hardware. This should not be confused with hacking computers."
      SpecializationDescs(7)="The degree to which an agent can infiltrate computer systems and otherwise manipulate software."
      SpecializationDescs(8)="The speed and complexity with which an agent can move across land and water."
      SpecializationDescs(9)="The effect and lifespan of tech goggles, thermoptic camo, ballistic vests, hazmat suits, and rebreathers."
