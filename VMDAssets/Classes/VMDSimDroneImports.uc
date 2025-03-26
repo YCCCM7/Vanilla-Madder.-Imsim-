@@ -165,7 +165,7 @@ class VMDSimDroneImports extends VMDSimImportsParent abstract;
 #exec MESH IMPORT MESH=VMDHelidroneCombatKnife ANIVFILE=MODELS\VMDHelidroneCombatKnife_a.3d DATAFILE=MODELS\VMDHelidroneCombatKnife_d.3d X=0 Y=0 Z=0
 #exec MESH ORIGIN MESH=VMDHelidroneCombatKnife X=0 Y=0 Z=0 PITCH=0 ROLL=0 YAW=0
 
-#exec MESH SEQUENCE MESH=VMDHelidroneCombatKnife SEQ=All              STARTFRAME=0 NUMFRAMES=1 RATE=1
+#exec MESH SEQUENCE MESH=VMDHelidroneCombatKnife SEQ=All              STARTFRAME=0 NUMFRAMES=7 RATE=1
 #exec MESH SEQUENCE MESH=VMDHelidroneCombatKnife SEQ=VMDHelidroneCombatKnife STARTFRAME=0 NUMFRAMES=1 RATE=1
 #exec MESH SEQUENCE MESH=VMDHelidroneCombatKnife SEQ=Attack STARTFRAME=0 NUMFRAMES=7 RATE=18
 #exec MESH SEQUENCE MESH=VMDHelidroneCombatKnife SEQ=AttackSide STARTFRAME=0 NUMFRAMES=7 RATE=18
@@ -188,7 +188,7 @@ class VMDSimDroneImports extends VMDSimImportsParent abstract;
 #exec MESH IMPORT MESH=VMDHelidroneBaton ANIVFILE=MODELS\VMDHelidroneBaton_a.3d DATAFILE=MODELS\VMDHelidroneBaton_d.3d X=0 Y=0 Z=0
 #exec MESH ORIGIN MESH=VMDHelidroneBaton X=0 Y=0 Z=0 PITCH=0 ROLL=0 YAW=0
 
-#exec MESH SEQUENCE MESH=VMDHelidroneBaton SEQ=All              STARTFRAME=0 NUMFRAMES=1 RATE=1
+#exec MESH SEQUENCE MESH=VMDHelidroneBaton SEQ=All              STARTFRAME=0 NUMFRAMES=7 RATE=1
 #exec MESH SEQUENCE MESH=VMDHelidroneBaton SEQ=VMDHelidroneBaton STARTFRAME=0 NUMFRAMES=1 RATE=1
 #exec MESH SEQUENCE MESH=VMDHelidroneBaton SEQ=Attack STARTFRAME=0 NUMFRAMES=7 RATE=15
 #exec MESH SEQUENCE MESH=VMDHelidroneBaton SEQ=AttackSide STARTFRAME=0 NUMFRAMES=7 RATE=15
