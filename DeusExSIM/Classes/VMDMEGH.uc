@@ -6,7 +6,7 @@ class VMDMEGH extends Robot;
 var localized string MsgMeghKilled;
 var(MADDERS) localized string BritishTextTargetAcquired[5];
 
-var(MEGH) bool bCanHack, bCanHeal, bHasHeal, bHealthBuffed, bMeleeBuff, bHasMedigel, bReversePatrol, bReconMode, bSaidOutOfAmmo;
+var(MEGH) bool bCanHack, bCanHeal, bHasHeal, bHealthBuffed, bMeleeBuff, bHasMedigel, bReversePatrol, bReconMode, bAutoReload, bSaidOutOfAmmo;
 var(MEGH) string CustomName;
 
 var(MEGHAI) int NumReconTargets;
@@ -19,11 +19,13 @@ var(MEGHAI) ScriptedPawn ReconTargets[16], DestroyOtherPawn, MEGHLastEnemy;
 
 var(MEGHAI) AllianceInfoEx CachedAlliances[16];
 
-var(MEGHHacks) bool bWallCrammed, bDoorGhosting, bDebugState, bQueueTalentUpdate;
+var(MEGHHacks) bool bWallCrammed, bDoorGhosting, bDebugState, bQueueTalentUpdate, bClearPlayerTrace, bClearFastTrace;
 var(MEGHHacks) int PathingFailures, PathingFailures2, LastLocationFailures;
 var(MEGHHacks) float PositionRecheckTimer;
+var(MEGHHacks) name CurStateName;
 var(MEGHHacks) vector LastLocation, FirstLocation;
 var(MEGHHacks) Rotator WallCramPointer;
+var(MEGHHacks) Ammo LastDroppedAmmo;
 
 //MADDERS, 9/4/22: This used to be "elevatorhackloc", for elevator stuff, but this
 //very rapidly devolved into one more hack, and another, and another... And fuck me.
@@ -72,18 +74,137 @@ final function GraftedHCComputerSecurity AizomeHCFudgeCast(Actor OrderActor)
 	return Result;
 }
 
-function bool VMDPlayerIsOnElevator(DeusExPlayer DXP)
+function VMDGrabWeapon(DeusExWeapon DXW)
+{
+	Super.VMDGrabWeapon(DXW);
+	
+	UpdateWeaponModel();
+}
+
+
+function bool VMDDroneCanEquipWeapon(DeusExWeapon DXW)
+{
+	local DeusExAmmo DXA;
+	
+	if (DXW == None)
+	{
+		return false;
+	}
+	
+	DXA = DeusExAmmo(DXW.AmmoType);
+	switch(DXW.Class.Name)
+	{
+		case 'WeaponPistol':
+		case 'WeaponStealthPistol':
+		case 'WeaponPeppergun':
+		case 'WeaponCombatKnife':
+		case 'WeaponBaton':
+		case 'WeaponHideAGun':
+		case 'WeaponMiniCrossbow':
+		case 'WeaponSawedOffShotgun':
+			return true;
+		break;
+		case 'WeaponEMPGrenade':
+		case 'WeaponGasGrenade':
+		case 'WeaponLAM':
+		case 'WeaponNanoVirusGrenade':
+		
+		case 'WeaponHCEMPGrenade':
+		case 'WeaponHCHCGasGrenade':
+		case 'WeaponHCLAM':
+		case 'WeaponHCNanoVirusGrenade':
+			if ((DXA != None && DXA.AmmoAmount > 0) || (DXA == None && DXW.PickupAmmoCount > 0))
+			{
+				return true;
+			}
+		break;
+		default:
+			if (DXW.bDroneCapableWeapon)
+			{
+				if (DXW.bDroneGrenadeWeapon)
+				{
+					if ((DXA != None && DXA.AmmoAmount > 0) || (DXA == None && DXW.PickupAmmoCount > 0))
+					{
+						return true;
+					}
+				}
+				else
+				{
+					return true;
+				}
+			}
+		break;
+	}
+	
+	return false;
+}
+
+function bool AttemptAutoReload()
+{
+	local int TTake;
+	local DeusExAmmo TAmmo, DXA;
+	local DeusExWeapon DXW;
+	local class<DeusExAmmo> TType;
+	local ScriptedPawn MLA;
+	local VMDBufferPlayer VMP;
+	
+	VMP = GetLastVMP();
+	if (VMP == None)
+	{
+		return false;
+	}
+	
+	DXW = FirstWeapon();
+	if (DXW != None)
+	{
+		TAmmo = DeusExAmmo(DXW.AmmoType);
+		TType = class<DeusExAmmo>(DXW.AmmoName);
+		if (TType != None)
+		{
+			DXA = DeusExAmmo(VMP.FindInventoryType(TType));
+		}
+	}
+	
+	if (TType == None || DXA == None || DXW == None || DXW.AmmoType == None)
+	{
+		return false;
+	}
+	
+	bSaidOutOfAmmo = false;
+	
+	if (DXW.AltFireSound != None)
+	{
+		VMP.PlaySound(DXW.AltFireSound, SLOT_None,,, 1024, DXW.VMDGetMiscPitch());
+	}
+	else if (DXW.CockingSound != None)
+	{
+		VMP.PlaySound(DXW.CockingSound, SLOT_None,,, 1024, DXW.VMDGetMiscPitch());
+	}
+	
+	TTake = Min(DXA.AmmoAmount, DXW.ReloadCount - DXW.AmmoType.AmmoAmount);
+	if (TTake > 0)
+	{
+		DXW.ClipCount -= TTake;
+		TAmmo.AmmoAmount += TTake;
+		DXA.AmmoAmount -= TTake;
+		
+		return true;
+	}
+	return false;
+}
+
+function bool VMDPawnIsOnElevator(Pawn TPawn)
 {
 	local int TWidth, TBreadth, THeight;
 	local Vector ColBoxMin, ColBoxMax;
 	local Mover TMov;
 	
-	if ((DXP != None) && (DXP.Base != Level) && (DXP.Base != None) && (Mover(DXP.Base) != None))
+	if ((TPawn != None) && (TPawn.Base != Level) && (TPawn.Base != None) && (Mover(TPawn.Base) != None))
 	{
 		//MADDERS, 7/15/24: Do some really swoocey shit here.
 		//Basically, if it's too big to be an elevator, it's probably some moving piece of floor (NYC sewer bridge, for instance)
 		//Or, if it's really small on 2 axes, it's not big enough to be a real elevator.
-		TMov = Mover(DXP.Base);
+		TMov = Mover(TPawn.Base);
 		TMov.GetBoundingBox(ColBoxMin, ColBoxMax, false, TMov.KeyPos[TMov.KeyNum]+TMov.BasePos, TMov.KeyRot[TMov.KeyNum]+TMov.BaseRot);
 		
 		TWidth = ColBoxMax.Y - ColBoxMin.Y;
@@ -443,7 +564,7 @@ function CacheAlliances()
 	
 	for (i=0; i<ArrayCount(AlliancesEx); i++)
 	{
-		CachedAlliances[i] = AlliancesEx[i];
+		//CachedAlliances[i] = AlliancesEx[i];
 		AlliancesEx[i] = EmptyAlliance;
 	}
 	
@@ -464,14 +585,16 @@ function CacheAlliances()
 
 function UncacheAlliances()
 {
-	local int i;
+	VMDLoadTravelingAlliances();
+	
+	/*local int i;
 	local AllianceInfoEx EmptyAlliance;
 	
 	for (i=0; i<ArrayCount(AlliancesEx); i++)
 	{
 		AlliancesEx[i] = CachedAlliances[i];
 		CachedAlliances[i] = EmptyAlliance;
-	}
+	}*/
 }
 
 function int VMDGetMaxHealth()
@@ -552,7 +675,8 @@ function TweenToAttack(float tweentime)
 {
 	if (WeaponBaton(Weapon) != None || WeaponCombatKnife(Weapon) != None)
 	{
-		Super(VMDBufferPawn).TweenToAttack(TweenTime);
+		//Super(VMDBufferPawn).TweenToAttack(TweenTime);
+		Super(VMDBufferPawn).PlayAttack();
 	}
 	else
 	{
@@ -562,14 +686,6 @@ function TweenToAttack(float tweentime)
 
 function TweenToShoot(float tweentime)
 {
-	if (WeaponBaton(Weapon) != None || WeaponCombatKnife(Weapon) != None)
-	{
-		Super(VMDBufferPawn).TweenToShoot(TweenTime);
-	}
-	else
-	{
-		Super.TweenToShoot(TweenTime);
-	}
 }
 
 function PlayShoot()
@@ -582,14 +698,6 @@ function PlayFlying()
 
 function PlayRunningAndFiring()
 {
-	if (WeaponBaton(Weapon) != None || WeaponCombatKnife(Weapon) != None)
-	{
-		Super(VMDBufferPawn).PlayAttack();
-	}
-	else
-	{
-		Super.PlayRunningAndFiring();
-	}
 }
 
 //MADDERS, 9/14/22: Reduce select damage types that hard counter us. Try and balance things out, you know?
@@ -601,9 +709,24 @@ function float ShieldDamage(Name damageType)
 	{
 		case 'Exploded':
 			Ret = 0.35;
+			if (bHealthBuffed)
+			{
+				Ret = 0.175;
+			}
 		break;
 		case 'Burned':
 			Ret = 0.5;
+			if (bHealthBuffed)
+			{
+				Ret = 0.25;
+			}
+		break;
+		case 'EMP':
+			Ret = 1.0;
+			if (bHealthBuffed)
+			{
+				Ret = 0.5;
+			}
 		break;
 		default:
 			Ret = 1.0;
@@ -628,7 +751,7 @@ function PlayTargetAcquiredSound()
 	
 	TargetAcquiredSpeechTimer = 2.0;
 	
-	if ((!bDeleteMe) && (DeusExWeapon(Weapon) != None) && (DeusExWeapon(Weapon).VMDIsMeleeWeapon()))
+	if ((!bDeleteMe) && (DeusExWeapon(Weapon) != None) && (DeusExWeapon(Weapon).VMDIsMeleeWeapon()) && (bMeleeBuff))
 	{
 		TRand = Rand(5);
 		TSpoof = BritishTextTargetAcquired[TRand];
@@ -719,7 +842,14 @@ function Frob(Actor Frobber, Inventory FrobWith)
 	
 	if ((EMPHitPoints > 0) && (DeusExPlayer(Frobber) != None))
 	{
-		InvokeMEGHManagementWindow(DeusExPlayer(Frobber));
+		if ((DeusExRootWindow(DeusExPlayer(Frobber).RootWindow) != None) && (DeusExRootWindow(DeusExPlayer(Frobber).RootWindow).GetTopWindow() != None))
+		{
+			return;
+		}
+		else
+		{
+			InvokeMEGHManagementWindow(DeusExPlayer(Frobber));
+		}
 	}
 }
 
@@ -768,9 +898,15 @@ function PostSpecialStatCheck()
 
 function UpdateSensitiveMap()
 {
+	local VMDBufferPlayer VMP;
+	
+	VMP = GetLastVMP();
 	if ((class'VMDStaticFunctions'.Static.VMDIsWeaponSensitiveMap(Self)) && (!bReconMode))
 	{
-		BroadcastMessage("Sensitive zone detected. Holstering weapon.");
+		if (VMP != None)
+		{
+			VMP.ClientMessage("Sensitive zone detected. Holstering weapon.");
+		}
 		bReconMode = true;
 	}
 	SetupWeapon(!bReconMode, true);
@@ -803,6 +939,42 @@ function UpdateHackAlliances()
 	}
 }
 
+function VMDLoadTravelingAlliances()
+{
+	local int i;
+	local Pawn TPawn;
+	local ScriptedPawn SP;
+	local VMDBufferPlayer TPlayer;
+	
+	TPlayer = GetLastVMP();
+	
+	if (TPlayer == None)
+	{
+		return;
+	}
+	
+	for (TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+	{
+		SP = ScriptedPawn(TPawn);
+		if ((SP != None) && (VMDSIDD(TPawn) == None) && (VMDMEGH(TPawn) == None))
+		{
+			for(i=0; i<TPlayer.VMDGetMaxDroneAlliances(); i++)
+			{
+				if (SP.Alliance == TPlayer.VMDGetDroneAlliance(i))
+				{
+					ChangeAlly(SP.Alliance, 1, true);
+					break;
+				}
+				else if (SP.Alliance == TPlayer.VMDGetDroneHostility(i))
+				{
+					ChangeAlly(SP.Alliance, -1, true);
+					break;
+				}
+			}
+		}
+	}
+}
+
 function DeusExWeapon FirstWeapon()
 {
 	local Inventory Inv;
@@ -827,13 +999,53 @@ function DropAmmo(DeusExAmmo DXA, Vector DropVect)
 		}
 		else
 		{
+			LastDroppedAmmo = DXA;
 			DXA.DropFrom(DropVect);
 			DXA.AmmoAmount = Min(DXA.MaxAmmo, DXA.AmmoAmount);
 		}
 	}
 }
 
-function bool VMDMeghDropWeapon()
+function bool VMDMeghCanDropWeapon()
+{
+	local Vector StartTrace, EndTrace, HitLoc, HitNorm, Extent;
+	local Actor HitAct;
+	local DeusExWeapon TWep;
+	
+	TWep = FirstWeapon();
+	if (TWep == None)
+	{
+		return false;
+	}
+	
+	StartTrace = Location;
+	EndTrace = StartTrace + Vect(0, 0, -15);
+	Extent = Vect(0.5, 0.5, 0) * TWep.Default.CollisionRadius;
+	Extent.Z = TWep.Default.CollisionHeight;
+	
+	HitAct = Trace(HitLoc, HitNorm, EndTrace, StartTrace, true, Extent);
+	if (HitAct == Level || Mover(HitAct) != None)
+	{
+		return false;
+	}
+	
+	if (TWep.AmmoType != None)
+	{
+		EndTrace = StartTrace + Vect(0, 0, -15);
+		Extent = Vect(0.5, 0.5, 0) * TWep.AmmoType.Default.CollisionRadius;
+		Extent.Z = TWep.AmmoType.Default.CollisionHeight;
+		
+		HitAct = Trace(HitLoc, HitNorm, EndTrace, StartTrace, true, Extent);
+		if (HitAct == Level || Mover(HitAct) != None)
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+function bool VMDMeghDropWeapon(optional bool bHigh)
 {
 	local bool bWon;
 	local Vector DropVect, DropVect2;
@@ -844,8 +1056,16 @@ function bool VMDMeghDropWeapon()
 	DXW = FirstWeapon();
 	if (DXW != None)
 	{
-		DropVect = Location-vect(0,0,15);
-		DropVect2 = Location-vect(0,0,10);
+		if (bHigh)
+		{
+			DropVect = Location;
+			DropVect2 = Location+vect(0,0,5);
+		}
+		else
+		{
+			DropVect = Location-vect(0,0,15);
+			DropVect2 = Location-vect(0,0,10);
+		}
 		
 		DXA = DeusExAmmo(DXW.AmmoType);
 		if ((DXA != None) && (!DXA.bDeleteMe) && (DXA.AmmoAmount > 0))
@@ -1033,6 +1253,7 @@ function ReturnToItem()
 		TPick.bDroneHealthBuff = bHealthBuffed;
 		TPick.bDroneHealing = bCanHeal;
 		TPick.bDroneReconMode = bReconMode;
+		TPick.bDroneAutoReload = bAutoReload;
 		TPick.UpdateDroneSkins();
 		Destroy();
 	}
@@ -1055,7 +1276,7 @@ function UpdateTalentEffects(VMDBufferPlayer VMP)
 		}
 	}
 	
-	if (bForceReconState)
+	/*if (bForceReconState)
 	{
 		bReconMode = NewbReconMode;
 		if (bReconMode)
@@ -1072,7 +1293,9 @@ function UpdateTalentEffects(VMDBufferPlayer VMP)
 		{
 			MatchAlliances(LastSIDD);
 		}	
-	}
+	}*/
+	
+	VMDLoadTravelingAlliances();
 	
 	if ((VMP != None) && (EMPHitPoints > 0))
 	{
@@ -1136,6 +1359,9 @@ function UpdateTalentEffects(VMDBufferPlayer VMP)
 				bHealthBuffed = true;
 			}
 		}
+		
+		Health = Clamp(Health, 1, VMDGetMaxHealth());
+		EMPHitPoints = Clamp(EMPHitPoints, 1, VMDGetMaxEMPHitPoints());
 		
 		bCanHeal = false;
 		if (VMP.HasSkillAugment('TagTeamMedicalSyringe'))
@@ -1223,6 +1449,8 @@ function UpdateWeaponModel()
 			Mesh = LODMesh'VMDHelidronePeppergun';
 		break;
 		case 'WeaponPistol':
+		case 'WeaponWaltherDXN':
+		case 'WeaponBRGlock':
 			Mesh = LODMesh'VMDHelidronePistol';
 		break;
 		case 'WeaponSawedOffShotgun':
@@ -1277,6 +1505,8 @@ function int GetDroneWeaponMaxRange()
 			return 160;
 		break;
 		case 'WeaponPistol':
+		case 'WeaponWaltherDXN':
+		case 'WeaponBRGlock':
 			return 640;
 		break;
 		case 'WeaponSawedOffShotgun':
@@ -1315,6 +1545,21 @@ function int GetDroneWeaponMinRange()
 	}
 	
 	return 0;
+}
+
+function float GetDroneFollowDistance()
+{
+	local DeusExWeapon DXW;
+	
+	DXW = FirstWeapon();
+	if ((bAutoReload) && (DXW != None) && (DXW.AmmoType != None) && (DXW.AmmoType.AmmoAmount <= 0))
+	{
+		return 80;
+	}
+	else
+	{
+		return 180;
+	}
 }
 
 function MEGHIssueOrder(name NewOrderName, Actor NewOrderActor, optional Actor NewSecondaryOrderActor, optional bool bDontWipe)
@@ -1383,6 +1628,15 @@ function MEGHIssueOrder(name NewOrderName, Actor NewOrderActor, optional Actor N
 			OppressTarget = VMDBufferPawn(NewOrderActor);
 			bLockOrderActor = true;
 			bEngageOrderActor = true;
+		break;
+		case 'VMDPickingUpWeapon':
+			if (DeusExWeapon(NewOrderActor) == None)
+			{
+				return;
+			}
+			LastSoughtWeapon = DeusExWeapon(NewOrderActor);
+			GoToState('VMDPickingUpWeapon', 'Begin');
+			return;
 		break;
 	}
 	
@@ -1990,6 +2244,39 @@ function GiveReconPulse()
 		GSpeed = Level.Game.GameSpeed;
 	}
 	
+	if (!bClearPlayerTrace)
+	{
+		switch(CurStateName)
+		{
+			case 'Standing':
+			case 'LiteHacking':
+			case 'LiteHackStanding':
+			case 'MeghPatrolling':
+				RadarMark = Spawn(class'VMDFakeRadarMarker',,, Location);
+				if (RadarMark != None)
+				{
+					RadarMark.bMEGHReminder = true;
+					RadarMark.RenderPlayer = RenderPlayer;
+					RadarMark.ReconTarget = Self;
+					if (LastMark != None)
+					{
+						LastMark.NextMark = RadarMark;
+					}
+					else
+					{
+						RenderPlayer.FirstRadarMark = RadarMark;
+					}
+					LastMark = RadarMark;
+				}
+			break;
+		}
+	}
+	
+	if (!bReconMode)
+	{
+		return;
+	}
+	
 	for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
 	{
 		SP = ScriptedPawn(TPawn);
@@ -2269,6 +2556,145 @@ function StopLiteHacking()
 	}
 }
 
+state Standing
+{
+	ignores EnemyNotVisible;
+
+Begin:
+	WaitForLanding();
+	if (!bUseHome)
+		Goto('StartStand');
+
+MoveToBase:
+	if (!IsPointInCylinder(self, HomeLoc, 16-CollisionRadius))
+	{
+		EnableCheckDestLoc(true);
+		while (true)
+		{
+			if (PointReachable(HomeLoc))
+			{
+				if (ShouldPlayWalk(HomeLoc))
+					PlayWalking();
+				MoveTo(HomeLoc, GetWalkingSpeed());
+				CheckDestLoc(HomeLoc);
+				break;
+			}
+			else
+			{
+				MoveTarget = FindPathTo(HomeLoc);
+				if (MoveTarget != None)
+				{
+					if (ShouldPlayWalk(MoveTarget.Location))
+						PlayWalking();
+					MoveToward(MoveTarget, GetWalkingSpeed());
+					CheckDestLoc(MoveTarget.Location, true);
+				}
+				else
+				{
+					if (bCanClimbLadders)
+					{
+						if (VMDFindLadderTowards(HomeLoc) != None)
+						{
+							MoveTarget = GetNextWaypoint(VMDFindLadderTowards(HomeLoc));
+							if (MoveTarget != None)
+							{
+								TargetedLadderPoint = VMDFindLadderTowards(HomeLoc);
+								OrderActor = TargetedLadderPoint;
+								GoToState('GoingTo', 'Begin');
+							}
+							else
+							{
+								break;
+							}
+						}
+						else
+						{
+							if (LastUsedLadder != None)
+							{
+								TargetedLadderPoint = LastUsedLadder;
+								OrderActor = TargetedLadderPoint;
+								GoToState('GoingTo', 'Begin');
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+		}
+		EnableCheckDestLoc(false);
+	}
+	TurnTo(Location+HomeRot);
+
+StartStand:
+	Acceleration=vect(0,0,0);
+	Goto('Stand');
+
+ContinueFromDoor:
+	Goto('MoveToBase');
+
+Stand:
+ContinueStand:
+	// nil
+	bStasis = False; //MADDERS, 3/23/25: You think I'd learn by now, huh?
+
+	PlayWaiting();
+	if (!bPlayIdle)
+		Goto('DoNothing');
+	Sleep(FRand()*14+8);
+
+Fidget:
+	if (FRand() < 0.5)
+	{
+		PlayIdle();
+		FinishAnim();
+	}
+	else
+	{
+		if (FRand() > 0.5)
+		{
+			PlayTurnHead(LOOK_Up, 1.0, 1.0);
+			Sleep(2.0);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+		else if (FRand() > 0.5)
+		{
+			PlayTurnHead(LOOK_Left, 1.0, 1.0);
+			Sleep(1.5);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.9);
+			PlayTurnHead(LOOK_Right, 1.0, 1.0);
+			Sleep(1.2);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+		else
+		{
+			PlayTurnHead(LOOK_Right, 1.0, 1.0);
+			Sleep(1.5);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.9);
+			PlayTurnHead(LOOK_Left, 1.0, 1.0);
+			Sleep(1.2);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+	}
+	if (FRand() < 0.3)
+		PlayIdleSound();
+	Goto('Stand');
+
+DoNothing:
+	// nil
+}
+
 state LiteHackStanding expands Standing
 {
 	function EndState()
@@ -2280,6 +2706,106 @@ state LiteHackStanding expands Standing
 		
 		Super.EndState();
 	}
+Begin:
+	WaitForLanding();
+	if (!bUseHome)
+		Goto('StartStand');
+
+MoveToBase:
+	if (!IsPointInCylinder(self, HomeLoc, 16-CollisionRadius))
+	{
+		EnableCheckDestLoc(true);
+		while (true)
+		{
+			if (PointReachable(HomeLoc))
+			{
+				if (ShouldPlayWalk(HomeLoc))
+					PlayWalking();
+				MoveTo(HomeLoc, GetWalkingSpeed());
+				CheckDestLoc(HomeLoc);
+				break;
+			}
+			else
+			{
+				MoveTarget = FindPathTo(HomeLoc);
+				if (MoveTarget != None)
+				{
+					if (ShouldPlayWalk(MoveTarget.Location))
+						PlayWalking();
+					MoveToward(MoveTarget, GetWalkingSpeed());
+					CheckDestLoc(MoveTarget.Location, true);
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+		EnableCheckDestLoc(false);
+	}
+	TurnTo(Location+HomeRot);
+
+StartStand:
+	Acceleration=vect(0,0,0);
+	Goto('Stand');
+
+ContinueFromDoor:
+	Goto('MoveToBase');
+
+Stand:
+ContinueStand:
+	// nil
+	bStasis = False; //MADDERS, 2/9/25: Yeah, we don't do this for MEGH.
+
+	PlayWaiting();
+	if (!bPlayIdle)
+		Goto('DoNothing');
+	Sleep(FRand()*14+8);
+
+Fidget:
+	if (FRand() < 0.5)
+	{
+		PlayIdle();
+		FinishAnim();
+	}
+	else
+	{
+		if (FRand() > 0.5)
+		{
+			PlayTurnHead(LOOK_Up, 1.0, 1.0);
+			Sleep(2.0);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+		else if (FRand() > 0.5)
+		{
+			PlayTurnHead(LOOK_Left, 1.0, 1.0);
+			Sleep(1.5);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.9);
+			PlayTurnHead(LOOK_Right, 1.0, 1.0);
+			Sleep(1.2);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+		else
+		{
+			PlayTurnHead(LOOK_Right, 1.0, 1.0);
+			Sleep(1.5);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.9);
+			PlayTurnHead(LOOK_Left, 1.0, 1.0);
+			Sleep(1.2);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+	}
+	if (FRand() < 0.3)
+		PlayIdleSound();
+	Goto('Stand');
+
+DoNothing:
+	// nil
 }
 
 
@@ -2609,12 +3135,11 @@ state MeghFollowing expands Following
 	
 	function bool PickDestinationBool()
 	{
-		local float   dist;
-		local float   extra;
-		local float   distMax;
-		local int     dir;
-		local rotator rot;
 		local bool    bSuccess;
+		local int     dir;
+		local float   dist, extra, distMax;
+		local vector TestLoc;
+		local rotator rot;
 		
 		local DeusExPlayer DXP;
 		
@@ -2646,17 +3171,18 @@ state MeghFollowing expands Following
 			if ((DXP.Region.Zone != None) && (DXP.Region.Zone.bWaterZone))
 			{
 				BackpedalTimer = -1;
+				TestLoc = Location + (Vect(0,0,12) * CollisionHeight);
 				
-				//Are we on an elevator, in line of sight?
-				if (AICanSee(orderActor, , false, false, false, true) > 0)
+				//Is player unobstructed? Will we not ramp into water?
+				if ((AICanSee(orderActor, , false, false, false, true) > 0) && (FastTrace(TestLoc, Location)))
 				{
-					//MADDERS, 8/29/22: Move closer, to get on the elevator.
+					//MADDERS, 8/29/22: Hover over our position underwater. Neato.
 					PathOverrideHackLoc = DXP.Location;
 				}
 				return false;
 			}
 			//Are we on an elevator, in line of sight?
-			if ((VMDPlayerIsOnElevator(DXP)) && (AICanSee(orderActor, , false, false, false, true) > 0))
+			if ((VMDPawnIsOnElevator(DXP)) && (AICanSee(orderActor, , false, false, false, true) > 0))
 			{
 				BackpedalTimer = -1;
 				
@@ -2667,12 +3193,12 @@ state MeghFollowing expands Following
 			}
 		}
 		
-		if ((dist > 180) || (AICanSee(orderActor, , false, false, false, true) <= 0))
+		if (dist > GetDroneFollowDistance() || AICanSee(orderActor, , false, false, false, true) <= 0)
 		{
 			if (ActorReachable(orderActor))
 			{
 				rot = Rotator(orderActor.Location - Location);
-				distMax = (dist-180)+45;
+				distMax = (dist-GetDroneFollowDistance())+45;
 				if (distMax > 80)
 				{
 					distMax = 80;
@@ -2690,9 +3216,9 @@ state MeghFollowing expands Following
 			}
 			BackpedalTimer = -1;
 		}
-		else if (dist < 60)
+		else if (dist < GetDroneFollowDistance() * 0.33)
 		{
-			if ((VMDPlayerIsOnElevator(DXP)) && (DXP.bDuck > 0 || DXP.bForceDuck))
+			if ((VMDPawnIsOnElevator(DXP)) && (DXP.bDuck > 0 || DXP.bForceDuck))
 			{
 				if (dist < 32)
 				{
@@ -2815,8 +3341,25 @@ Wait:
 	//PlayTurning();
 	//TurnToward(orderActor);
 	PlayWaiting();
-	
 WaitLoop:
+	if ((bAutoReload) && (!bReconMode) && (WeaponSawedOffShotgun(FirstWeapon()) == None) && (VSize(GetLastVMP().Location - Location) <= GetDroneFollowDistance()) && (FirstWeapon() != None) && (FirstWeapon().AmmoType != None) && (FirstWeapon().AmmoType.AmmoAmount <= 0))
+	{
+		if (AttemptAutoReload())
+		{
+			Sleep(FMax(0.5, FirstWeapon().ReloadTime * 0.25));
+			
+			SetupWeapon(!bReconMode, true);
+			if ((MEGHLastEnemy != None) && (!MEGHLastEnemy.bDeleteMe) && (!MEGHLastEnemy.IsInState('Dying')) && (FastTrace(Location, MEGHLastEnemy.Location)))
+			{
+				MEGHIssueOrder('Attacking', MEGHLastEnemy);
+			}
+			else
+			{
+				MEGHLastEnemy = None;
+			}
+		}
+	}
+	
 	Acceleration = vect(0,0,0);
 	Sleep(0.0);
 	if (!PickDestinationBool())
@@ -3378,6 +3921,7 @@ Done:
 	//GotoState('Standing');
 	//GoToState('MeghFollowing');
 	
+	Sleep(0.1);
 	if (GetClosestPatrolPoint(Self) != None)
 	{
 		MEGHIssueOrder('MeghPatrolling', GetClosestPatrolPoint(Self));
@@ -3872,12 +4416,11 @@ function bool IsDoor(Actor Target, bool bWarn)
 
 function bool FakePickDestination()
 {
-	local float   dist;
-	local float   extra;
-	local float   distMax;
-	local int     dir;
-	local rotator rot;
 	local bool    bSuccess;
+	local int     dir;
+	local float   dist, extra, distmax;
+	local Vector TestLoc;
+	local rotator rot;
 	
 	local DeusExPlayer DXP;
 	
@@ -3912,9 +4455,10 @@ function bool FakePickDestination()
 	if ((DXP != None) && (DXP.Region.Zone != None) && (DXP.Region.Zone.bWaterZone))
 	{
 		BackpedalTimer = -1;
+		TestLoc = Location + (Vect(0,0,12) * CollisionHeight);
 		
-		//Are we on an elevator, in line of sight?
-		if (AICanSee(orderActor, , false, false, false, true) > 0)
+		//Is player unobstructed? Will we not ramp into water?
+		if ((AICanSee(orderActor, , false, false, false, true) > 0) && (FastTrace(TestLoc, Location)))
 		{
 			//MADDERS, 8/29/22: Hover over our position underwater. Neato.
 			PathOverrideHackLoc = DXP.Location;
@@ -3924,7 +4468,7 @@ function bool FakePickDestination()
 	
 	//Are we on an elevator, in line of sight?
 	//(DXP.bDuck > 0) && 
-	if ((VMDPlayerIsOnElevator(DXP)) && (AICanSee(orderActor, , false, false, false, true) > 0))
+	if ((VMDPawnIsOnElevator(DXP)) && (AICanSee(orderActor, , false, false, false, true) > 0))
 	{
 		//MADDERS, 8/29/22: Move closer, to get on the elevator.
 		PathOverrideHackLoc = DXP.Location;
@@ -3955,7 +4499,7 @@ function bool FakePickDestination()
 	}
 	else if (dist < 60)
 	{
-		if ((VMDPlayerIsOnElevator(DXP)) && (DXP.bDuck > 0 || DXP.bForceDuck))
+		if ((VMDPawnIsOnElevator(DXP)) && (DXP.bDuck > 0 || DXP.bForceDuck))
 		{
 			if (dist < 32)
 			{
@@ -4071,7 +4615,7 @@ function bool AttemptFollowingRegroupTeleport()
 
 function bool ShouldReactToWallCramming()
 {
-	switch (GetStateName())
+	switch (CurStateName)
 	{
 		case 'LiteHacking':
 		case 'LiteHackStanding':
@@ -4090,6 +4634,7 @@ function Tick(float DT)
 	local bool FlagWallCrammed;
 	local float TDist, ATDist, TraceDist, TargetX, TargetY, TargetZ, GSpeed;
 	local Vector TNorm, StartTrace, EndTrace, HitLocation, HitNormal, TVect, TLoc;
+	local Rotator TRot;
 	local Actor HitAct;
 	local DeusExPlayer DXP, HackPlayer;
 	
@@ -4130,6 +4675,39 @@ function Tick(float DT)
 		//9/1/22: Update: Do 6.25 seconds instead. We can afford it.
 		HackPlayer = GetLastVMP();
 		DXP = DeusExPlayer(OrderActor);
+		
+		bClearPlayerTrace = FastTrace(HackPlayer.Location, Location);
+		CurStateName = GetStateName();
+		switch(CurStateName)
+		{
+			case 'GuardingOther':
+			case 'HealingGuardedOther':
+			case 'HealingOther':
+				if (GuardedOther != None)
+				{
+					bClearFastTrace = FastTrace(GuardedOther.Location, Location);
+				}
+			break;
+			case 'Attacking':
+			case 'Opressing':
+			case 'HandlingEnemy':
+			case 'DestroyingOther':
+				if (Enemy != None)
+				{
+					bClearFastTrace = FastTrace(Enemy.Location, Location);
+				}
+			break;
+			case 'LiteHacking':
+			case 'LiteHackStanding':
+				if (LiteHackTarget != None)
+				{
+					bClearFastTrace = FastTrace(LiteHackTarget.Location, Location);
+				}
+			break;
+			case 'MEGHFollowing':
+				bClearFastTrace = bClearPlayerTrace;
+			break;
+		}
 		
 		bHidden = (HackPlayer.IsInState('Interpolating') || HackPlayer.IsInState('Paralyzed') || IsInState('TrulyParalyzed'));
 		if (bHidden) return;
@@ -4182,7 +4760,7 @@ function Tick(float DT)
 			}
 		}
 		
-		if (bReconMode)
+		if (bReconMode || !bClearPlayerTrace)
 		{
 			ReconScanTimer += DT;
 			if (ReconScanTimer > 2.0)
@@ -4290,9 +4868,10 @@ function Tick(float DT)
 				bCollideWorld = true;
 			}
 			
-			if ((!FastTrace(Location+vect(0,0,20), Location)) && (FastTrace(Location-vect(0,0,40), Location)))
+			//20, 40, 40?
+			if ((!FastTrace(Location+vect(0,0,30), Location)) && (FastTrace(Location-vect(0,0,30), Location)))
 			{
-				TargetZ = Location.Z - 40;
+				TargetZ = Location.Z - 30;
 			}
 			else if ((bWallCrammed) && (ShouldReactToWallCramming()))
 			{
@@ -4318,10 +4897,14 @@ function Tick(float DT)
 				TargetX = TVect.X;
 				TargetY = TVect.Y;
 			}
-			else if ((DXP != None) && (GetStateName() == 'MeghFollowing'))
+			else if ((LastSoughtWeapon != None) && (CurStateName == 'VMDPickingUpWeapon'))
+			{
+				TargetZ = LastSoughtWeapon.Location.Z + CollisionHeight;
+			}
+			else if ((DXP != None) && (CurStateName == 'MeghFollowing'))
 			{
 				TDist = DXP.Location.Z - Location.Z;
-				if ((VSize(DXP.Location - Location) - Abs(TDist) < 240) && (DXP.Region.Zone == None || !DXP.Region.Zone.bWaterZone))
+				if ((VSize(DXP.Location - Location) - Abs(TDist) < 240) && (bClearPlayerTrace) && (DXP.Region.Zone == None || !DXP.Region.Zone.bWaterZone))
 				{
 					TargetZ = DXP.Location.Z;
 				}
@@ -4330,12 +4913,16 @@ function Tick(float DT)
 				{
 					TargetX = DXP.Location.X;
 					TargetY = DXP.Location.Y;
+					if ((VMDPawnIsOnElevator(DXP)) && (bClearPlayerTrace))
+					{
+						TargetZ = DXP.Location.Z;
+					}
 				}
 			}
 			else if ((GuardedOther != None) && (IsInState('GuardingOther')))
 			{
 				TDist = GuardedOther.Location.Z - Location.Z;
-				if ((VSize(GuardedOther.Location - Location) - Abs(TDist) < 240) && (GuardedOther.Region.Zone == None || !GuardedOther.Region.Zone.bWaterZone))
+				if ((VSize(GuardedOther.Location - Location) - Abs(TDist) < 240) && (bClearFastTrace) && (GuardedOther.Region.Zone == None || !GuardedOther.Region.Zone.bWaterZone))
 				{
 					TargetZ = GuardedOther.Location.Z;
 				}
@@ -4344,6 +4931,10 @@ function Tick(float DT)
 				{
 					TargetX = GuardedOther.Location.X;
 					TargetY = GuardedOther.Location.Y;
+					if ((VMDPawnIsOnElevator(GuardedOther)) && (bClearFastTrace))
+					{
+						TargetZ = GuardedOther.Location.Z;
+					}
 				}
 			}
 			else
@@ -4403,40 +4994,40 @@ function Tick(float DT)
 		{
 			TDist = TargetX - Location.X;
 			ATDist = Abs(TDist);
-			if ((HackPlayer != None) && (VMDPlayerIsOnElevator(HackPlayer)))
+			if ((HackPlayer != None) && (VMDPawnIsOnElevator(HackPlayer)))
 			{
 				if (ATDist < 32)
 				{
-					Velocity.X = 0;
-					Acceleration.X = 0;
+					Velocity.X = TDist * 0.00 * 60.0;
+					Acceleration.X = TDist * 0.00 * 60.0;
 				}
 				else if (ATDist < 64)
 				{
-					Velocity.X = TDist * 5;
-					Acceleration.X = TDist * 5;
+					Velocity.X = TDist * 0.10 * 60.0;
+					Acceleration.X = TDist * 0.10 * 60.0;
 				}
 				else if (ATDist < 96)
 				{
-					Velocity.X = TDist * 10;
-					Acceleration.X = TDist * 10;
+					Velocity.X = TDist * 0.20 * 60.0;
+					Acceleration.X = TDist * 0.20 * 60.0;
 				}
 				else
 				{
-					Velocity.X = TDist * 20;
-					Acceleration.X = TDist * 20;
+					Velocity.X = TDist * 0.35 * 60.0;
+					Acceleration.X = TDist * 0.35 * 60.0;
 				}
 			}
 			else
 			{
 				if (ATDist < 32)
 				{
-					Velocity.X = 0;
-					Acceleration.X = 0;
+					Velocity.X = TDist * 0.04 * 60.0;
+					Acceleration.X = TDist * 0.04 * 60.0;
 				}
 				else
 				{
-					Velocity.X = TDist;
-					Acceleration.X = TDist;
+					Velocity.X = TDist * 0.1 * 60.0;
+					Acceleration.X = TDist * 0.1 * 60.0;
 				}
 			}
 		}
@@ -4444,40 +5035,40 @@ function Tick(float DT)
 		{
 			TDist = TargetY - Location.Y;
 			ATDist = Abs(TDist);
-			if ((HackPlayer != None) && (VMDPlayerIsOnElevator(HackPlayer)))
+			if ((HackPlayer != None) && (VMDPawnIsOnElevator(HackPlayer)))
 			{
 				if (ATDist < 32)
 				{
-					Velocity.Y = 0;
-					Acceleration.Y = 0;
+					Velocity.Y = TDist * 0.00 * 60.0;
+					Acceleration.Y = TDist * 0.00 * 60.0;
 				}
 				else if (ATDist < 64)
 				{
-					Velocity.Y = TDist * 5;
-					Acceleration.Y = TDist * 5;
+					Velocity.Y = TDist * 0.10 * 60.0;
+					Acceleration.Y = TDist * 0.10 * 60.0;
 				}
 				else if (ATDist < 96)
 				{
-					Velocity.Y = TDist * 10;
-					Acceleration.Y = TDist * 10;
+					Velocity.Y = TDist * 0.20 * 60.0;
+					Acceleration.Y = TDist * 0.20 * 60.0;
 				}
 				else
 				{
-					Velocity.Y = TDist * 20;
-					Acceleration.Y = TDist * 20;
+					Velocity.Y = TDist * 0.35 * 60.0;
+					Acceleration.Y = TDist * 0.35 * 60.0;
 				}
 			}
 			else
 			{
 				if (ATDist < 32)
 				{
-					Velocity.Y = 0;
-					Acceleration.Y = 0;
+					Velocity.Y = TDist * 0.04 * 60.0;
+					Acceleration.Y = TDist * 0.04 * 60.0;
 				}
 				else
 				{
-					Velocity.Y = TDist;
-					Acceleration.Y = TDist;
+					Velocity.Y = TDist * 0.1 * 60.0;
+					Acceleration.Y = TDist * 0.1 * 60.0;
 				}
 			}
 		}
@@ -4485,43 +5076,40 @@ function Tick(float DT)
 		{
 			TDist = TargetZ - Location.Z;
 			ATDist = Abs(TDist);
-			if ((HackPlayer != None) && (VMDPlayerIsOnElevator(HackPlayer)))
+			if ((HackPlayer != None) && (VMDPawnIsOnElevator(HackPlayer)))
 			{
-				if (ATDist < 24)
+				if (ATDist < 16)
 				{
-					//Less? None?
-					//Velocity.Z = TDist;
-					//Acceleration.Z = TDist;
-					Velocity.Z = Velocity.Z * 0.85;
-					Acceleration.Z = Acceleration.Z * 0.85;
+					Velocity.Z = TDist * 0.04 * 60.0;
+					Acceleration.Z = TDist * 0.04 * 60.0;
+				}
+				else if (ATDist < 24)
+				{
+					Velocity.Z = TDist * 0.10 * 60.0;
+					Acceleration.Z = TDist * 0.10 * 60.0;
 				}
 				else if (ATDist < 48)
 				{
-					Velocity.Z = TDist * 15;
-					Acceleration.Z = TDist * 15;
-				}
-				else if (ATDist < 96)
-				{
-					Velocity.Z = TDist * 30;
-					Acceleration.Z = TDist * 30;
+					Velocity.Z = TDist * 0.20 * 60.0;
+					Acceleration.Z = TDist * 0.20 * 60.0;
 				}
 				else
 				{
-					Velocity.Z = TDist * 60;
-					Acceleration.Z = TDist * 60;
+					Velocity.Z = TDist * 0.35 * 60.0;
+					Acceleration.Z = TDist * 0.35 * 60.0;
 				}
 			}
 			else
 			{
 				if (ATDist < 32)
 				{
-					Velocity.Z = Velocity.Z * 0.85;
-					Acceleration.Z = Acceleration.Z * 0.85;
+					Velocity.Z = TDist * 0.04 * 60.0;
+					Acceleration.Z = TDist * 0.04 * 60.0;
 				}
 				else
 				{
-					Velocity.Z = TDist;
-					Acceleration.Z = TDist;
+					Velocity.Z = TDist * 0.1 * 60.0;
+					Acceleration.Z = TDist * 0.1 * 60.0;
 				}
 			}
 		}
@@ -4532,7 +5120,19 @@ function Tick(float DT)
 			TNorm.Y = Velocity.Y;
 			TNorm.Z = Velocity.Z;
 			
-			SetRotation(Rotator(TNorm));
+			//Don't do this if we're just going to wind up facing 0,0,0.
+			if (Velocity != Vect(0,0,0))
+			{
+				//Don't be weird and teleporty about our jerky movements on elevators.
+				if (VMDPawnIsOnElevator(HackPlayer) || (GuardedOther != None && VMDPawnIsOnElevator(GuardedOther)))
+				{
+					DesiredRotation = Rotator(TNorm);
+				}
+				else
+				{
+					SetRotation(Rotator(TNorm));
+				}
+			}
 		}
 		
 		if (bDoorGhosting)
@@ -4581,7 +5181,6 @@ event FellOutOfWorld()
 
 function bool PlayerCanSee(DeusExPlayer DXP, Pawn TPawn)
 {
-	local bool bClearTrace;
 	local int YawDiff, PitchDiff, TPitch, VPitch;
 	local Rotator TRot, VRot;
 	
@@ -4591,8 +5190,6 @@ function bool PlayerCanSee(DeusExPlayer DXP, Pawn TPawn)
 	
 	if (TPawn == Self)
 	{
-		bClearTrace = FastTrace(DXP.Location, Location);
-		
 		TRot = Rotator(TPawn.Location - DXP.Location);
 		VRot = DXP.ViewRotation;
 		
@@ -4609,7 +5206,7 @@ function bool PlayerCanSee(DeusExPlayer DXP, Pawn TPawn)
 		}
 		PitchDiff = Abs(VPitch - TPitch) % 65536;
 		
-		if (!bClearTrace)
+		if (!bClearPlayerTrace)
 		{
 			if (VSize(DXP.Location - Location) > 1536)
 			{
@@ -4677,8 +5274,15 @@ function Carcass SpawnCarcass()
 	{
 		PlayMEGHDeathSound();
 	}
-	VMDMeghDropWeapon();
 	
+	if (VMDMeghCanDropWeapon())
+	{
+		VMDMeghDropWeapon();
+	}
+	else
+	{
+		VMDMeghDropWeapon(True);
+	}
 	return Super.SpawnCarcass();
 }
 
@@ -4814,6 +5418,20 @@ function float ComputeActorVisibility(actor seeActor)
 	}
 	
 	return (visibility);
+}
+
+//MADDERS, 2/22/25: Stop blocking doorways in recon mode. Thanks.
+function Bump(Actor Other)
+{
+	local Vector VelAdd;
+	
+	Super.Bump(Other);
+	
+	//Simple equation, right? Light things barely move us, heavy things kick us hard.
+	if (ScriptedPawn(Other) != None)
+	{
+		Velocity += ScriptedPawn(Other).Velocity * (Other.Mass / Mass);
+	}
 }
 
 defaultproperties
