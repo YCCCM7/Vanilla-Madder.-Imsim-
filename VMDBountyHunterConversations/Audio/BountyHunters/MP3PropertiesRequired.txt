@@ -1,0 +1,1 @@
+Looking at TNM's audio, codec doesn't matter, bitrate ranges from 48kBit/s to 160kBit/s, frequency from 22050Hz to 48000hz
