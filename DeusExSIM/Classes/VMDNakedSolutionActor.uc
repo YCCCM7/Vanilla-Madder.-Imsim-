@@ -733,6 +733,51 @@ function CommitNakedSolutionNerfing()
 					}
 				}
 			break;
+			case "06_HONGKONG_STORAGE":
+				RemoveSolutions[0] = int(FakeFRand() < TFactor);
+				
+				if (RemoveSolutions[0] > 0)
+				{
+					//Relocate electricity so it can't be swooced around.
+					forEach AllActors(class'Actor', TAct)
+					{
+						if (ElectricityEmitter(TAct) != None)
+						{
+							ElectricityEmitter(TAct).RandomAngle *= 1.5;
+							ElectricityEmitter(TAct).SetLocation(TAct.Location + Vect(0, 0, 0));
+							
+							switch(SF.Static.StripBaseActorSeed(TAct))
+							{
+								case 8:
+								case 9:
+									ElectricityEmitter(TAct).VMDEndTraceOffset = (Vect(0, -16, 0) + Vect(0, -20, 0)) * (5000.0 / 320.0);
+								break;
+								case 24:
+								case 25:
+									ElectricityEmitter(TAct).VMDEndTraceOffset = (Vect(0, -16, 0) + Vect(0, 0, 0)) * (5000.0 / 320.0);
+								break;
+								case 28:
+								case 29:
+									ElectricityEmitter(TAct).VMDEndTraceOffset = (Vect(0, -16, 0) + Vect(0, 20, 0)) * (5000.0 / 320.0);
+								break;
+								
+								case 10:
+								case 11:
+									ElectricityEmitter(TAct).VMDEndTraceOffset = (Vect(0, -20, 0)) * (5000.0 / 320.0);
+								break;
+								case 26:
+								case 27:
+									ElectricityEmitter(TAct).VMDEndTraceOffset = (Vect(0, 0, 0)) * (5000.0 / 320.0);
+								break;
+								case 30:
+								case 31:
+									ElectricityEmitter(TAct).VMDEndTraceOffset = (Vect(0, 20, 0)) * (5000.0 / 320.0);
+								break;
+							}
+						}
+					}
+				}
+			break;
 			//9999999999999999999999999999
 			//MISSION 09
 			case "09_NYC_DOCKYARD":
