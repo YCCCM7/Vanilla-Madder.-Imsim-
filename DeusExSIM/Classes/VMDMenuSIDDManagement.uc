@@ -10,10 +10,10 @@ struct VMDButtonPos {
 
 var MenuUIActionButtonWindow DoneButton,  TurnOffButton;
 
-var VMDMenuUIActionButtonWindow ReloadButton, UnloadButton, RepairButton, RechargeButton;
+var VMDMenuUIActionButtonWindow CustomNameEditButton, ReloadButton, UnloadButton, RepairButton, RechargeButton;
 
 var localized string DoneButtonText, TurnOffButtonText,
-			ReloadButtonText, UnloadButtonText, RepairButtonText, RechargeButtonText,
+			CustomNameEditButtonText, ReloadButtonText, UnloadButtonText, RepairButtonText, RechargeButtonText,
 			StrHealthTitle, StrHealthDesc, StrEMPHealthTitle, StrEMPHealthDesc, StrScrap, StrCells,
 			StrMagCount, StrAmmoLeft, StrScrapLeft, StrCellsLeft;
 
@@ -33,7 +33,7 @@ var VMDMenuUIInfoWindow WinInfoHealth, WinInfoEMPHealth;
 
 var VMDButtonPos ReloadButtonPos, ReloadButtonSize, UnloadButtonPos, UnloadButtonSize,
 			RepairButtonPos, RepairButtonSize, RechargeButtonPos, RechargeButtonSize,
-			CustomNamePos, CustomNameSize, HealthPos, HealthSize, EMPHealthPos, EMPHealthSize,
+			CustomNamePos, CustomNameSize, CustomNameEditButtonPos, CustomNameEditButtonSize, HealthPos, HealthSize, EMPHealthPos, EMPHealthSize,
 			AmmoNameSize,  MagCountPos, MagCountSize, AmmoLeftPos, AmmoLeftSize,
 			ScrapIconPos, CellsIconPos, AmmoIconPos,
 			ScrapLeftPos, ScrapLeftSize, CellsLeftPos, CellsLeftSize,
@@ -119,7 +119,7 @@ event InitWindow()
 function CreateNameEditWindow()
 {
 	CustomNameEntry = CreateMenuEditWindow(CustomNamePos.X, CustomNamePos.Y, CustomNameSize.X, 28, winClient);
-	CustomNameEntry.SetSensitivity(True);
+	CustomNameEntry.SetSensitivity(False);
 }
 
 function CreateInfoWindows()
@@ -195,6 +195,11 @@ function CreateIconWindows()
 
 function CreateButtons()
 {
+	CustomNameEditButton = VMDMenuUIActionButtonWindow(WinClient.NewChild(Class'VMDMenuUIActionButtonWindow'));
+	CustomNameEditButton.SetButtonText(CustomNameEditButtonText);
+	CustomNameEditButton.SetPos(CustomNameEditButtonPos.X, CustomNameEditButtonPos.Y);
+	CustomNameEditButton.SetWidth(CustomNameEditButtonSize.X);
+	
 	ReloadButton = VMDMenuUIActionButtonWindow(WinClient.NewChild(Class'VMDMenuUIActionButtonWindow'));
 	ReloadButton.SetButtonText(ReloadButtonText);
 	ReloadButton.SetPos(ReloadButtonPos.X, ReloadButtonPos.Y);
@@ -386,6 +391,11 @@ function bool ButtonActivated( Window buttonPressed )
 			SIDD = None; //Clear the memory reference.
 			AddTimer(0.1, True,, 'DoPop');
 			bHandled = true;
+		break;
+		
+		case CustomNameEditButton:
+			CustomNameEntry.SetSensitivity(True);
+			CustomNameEditButton.SetSensitivity(False);
 		break;
 		
 		case ReloadButton:
@@ -617,6 +627,7 @@ defaultproperties
      StrScrapLeft="%d"
      StrCellsLeft="%dx"
      
+     CustomNameEditButtonText="Edit"
      ReloadButtonPos=(X=199,Y=77)
      ReloadButtonSize=(X=53,Y=15)
      UnloadButtonPos=(X=199,Y=100)
@@ -635,7 +646,9 @@ defaultproperties
      AmmoLeftPos=(X=324,Y=126)
      AmmoLeftSize=(X=81,Y=24)
      CustomNamePos=(X=191,Y=16)
-     CustomNameSize=(X=188,Y=32)
+     CustomNameSize=(X=144,Y=32)
+     CustomNameEditButtonPos=(X=337,Y=17)
+     CustomNameEditButtonSize=(X=53,Y=15)
      ScrapLeftPos=(X=32,Y=243)
      ScrapLeftSize=(X=49,Y=12)
      CellsLeftPos=(X=236,Y=243)
