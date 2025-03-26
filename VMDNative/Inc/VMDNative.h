@@ -11,6 +11,8 @@
 #include "windows.h"	//Necessary for detours?
 #include "Core.h"
 #include "Engine.h"
+#include "EditorPrivate.h"
+#include "Editor.h"
 #include "UnPath.h"
 #include "Extension.h"
 #include "DeusEx.h"

@@ -20,6 +20,15 @@
 #ifndef NAMES_ONLY
 
 
+class VMDNATIVE_API AVMDUnlitFixer : public AActor
+{
+public:
+    DECLARE_FUNCTION(execPatchUnlitSurfaces);
+    DECLARE_CLASS(AVMDUnlitFixer,AActor,0)
+    NO_DEFAULT_CONSTRUCTOR(AVMDUnlitFixer)
+};
+
+
 class VMDNATIVE_API AVMDPathRebuilder : public AActor
 {
 public:
@@ -31,6 +40,26 @@ public:
 };
 
 
+class VMDNATIVE_API AVMDNihilumCleaner : public AActor
+{
+public:
+    BITFIELD bIgnoreNextShowMenu:1 GCC_PACK(4);
+    class URootWindow* RootWindow GCC_PACK(4);
+    DECLARE_FUNCTION(execSilenceNihilum);
+    DECLARE_CLASS(AVMDNihilumCleaner,AActor,0)
+    NO_DEFAULT_CONSTRUCTOR(AVMDNihilumCleaner)
+};
+
+
+class VMDNATIVE_API AVMDLightRebuilder : public AActor
+{
+public:
+    DECLARE_FUNCTION(execRebuildLighting);
+    DECLARE_CLASS(AVMDLightRebuilder,AActor,0)
+    NO_DEFAULT_CONSTRUCTOR(AVMDLightRebuilder)
+};
+
+
 class VMDNATIVE_API AVMDHDSpacefix : public AActor
 {
 public:
@@ -39,13 +68,16 @@ public:
     NO_DEFAULT_CONSTRUCTOR(AVMDHDSpacefix)
 };
 
-class VMDNATIVE_API AVMDUnlitFixer : public AActor
+
+class VMDNATIVE_API AVMDFileFinder : public AActor
 {
 public:
-    DECLARE_FUNCTION(execPatchUnlitSurfaces);
-    DECLARE_CLASS(AVMDUnlitFixer,AActor,0)
-    NO_DEFAULT_CONSTRUCTOR(AVMDUnlitFixer)
+    DECLARE_FUNCTION(execGetLatestSaveDir);
+    DECLARE_FUNCTION(execFindFileAt);
+    DECLARE_CLASS(AVMDFileFinder,AActor,0)
+    NO_DEFAULT_CONSTRUCTOR(AVMDFileFinder)
 };
+
 
 class VMDNATIVE_API UKentiesUIFix : public UObject
 {
@@ -64,7 +96,11 @@ AUTOGENERATE_FUNCTION(AVMDUnlitFixer,2207,execPatchUnlitSurfaces);
 AUTOGENERATE_FUNCTION(AVMDPathRebuilder,2206,execRedefinePaths);
 AUTOGENERATE_FUNCTION(AVMDPathRebuilder,2205,execScoutSetup);
 AUTOGENERATE_FUNCTION(AVMDPathRebuilder,2204,execAllowScoutToSpawn);
+AUTOGENERATE_FUNCTION(AVMDNihilumCleaner,2208,execSilenceNihilum);
+AUTOGENERATE_FUNCTION(AVMDLightRebuilder,2199,execRebuildLighting);
 AUTOGENERATE_FUNCTION(AVMDHDSpacefix,2200,execGetFreeHDSpace);
+AUTOGENERATE_FUNCTION(AVMDFileFinder,2198,execGetLatestSaveDir);
+AUTOGENERATE_FUNCTION(AVMDFileFinder,2209,execFindFileAt);
 
 #ifndef NAMES_ONLY
 #undef AUTOGENERATE_NAME

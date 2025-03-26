@@ -68,7 +68,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "VMDNATIVE_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /Zp4 /MD /W4 /WX /vd0 /GX /O2 /I ".\Inc" /I "..\Headers\Core\Inc" /I "..\Headers\Engine\Inc" /I "..\Headers\Engine\Src" /I "..\Headers\Extension\Inc" /I "..\Headers\DeusEx\Inc" /D "NDEBUG" /D ThisPackage=VMDNative /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_UNICODE" /D VMDNATIVE_API=__declspec(dllexport) /FR /FD
+# ADD CPP /nologo /Zp4 /MD /W4 /WX /vd0 /GX /O2 /I ".\Inc" /I "..\Headers\Core\Inc" /I "..\Headers\Engine\Inc" /I "..\Headers\Engine\Src" /I "..\Headers\Editor\Inc" /I "..\Headers\Editor\Src" /I "..\Headers\Extension\Inc" /I "..\Headers\DeusEx\Inc" /D "NDEBUG" /D ThisPackage=VMDNative /D "WIN32" /D "_WINDOWS" /D "UNICODE" /D "_UNICODE" /D VMDNATIVE_API=__declspec(dllexport) /FR /FD
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -78,7 +78,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 ..\Core\Lib\Core.lib ..\Engine\Lib\Engine.lib ..\Extension\Lib\Extension.lib User32.lib Shell32.lib /nologo /dll /incremental:no /machine:I386 /out:"..\System\VMDNative.dll" /pdbtype:sept
+# ADD LINK32 ..\Core\Lib\Core.lib ..\Engine\Lib\Engine.lib ..\Editor\Lib\Editor.lib ..\Extension\Lib\Extension.lib User32.lib Shell32.lib /nologo /dll /incremental:no /machine:I386 /out:"..\System\VMDNative.dll" /pdbtype:sept
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -92,7 +92,19 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\Inc\AVMDFileFinder.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\Inc\AVMDHDSpaceFix.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Inc\AVMDLightRebuilder.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Inc\AVMDNihilumCleaner.cpp
 # End Source File
 # Begin Source File
 
