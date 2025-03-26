@@ -195,6 +195,20 @@ function bool CanReinforcePawn(VMDBufferPawn SP)
 		}
 		return true;
 	}
+	
+	//MADDERS, 2/27/25: These guys can spawn janky NPC placements, so don't reinforce.
+	if ((VMDGetMapName() == "UNDERGROUND_LAB2") && (SP.IsA('MJ12Troop')))
+	{
+		switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
+		{
+			case 3:
+			case 4:
+				return false;
+			break;
+		}
+		return true;
+	}
+	
 	//MADDERS, 11/4/22: Don't reinforce the ones that are a MAJOR dick move for completion of the level.
 	//Rest is fair game.
 	if ((VMDGetMapName() == "05_NYC_UNATCOMJ12LAB") && (SP.IsA('MJ12Troop')))
@@ -743,7 +757,7 @@ function class<Weapon> ObtainLowLevelWeapon(VMDBufferPawn TP, out class<Ammo> Ou
 		case 1:
 		case 2:
 		case 3:
-			Ret = class'WeaponPistol';
+			Ret = class<Weapon>(MutateItem(VMDBufferPlayer(GetPlayerPawn()), class'WeaponPistol'));
 		break;
 		case 4:
 			Ret = class'WeaponMiniCrossbow';
@@ -778,25 +792,39 @@ function class<Weapon> ObtainHighLevelWeapon(VMDBufferPawn TP, out class<Ammo> O
 		case 4:
 		case 5:
 		case 6:
-			if (TMission < 10)
+			if (!TP.IsA('HumanCivilian'))
 			{
-				Ret = class'WeaponFlamethrower';
+				if (TMission < 10)
+				{
+					Ret = class'WeaponFlamethrower';
+				}
+				else
+				{
+					Ret = class'WeaponPlasmaRifle';
+				}
 			}
 			else
 			{
-				Ret = class'WeaponPlasmaRifle';
+				Ret = class'WeaponAssaultGun';
 			}
 		break;
 		case 7:
 		case 8:
 		case 9:
-			Ret = class'WeaponGEPGun';
+			if (!TP.IsA('HumanCivilian'))
+			{
+				Ret = class'WeaponGEPGun';
+			}
+			else
+			{
+				Ret = class'WeaponRifle';
+			}
 		break;
 		case 10:
 		case 11:
 			if (TMission > 15)
 			{
-				Ret = class'WeaponPistol';
+				Ret = class<Weapon>(MutateItem(VMDBufferPlayer(GetPlayerPawn()), class'WeaponPistol'));
 			}
 		case 12:
 		case 13:
@@ -1050,6 +1078,9 @@ function class<Inventory> MutateItem(VMDBufferPlayer VMP, class<Inventory> InIte
 			else if (InItem == class'WeaponEMPGrenade') Ret = LoadItem("HotelCarone.WeaponHCEMPGrenade");
 			else if (InItem == class'WeaponGasGrenade') Ret = LoadItem("HotelCarone.WeaponHCGasGrenade");
 			else if (InItem == class'WeaponNanoVirusGrenade') Ret = LoadItem("HotelCarone.WeaponHCNanoVirusGrenade");
+		break;
+		case "NIHILUM":
+			if (InItem == class'WeaponPistol') Ret = LoadItem("SGWeap.WeaponBRGlock");
 		break;
 	}
 	
