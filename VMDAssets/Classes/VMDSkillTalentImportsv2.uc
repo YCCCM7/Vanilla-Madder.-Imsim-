@@ -167,6 +167,70 @@ class VMDSkillTalentImportsv2 extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="SkillTalentGemAvailable" FILE="Textures\SkillTalentsv2\SkillTalentGemAvailable.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="SkillTalentGemOwned" FILE="Textures\SkillTalentsv2\SkillTalentGemOwned.pcx" GROUP=UI FLAGS=2
 
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase01" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase01.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase02" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase02.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase03" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase03.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase04" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase04.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase05" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase05.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase06" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase06.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase07" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase07.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase08" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase08.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase09" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase09.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase10" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase10.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase11" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase11.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase12" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase12.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase13" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase13.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase14" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase14.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemUntrainedPurchase15" FILE="Textures\SkillTalentsv2\SkillGemUntrainedPurchase15.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase01" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase01.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase02" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase02.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase03" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase03.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase04" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase04.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase05" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase05.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase06" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase06.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase07" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase07.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase08" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase08.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase09" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase09.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase10" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase10.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase11" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase11.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase12" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase12.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase13" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase13.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase14" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase14.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemTrainedPurchase15" FILE="Textures\SkillTalentsv2\SkillGemTrainedPurchase15.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase01" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase01.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase02" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase02.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase03" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase03.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase04" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase04.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase05" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase05.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase06" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase06.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase07" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase07.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase08" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase08.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase09" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase09.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase10" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase10.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase11" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase11.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase12" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase12.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase13" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase13.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase14" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase14.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemAdvancedPurchase15" FILE="Textures\SkillTalentsv2\SkillGemAdvancedPurchase15.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase01" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase01.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase02" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase02.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase03" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase03.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase04" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase04.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase05" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase05.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase06" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase06.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase07" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase07.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase08" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase08.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase09" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase09.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase10" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase10.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase11" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase11.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase12" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase12.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase13" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase13.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase14" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase14.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillGemMasterPurchase15" FILE="Textures\SkillTalentsv2\SkillGemMasterPurchase15.pcx" GROUP=UI FLAGS=2
+
 #exec TEXTURE IMPORT NAME="GemSpecializationLabel" FILE="Textures\SkillTalentsv2\GemSpecializationLabel.pcx" GROUP=UI FLAGS=2
 
 #exec TEXTURE IMPORT NAME="GemPointsLabel0" FILE="Textures\SkillTalentsv2\GemPointsLabel0.pcx" GROUP=UI FLAGS=2
