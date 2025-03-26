@@ -6,6 +6,7 @@ class VMDHitIndicator extends Window;
 //Mr. Incredible: Show Time.
 var float ShowTime, ShowLength;
 var bool bHeadshot, bArmorHit;
+var VMDBufferPlayer VMP;
 
 // ----------------------------------------------------------------------
 // InitWindow()
@@ -14,9 +15,10 @@ var bool bHeadshot, bArmorHit;
 event InitWindow()
 {
 	local Color col;
-
+	
 	Super.InitWindow();
-
+	
+	VMP = VMDBufferPlayer(GetPlayerPawn());
 	SetBackgroundStyle(DSTY_Translucent);
 	SetBackground(Texture'HitIndicatorSquare');
 	col.R = 255;
@@ -31,7 +33,7 @@ event InitWindow()
 
 function SetIndicator( bool bShow, optional bool NewbHeadshot, optional bool NewbArmorhit )
 {
-	if ((VMDBufferPlayer(GetPlayerPawn()) != None) && (VMDBufferPlayer(GetPlayerPawn()).bHitIndicatorHasVisual))
+	if ((VMP != None) && (VMP.bHitIndicatorHasVisual))
 	{
 		if (bShow)
         	{
