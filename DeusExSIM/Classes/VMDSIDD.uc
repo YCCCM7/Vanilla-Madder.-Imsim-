@@ -436,7 +436,7 @@ function CacheAlliances()
 	
 	for (i=0; i<ArrayCount(AlliancesEx); i++)
 	{
-		CachedAlliances[i] = AlliancesEx[i];
+		//CachedAlliances[i] = AlliancesEx[i];
 		AlliancesEx[i] = EmptyAlliance;
 	}
 	
@@ -457,14 +457,16 @@ function CacheAlliances()
 
 function UncacheAlliances()
 {
-	local int i;
+	VMDLoadTravelingAlliances();
+	
+	/*local int i;
 	local AllianceInfoEx EmptyAlliance;
 	
 	for (i=0; i<ArrayCount(AlliancesEx); i++)
 	{
 		AlliancesEx[i] = CachedAlliances[i];
 		CachedAlliances[i] = EmptyAlliance;
-	}
+	}*/
 }
 
 function int VMDGetMaxHealth()
@@ -522,7 +524,7 @@ function float ShieldDamage(Name damageType)
 			Ret = 0.35;
 		break;
 		case 'Burned':
-			Ret = 0.5;
+			Ret = 0.35;
 		break;
 		default:
 			Ret = 1.0;
@@ -603,7 +605,14 @@ function Frob(Actor Frobber, Inventory FrobWith)
 	
 	if ((EMPHitPoints > 0) && (DeusExPlayer(Frobber) != None))
 	{
-		InvokeSIDDManagementWindow(DeusExPlayer(Frobber));
+		if ((DeusExRootWindow(DeusExPlayer(Frobber).RootWindow) != None) && (DeusExRootWindow(DeusExPlayer(Frobber).RootWindow).GetTopWindow() != None))
+		{
+			return;
+		}
+		else
+		{
+			InvokeSIDDManagementWindow(DeusExPlayer(Frobber));
+		}
 	}
 }
 
@@ -636,6 +645,42 @@ function ApplySpecialStats()
 	{
 		bQueueTalentUpdate = false;
 		UpdateTalentEffects(VMP);
+	}
+}
+
+function VMDLoadTravelingAlliances()
+{
+	local int i;
+	local Pawn TPawn;
+	local ScriptedPawn SP;
+	local VMDBufferPlayer TPlayer;
+	
+	TPlayer = GetLastVMP();
+	
+	if (TPlayer == None)
+	{
+		return;
+	}
+	
+	for (TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+	{
+		SP = ScriptedPawn(TPawn);
+		if ((SP != None) && (VMDSIDD(TPawn) == None) && (VMDMEGH(TPawn) == None))
+		{
+			for(i=0; i<TPlayer.VMDGetMaxDroneAlliances(); i++)
+			{
+				if (SP.Alliance == TPlayer.VMDGetDroneAlliance(i))
+				{
+					ChangeAlly(SP.Alliance, 1, true);
+					break;
+				}
+				else if (SP.Alliance == TPlayer.VMDGetDroneHostility(i))
+				{
+					ChangeAlly(SP.Alliance, -1, true);
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -774,7 +819,9 @@ function UpdateTalentEffects(VMDBufferPlayer VMP)
 			MatchAlliances(LastSIDD);
 		}
 	}*/
-
+	
+	VMDLoadTravelingAlliances();
+	
 	if ((VMP != None) && (EMPHitPoints > 0))
 	{
 		BaseAccuracy = -0.25;
@@ -1832,6 +1879,146 @@ function float ComputeActorVisibility(actor seeActor)
 	}
 	
 	return (visibility);
+}
+
+
+state Standing
+{
+	ignores EnemyNotVisible;
+
+Begin:
+	WaitForLanding();
+	if (!bUseHome)
+		Goto('StartStand');
+
+MoveToBase:
+	if (!IsPointInCylinder(self, HomeLoc, 16-CollisionRadius))
+	{
+		EnableCheckDestLoc(true);
+		while (true)
+		{
+			if (PointReachable(HomeLoc))
+			{
+				if (ShouldPlayWalk(HomeLoc))
+					PlayWalking();
+				MoveTo(HomeLoc, GetWalkingSpeed());
+				CheckDestLoc(HomeLoc);
+				break;
+			}
+			else
+			{
+				MoveTarget = FindPathTo(HomeLoc);
+				if (MoveTarget != None)
+				{
+					if (ShouldPlayWalk(MoveTarget.Location))
+						PlayWalking();
+					MoveToward(MoveTarget, GetWalkingSpeed());
+					CheckDestLoc(MoveTarget.Location, true);
+				}
+				else
+				{
+					if (bCanClimbLadders)
+					{
+						if (VMDFindLadderTowards(HomeLoc) != None)
+						{
+							MoveTarget = GetNextWaypoint(VMDFindLadderTowards(HomeLoc));
+							if (MoveTarget != None)
+							{
+								TargetedLadderPoint = VMDFindLadderTowards(HomeLoc);
+								OrderActor = TargetedLadderPoint;
+								GoToState('GoingTo', 'Begin');
+							}
+							else
+							{
+								break;
+							}
+						}
+						else
+						{
+							if (LastUsedLadder != None)
+							{
+								TargetedLadderPoint = LastUsedLadder;
+								OrderActor = TargetedLadderPoint;
+								GoToState('GoingTo', 'Begin');
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+		}
+		EnableCheckDestLoc(false);
+	}
+	TurnTo(Location+HomeRot);
+
+StartStand:
+	Acceleration=vect(0,0,0);
+	Goto('Stand');
+
+ContinueFromDoor:
+	Goto('MoveToBase');
+
+Stand:
+ContinueStand:
+	// nil
+	bStasis = False; //MADDERS, 3/23/25: You think I'd learn by now, huh?
+
+	PlayWaiting();
+	if (!bPlayIdle)
+		Goto('DoNothing');
+	Sleep(FRand()*14+8);
+
+Fidget:
+	if (FRand() < 0.5)
+	{
+		PlayIdle();
+		FinishAnim();
+	}
+	else
+	{
+		if (FRand() > 0.5)
+		{
+			PlayTurnHead(LOOK_Up, 1.0, 1.0);
+			Sleep(2.0);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+		else if (FRand() > 0.5)
+		{
+			PlayTurnHead(LOOK_Left, 1.0, 1.0);
+			Sleep(1.5);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.9);
+			PlayTurnHead(LOOK_Right, 1.0, 1.0);
+			Sleep(1.2);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+		else
+		{
+			PlayTurnHead(LOOK_Right, 1.0, 1.0);
+			Sleep(1.5);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.9);
+			PlayTurnHead(LOOK_Left, 1.0, 1.0);
+			Sleep(1.2);
+			PlayTurnHead(LOOK_Forward, 1.0, 1.0);
+			Sleep(0.5);
+		}
+	}
+	if (FRand() < 0.3)
+		PlayIdleSound();
+	Goto('Stand');
+
+DoNothing:
+	// nil
 }
 
 defaultproperties
