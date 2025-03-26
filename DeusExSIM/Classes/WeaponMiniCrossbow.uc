@@ -107,6 +107,7 @@ defaultproperties
      FiringSystemOperation=1
      ClipsLabel="CLIPS"
      GrimeRateMult=1.250000
+     OverrideAnimRate=1.350000
      
      RecoilStrength=1.400000
      AimDecayMult=0.000000 //Don't actually decay aim on this one during firing.
@@ -195,6 +196,7 @@ defaultproperties
      mpPickupAmmoCount=6
      bCanHaveModBaseAccuracy=True
      bCanHaveModAccurateRange=True
+     bCanHaveModReloadCount=True
      bCanHaveModReloadTime=True
      AmmoName=Class'DeusEx.AmmoDartPoison'
      ReloadCount=4
