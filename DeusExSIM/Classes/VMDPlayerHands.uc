@@ -204,32 +204,16 @@ simulated function VMDUpdateTiltEffects(float DT)
 		if (UseVec != Vect(0,0,0))
 		{
 			TXChunk = UseVec.X * 6144 * 0.01;
-			if (TXChunk%1.0 > 0.0)
-			{
-				if (FRand() < TXChunk%1.0)
-				{
-					TXChunk = (TXChunk - (TXChunk%1.0)) + Sign(TXChunk);
-				}
-				else
-				{
-					TXChunk = TXChunk - (TXChunk%1.0);
-				}
-			}
-  			VMP.ViewRotation.Yaw += TXChunk;
+			TXChunk += VMP.TiltEffectYawFloat;
+			VMP.TiltEffectYawFloat = TXChunk % 1.0;
+			
+  			VMP.ViewRotation.Yaw += int(TXChunk);
 			
 			TYChunk = UseVec.Y * 6144 * 0.01;
-			if (TYChunk%1.0 > 0.0)
-			{
-				if (FRand() < TYChunk%1.0)
-				{
-					TYChunk = (TYChunk - (TYChunk%1.0)) + Sign(TYChunk);
-				}
-				else
-				{
-					TYChunk = TYChunk - (TYChunk%1.0);
-				}
-			}
-  			TPitch = VMP.ViewRotation.Pitch + TYChunk;
+			TYChunk += VMP.TiltEffectPitchFloat;
+			VMP.TiltEffectPitchFloat = TYChunk % 1.0;
+			
+  			TPitch = VMP.ViewRotation.Pitch + int(TYChunk);
   			if ((TPitch > 18000) && (TPitch < 32768)) TPitch = 18000;
 			else if ((TPitch >= 32768) && (TPitch < 49152)) TPitch = 49152;
   			VMP.ViewRotation.Pitch = TPitch;
@@ -298,32 +282,16 @@ simulated function VMDUpdateTiltEffects(float DT)
   		UseVec = UseVec * TAF * UVM;
   		
 		TXChunk = UseVec.X * 6144 * 0.01;
-		if (TXChunk%1.0 > 0.0)
-		{
-			if (FRand() < TXChunk%1.0)
-			{
-				TXChunk = (TXChunk - (TXChunk%1.0)) + Sign(TXChunk);
-			}
-			else
-			{
-				TXChunk = TXChunk - (TXChunk%1.0);
-			}
-		}
+		TXChunk += VMP.TiltEffectYawFloat;
+		VMP.TiltEffectYawFloat = TXChunk % 1.0;
+		
   		VMP.ViewRotation.Yaw += TXChunk;
 		
 		TYChunk = UseVec.Y * 6144 * 0.01;
-		if (TYChunk%1.0 > 0.0)
-		{
-			if (FRand() < TYChunk%1.0)
-			{
-				TYChunk = (TYChunk - (TYChunk%1.0)) + Sign(TYChunk);
-			}
-			else
-			{
-				TYChunk = TYChunk - (TYChunk%1.0);
-			}
-		}
-  		TPitch = VMP.ViewRotation.Pitch + TYChunk;
+		TYChunk += VMP.TiltEffectPitchFloat;
+		VMP.TiltEffectPitchFloat = TYChunk % 1.0;
+		
+  		TPitch = VMP.ViewRotation.Pitch + int(TYChunk);
   		if ((TPitch > 18000) && (TPitch < 32768)) TPitch = 18000;
 		else if ((TPitch >= 32768) && (TPitch < 49152)) TPitch = 49152;
   		VMP.ViewRotation.Pitch = TPitch;
@@ -618,7 +586,7 @@ function Tick(float DT)
 		TSpeed = GetSpeedMult();
 		TAnim = GetAnimType(bFastAnim);
 		
-		if (LastGetAnim != TAnim || TAnim == 'Walk' || !IsAnimating() || TSpeed != LastSpeed)
+		if (LastGetAnim != TAnim || TAnim == 'Walk' || TAnim == 'Still' || !IsAnimating() || TSpeed != LastSpeed)
 		{
 			LastSpeed = TSpeed;
 			if ((bFastAnim == 2) && (VMP.AnimFrame > 0)) //Quick one-offs only.
