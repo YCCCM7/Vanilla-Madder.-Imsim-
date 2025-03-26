@@ -6,6 +6,7 @@ class VMDMenuHousingFoodTile extends PersonaBorderButtonWindow;
 
 var Window WinIcon;
 var PersonaSkillTextWindow WinName, WinDesc;
+var VMDMenuHousingFoodWindow FoodWindow;
 var class<Inventory> CurItem;
 
 var Texture DefaultTex[3], HighlightTex[3];
@@ -138,6 +139,30 @@ function RefreshItemInfo()
 		winName.SetText( Left(CurItem.Default.ItemName, 30) );
 		winDesc.SetText(SprintF(MsgPrice, class'VMDStaticHousingFunctions'.Static.GetFoodPrice(CurItem.Name)));
 	}
+}
+
+// ----------------------------------------------------------------------
+// MouseButtonPressed()
+//
+// Fast hotkey activation.
+// ----------------------------------------------------------------------
+
+event bool MouseButtonPressed(float pointX, float pointY, EInputKey button, int numClicks)
+{
+	local Bool bResult;
+	
+	bResult = False;
+	
+	if (button == IK_RightMouse)
+	{
+		if (FoodWindow != None)
+		{
+			FoodWindow.SelectTile(Self);
+			FoodWindow.LinkCurrentItem();
+		}
+		bResult = True;
+	}
+	return bResult;
 }
 
 // ----------------------------------------------------------------------

@@ -4,6 +4,7 @@
 class VMDMenuMEGHWeaponTile extends PersonaBorderButtonWindow;
 
 var Window WinIcon;
+var VMDMenuMEGHWeaponWindow WeaponWindow;
 var VMDMenuUISkillTextWindow WinName, WinDesc;
 var DeusExWeapon CurItem;
 
@@ -173,6 +174,30 @@ function RefreshItemInfo()
 			break;
 		}
 	}
+}
+
+// ----------------------------------------------------------------------
+// MouseButtonPressed()
+//
+// Fast hotkey activation.
+// ----------------------------------------------------------------------
+
+event bool MouseButtonPressed(float pointX, float pointY, EInputKey button, int numClicks)
+{
+	local Bool bResult;
+	
+	bResult = False;
+	
+	if (button == IK_RightMouse)
+	{
+		if (WeaponWindow != None)
+		{
+			WeaponWindow.SelectTile(Self);
+			WeaponWindow.EquipCurrentItem();
+		}
+		bResult = True;
+	}
+	return bResult;
 }
 
 // ----------------------------------------------------------------------
