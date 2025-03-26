@@ -144,9 +144,7 @@ function CreateInfoWindows()
 
 function CreateList()
 {
-	local Name TName;
 	local Inventory TInv;
-	local DeusExAmmo DXA;
 	local DeusExWeapon DXW, FirstWeapon;
 	local VMDMenuMEGHWeaponTile TTile;
 	
@@ -159,54 +157,14 @@ function CreateList()
 			if ((FirstWeapon != None) && (FirstWeapon.Class == TInv.Class)) continue;
 			
 			DXW = DeusExWeapon(TInv);
-			if (DXW != None)
+			if (Megh.VMDDroneCanEquipWeapon(DXW))
 			{
-				DXA = DeusExAmmo(DXW.AmmoType);
-				switch(DXW.Class.Name)
-				{
-					case 'WeaponPistol':
-					case 'WeaponStealthPistol':
-					case 'WeaponPeppergun':
-					case 'WeaponCombatKnife':
-					case 'WeaponBaton':
-					case 'WeaponHideAGun':
-					case 'WeaponMiniCrossbow':
-					case 'WeaponSawedOffShotgun':
-						TTile = VMDMenuMEGHWeaponTile(WinTile.NewChild(class'VMDMenuMEGHWeaponTile'));
-						TTile.SetItem(DXW);
-						
-						TileSet[CurTileCount] = TTile;
-						CurTileCount++;
-					break;
-					case 'WeaponEMPGrenade':
-					case 'WeaponGasGrenade':
-					case 'WeaponLAM':
-					case 'WeaponNanoVirusGrenade':
-					
-					case 'WeaponHCEMPGrenade':
-					case 'WeaponHCHCGasGrenade':
-					case 'WeaponHCLAM':
-					case 'WeaponHCNanoVirusGrenade':
-						if ((DXA != None) && (DXA.AmmoAmount > 0))
-						{
-							TTile = VMDMenuMEGHWeaponTile(WinTile.NewChild(class'VMDMenuMEGHWeaponTile'));
-							TTile.SetItem(DXW);
-							
-							TileSet[CurTileCount] = TTile;
-							CurTileCount++;
-						}
-					break;
-					default:
-						if (DXW.bDroneCapableWeapon)
-						{
-							TTile = VMDMenuMEGHWeaponTile(WinTile.NewChild(class'VMDMenuMEGHWeaponTile'));
-							TTile.SetItem(DXW);
-							
-							TileSet[CurTileCount] = TTile;
-							CurTileCount++;
-						}
-					break;
-				}
+				TTile = VMDMenuMEGHWeaponTile(WinTile.NewChild(class'VMDMenuMEGHWeaponTile'));
+				TTile.SetItem(DXW);
+				TTile.WeaponWindow = Self;
+				
+				TileSet[CurTileCount] = TTile;
+				CurTileCount++;
 			}
 		}
 		
@@ -283,7 +241,7 @@ function UpdateInfo()
 
 function EquipCurrentItem()
 {
-	local DeusExWeapon OldDXW, DXW;
+	local DeusExWeapon OldDXW, DXW, DroppedWeapon;
 	local DeusExAmmo OldDXA, DXA;
 	local VMDMenuMEGHWeaponTile TarTile;
 	
@@ -291,7 +249,8 @@ function EquipCurrentItem()
 	
 	if ((VMP != None) && (Megh != None) && (TarTile != None) && (TarTile.CurItem != None))
 	{
-		if (Megh.FirstWeapon() != None)
+		DroppedWeapon = Megh.FirstWeapon();
+		if (Megh.VMDMeghCanDropWeapon())
 		{
 			if (Megh.VMDMeghDropWeapon())
 			{
@@ -303,6 +262,10 @@ function EquipCurrentItem()
 				//HOWEVER, we should make sure this actually works first.
 				return;
 			}
+		}
+		else if (Megh.FirstWeapon() != None)
+		{
+			return;
 		}
 		
 		switch(TarTile.CurItem.Class.Name)
@@ -443,18 +406,36 @@ function EquipCurrentItem()
 		if (DXW != None) DXW.VMDSignalPickupUpdate();
 		Megh.bSaidOutOfAmmo = false;
 		Megh.UpdateWeaponModel();
+		
+		if (DroppedWeapon != None)
+		{
+			VMP.FakeParseRightClick(DroppedWeapon);
+		}
+		if ((Megh.LastDroppedAmmo != None) && (Megh.LastDroppedAmmo.Owner == None))
+		{
+			VMP.FakeParseRightClick(Megh.LastDroppedAmmo);
+		}
+		
 		AddTimer(0.1, True,, 'DoPop');
 	}
 }
 
 function UnequipCurrentItem()
 {
-	if (Megh != None)
+	if ((Megh != None) && (Megh.VMDMeghCanDropWeapon()))
 	{
 		if (Megh.VMDMeghDropWeapon())
 		{
 			Player.PlaySound(Sound'VMDMeghDropWeapon', SLOT_None,,, 512, MEGH.RandomPitch());
 		}
+		else
+		{
+			return;
+		}
+	}
+	else
+	{
+		return;
 	}
 	
 	AddTimer(0.1, True,, 'DoPop');
