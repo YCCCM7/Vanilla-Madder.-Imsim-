@@ -5,7 +5,7 @@ class VMDMEGHPickup extends DeusExPickup;
 
 var localized string MsgCantDeployUnderwater, MsgNoRoomToDeploy, DroneHPLabel, DroneEMPHPLabel, DroneNameLabel;
 var travel int DroneHealth, DroneEMPHealth;
-var travel bool bDroneHealthBuff, bDroneHealing, bDroneReconMode;
+var travel bool bDroneHealthBuff, bDroneHealing, bDroneReconMode, bDroneAutoReload;
 var travel string CustomName;
 
 function string VMDGetItemName()
@@ -126,6 +126,7 @@ function bool DeployHelidrone(VMDBufferPlayer VMP)
 		TMegh.bHealthBuffed = bDroneHealthBuff;
 		TMegh.bCanHeal = bDroneHealing;
 		TMegh.bReconMode = bDroneReconMode;
+		TMegh.bAutoReload = bDroneAutoReload;
 		TMegh.SetupWeapon(!TMegh.bReconMode, true);
 		
 		TMegh.UpdateTalentEffects(VMP);
