@@ -5,8 +5,6 @@ class VMDChemistrySet extends DeusExPickup;
 
 #exec OBJ LOAD FILE=CoreTexGlass
 
-var localized string MsgNoSkill, MsgNoRecipes, MsgAlreadyCrafting, MsgCantCraftUnderwater;
-
 //Open our window 'n shit.
 function OpenCraftingWindow(VMDBufferPlayer VMP)
 {
@@ -14,52 +12,6 @@ function OpenCraftingWindow(VMDBufferPlayer VMP)
 	{
 		VMP.VMDInvokeChemistrySetWindow();
 	}
-}
-
-//How good are we with Hardware?
-function int GetPlayerSkill(DeusExPlayer DXP)
-{
-	local int Ret;
-	
-	if ((DXP != None) && (DXP.SkillSystem != None))
-	{
-		Ret = DXP.SkillSystem.GetSkillLevel(class'SkillMedicine');
-	}
-	
-	return Ret;
-}
-
-function bool GetPlayerSpecialization(VMDBufferPlayer VMP)
-{
-	if (VMP == None) return false;
-	
-	return VMP.IsSpecializedInSkill(class'SkillMedicine');
-}
-
-function int GetNumRecipes(VMDBufferPlayer VMP)
-{
-	local int Ret, i;
-	local VMDNonStaticCraftingFunctions CF;
-	local class<Inventory> TType;
-	
-	if (VMP == None || VMP.CraftingManager == None || VMP.CraftingManager.StatRef == None) return 0;
-	
-	CF = VMP.CraftingManager.StatRef;
-	
-	if (CF != None)
-	{
-		for (i=1; i<ArrayCount(CF.Default.MedicalItemsGlossary); i++)
-		{
-			TType = CF.GetMedicalItemGlossary(i);
-			if (TType == None || !VMP.DiscoveredItem(TType))
-			{
-				continue;
-			}
-			Ret++;
-		}
-	}
-	
-	return Ret;
 }
 
 // ----------------------------------------------------------------------
@@ -97,28 +49,13 @@ function bool VMDHasActivationObjection()
 	VMP = VMDBufferPlayer(Owner);
 	if (VMP != None)
 	{
-		if ((GetPlayerSkill(VMP) < 1) && (!GetPlayerSpecialization(VMP)))
+		if (!VMP.CanCraftMedical(true))
 		{
-			VMP.ClientMessage(MsgNoSkill);
 			return true;
 		}
-		if (GetNumRecipes(VMP) < 1)
-		{
-			VMP.ClientMessage(MsgNoRecipes);
-			return true;
-		}
-		if ((VMP.Region.Zone != None) && (VMP.Region.Zone.bWaterZone))
-		{
-			VMP.ClientMessage(MsgCantCraftUnderwater);
-			return true;
-		}
-		if (VMP.VMDPlayerIsCrafting(False))
-		{
-			VMP.ClientMessage(MsgAlreadyCrafting);
-			return true;
-		}
+		return false;
 	}
-	return false;
+	return true;
 }
 
 //MADDERS: Rotate items in inventory with this one weird trick
@@ -156,10 +93,6 @@ function Tick(float DT)
 defaultproperties
 {
      M_Activated="You begin toiling with your %s"
-     MsgNoSkill="This is of no use to you. It's not like you practice MEDICINE or anything..."
-     MsgNoRecipes="You don't actually know any medical recipes, now that you think about it"
-     MsgCantCraftUnderwater="You cannot craft underwater"
-     MsgAlreadyCrafting="You are already crafting"
      bCanRotateInInventory=True //MADDERS, 5/12/22: Dry icon, lesss gooo
      RotatedIcon=Texture'LargeIconVMDChemistrySetRotatedDry'     
      
