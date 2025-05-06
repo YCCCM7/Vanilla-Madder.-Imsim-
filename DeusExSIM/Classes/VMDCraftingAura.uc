@@ -68,7 +68,7 @@ function VMDFakeAuraTimerHook(bool bWhole)
 		{
 			if (bMedicalCrafting)
 			{
-				if (CS != None)
+				if (CS != None && (DeusExRootWindow(MyVMP.RootWindow) == None || DeusExRootWindow(MyVMP.RootWindow).GetTopWindow() == None))
 				{
 					BeginNoise();
 				}
@@ -80,7 +80,7 @@ function VMDFakeAuraTimerHook(bool bWhole)
 			}
 			else
 			{
-				if (TB != None)
+				if (TB != None && (DeusExRootWindow(MyVMP.RootWindow) == None || DeusExRootWindow(MyVMP.RootWindow).GetTopWindow() == None))
 				{
 					BeginNoise();
 				}
@@ -102,7 +102,7 @@ function VMDFakeAuraTimerHook(bool bWhole)
 			{
 			}
 			//MADDERS, 4/28/23: Don't let us craft while carrying decos now.
-			else if (MyVMP.InHand != None || MyVMP.CarriedDecoration != None)
+			else if (MyVMP.InHand != None || MyVMP.CarriedDecoration != None || (DeusExRootWindow(MyVMP.RootWindow) != None && DeusExRootWindow(MyVMP.RootWindow).GetTopWindow() != None))
 			{
 				FlagInappropriate = true;
 			}
