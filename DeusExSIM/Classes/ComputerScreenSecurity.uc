@@ -657,7 +657,7 @@ event bool VirtualKeyPressed(EInputKey key, bool bRepeat)
 	}
 	
    	// DEUS_EX AMSD Use replicated rotation.
-	if (SelectedCamera != None)
+	if ((SelectedCamera != None) && (SelectedCamera.Camera != None) && (SelectedCamera.WinCamera != None))
 	{
 		rot = selectedCamera.camera.ReplicatedRotation;
 		fov = selectedCamera.winCamera.fov;
@@ -701,13 +701,22 @@ event bool VirtualKeyPressed(EInputKey key, bool bRepeat)
 		break;
 		
 		case IK_1:
-			winCameras[0].btnCamera.PressButton();
+			if (WinCameras[0] != None)
+			{
+				winCameras[0].btnCamera.PressButton();
+			}
 			break;
 		case IK_2:
-			winCameras[1].btnCamera.PressButton();
+			if (WinCameras[1] != None)
+			{
+				winCameras[1].btnCamera.PressButton();
+			}
 			break;
 		case IK_3:
-			winCameras[2].btnCamera.PressButton();
+			if (WinCameras[2] != None)
+			{
+				winCameras[2].btnCamera.PressButton();
+			}
 			break;
 		
 		default:
@@ -715,7 +724,7 @@ event bool VirtualKeyPressed(EInputKey key, bool bRepeat)
 			break;
 	}
 	
-	if (SelectedCamera != None)
+	if ((SelectedCamera != None) && (SelectedCamera.WinCamera != None) && (Player != None))
 	{
    		player.UpdateCameraRotation(selectedCamera.camera,rot);
 		
