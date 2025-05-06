@@ -221,6 +221,7 @@ defaultproperties
      ShotTime=0.100000 //Used to be 0.2, and before that 0.1 in vanilla
      reloadTime=3.000000
      HitDamage=3
+     ExtraFloatDamage=0.500000 //MADDERS, 4/28/25: B-b-b-buff with this new feature.
      BaseAccuracy=0.700000
      bCanHaveLaser=True
      bCanHaveSilencer=True
