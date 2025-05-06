@@ -965,13 +965,18 @@ function DeusExBaseWindow PushWindow(
 			if (( hideCurrentWin ) && (winCount > 0 ))
 				winStack[winCount-1].Hide();
 		}
-
+		
 		// Create the new window based on the type passed in
 		newWindow = DeusExBaseWindow(NewChild(newWindowClass, True));			
-
+		
 		// Now push this new window on the stack
 		winStack[winCount++] = newWindow;
-
+		
+		if ((VMDBufferPlayer(ParentPawn) != None) && (VMDBufferPlayer(ParentPawn).bDuck > 0) && (!VMDBufferPlayer(ParentPawn).bToggleCrouch))
+		{
+			VMDBufferPlayer(ParentPawn).UIForceDuckTimer = VMDBufferPlayer(ParentPawn).UIForceDuckTime;
+		}
+		
 		// Pause the game
 		if (!bNoPause)
 			UIPauseGame();
@@ -1298,6 +1303,15 @@ function RemoteStartNewGamePlus()
 	if (VMP != None)
 	{
 		VMP.StartNewGamePlus();
+	}
+}
+
+function VMDInvokeAutoSave()
+{
+	UnpauseGame();
+	if (VMDBufferPlayer(ParentPawn) != None)
+	{
+		VMDBufferPlayer(ParentPawn).VMDAutoSave();
 	}
 }
 
