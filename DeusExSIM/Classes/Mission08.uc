@@ -13,8 +13,9 @@ var int AugCanCount;
 
 function FirstFrame()
 {
-	local SandraRenton Sandra;
 	local FordSchick Ford;
+	local JordanShea Jordan;
+	local SandraRenton Sandra;
 
 	Super.FirstFrame();
 
@@ -23,8 +24,20 @@ function FirstFrame()
 		foreach AllActors(class'SandraRenton', Sandra)
 			Sandra.Destroy();
 	}
-
-	if (localURL == "08_NYC_SMUG")
+	
+	//MADDERS, 4/27/25: If we pissed off Jordan in M02 or M04, make her remember and take it personally.
+	if (localURL == "08_NYC_BAR")
+	{
+		// unhide Ford if you've rescued him
+		if (flags.GetBool('VMDPlayerCrossedJordanShea'))
+		{
+			foreach AllActors(class'JordanShea', Jordan)
+			{
+				Jordan.ChangeAlly('Player', -1.0, true);
+			}
+		}
+	}
+	else if (localURL == "08_NYC_SMUG")
 	{
 		// unhide Ford if you've rescued him
 		if (flags.GetBool('FordSchickRescued'))
@@ -279,7 +292,8 @@ function Timer()
 	}
 	else if (localURL == "08_NYC_SMUG")
 	{
-		if (flags.GetBool('FordSchickRescued'))
+		//MADDERS, 4/28/25: we'll be bundling LDDP confix going forward from now on. This is redundant.
+		/*if (flags.GetBool('FordSchickRescued'))
 		{
 			if ((!flags.GetBool('M08MeetFordSchick_Played')) && (!flags.GetBool('FemJCM08MeetFordSchick_Played')))
 			{
@@ -317,7 +331,7 @@ function Timer()
 					Flags.SetBool('VMDFixedSchickAug', true,, 09);
 				}
 			}
-		}
+		}*/
 	}
 }
 
