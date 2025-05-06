@@ -82,6 +82,7 @@ class VMDSkillTalentImportsv2 extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="SkillMapBranchLockpicking01B" FILE="Textures\SkillTalentsv2\SkillMapBranchLockpicking01B.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="SkillMapBranchLockpicking01C" FILE="Textures\SkillTalentsv2\SkillMapBranchLockpicking01C.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="SkillMapBranchLockpicking01D" FILE="Textures\SkillTalentsv2\SkillMapBranchLockpicking01D.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillMapBranchLockpicking01E" FILE="Textures\SkillTalentsv2\SkillMapBranchLockpicking01E.pcx" GROUP=UI FLAGS=2
 
 #exec TEXTURE IMPORT NAME="SkillMapBranchMedicine01A" FILE="Textures\SkillTalentsv2\SkillMapBranchMedicine01A.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="SkillMapBranchMedicine01B" FILE="Textures\SkillTalentsv2\SkillMapBranchMedicine01B.pcx" GROUP=UI FLAGS=2
