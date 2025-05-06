@@ -11,6 +11,12 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="IconSmokeSmellLarge" FILE="Textures\SmellIconLargeSmokeSmell.pcx" GROUP=UI FLAGS=2
 
 //=============================
+//Slider Mini
+//=============================
+#exec TEXTURE IMPORT NAME="VMDMenuSliderMini" FILE="Textures\MenuSliderMini.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDMenuSliderBarMini" FILE="Textures\MenuSliderBarMini.pcx" GROUP=UI FLAGS=2
+
+//=============================
 //Hit Indicator
 //=============================
 #exec TEXTURE IMPORT NAME="HitIndicatorSquare" FILE="Textures\HitIndicatorSquare.pcx" GROUP=UI FLAGS=2
@@ -814,6 +820,8 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 //=============================
 //Toolbox Screen
 //=============================
+#exec TEXTURE IMPORT NAME="VMDCraftingWindowLinesOverlay" FILE="Textures\CraftingWindowLinesOverlay.pcx" GROUP=UI FLAGS=2
+
 #exec TEXTURE IMPORT NAME="VMDToolboxListWindowBG01" FILE="Textures\VMDToolboxListWindowBG01.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="VMDToolboxListWindowBG02" FILE="Textures\VMDToolboxListWindowBG02.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="VMDToolboxListWindowBG03" FILE="Textures\VMDToolboxListWindowBG03.pcx" GROUP=UI FLAGS=2
