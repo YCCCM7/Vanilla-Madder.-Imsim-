@@ -136,6 +136,20 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 			Spawn(class'PathNodeMobile',,, Vect(-54,150,-2410));
 			VMP.VMDRebuildPaths();
 			
+			//MADDERS, 4/29/25: Stop letting us trigger this early. Bad.
+			A = FindActorBySeed(class'MapExit', 0);
+			if (A != None)
+			{
+				A.SetCollision(False, False, False);
+			}
+			
+			//MADDERS, 4/29/25: Stop us from trying to eat this unreachable corpse.
+			A = FindActorBySeed(class'ThugMale2Carcass', 0);
+			if (A != None)
+			{
+				DeusExCarcass(A).bBlockAnimalFoodRoutines = true;
+			}
+			
 			forEach AllActors(class'DeusExMover', DXM)
 			{
 				if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
