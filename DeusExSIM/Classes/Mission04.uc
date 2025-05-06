@@ -107,6 +107,12 @@ function PreTravel()
 				Flags.SetBool('AnnaNavarre_Unconscious', False,, 6);
 				Flags.SetBool('AnnaNavarre_Dead', False,, 6);
 			}
+			if (Flags.GetBool('JordanShea_Unconscious'))
+			{
+				Flags.SetBool('JordanShea_Unconscious', False,, 6);
+				Flags.SetBool('JordanShea_Dead', False,, 6);
+				Flags.SetBool('VMDPlayerCrossedJordanShea', True,, 9);
+			}
 			
 			if (!Player.IsA('GreaselPlayer'))
 			{
@@ -177,6 +183,12 @@ function Timer()
 					Flags.SetBool('AnnaNavarre_Unconscious', False,, 6);
 					Flags.SetBool('AnnaNavarre_Dead', False,, 6);
 				}
+				if (Flags.GetBool('JordanShea_Unconscious'))
+				{
+					Flags.SetBool('JordanShea_Unconscious', False,, 6);
+					Flags.SetBool('JordanShea_Dead', False,, 6);
+					Flags.SetBool('VMDPlayerCrossedJordanShea', True,, 9);
+				}
 				
 				flags.SetBool('MS_PlayerCaptured', True,, 5);
 				Player.GoalCompleted('EscapeToBatteryPark');
@@ -194,6 +206,12 @@ function Timer()
 				{
 					Flags.SetBool('AnnaNavarre_Unconscious', False,, 6);
 					Flags.SetBool('AnnaNavarre_Dead', False,, 6);
+				}
+				if (Flags.GetBool('JordanShea_Unconscious'))
+				{
+					Flags.SetBool('JordanShea_Unconscious', False,, 6);
+					Flags.SetBool('JordanShea_Dead', False,, 6);
+					Flags.SetBool('VMDPlayerCrossedJordanShea', True,, 9);
 				}
 				
 				// Transcended - Ported
@@ -277,6 +295,11 @@ function Timer()
 			{
 				foreach AllActors(class'ScriptedPawn', pawn)
 				{
+					if (Pawn == None)
+					{
+						continue;
+					}
+					
 					if (pawn.IsA('UNATCOTroop') || pawn.IsA('MIB'))
 					{
 						pawn.EnterWorld();
@@ -293,7 +316,7 @@ function Timer()
 					// Movers still exist but at Z + 20k if destroyed
 					foreach AllActors(class'DeusExMover', m)
 					{
-						if (m.KeyIDNeeded == 'Apartment')
+						if ((m != None) && (m.KeyIDNeeded == 'Apartment'))
 						{
 							yPosition = m.Location.Y;
 							break;
@@ -350,6 +373,11 @@ function Timer()
 				{
 					foreach AllActors(class'ScriptedPawn', pawn)
 					{
+						if (Pawn == None)
+						{
+							continue;
+						}
+						
 						if (pawn.IsA('UNATCOTroop') || pawn.IsA('MIB'))
 						{
 							pawn.LeaveWorld();
@@ -370,6 +398,11 @@ function Timer()
 			{
 				foreach AllActors(class'ScriptedPawn', pawn)
 				{
+					if (Pawn == None)
+					{
+						continue;
+					}
+					
 					if (pawn.IsA('MIB'))
 					{
 						pawn.bInvincible = False;
@@ -386,12 +419,17 @@ function Timer()
 			{
 				foreach AllActors(class'ScriptedPawn', pawn, 'JoJoUpstairs')
 				{
+					if (Pawn == None)
+					{
+						continue;
+					}
+					
 					pawn.EnterWorld();
 				}
 				flags.SetBool('MS_JoJoUnhidden', True,, 5);
 			}
 		}
-
+		
 		// unhide the correct JoJo
 		if (!flags.GetBool('MS_JoJoUnhidden') &&
 			(flags.GetBool('M03OverhearSquabble_Played') &&
@@ -402,6 +440,11 @@ function Timer()
 			{
 				foreach AllActors(class'ScriptedPawn', pawn, 'JoJoUpstairs')
 				{
+					if (Pawn == None)
+					{
+						continue;
+					}
+					
 					pawn.EnterWorld();
 				}
 				flags.SetBool('MS_JoJoUnhidden', True,, 5);
@@ -415,14 +458,20 @@ function Timer()
 			{
 				foreach AllActors(class'Actor', A, 'GilbertAttacksJoJo')
 				{
-					A.Trigger(Self, Player);
+					if (A != None)
+					{
+						A.Trigger(Self, Player);
+					}
 				}
 			}
 			else
 			{
 				foreach AllActors(class'Actor', A, 'JoJoAttacksGilbert')
 				{
-					A.Trigger(Self, Player);
+					if (A != None)
+					{
+						A.Trigger(Self, Player);
+					}
 				}
 			}
 			
@@ -434,7 +483,10 @@ function Timer()
 		{
 			foreach AllActors(class'Actor', A, 'SandraLeaves')
 			{
-				A.Trigger(Self, Player);
+				if (A != None)
+				{
+					A.Trigger(Self, Player);
+				}
 			}
 			flags.SetBool('MS_JoJo2Triggered', True,, 5);
 		}
@@ -444,7 +496,10 @@ function Timer()
 		{
 			foreach AllActors(class'Actor', A, 'JoJoAttacksGilbert')
 			{
-				A.Trigger(Self, Player);
+				if (A != None)
+				{
+					A.Trigger(Self, Player);
+				}
 			}
 			flags.SetBool('MS_JoJo3Triggered', True,, 5);
 		}
