@@ -1,0 +1,1 @@
+(Audacity: 0.01 second delay x2, pitch -18.5-22%, amplify, amplify weaker portions, amplify 6 DB with clipping, limiter -0.1 DB)
