@@ -165,7 +165,7 @@ function Timer()
 					for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
 					{
 						SP = ScriptedPawn(TPawn);
-						if (SP != None)
+						if ((SP != None) && (Robot(SP) == None))
 						{
 							SP.bStasis = false;
 							if (SP.IsInState('Attacking'))
