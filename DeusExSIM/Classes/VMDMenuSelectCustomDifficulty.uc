@@ -30,6 +30,9 @@ var Color colDesc;
 var string varSetting[64];
 var localized string strSetting[64], strDescription[64], OverrideLabelValues[64], StrMultipleChoices, NGPlusMayhemBlurb;
 var int OverrideSettingCaps[64];
+var MenuUISliderButtonWindowMini MiniSliders[64], LastMiniSlider;
+
+var VMDButtonPos MiniSliderBarPos;
 
 var MenuUIChoiceSlider DamageSlider, TimerSlider, HPSlider;
 var VMDButtonPos DamageSliderPos, TimerSliderPos, HPSliderPos,
@@ -484,14 +487,28 @@ function CreateItemListWindow()
 
 function PopulateItemList()
 {
-	local int rowIndex, i, maxEvents;
+	local int rowIndex, i, maxEvents, PopulatedCount;
 	
 	lstItems.DeleteAllRows();
 	
 	for (i=0; i<arrayCount(strSetting); i++)
 	{
 		if (strSetting[i] != "")
+		{
 			rowIndex = lstItems.AddRow(BuildItemString(i));
+			if (OverrideSettingCaps[i] > 2)
+			{
+				MiniSliders[i] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+				MiniSliders[i].SetTicks(OverrideSettingCaps[i], 0, OverrideSettingCaps[i]-1);
+				MiniSliders[i].WinSlider.SetValue(int(Player.GetPropertyText(VarSetting[i])));
+				MiniSliders[i].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarSetting[i])));
+				MiniSliders[i].ConfigSetting = VarSetting[i];
+				MiniSliders[i].ParentWindow = Self;
+				MiniSliders[i].ArrayIndex = PopulatedCount;
+				MiniSliders[i].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * PopulatedCount));
+			}
+			PopulatedCount += 1;
+		}
 	}
 	
 	//lstItems.Sort();
@@ -637,6 +654,12 @@ function SwitchVariable(int UseRow)
 	{
 		VMP.AssignedDifficulty = VMP.StrCustomDifficulty@VMP.AssignedDifficulty;
 		bCustomizedDifficulty = true;
+	}
+	
+	//MADDERS, 3/28/25: Don't let us manually fuck with slider settings.
+	if (OverrideSettingCaps[IGF] > 2)
+	{
+		return;
 	}
 	
 	AddRate = 1;
@@ -791,6 +814,12 @@ function SetRowVariable(int UseRow, int NewVal)
 			else LabelValue = "Off";
 		}
 		Player.SetPropertyText(VS, String(NewVal));
+	}
+	
+	if (MiniSliders[IGF] != None)
+	{
+		MiniSliders[IGF].WinSlider.SetValue(NewVal);
+		MiniSliders[IGF].WinSlider.SetThumbStep(NewVal);
 	}
 	
 	WriteValue = lstItems.GetField(UseRow, 0)$";"$LabelValue$";"$lstItems.GetField(UseRow, 2);
@@ -1264,9 +1293,19 @@ event bool BoxOptionSelected(Window msgBoxWindow, int buttonNumber)
 	return true;
 }
 
+function MiniSliderChanged()
+{
+	if (LastMiniSlider != None)
+	{
+		SetRowVariable(LastMiniSlider.ArrayIndex, int(Player.GetPropertyText(LastMiniSlider.ConfigSetting)));
+	}
+}
+
 defaultproperties
 {
-     StrMultipleChoices="Hold ctrl to cycle backwards. Hold shift to cycle at 2x the rate."
+     StrMultipleChoices="" //"Hold ctrl to cycle backwards. Hold shift to cycle at 2x the rate."
+     
+     MiniSliderBarPos=(X=325,Y=12)
      
      OverrideSettingCaps(0)=1
      strSetting(0)="----Major Settings-----------"
@@ -1277,7 +1316,7 @@ defaultproperties
      strSetting(1)="Save Gate"
      varSetting(1)="bSaveGateEnabled"
      strDescription(1)="If enabled, saving will be limited to occur less often. If set to max duration, all forms of saving will be disabled permanently."
-     OverrideSettingCaps(2)=4
+     OverrideSettingCaps(2)=5
      strSetting(2)="Save Gate Duration"
      varSetting(2)="BarfSaveGateTime"
      OverrideLabelValues(2)="45 Sec|90 Sec|180 Sec|720 Sec|Permanent"
@@ -1365,7 +1404,7 @@ defaultproperties
      strSetting(22)="Infamy Mercenaries"
      varSetting(22)="bBountyHuntersEnabled"
      strDescription(22)="If enabled, the Infamy system will allow elite hunters to spawn if the infamy cap has been reached. They will truly test your skill. While not the most canon friendly, you ARE playing something crazier than vanilla."
-     OverrideSettingCaps(23)=6
+     OverrideSettingCaps(23)=3
      strSetting(23)="Infamy Mercenary Limit"
      varSetting(23)="BarfHunterQuantity"
      OverrideLabelValues(23)="1 Hunter|2 Hunters|3 Hunters"
@@ -1481,7 +1520,7 @@ defaultproperties
      //strDescription(48)="If enabled, enemies with GEP guns can lock onto targets."
      strSetting(49)="Enemies Disarm Explosives"
      varSetting(49)="bEnemyDisarmExplosivesEnabled"
-     strDescription(49)="If enabled, during an ambush in M04, the AI will disarm explosives placed in the ambush area, to ensure a fair fight. This may be expanded in the future."
+     strDescription(49)="If enabled, during ambushs in M04 and M14, the AI will disarm explosives placed in the ambush area, to ensure a fair fight."
      strSetting(50)="Enemies Target Explosives"
      varSetting(50)="bShootExplosivesEnabled"
      strDescription(50)="If enabled, opportunistic enemies will open fire on explosives you're in range of."
