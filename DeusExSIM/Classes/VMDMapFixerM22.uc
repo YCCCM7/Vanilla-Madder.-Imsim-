@@ -350,6 +350,42 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				}
 			}
 			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				//MADDERS, 4/29/25: ADAM is literally just Paul Denton. Mix it up.
+				//Give him the supplies he needs to succeed.
+				VMBP = VMDBufferPawn(TPawn);
+				if (PaulDenton(VMBP) != None)
+				{
+					VMBP.AddToInitialInventory(class'BioelectricCell', 3);
+					VMBP.AddToInitialInventory(class'Medkit', 4);
+					VMBP.VMDWipeAllAugs();
+					VMBP.DefaultAugs[0] = class'AugBallistic';
+					VMBP.DefaultAugs[1] = class'AugShield';
+					VMBP.DefaultAugs[2] = class'AugEnviro';
+					VMBP.DefaultAugs[3] = class'AugTarget';
+					VMBP.DefaultAugs[5] = class'AugEMP';
+					VMBP.DefaultAugs[6] = class'AugCombat';
+					VMBP.DefaultAugs[7] = class'AugStealth';
+					VMBP.VMDInitializeSubsystems();
+				}
+				//While we're at it, give Kaneko some 10mm HEAP and ballistic armor, along with some medkits.
+				else if ((VMBP != None) && (VMBP.IsA('RS_Kaneko')))
+				{
+					VMBP.MedicineSkillLevel = 2;
+					VMBP.EnviroSkillLevel = 2;
+					VMBP.AddToInitialInventory(class'BallisticArmor', 1);
+					VMBP.AddToInitialInventory(class'Medkit', 3);
+					VMBP.AddToInitialInventory(class'Ammo10mmHEAT', 1);
+					DXA = DeusExAmmo(VMBP.FindInventoryType(class'Ammo10mmHEAT'));
+					DXW = DeusExWeapon(VMBP.FindInventoryType(class'WeaponPistol'));
+					if ((DXW != None) && (DXA != None))
+					{
+						DXW.LoadAmmoType(DXA);
+					}
+				}
+			}
+			
 			//MADDERS, 4/3/24: Redsun NG plus. Just outside the bossfight.
 			//6/20/24: Actually found a better way to do this lol.
 			/*NGPortal = Spawn(class'VMDNGPlusPortal',,, Vect(2004, -9783, 426), Rot(0, -16384, 0));
