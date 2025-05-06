@@ -14,10 +14,10 @@ struct S_KeyDisplayItem
 	var localized String DisplayName;
 };
 
-var localized string	FunctionText[66];
-var string				MenuValues1[66];
-var string				MenuValues2[66];
-var string				AliasNames[66];
+var localized string	FunctionText[68];
+var string				MenuValues1[68];
+var string				MenuValues2[68];
+var string				AliasNames[68];
 var string				PendingCommands[100];
 var localized S_KeyDisplayItem    keyDisplayNames[71];
 var localized string			  NoneText;
@@ -620,12 +620,14 @@ defaultproperties
      FunctionText(57)="Issue Drone Order"
      FunctionText(58)="Controller-Friendly Aug Menu"
      FunctionText(59)="Controller-Friendly Health Menu"
-     FunctionText(60)="(Mutations) Show Level Map"
-     FunctionText(61)="Show Multiplayer Scores"
-     FunctionText(62)="Send Message To Team"
-     FunctionText(63)="Send Message To All"
-     FunctionText(64)="Activate Multiplayer Skill Menu"
-     FunctionText(65)="Show Multiplayer Kill Details"
+     FunctionText(60)="Quick Hardware Crafting Menu"
+     FunctionText(61)="Quick Medicine Crafting Menu"
+     FunctionText(62)="(Mutations) Show Level Map"
+     FunctionText(63)="Show Multiplayer Scores"
+     FunctionText(64)="Send Message To Team"
+     FunctionText(65)="Send Message To All"
+     FunctionText(66)="Activate Multiplayer Skill Menu"
+     FunctionText(67)="Show Multiplayer Kill Details"
      AliasNames(0)="ParseLeftClick|Fire"
      AliasNames(1)="ParseRightClick"
      AliasNames(2)="DropItem"
@@ -686,12 +688,14 @@ defaultproperties
      AliasNames(57)="IssueDroneOrder"
      AliasNames(58)="OpenControllerAugWindow"
      AliasNames(59)="OpenControllerHealthWindow"
-     AliasNames(60)="ShowMap"
-     AliasNames(61)="ShowScores"
-     AliasNames(62)="TeamTalk"
-     AliasNames(63)="Talk"
-     AliasNames(64)="BuySkills"
-     AliasNames(65)="KillerProfile"
+     AliasNames(60)="OpenMechanicalCraftingWindow"
+     AliasNames(61)="OpenMedicalCraftingWindow"
+     AliasNames(62)="ShowMap"
+     AliasNames(63)="ShowScores"
+     AliasNames(64)="TeamTalk"
+     AliasNames(65)="Talk"
+     AliasNames(66)="BuySkills"
+     AliasNames(67)="KillerProfile"
      keyDisplayNames(0)=(inputKey=IK_LeftMouse,displayName="Left Mouse Button")
      keyDisplayNames(1)=(inputKey=IK_RightMouse,displayName="Right Mouse Button")
      keyDisplayNames(2)=(inputKey=IK_MiddleMouse,displayName="Middle Mouse Button")
