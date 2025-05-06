@@ -383,11 +383,11 @@ function CreateButtons()
 	winActionButtons.FillAllSpace(False);
 	
 	VMP = VMDBufferPlayer(Player);
-	if (VMP.bCraftingSystemEnabled)
+	if ((VMP != None) && (VMP.bCraftingSystemEnabled))
 	{
 		BtnCrafting = PersonaActionButtonWindow(winActionButtons.NewChild(Class'PersonaActionButtonWindow'));
 		BtnCrafting.SetButtonText(CraftingButtonLabel);
-		if ((GetPlayerSkill(VMP) < 1) && (!GetPlayerSpecialization(VMP)))
+		if (!VMP.CanCraftMechanical(True, True))
 		{
 			BtnCrafting.SetSensitivity(False);
 		}
