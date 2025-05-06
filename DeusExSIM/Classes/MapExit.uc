@@ -101,6 +101,13 @@ function Trigger(Actor Other, Pawn Instigator)
 
 function Touch(Actor Other)
 {
+	//MADDERS, 4/29/25: Stupid bullshit, but turn this crap off so scouts stop triggering map exits...
+	//After all, map exits are navigation points, and get touched.
+	if (Scout(Other) != None)
+	{
+		return;
+	}
+	
 	Super.Touch(Other);
 	LoadMap(Other);
 }
