@@ -101,7 +101,7 @@ function Timer()
 			{
 				if ((VMDBufferPlayer(HackPlayer) != None) && (VMDBufferPlayer(HackPlayer).HasSkillAugment('ElectronicsSpeed')))
 				{
-					THackMath *= 4.0;
+					THackMath *= 5.0;
 				}
 				else
 				{
@@ -230,7 +230,7 @@ function Frob(Actor Frobber, Inventory frobWith)
 			HackTweak2 = 3.0;
 			if ((VMDBufferPlayer(Frobber) != None) && (VMDBufferPlayer(Frobber).HasSkillAugment('ElectronicsSpeed')))
 			{
-				HackTweak2 = 4.0;
+				HackTweak2 = 5.0;
 			}
 			if ((Player != None) && (Player.SkillSystem != None))
 			{
