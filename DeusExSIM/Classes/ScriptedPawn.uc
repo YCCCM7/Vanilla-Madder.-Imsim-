@@ -2019,7 +2019,7 @@ function GenerateTotalHealth()
 			VMP.bDamageGateInTact = false;
 			if ((MinHealth > 1) && (Enemy != None) && (Health <= MinHealth) && (UnclampedHealth > GateBreakThreshold))
 			{
-				if ((VMP.LastVMP != None) && (VMP.LastVMP == VMP.LastInstigator))
+				if ((VMP.LastVMP != None) && (VMP.LastVMP == VMP.LastInstigator) && (VMP.LastVMP.bDamageGateBreakNoise))
 				{
 					VMP.LastVMP.PlaySound(sound'GlassBreakLarge', SLOT_None,,,, 1.75);
 				}
@@ -3077,7 +3077,7 @@ function DropWeapon()
 			oldWeapon.SetPropertyText("bCorpseUnclog", "True");
 			oldWeapon.DropFrom(Location);
 			
-			OldWeapon.PickupAmmoCount = class'VMDStaticFunctions'.Static.GWARRRand(0, 0, DeusExWeapon(OldWeapon), DeusEXAmmo(OldWeapon.AmmoType), VMDBufferPlayer(GetPlayerPawn()));
+			OldWeapon.PickupAmmoCount = class'VMDStaticFunctions'.Static.GWARRRand(0, 0, DeusExWeapon(OldWeapon), DeusExAmmo(OldWeapon.AmmoType), VMDBufferPlayer(GetPlayerPawn()));
 		}
 		
 		VMP = VMDBufferPawn(Self);
@@ -4062,11 +4062,12 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	local float        shieldMult, ShieldMult2, AugLevel;
 	
 	local bool bPoisonReact;
-	local int LegSum, TPos;
+	local int LegSum, TPos, TRand;
 	local float LegMod, PoisonMod, FDamage, BonusFDamage;
 	local Vector TLoc, HitLocs[5], HitNorm, StartTraces[6], EndTraces[6];
 	local Actor HitActor, TComp;
 	local VMDBufferPawn VMBP;
+	local VMDPoisonScout TScout;
 	
 	//G-Flex: keep track of burning death
 	local bool bWasOnFire;
@@ -4433,13 +4434,13 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	//This helps the crossbow be more viable for full nonlethal.
 	//However, after a certain point, we still notice we're being dosed,
 	//So, as it is: Tranq people at oportune spots.
-	if (DamageType == 'PoisonEffect')
+	if ((DamageType == 'PoisonEffect') && (Animal(Self) == None))
 	{
 		bPoisonReact = true;
 		VMBP.PoisonGuessingFudge = FClamp(VMBP.PoisonGuessingFudge + (FDamage * 0.035), 0.0, VMBP.MaxGuessingFudge);
 	}
 	
-	if ((DamageType == 'Poison') && (VMBP != None))
+	if ((DamageType == 'Poison') && (VMBP != None) && (Animal(Self) == None))
 	{
 		VMBP.PoisonGuessingFudge = FClamp(VMBP.PoisonGuessingFudge + (FDamage * 0.035), 0.0, VMBP.MaxGuessingFudge);
 		
@@ -4505,28 +4506,81 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 					TLoc = HitLocs[1];
 				}
 				VMBP.FirstPoisonOrigin = TLoc;
+				
+				TScout = Spawn(class'VMDPoisonScout', Self);
+				if (TScout != None)
+				{
+					TScout.FakeNode = Spawn(class'VMDFakePathNode', TScout,, InstigatedBy.Location);
+					if (TScout.FakeNode != None)
+					{
+						VMBP.OwnedPoisonScout = TScout;
+						VMBP.OrderActor = TScout.FakeNode;
+						VMBP.SetOrders('RunningTo',, true);
+					}
+					else
+					{
+						TScout.Destroy();
+					}
+				}
 			}
 			bPoisonReact = false;
 			VMBP.bNoticedPoisonOrigin = true;
 		}
 	}
 	
-	if ((bPoisonReact) && (VMBP != None) && (!IsInState('Attacking')) && (!ShouldFlee()))
+	if ((bPoisonReact) && (VMBP != None) && (!IsInState('Attacking')) && (!IsInState('Fleeing')) && (!IsInState('Alerting')) && (!ShouldFlee() || Weapon != None))
 	{
+		if ((GetPawnAllianceType(InstigatedBy) != ALLIANCE_Hostile) && (ShouldReactToInjuryType(damageType, bHateInjury, bHateIndirectInjury)))
+		{
+			IncreaseAgitation(instigatedBy);
+		}
+		
 		if (VMDBufferPlayer(InstigatedBy) != None)
 		{
 			IncreaseAgitation(VMDBufferPlayer(InstigatedBy), 1.0);
 			if (VMBP.bFirstSearchedForPoison)
 			{
-				SeekLevel = Clamp(SeekLevel + 2, -1, 3 + VMBP.DifficultyExtraSearchSteps);
-				GotoState('Seeking', 'FindAnotherPlace');
+				if ((VMBP.OwnedPoisonScout != None) && (VMBP.OwnedPoisonScout.CurPointTraversed < VMBP.OwnedPoisonScout.NumPoisonPoints - 1))
+				{
+					TScout = VMBP.OwnedPoisonScout;
+					TRand = Rand(3) + 2;
+					
+					TScout.CurPointTraversed = Min(TScout.NumPoisonPoints - 1, TScout.CurPointTraversed + TRand);
+					StartTraces[0] = TScout.GetPoisonPoint(TScout.CurPointTraversed);
+					if (TScout.CurPointTraversed < TScout.OriginalPointIndex)
+					{
+						EndTraces[0] = VRand() * 32;
+						EndTraces[0].Z = 0;
+						EndTraces[0] += StartTraces[0];
+					}
+					else
+					{
+						EndTraces[0] = VRand() * 64;
+						EndTraces[0].Z = 0;
+						EndTraces[0] += StartTraces[0];
+					}
+					HitActor = Trace(HitLocs[0], HitNorm, EndTraces[0], StartTraces[0], false);
+					
+					SeekLevel = Clamp(SeekLevel + 2, -1, 3 + VMBP.DifficultyExtraSearchSteps);
+					if (HitActor != None)
+					{
+						SetSeekLocation(VMDBufferPlayer(InstigatedBy), StartTraces[0], SEEKTYPE_Sound);
+					}
+					else
+					{
+						SetSeekLocation(VMDBufferPlayer(InstigatedBy), EndTraces[0], SEEKTYPE_Sound);
+					}
+					GoToState('Seeking');
+				}
+				else
+				{
+					SeekLevel = Clamp(SeekLevel + 2, -1, 3 + VMBP.DifficultyExtraSearchSteps);
+					GotoState('Seeking', 'FindAnotherPlace');
+				}
 			}
 			else
 			{
-				if (VSize(VMBP.FirstPoisonOrigin - Location) < 80 || (PoisonCounter < 15 && VSize(Velocity) < 20))
-				{
-					VMBP.bFirstSearchedForPoison = true;
-				}
+				VMBP.bFirstSearchedForPoison = true;
 				SetSeekLocation(VMDBufferPlayer(InstigatedBy), VMBP.FirstPoisonOrigin, SEEKTYPE_Sound);
 				GoToState('Seeking');
 			}
@@ -4537,9 +4591,20 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	{
 		ReactToInjury(instigatedBy, damageType, hitPos);
 	}
-	else if ((DamageType != 'AutoShot') && (GetPawnAllianceType(InstigatedBy) == ALLIANCE_Friendly || VMDBufferPlayer(InstigatedBy) == None || IsInState('Attacking')))
+	else if ((DamageType == 'Poison' || DamageType == 'PoisonEffect') && (GetPawnAllianceType(InstigatedBy) != ALLIANCE_Hostile || Animal(Self) != None || VMDBufferPlayer(InstigatedBy) == None || IsInState('Attacking')))
 	{
-		ReactToInjury(instigatedBy, damageType, hitPos);
+		if (VMDBufferPlayer(InstigatedBy) == None || IsInState('Attacking'))
+		{
+			ReactToInjury(instigatedBy, damageType, hitPos);
+		}
+		else if ((Animal(Self) != None) && (VMPlayer != None) && (!VMPlayer.HasSkillAugment('LockpickPoisonIdentity')))
+		{
+			ReactToInjury(instigatedBy, damageType, hitPos);
+		}
+		else if ((Animal(Self) == None) && (GetPawnAllianceType(InstigatedBy) != ALLIANCE_Hostile) && (VMPlayer != None) && (!VMPlayer.HasSkillAugment('LockpickPoisonIdentity')))
+		{
+			ReactToInjury(instigatedBy, damageType, hitPos);
+		}
 	}
 	else if ((DamageType == 'AutoShot') && (InstigatedBy != None) && (Robot(Self) == None))
 	{
@@ -4553,7 +4618,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 			TComp = VMBP.VMDFindTurretComputer();
 		}
 		
-		if (GetPawnAllianceType(InstigatedBy) == ALLIANCE_Friendly || IsInState('Attacking'))
+		if (GetPawnAllianceType(InstigatedBy) != ALLIANCE_Hostile || IsInState('Attacking'))
 		{
 			ReactToInjury(instigatedBy, damageType, hitPos);
 		}
@@ -4778,13 +4843,21 @@ function GotoDisabledState(name damageType, EHitLocation hitPos)
 		GotoState('RubbingEyes');
 	}
 	else if (damageType == 'Stunned')
+	{
 		GotoState('Stunned');
+	}
 	else if ((damageType == 'Burned') && (bOnFire))
+	{
 		return;
+	}
 	else if (CanShowPain())
+	{
 		TakeHit(hitPos);
+	}
 	else
+	{
 		GotoNextState();
+	}
 }
 
 
@@ -13245,6 +13318,7 @@ State Seeking
 		
 		if (!bLOS)
 		{
+			//BroadcastMessage("NO LOS!");
 			if (PointReachable(destLoc))
 			{
 				rotation = Rotator(destLoc - Location);
@@ -13322,8 +13396,10 @@ State Seeking
 				}
 			}
 		}
-		else if (VMBP != None && VMBP.VMDGetGuessingFudge() > 0 && VMDBufferPlayer(SeekPawn) != None)
+		else if (VMBP != None && VMBP.VMDGetGuessingFudge() > 0 && VMDBufferPlayer(SeekPawn) != None && 1 == 2)
 		{
+			//BroadcastMessage("HAS LOS AND FUDGE!");
+			
 			//MADDERS, 3/16/25: Don't do this at close range, since it'll just backtrack and fuck up.
 			if (VSize(SeekPawn.Location - Location) < 160)
 			{
@@ -13332,9 +13408,9 @@ State Seeking
 			}
 			else
 			{
-				MoveTarget = VMBP.VMDFindShittyPathTo(SeekPawn.Location, Location, 300, true);
-				VMBP.ConsecutiveShittyPaths += 1;
-				if ((MoveTarget != None) && (VMBP.ConsecutiveShittyPaths < 2))
+				MoveTarget = FindPathTo(SeekPawn.Location);
+				VMBP.ConsecutiveShittyPaths = 0;
+				if (MoveTarget != None)
 				{
 					NextLoc = MoveTarget.Location;
 					diffVect = nextLoc - Location;
@@ -13350,11 +13426,6 @@ State Seeking
 					{
 						bDone = true;
 					}
-				}
-				else
-				{
-					VMBP.ConsecutiveShittyPaths = 0;
-					bDone = true;
 				}
 			}
 		}
