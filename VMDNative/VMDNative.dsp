@@ -96,6 +96,10 @@ SOURCE=.\Inc\AVMDFileFinder.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\Inc\AVMDGenericNativeFunctions.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\Inc\AVMDHDSpaceFix.cpp
 # End Source File
 # Begin Source File

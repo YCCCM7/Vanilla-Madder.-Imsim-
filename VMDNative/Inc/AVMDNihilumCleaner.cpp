@@ -10,12 +10,18 @@ void AVMDNihilumCleaner::execSilenceNihilum(FFrame &Stack, RESULT_DECL)
 	//So, we have this stupid function writing to log every frame. Stop it from happening, thanks.
     UFunction *FuckDrawBorder = Cast<UFunction>(UObject::StaticFindObject(UFunction::StaticClass(), ANY_PACKAGE, TEXT("VMDNative.VMDNihilumCleaner.FuckDrawBorder")));
     UFunction *NihilumDrawBorder = Cast<UFunction>(UObject::StaticFindObject(UFunction::StaticClass(), ANY_PACKAGE, TEXT("FGRHK.TestHUDHitDisplay.DrawBorder")));
-    NihilumDrawBorder->Script = FuckDrawBorder->Script;
+	if (NihilumDrawBorder && FuckDrawBorder)
+	{
+	   NihilumDrawBorder->Script = FuckDrawBorder->Script;
+	}
 	
 	//Next, fix the main menu function being chunky as fuck and calling FLUSH.
     UFunction *NewMainMenu = Cast<UFunction>(UObject::StaticFindObject(UFunction::StaticClass(), ANY_PACKAGE, TEXT("DeusEx.VMDBufferPlayer.VMDNihilumDontFlushMainMenu")));
     UFunction *NihilumMainMenu = Cast<UFunction>(UObject::StaticFindObject(UFunction::StaticClass(), ANY_PACKAGE, TEXT("FGRHK.MadIngramPlayer.ShowMainMenu")));
-    NihilumMainMenu->Script = NewMainMenu->Script;
+	if (NihilumMainMenu && NewMainMenu)
+	{
+	    NihilumMainMenu->Script = NewMainMenu->Script;
+	}
 }
 
 IMPLEMENT_FUNCTION(AVMDNihilumCleaner,2208,execSilenceNihilum);

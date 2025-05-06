@@ -69,6 +69,17 @@ public:
 };
 
 
+class VMDNATIVE_API AVMDGenericNativeFunctions : public AActor
+{
+public:
+    DECLARE_FUNCTION(execSwapTargetScripts);
+    DECLARE_FUNCTION(execSetArrayPropertyText);
+    DECLARE_FUNCTION(execGetArrayPropertyText);
+    DECLARE_CLASS(AVMDGenericNativeFunctions,AActor,0)
+    NO_DEFAULT_CONSTRUCTOR(AVMDGenericNativeFunctions)
+};
+
+
 class VMDNATIVE_API AVMDFileFinder : public AActor
 {
 public:
@@ -99,6 +110,9 @@ AUTOGENERATE_FUNCTION(AVMDPathRebuilder,2204,execAllowScoutToSpawn);
 AUTOGENERATE_FUNCTION(AVMDNihilumCleaner,2208,execSilenceNihilum);
 AUTOGENERATE_FUNCTION(AVMDLightRebuilder,2199,execRebuildLighting);
 AUTOGENERATE_FUNCTION(AVMDHDSpacefix,2200,execGetFreeHDSpace);
+AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,2195,execSwapTargetScripts);
+AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,2196,execSetArrayPropertyText);
+AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,2197,execGetArrayPropertyText);
 AUTOGENERATE_FUNCTION(AVMDFileFinder,2198,execGetLatestSaveDir);
 AUTOGENERATE_FUNCTION(AVMDFileFinder,2209,execFindFileAt);
 

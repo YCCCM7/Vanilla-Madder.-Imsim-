@@ -70,7 +70,7 @@ void UKentiesUIFix::execApplyScaling( FFrame& Stack, RESULT_DECL )
 	XRootWindowOverlay *HackWindow = reinterpret_cast<XRootWindowOverlay*>(RootWindow);
 	APlayerPawnExt *GrabPlayer = HackWindow -> parentPawn;
 	int TScale = 1;
-
+	
 	//If we have one, sniff around for a custom UI scale property
 	if (GrabPlayer != 0)
 	{
@@ -79,38 +79,44 @@ void UKentiesUIFix::execApplyScaling( FFrame& Stack, RESULT_DECL )
 		if (P != 0)
 		{
 			P->CopyCompleteValue(&TScale, (BYTE*)GrabPlayer + P->Offset);
+			TScale -= 1;
 		}
 	}
 	
+	//WCCC: Value of 0 is automatic, AKA vanilla behavior.
+	if (TScale <= 0)
+	{
+		RootWindow -> ResizeRoot(Canvas);
+	}
     //Checking the size fixes OTP scaling fix issue of UI popping into corner when e.g. resizing window from 2x to 1x scaling range
-    if (HackWindow -> hMultiplier != TScale || HackWindow -> vMultiplier != TScale || Canvas->X != LastX || LastY != Canvas->Y )
+    else if (HackWindow -> hMultiplier != TScale || HackWindow -> vMultiplier != TScale || Canvas->X != LastX || LastY != Canvas->Y )
     {
 		RootWindow -> ResizeRoot(Canvas);
 		
-        //Change our size; children will align themselves properly
-        const float fScaleAmount = static_cast<float>(TScale);
+		//Change our size; children will align themselves properly
+		const float fScaleAmount = static_cast<float>(TScale);
 		HackWindow -> width *= HackWindow -> hMultiplier/fScaleAmount;
-        HackWindow -> height *= HackWindow -> vMultiplier/fScaleAmount;
+		HackWindow -> height *= HackWindow -> vMultiplier/fScaleAmount;
 		
-        HackWindow -> clipRect.clipWidth = HackWindow -> width;
-        HackWindow -> clipRect.clipHeight = HackWindow -> height;
+		HackWindow -> clipRect.clipWidth = HackWindow -> width;
+		HackWindow -> clipRect.clipHeight = HackWindow -> height;
 		
-        HackWindow -> winGC->SetClipRect(HackWindow -> clipRect); //Otherwise cursor is hidden
+		HackWindow -> winGC->SetClipRect(HackWindow -> clipRect); //Otherwise cursor is hidden
 		
-        //Prevent actual scaling
-        HackWindow -> hMultiplier = LastScale;
-        HackWindow -> vMultiplier = LastScale;
+		//Prevent actual scaling
+		HackWindow -> hMultiplier = LastScale;
+		HackWindow -> vMultiplier = LastScale;
 		
-        //Apply changes
-        for (XWindow *pChild = RootWindow -> GetBottomChild(); pChild != 0; pChild = pChild->GetHigherSibling())
-        {
-                pChild->Hide();
-                pChild->Show();
-        }
+		//Apply changes
+		for (XWindow *pChild = RootWindow -> GetBottomChild(); pChild != 0; pChild = pChild->GetHigherSibling())
+		{
+		        pChild->Hide();
+		        pChild->Show();
+		}
 		
 		LastScale = fScaleAmount;
-        LastX = Canvas->X;
-        LastY = Canvas->Y;
+		LastX = Canvas->X;
+		LastY = Canvas->Y;
 	}
 	
 	unguardexec;

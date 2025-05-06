@@ -35,6 +35,8 @@ void AVMDPathRebuilder::execScoutSetup(FFrame &Stack, RESULT_DECL)
 	
     ULevel *CurrentLevel = GetLevel();
     
+	Scout->bDetectable = 0; //4/29/25: Stop triggering triggers.
+	Scout->bCanTeleport = 0; //4/29/25: Stop triggering teleporters.
     Scout->SetCollision(true, true, true);
     Scout->bCollideWorld = 1;
 	
