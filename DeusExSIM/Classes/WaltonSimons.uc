@@ -57,7 +57,7 @@ function float ShieldDamage(name damageType)
 
 function GotoDisabledState(name damageType, EHitLocation hitPos)
 {
-	if ((!bCollideActors) && (!bBlockActors) && (!bBlockPlayers))
+	/*if ((!bCollideActors) && (!bBlockActors) && (!bBlockPlayers))
 	{
 		return;
 	}
@@ -68,7 +68,9 @@ function GotoDisabledState(name damageType, EHitLocation hitPos)
 	else
 	{
 		GotoNextState();
-	}
+	}*/
+	
+	Super.GoToDisabledState(DamageType, HitPos);
 }
 
 // Transcended - Let's not let bosses drop their weapons, Gunther likes to do it.
