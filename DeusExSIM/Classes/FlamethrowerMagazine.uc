@@ -5,6 +5,7 @@ class FlamethrowerMagazine extends VMDWeaponMagazine;
 
 defaultproperties
 {
+     bAmmoLookalike=True
      Mesh=LODMesh'VMDFlamethrowerMag'
      Fragments(0)=LODMesh'VMDFlamethrowerMag'
      NumFragmentTypes=1

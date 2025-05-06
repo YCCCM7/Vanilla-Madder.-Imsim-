@@ -5,6 +5,7 @@ class PlasmaRifleMagazine extends VMDWeaponMagazine;
 
 defaultproperties
 {
+     bAmmoLookalike=True
      Mesh=LODMesh'VMDPlasmaRifleMag'
      Fragments(0)=LODMesh'VMDPlasmaRifleMag'
      NumFragmentTypes=1

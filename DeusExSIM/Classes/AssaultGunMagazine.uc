@@ -5,6 +5,7 @@ class AssaultGunMagazine extends VMDWeaponMagazine;
 
 defaultproperties
 {
+     bAmmoLookalike=True
      Multiskins(0)=Texture'VMDAssaultGunMagTex1'
      Mesh=LODMesh'Ammo762mm'
      Fragments(0)=LODMesh'Ammo762mm'
