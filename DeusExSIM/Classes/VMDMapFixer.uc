@@ -24,6 +24,7 @@ var localized string VMDPatchedTruckDesc;
 //MADDERS, 2/21/25: Can't be bothered to rewrite this shit constantly. Just store it here.
 //Parent class junk.
 var Actor A;
+var DeusExAmmo DXA;
 var DeusExDecoration DXD;
 var DeusExLevelInfo DXLI;
 var DeusExWeapon DXW;
@@ -32,6 +33,7 @@ var Pawn TPawn;
 var ScriptedPawn SP;
 var Seat TSeat;
 var VMDBufferDeco VMD;
+var VMDBufferPawn VMBP;
 
 //Door stuff.
 var vector FrameAdd[8], LocAdd, PivAdd, TestLoc;
