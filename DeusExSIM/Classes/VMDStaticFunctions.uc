@@ -16,6 +16,11 @@ var int TreePosX[32], TreePosY[32];
 var localized String TreeLabels[32], TreeGapLabels[16];
 var class<Skill> TreeSkills[32];
 
+//MADDERS, 4/29/25: For shutting functions the fuck up.
+function NullFunction()
+{
+}
+
 //111111111111111111111111111111
 //SEED STUFF
 //111111111111111111111111111111
@@ -777,6 +782,11 @@ static function int GWARRRand(int ResultFloor, int RandFloor, DeusExWeapon DXW, 
 	if (DXA == None) return 0;
 	if (AmmoNone(DXA) != None) return 0;
 	
+	if ((ResultFloor < 1) && (DXW != None) && (DXW.bHandToHand) && (!DXW.bInstantHit) && (DXW.GoverningSkill == class'SkillDemolition'))
+	{
+		ResultFloor = 1;
+	}
+	
 	Ret = GWARR(DXW, DXA, VMP);
 	Ret = Max(RandFloor+1, Ret);
 	if (Ret < 2)
@@ -874,6 +884,8 @@ static function bool VMDIsWeaponSensitiveMap(Actor A, optional bool bMorallyGrey
 		case "22_KABUKICHO":
 		case "22_TOKYO_AQUA":
 		case "22_TOKYO_DISCO":
+		case "60_HONGKONG_FORICHI":
+		case "60_HONGKONG_GREASELPIT":
 		case "73_ZODIAC_NEWMEXICO_PAGEBIO":
 		case "CF_01_UNRC":
 		case "GOTEM":
@@ -903,6 +915,49 @@ static function bool VMDIsWeaponSensitiveMap(Actor A, optional bool bMorallyGrey
 		case "08_NYC_UNDERGROUND":
 		case "08_NYC_SMUG":
 		case "11_PARIS_EVERETT":
+		//Redsun maps.
+		case "21_OTEMACHILAB_1":
+		case "21_OTEMACHILAB_2":
+		case "21_PASSAGEWAYS":
+		case "21_SHINJUKU_SEWERS":
+		case "21_SHUTTLE_BUS_VID":
+		case "21_TMGCOMPLEX":
+		case "21_YOKOTANIBANK_OFF":
+		case "21_YOKOTANIBANK_ON":
+		case "22_CAN_VID":
+		case "22_CREDITS":
+		case "22_EXTRO1":
+		case "22_EXTRO1_2":
+		case "22_EXTRO2":
+		case "22_LOSTCITY": //We blow our way in. How are hunters getting in?
+		case "22_TSPE": //Similar situation. How?
+		//Zodiac maps.
+		case "70_ZODIAC_HONGKONG_TONGBASE":
+		case "70_ZODIAC_HONGKONG_WANCHAI_MARKET":
+		case "71_ZODIAC_LANGLEY_CIAHQ":
+		case "71_ZODIAC_LANGLEY_MJ12":
+		case "75_ZODIAC_NEWMEXICO_HBUNKER":
+		case "76_ZODIAC_EGYPT_REACTOR":
+		case "77_ZODIAC_ENDGAME1":
+		case "77_ZODIAC_ENDGAME2":
+		//Hotel Carone maps.
+		case "16_HOTELCARONE_HOUSE":
+		case "16_HOTELCARONE_INTRO":
+		//Nihilum maps.
+		case "59_INTRO":
+		case "60_HONGKONG_MPSHELIPAD":
+		case "60_HONGKONG_MPSHQ":
+		case "61_HONGKONG_FORICHI":
+		case "61_HONGKONG_MPSHELIPAD":
+		case "62_BERLIN_AIRBORNELAB":
+		case "62_BERLIN_AIRPORT":
+		case "62_BERLIN_XVAINTERIOR":
+		case "63_NYC_STORAGE":
+		case "64_WOODFIBRE_STAFFORD":
+		case "64_WOODFIBRE_TUNNELS":
+		case "65_WOODFIBRE_BEACHFRONT":
+		case "66_WHITEHOUSE_ILLUMINATI":
+		case "66_WHITEHOUSE_EXTERIOR":
 			return bMorallyGrey;
 		break;
 		default:
