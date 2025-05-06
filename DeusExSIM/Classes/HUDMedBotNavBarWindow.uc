@@ -23,10 +23,10 @@ function CreateButtons()
 {
 	VMP = VMDBufferPlayer(Player);
 	
-	if (VMP.bCraftingSystemEnabled)
+	if ((VMP != None) && (VMP.bCraftingSystemEnabled))
 	{
 		BtnCrafting = CreateNavButton(WinNavButtons, CraftingButtonLabel);
-		if ((GetPlayerSkill(VMP) < 1) && (!GetPlayerSpecialization(VMP)))
+		if (!VMP.CanCraftMedical(True, True))
 		{
 			BtnCrafting.SetSensitivity(False);
 		}
@@ -130,26 +130,6 @@ function VMDInvokeCraftingScreen()
 	
 	CraftScreen = VMDMenuCraftingChemistrySetWindow(root.InvokeUIScreen(Class'VMDMenuCraftingChemistrySetWindow', False));
 	CraftScreen.SetMedbot(Medbot);
-}
-
-//How good are we with Hardware?
-function int GetPlayerSkill(DeusExPlayer DXP)
-{
-	local int Ret;
-	
-	if ((DXP != None) && (DXP.SkillSystem != None))
-	{
-		Ret = DXP.SkillSystem.GetSkillLevel(class'SkillMedicine');
-	}
-	
-	return Ret;
-}
-
-function bool GetPlayerSpecialization(VMDBufferPlayer VMP)
-{
-	if (VMP == None) return false;
-	
-	return VMP.IsSpecializedInSkill(class'SkillMedicine');
 }
 
 defaultproperties
