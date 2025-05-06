@@ -42,7 +42,7 @@ var Texture RotatedIcon;
 var() bool bSuperOwned;
 
 //MADDERS, 6/24/23: Setup stuff here.
-var bool bDidSetup;
+var travel bool bDidSetup;
 
 //MADDERS, 8/7/23: Corpse drop hack for not blocking pawns.
 var bool bCorpseUnclog;
@@ -174,7 +174,7 @@ simulated function vector CalcDrawOffset()
 {
 	local float AddGap;
 	local Rotator TRot;
-	local vector DrawOffset, WeaponBob;
+	local vector DrawOffset, WeaponBob, AddVect;
 	local Pawn PawnOwner;
 	local VMDBufferPlayer VMP;
 	
@@ -204,9 +204,12 @@ simulated function vector CalcDrawOffset()
 		if ((VMP != None) && (VMP.bUseDynamicCamera))
 		{
 			AddGap = 5;
-			
 			AddGap *= (VMP.CollisionRadius / VMP.Default.CollisionRadius);
-			DrawOffset += Vector(VMP.ViewRotation) * AddGap;
+			
+			AddVect = Vector(VMP.ViewRotation) * AddGap;
+			AddVect.Z = 0;
+			
+			DrawOffset += AddVect;
 		}
 	}
 	return DrawOffset;
