@@ -26,6 +26,7 @@ var Color colDesc;
 
 var string varSetting[128];
 var localized string strSetting[128], strDescription[128];
+var MenuUISliderButtonWindowMini MiniSliders[128], LastMiniSlider;
 
 //MADDERS, 7/22/21: Only precache once.
 var bool bEverCached;
@@ -35,6 +36,13 @@ var localized string OverrideLabelValues[128], StrCycleBackwards, StrMultipleCho
 var int OverrideSettingCaps[128];
 var string RenderDeviceNames[64];
 var int MaxRenderDevice, RenderDeviceFPSSupported[64], RenderDeviceVSyncSupported[64];
+
+struct VMDButtonPos {
+	var int X;
+	var int Y;
+};
+
+var VMDButtonPos MiniSliderBarPos;
 
 // ----------------------------------------------------------------------
 // InitWindow()
@@ -269,14 +277,29 @@ function CreateItemListWindow()
 
 function PopulateItemList()
 {
-	local int rowIndex, i, maxEvents;
+	local int rowIndex, i, maxEvents, PopulatedCount;
+	local MenuUISliderButtonWindowMini TSlider;
 	
 	lstItems.DeleteAllRows();
 	
 	for (i=0; i<arrayCount(strSetting); i++)
 	{
 		if (strSetting[i] != "")
+		{
 			rowIndex = lstItems.AddRow(BuildItemString(i));
+			if (OverrideSettingCaps[i] > 2)
+			{
+				MiniSliders[i] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+				MiniSliders[i].SetTicks(OverrideSettingCaps[i], 0, OverrideSettingCaps[i]-1);
+				MiniSliders[i].WinSlider.SetValue(int(Player.GetPropertyText(VarSetting[i])));
+				MiniSliders[i].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarSetting[i])));
+				MiniSliders[i].ConfigSetting = VarSetting[i];
+				MiniSliders[i].ParentWindow = Self;
+				MiniSliders[i].ArrayIndex = PopulatedCount;
+				MiniSliders[i].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * PopulatedCount));
+			}
+			PopulatedCount += 1;
+		}
 	}
 	
 	//lstItems.Sort();
@@ -286,6 +309,7 @@ function PopulateItemList()
 	{
 		winDescription.SetText(strSetting[selectedRowIdBackup] $ "|n|n" $ strDescription[selectedRowIdBackup]);
 	}
+	
 	selectedRowId = selectedRowIdBackup;
 }
 
@@ -427,6 +451,12 @@ function SwitchVariable()
 		{
 			return;
 		}
+	}
+	
+	//MADDERS, 3/28/25: Don't let us manually fuck with slider settings.
+	if (OverrideSettingCaps[IGF] > 2)
+	{
+		return;
 	}
 	
 	AddRate = 1;
@@ -773,6 +803,14 @@ function int VMDGetSettingIndex(string FindSetting)
 	return -1;
 }
 
+function MiniSliderChanged()
+{
+	if (LastMiniSlider != None)
+	{
+		SetRowVariable(LastMiniSlider.ArrayIndex, int(Player.GetPropertyText(LastMiniSlider.ConfigSetting)));
+	}
+}
+
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
 
@@ -799,8 +837,8 @@ defaultproperties
      bEscapeSavesSettings=True
      colDesc=(R=200,G=200,B=200)
      
-     StrCycleBackwards="Hold control while cycling option to cycle backwards."
-     StrMultipleChoices="Hold control while cycling option to cycle backwards. Hold shift to cycle at 2x the rate."
+     StrCycleBackwards="" //"Hold control while cycling option to cycle backwards."
+     StrMultipleChoices="" //"Hold control while cycling option to cycle backwards. Hold shift to cycle at 2x the rate."
      
      RenderDeviceNames(0)="GlideDrv.GlideRenderDevice"
      RenderDeviceFPSSupported(0)=0
@@ -826,282 +864,293 @@ defaultproperties
      RenderDeviceNames(7)="Unknown"
      RenderDeviceFPSSupported(7)=0
      RenderDeviceVSyncSupported(7)=0
-	 
+     
+     MiniSliderBarPos=(X=325,Y=12)
+     
      OverrideSettingCaps(0)=1
      strSetting(0)="----Accessibility-----------"
      varSetting(0)="BARF"
      OverrideLabelValues(0)="----"
      strDescription(0)=""
      
-     strSetting(1)="Automatic Saving"
-     varSetting(1)="bAutosaveEnabled"
-     strDescription(1)="Toggle whether the game will save automatically when traveling between maps. This is recommended to be left on, and we all know why."
-     strSetting(2)="Appearance Auto-load"
-     varSetting(2)="bAutoloadAppearanceSlots"	 
-     strDescription(2)="If enabled, switching to a new slot in the appearance menu will automatically load it, discarding current changes. This is a retro option."
-     strSetting(3)="Clearer Aug Noise"
-     varSetting(3)="bBoostAugNoise"
-     strDescription(3)="If enabled, augmentations will be louder when on, to better inform the player they are using energy."
-     OverrideSettingCaps(4)=7
-     strSetting(4)="Dodge Input Window"
-     varSetting(4)="BarfDodgeClickTime"
-     strDescription(4)="The time window allowed for double tap to dodge with the Untouchable talent. Increments by 0.025 seconds at base."
-     OverrideLabelValues(4)="0.10s|0.125s|0.15s|0.175s|0.20s|0.225s|0.25s"
-     strSetting(5)="Draw Keyring For Doors"
-     varSetting(5)="bDoorFrobKeyRing"
-     strDescription(5)="If enabled, trying to open a locked door that you have the key for will draw the keyring automatically."
-     OverrideSettingCaps(6)=3
-     strSetting(6)="Draw Lockpick/Crowbar For Doors"
-     varSetting(6)="DoorFrobLockpick"
-     strDescription(6)="If enabled, trying to open a locked door that can be lockpicked or cracked with a crowbar will draw the most effective implement automatically. If set to No Key, this will only happen when no key exists."
-     OverrideLabelValues(6)="Disabled|No Key|Always"
-     strSetting(7)="Draw Multitool For Electronics"
-     varSetting(7)="bElectronicsDrawMultitool"
-     strDescription(7)="If enabled, trying to use an electronic device that needs hacking will draw a multitool automatically."
-     strSetting(8)="Epilepsy Reduction"
-     varSetting(8)="bEpilepsyReduction"
-     strDescription(8)="If enabled, flickering lights in levels will be made solid."
-     OverrideSettingCaps(9)=8
-     strSetting(9)="Field Of View (FOV)"
-     varSetting(9)="FOVLevelBarf"
-     strDescription(9)="This scales the visible area around the player up or down, 75-110. Increments by 5 units at base."
-     OverrideLabelValues(9)="75|80|85|90|95|100|105|110"
-     strSetting(10)="Hold Refire Semiauto"
-     varSetting(10)="bRefireSemiauto"
-     strDescription(10)="If enabled, holding left mouse will make semiautomatic weapons continue to refire, for convenience sake."
-     strSetting(11)="Holster For Decorations"
-     varSetting(11)="bDecorationFrobHolster"
-     strDescription(11)="If enabled, trying to grab a decoration (such as a container or box) will holster your in-hand item if it would be obstructive."
-     OverrideSettingCaps(12)=7
-     strSetting(12)="Roll Input Window"
-     varSetting(12)="BarfTacticalRollTime"
-     strDescription(12)="The time window allowed for pushing jump after ducking to use the Tactical Roll talent. Increments by 0.025 seconds at base."
-     OverrideLabelValues(12)="0.10s|0.125s|0.15s|0.175s|0.20s|0.225s|0.25s"
+     strSetting(1)="Action Button To Holster"
+     varSetting(1)="FrobEmptyLowersWeapon"
+     strDescription(1)="If enabled, using the action button on nothing will lower your current weapon or item, unless it is reloading."
+     strSetting(2)="Automatic Saving"
+     varSetting(2)="bAutosaveEnabled"
+     strDescription(2)="Toggle whether the game will save automatically when traveling between maps. This is recommended to be left on, and we all know why."
+     strSetting(3)="Appearance Auto-load"
+     varSetting(3)="bAutoloadAppearanceSlots"	 
+     strDescription(3)="If enabled, switching to a new slot in the appearance menu will automatically load it, discarding current changes. This is a retro option."
+     strSetting(4)="Clearer Aug Noise"
+     varSetting(4)="bBoostAugNoise"
+     strDescription(4)="If enabled, augmentations will be louder when on, to better inform the player they are using energy."
+     OverrideSettingCaps(5)=7
+     strSetting(5)="Dodge Input Window"
+     varSetting(5)="BarfDodgeClickTime"
+     strDescription(5)="The time window allowed for double tap to dodge with the Untouchable talent. Increments by 0.025 seconds at base."
+     OverrideLabelValues(5)="0.10s|0.125s|0.15s|0.175s|0.20s|0.225s|0.25s"
+     strSetting(6)="Draw Keyring For Doors"
+     varSetting(6)="bDoorFrobKeyRing"
+     strDescription(6)="If enabled, trying to open a locked door that you have the key for will draw the keyring automatically."
+     OverrideSettingCaps(7)=3
+     strSetting(7)="Draw Lockpick/Crowbar For Doors"
+     varSetting(7)="DoorFrobLockpick"
+     strDescription(7)="If enabled, trying to open a locked door that can be lockpicked or cracked with a crowbar will draw the most effective implement automatically. If set to No Key, this will only happen when no key exists."
+     OverrideLabelValues(7)="Disabled|No Key|Always"
+     strSetting(8)="Draw Multitool For Electronics"
+     varSetting(8)="bElectronicsDrawMultitool"
+     strDescription(8)="If enabled, trying to use an electronic device that needs hacking will draw a multitool automatically."
+     strSetting(9)="Epilepsy Reduction"
+     varSetting(9)="bEpilepsyReduction"
+     strDescription(9)="If enabled, flickering lights in levels will be made solid."
+     OverrideSettingCaps(10)=8
+     strSetting(10)="Field Of View (FOV)"
+     varSetting(10)="FOVLevelBarf"
+     strDescription(10)="This scales the visible area around the player up or down, 75-110. Increments by 5 units at base."
+     OverrideLabelValues(10)="75|80|85|90|95|100|105|110"
+     strSetting(11)="Hold Refire Semiauto"
+     varSetting(11)="bRefireSemiauto"
+     strDescription(11)="If enabled, holding left mouse will make semiautomatic weapons continue to refire, for convenience sake."
+     strSetting(12)="Holster For Decorations"
+     varSetting(12)="bDecorationFrobHolster"
+     strDescription(12)="If enabled, trying to grab a decoration (such as a container or box) will holster your in-hand item if it would be obstructive."
+     OverrideSettingCaps(13)=7
+     strSetting(13)="Roll Input Window"
+     varSetting(13)="BarfTacticalRollTime"
+     strDescription(13)="The time window allowed for pushing jump after ducking to use the Tactical Roll talent. Increments by 0.025 seconds at base."
+     OverrideLabelValues(13)="0.10s|0.125s|0.15s|0.175s|0.20s|0.225s|0.25s"
      
-     OverrideSettingCaps(13)=1
-     strSetting(13)=" "
-     varSetting(13)="BARF"
-     OverrideLabelValues(13)=" "
-     strDescription(13)=""
      OverrideSettingCaps(14)=1
-     strSetting(14)="----Advanced Display Settings--"
+     strSetting(14)=" "
      varSetting(14)="BARF"
-     OverrideLabelValues(14)="----"
+     OverrideLabelValues(14)=" "
      strDescription(14)=""
+     OverrideSettingCaps(15)=1
+     strSetting(15)="----Advanced Display Settings--"
+     varSetting(15)="BARF"
+     OverrideLabelValues(15)="----"
+     strDescription(15)=""
      
-     strSetting(15)="D3D10/11 Precaching"
-     varSetting(15)="bD3DPrecachingEnabled"
-     strDescription(15)="Toggle D3D10/11 precaching, for optimal performance with DDS texture enhancements. Caching will be loaded when enabled. Don't panic."
-     OverrideSettingCaps(16)=11
-     strSetting(16)="FPS Cap"
-     varSetting(16)="FPSCapBarf"
-     strDescription(16)="The target FPS to render the game at, Uncapped or 40-240. Increments by 20 units at base. Decreasing may improve performance consistency, but in most cases you should aim for 60 or above."
-     OverrideLabelValues(16)="Uncapped|40|60|80|100|120|140|160|180|200|220|240"
-     strSetting(17)="Start Game Fullscreen"
-     varSetting(17)="BarfStartupFullscreen"
-     strDescription(17)="Toggle whether the game starts in windowed or fullscreen mode automatically. Changing this will toggle your current fullscreen status for convenience."
-     OverrideSettingCaps(18)=2
-     strSetting(18)="UI Scaling"
-     varSetting(18)="BarfUIScale"
-     strDescription(18)="The scale with which to draw the user interface. Available in 1x and 2x, thanks to Kentie's hard work on DX1. Do note: 2x may be too large for some screens in VMD, depending on target resolution."
-     OverrideLabelValues(18)="1x|2x"
-     strSetting(19)="VSync"
-     varSetting(19)="VSyncBarf"
-     strDescription(19)="The whether or not to slow FPS down to at most 60, in order to eliminate screen tearing caused by rapid changes on the display."
-     //OverrideSettingCaps(19)=7
-     ///strSetting(19)="Render Device (Backup)"
-     ///varSetting(19)="RenderDeviceBarf"
-     ///strDescription(19)="If the render device window doesn't work for you, you may change it here. It will only cycle through valid, existing devices. Restart to apply."
-     ///OverrideLabelValues(19)="3DFX Glide (Old)|Software (Old)|Open GL|DirectX 7 (Old)|DirectX 9|DirectX 10|DirectX 11|Unknown"
+     strSetting(16)="D3D10/11 Precaching"
+     varSetting(16)="bD3DPrecachingEnabled"
+     strDescription(16)="Toggle D3D10/11 precaching, for optimal performance with DDS texture enhancements. Caching will be loaded when enabled. Don't panic."
+     OverrideSettingCaps(17)=11
+     strSetting(17)="FPS Cap"
+     varSetting(17)="FPSCapBarf"
+     strDescription(17)="The target FPS to render the game at, Uncapped or 40-240. Increments by 20 units at base. Decreasing may improve performance consistency, but in most cases you should aim for 60 or above."
+     OverrideLabelValues(17)="Uncapped|40|60|80|100|120|140|160|180|200|220|240"
+     strSetting(18)="Start Game Fullscreen"
+     varSetting(18)="BarfStartupFullscreen"
+     strDescription(18)="Toggle whether the game starts in windowed or fullscreen mode automatically. Changing this will toggle your current fullscreen status for convenience."
+     OverrideSettingCaps(19)=3
+     strSetting(19)="UI Scaling"
+     varSetting(19)="BarfUIScale"
+     strDescription(19)="The scale with which to draw the user interface. Available in 1x and 2x, thanks to Kentie's hard work on DX1. Do note: 2x may be too large for some screens in VMD, depending on target resolution."
+     OverrideLabelValues(19)="Auto|1x|2x"
+     strSetting(20)="VSync"
+     varSetting(20)="VSyncBarf"
+     strDescription(20)="The whether or not to slow FPS down to at most 60, in order to eliminate screen tearing caused by rapid changes on the display."
+     //OverrideSettingCaps(20)=7
+     ///strSetting(20)="Render Device (Backup)"
+     ///varSetting(20)="RenderDeviceBarf"
+     ///strDescription(20)="If the render device window doesn't work for you, you may change it here. It will only cycle through valid, existing devices. Restart to apply."
+     ///OverrideLabelValues(20)="3DFX Glide (Old)|Software (Old)|Open GL|DirectX 7 (Old)|DirectX 9|DirectX 10|DirectX 11|Unknown"
      
-     OverrideSettingCaps(20)=1
-     strSetting(20)=" "
-     varSetting(20)="BARF"
-     OverrideLabelValues(19)=" "
-     strDescription(20)=""
      OverrideSettingCaps(21)=1
-     strSetting(21)="----Camera Settings-----------"
+     strSetting(21)=" "
      varSetting(21)="BARF"
-     OverrideLabelValues(21)="----"
+     OverrideLabelValues(21)=" "
      strDescription(21)=""
+     OverrideSettingCaps(22)=1
+     strSetting(22)="----Camera Settings-----------"
+     varSetting(22)="BARF"
+     OverrideLabelValues(22)="----"
+     strDescription(22)=""
      
-     strSetting(22)="Dynamic Camera"
-     varSetting(22)="bUseDynamicCamera"
-     strDescription(22)="If enabled, the player's view will be offset forward slightly, much like one's eyeballs in their actual skull. In very rare cases, players may get motion sickness from this effect."
-     strSetting(23)="Hand Tilt Effects"
-     varSetting(23)="bAllowPlayerHandsTiltEffects"
-     strDescription(23)="If enabled, immersive, empty player hands will sway the screen subtly in stride with their current action."
-     strSetting(24)="Pickup Tilt Effects"
-     varSetting(24)="bAllowPickupTiltEffects"
-     strDescription(24)="If enabled, animations on the keyring, lockpick, and multitool will slightly sway the screen."
-     strSetting(25)="Weapon Tilt Effects"
-     varSetting(25)="bAllowTiltEffects"
-     strDescription(25)="If enabled, most animations on weapons will slightly sway the screen."
+     strSetting(23)="Dynamic Camera"
+     varSetting(23)="bUseDynamicCamera"
+     strDescription(23)="If enabled, the player's view will be offset forward slightly, much like one's eyeballs in their actual skull. In very rare cases, players may get motion sickness from this effect."
+     strSetting(24)="Hand Tilt Effects"
+     varSetting(24)="bAllowPlayerHandsTiltEffects"
+     strDescription(24)="If enabled, immersive, empty player hands will sway the screen subtly in stride with their current action."
+     strSetting(25)="Pickup Tilt Effects"
+     varSetting(25)="bAllowPickupTiltEffects"
+     strDescription(25)="If enabled, animations on the keyring, lockpick, and multitool will slightly sway the screen."
+     strSetting(26)="Weapon Tilt Effects"
+     varSetting(26)="bAllowTiltEffects"
+     strDescription(26)="If enabled, most animations on weapons will slightly sway the screen."
      
-     OverrideSettingCaps(26)=1
-     strSetting(26)=" "
-     varSetting(26)="BARF"
-     OverrideLabelValues(26)=" "
-     strDescription(26)=""
      OverrideSettingCaps(27)=1
-     strSetting(27)="----HUD Settings------------"
+     strSetting(27)=" "
      varSetting(27)="BARF"
-     OverrideLabelValues(27)="----"
+     OverrideLabelValues(27)=" "
      strDescription(27)=""
+     OverrideSettingCaps(28)=1
+     strSetting(28)="----HUD Settings------------"
+     varSetting(28)="BARF"
+     OverrideLabelValues(28)="----"
+     strDescription(28)=""
      
-     strSetting(28)="HUD Master Visibility"
-     varSetting(28)="bHUDVisible"
-     strDescription(28)="Whether or not to display the entirety of the HUD. Only augmentation HUD and visual effects will be drawn over the game view if it is disabled."
-     strSetting(29)="Aim Focuser Visibility"
-     varSetting(29)="bAimFocuserVisible"
-     strDescription(29)="Whether or not to display how focused your aim is, which acts a sort of secondary crosshair."
-     strSetting(30)="Ammo Display Visibility"
-     varSetting(30)="bAmmoDisplayVisible"
-     strDescription(30)="Whether or not to display a small portrait of your current item, along with its remaining resources."
-     OverrideSettingCaps(31)=3
-     strSetting(31)="Aug Display Visibility"
-     varSetting(31)="BarfAugDisplayVisibility"
-     strDescription(31)="The degree to which aug icons will be shown."
-     OverrideLabelValues(31)="All|Active|None"
-     strSetting(32)="Compass Visibility"
-     varSetting(32)="bCompassVisible"
-     strDescription(32)="Whether or not to display the compass, for knowing your directional bearing."
-     strSetting(33)="Crosshair Visibility"
-     varSetting(33)="bCrosshairVisible"
-     strDescription(33)="Whether or not to display the crosshair and the hit indicator."
-     strSetting(34)="Drone Alliance Visibility"
-     varSetting(34)="bDroneAllianceVisible"
-     strDescription(34)="Whether or not to display what your drones (if any) think of the target you're looking at."
-     strSetting(35)="Health Portrait Visibility"
-     varSetting(35)="bHitDisplayVisible"
-     strDescription(35)="Whether or not the paper doll of your character's health is displayed, along with its various bars and a directional damage indicator."
-     strSetting(36)="Hit Indicator Icon"
-     varSetting(36)="bHitIndicatorHasVisual"
-     strDescription(36)="If enabled, hits on enemies will be reflected with an indicator on your HUD. White shows a standard hit. Yellow shows an armor hit. Red shows a critical hit. Orange shows both."
-     strSetting(37)="Hit Indicator Sound"
-     varSetting(37)="bHitIndicatorHasAudio"
-     strDescription(37)="If enabled, headshots are reinforced with a 'crunch' sound, for satisfying feedback when you perform well, as well as giving clearer feedback."
-     strSetting(38)="Item Highlight Borders"
-     varSetting(38)="bFrobDisplayBordersVisible"
-     strDescription(38)="Whether or not to display a bounding box around objects within touching range."
-     strSetting(39)="Light Gem Visibility"
-     varSetting(39)="bLightGemVisible"
-     strDescription(39)="Whether or not to display a light gem that recolors itself based on how exposed you are to enemy vision."
-     strSetting(40)="Log Visibility"
-     varSetting(40)="bLogVisible"
-     strDescription(40)="Whether or not to display a text log with information and various flavor messages specific to VMD."
-     strSetting(41)="Object Belt Visibility"
-     varSetting(41)="bObjectBeltVisible"
-     strDescription(41)="Whether or not the object belt is displayed."
-     strSetting(42)="Object Name Visibility"
-     varSetting(42)="bObjectNames"
-     strDescription(42)="Whether or not to display item names for objects within touching range."
-     strSetting(43)="Skill Notifier Visibility"
-     varSetting(43)="bSkillNotifierVisible"
-     strDescription(43)="Whether or not to display icons notifying you of new skill rank ups being possible."
-     strSetting(44)="Smell Indicator Visibility"
-     varSetting(44)="bSmellIndicatorVisible"
-     strDescription(44)="Whether or not to display a set of icons related to active smells. They can always be checked in the status screen."
-     strSetting(45)="Subtitles Visibility"
-     varSetting(45)="bSubtitles"
-     strDescription(45)="Whether or not to display subtitles during conversations."
+     strSetting(29)="HUD Master Visibility"
+     varSetting(29)="bHUDVisible"
+     strDescription(29)="Whether or not to display the entirety of the HUD. Only augmentation HUD and visual effects will be drawn over the game view if it is disabled."
+     strSetting(30)="Aim Focuser Visibility"
+     varSetting(30)="bAimFocuserVisible"
+     strDescription(30)="Whether or not to display how focused your aim is, which acts a sort of secondary crosshair."
+     strSetting(31)="Ammo Display Visibility"
+     varSetting(31)="bAmmoDisplayVisible"
+     strDescription(31)="Whether or not to display a small portrait of your current item, along with its remaining resources."
+     OverrideSettingCaps(32)=3
+     strSetting(32)="Aug Display Visibility"
+     varSetting(32)="BarfAugDisplayVisibility"
+     strDescription(32)="The degree to which aug icons will be shown."
+     OverrideLabelValues(32)="All|Active|None"
+     strSetting(33)="Compass Visibility"
+     varSetting(33)="bCompassVisible"
+     strDescription(33)="Whether or not to display the compass, for knowing your directional bearing."
+     strSetting(34)="Crosshair Visibility"
+     varSetting(34)="bCrosshairVisible"
+     strDescription(34)="Whether or not to display the crosshair and the hit indicator."
+     strSetting(35)="Drone Alliance Visibility"
+     varSetting(35)="bDroneAllianceVisible"
+     strDescription(35)="Whether or not to display what your drones (if any) think of the target you're looking at."
+     strSetting(36)="Health Portrait Visibility"
+     varSetting(36)="bHitDisplayVisible"
+     strDescription(36)="Whether or not the paper doll of your character's health is displayed, along with its various bars and a directional damage indicator."
+     strSetting(37)="Hit Indicator Icon"
+     varSetting(37)="bHitIndicatorHasVisual"
+     strDescription(37)="If enabled, hits on enemies will be reflected with an indicator on your HUD. White shows a standard hit. Yellow shows an armor hit. Red shows a critical hit. Orange shows both."
+     strSetting(38)="Hit Indicator Sound"
+     varSetting(38)="bHitIndicatorHasAudio"
+     strDescription(38)="If enabled, headshots are reinforced with a 'crunch' sound, for satisfying feedback when you perform well, as well as giving clearer feedback."
+     strSetting(39)="Item Highlight Borders"
+     varSetting(39)="bFrobDisplayBordersVisible"
+     strDescription(39)="Whether or not to display a bounding box around objects within touching range."
+     strSetting(40)="Light Gem Visibility"
+     varSetting(40)="bLightGemVisible"
+     strDescription(40)="Whether or not to display a light gem that recolors itself based on how exposed you are to enemy vision."
+     strSetting(41)="Log Visibility"
+     varSetting(41)="bLogVisible"
+     strDescription(41)="Whether or not to display a text log with information and various flavor messages specific to VMD."
+     strSetting(42)="Object Belt Visibility"
+     varSetting(42)="bObjectBeltVisible"
+     strDescription(42)="Whether or not the object belt is displayed."
+     strSetting(43)="Object Name Visibility"
+     varSetting(43)="bObjectNames"
+     strDescription(43)="Whether or not to display item names for objects within touching range."
+     strSetting(44)="Skill Notifier Visibility"
+     varSetting(44)="bSkillNotifierVisible"
+     strDescription(44)="Whether or not to display icons notifying you of new skill rank ups being possible."
+     strSetting(45)="Smell Indicator Visibility"
+     varSetting(45)="bSmellIndicatorVisible"
+     strDescription(45)="Whether or not to display a set of icons related to active smells. They can always be checked in the status screen."
+     strSetting(46)="Subtitles Visibility"
+     varSetting(46)="bSubtitles"
+     strDescription(46)="Whether or not to display subtitles during conversations."
      
-     OverrideSettingCaps(46)=1
-     strSetting(46)=" "
-     varSetting(46)="BARF"
-     OverrideLabelValues(46)=" "
-     strDescription(46)=""
      OverrideSettingCaps(47)=1
-     strSetting(47)="----Gameplay Systems------------"
+     strSetting(47)=" "
      varSetting(47)="BARF"
-     OverrideLabelValues(47)="----"
+     OverrideLabelValues(47)=" "
      strDescription(47)=""
+     OverrideSettingCaps(48)=1
+     strSetting(48)="----Gameplay Systems------------"
+     varSetting(48)="BARF"
+     OverrideLabelValues(48)="----"
+     strDescription(48)=""
      
-     OverrideSettingCaps(48)=3
-     strSetting(48)="Addiction System"
-     varSetting(48)="bAddictionEnabled"
-     strDescription(48)="Set to what degree you can get addicted to substances: None, Major, or All. Minor is comprised of petty things such as sugar and caffeine."
-     OverrideLabelValues(48)="Off|Major|All"
-     strSetting(49)="Classic Skill Purchasing"
-     varSetting(48)="bClassicSkillPurchasing"
-     strDescription(48)="If enabled, purchasing skills will bring up a prompt menu instead of relying on held inputs."
-     strSetting(50)="Crafting System"
-     varSetting(50)="bCraftingSystemEnabled"
-     strDescription(50)="Enable or disable a crafting system, incorporating both Medicine and Hardware skills. On Nightmare and higher difficulty, this will also replace some loot sources with chemicals and scrap."
-     strSetting(51)="Instant Crafting"
-     varSetting(51)="bUseInstantCrafting"
-     strDescription(51)="If enabled, Hardware-based and Medicine-based crafting occurs instantly, and will not close menus unnecessarily."
-     strSetting(52)="Environmental Sounds"
-     varSetting(52)="bEnvironmentalSoundsEnabled"
-     strDescription(52)="If enabled, select sounds will play in the environment, but for immersive purposes. This includes the heartbeat sound at high stress and crafting sounds."
-     strSetting(53)="Hunger System"
-     varSetting(53)="bHungerEnabled"
-     strDescription(53)="Toggle whether you require food to sustain yourself. This system aims to be immersive and discourage save abuse on Gallows difficulty."
-     strSetting(54)="Hunger Bio Usage"
-     varSetting(54)="bBioHungerEnabled"
-     strDescription(54)="Toggle whether bio energy will be consumed instead of taking damage, if hunger runs out."
-     strSetting(55)="Immersive Killswitch"
-     varSetting(55)="bImmersiveKillswitch"
-     strDescription(55)="Toggle whether any situations with the killswitch will apply debuffs. This system aims to add immersion and challenge."
-     strSetting(56)="Smell System"
-     varSetting(56)="bSmellsEnabled"
-     strDescription(56)="Toggle whether foods and blood can produce smell profiles. This system aims to be immersive and discourages excessive food storage and especially excessive murder."
-     strSetting(57)="Skill Talents System"
-     varSetting(57)="bSkillAugmentsEnabled"
-     strDescription(57)="Enable or disable the talents system on top of normal skill progression. These add functional upgrades. When disabled, 'essential' talents will be treated as if boughten."
-     strSetting(58)="Stress System"
-     varSetting(58)="bStressEnabled"
-     strDescription(58)="Toggle whether injuries and environmental factors can make your character get stressed. If enabled, good management gives benefit vs no stress system at all."
+     OverrideSettingCaps(49)=3
+     strSetting(49)="Addiction System"
+     varSetting(49)="bAddictionEnabled"
+     strDescription(49)="Set to what degree you can get addicted to substances: None, Major, or All. Minor is comprised of petty things such as sugar and caffeine."
+     OverrideLabelValues(49)="Off|Major|All"
+     strSetting(50)="Classic Skill Purchasing"
+     varSetting(50)="bClassicSkillPurchasing"
+     strDescription(50)="If enabled, purchasing skills will bring up a prompt menu instead of relying on held inputs."
+     strSetting(51)="Crafting System"
+     varSetting(51)="bCraftingSystemEnabled"
+     strDescription(51)="Enable or disable a crafting system, incorporating both Medicine and Hardware skills. On Nightmare and higher difficulty, this will also replace some loot sources with chemicals and scrap."
+     strSetting(52)="Instant Crafting"
+     varSetting(52)="bUseInstantCrafting"
+     strDescription(52)="If enabled, Hardware-based and Medicine-based crafting occurs instantly, and will not close menus unnecessarily."
+     strSetting(53)="Environmental Sounds"
+     varSetting(53)="bEnvironmentalSoundsEnabled"
+     strDescription(53)="If enabled, select sounds will play in the environment, but for immersive purposes. This includes the heartbeat sound at high stress and crafting sounds."
+     strSetting(54)="Gunplay 2.0 (ALPHA)"
+     varSetting(54)="bUseGunplayVersionTwo"
+     strDescription(54)="When enabled, gunplay is radically overhauled to be more like that of a tactial shooter, versus Deus Ex's RPG-heavy RPG-shooter. While not game breaking, the balance and presentation is currently underbaked."
+     strSetting(55)="Hunger System"
+     varSetting(55)="bHungerEnabled"
+     strDescription(55)="Toggle whether you require food to sustain yourself. This system aims to be immersive and discourage save abuse on Gallows difficulty."
+     strSetting(56)="Hunger Bio Usage"
+     varSetting(56)="bBioHungerEnabled"
+     strDescription(56)="Toggle whether bio energy will be consumed instead of taking damage, if hunger runs out."
+     strSetting(57)="Immersive Killswitch"
+     varSetting(57)="bImmersiveKillswitch"
+     strDescription(57)="Toggle whether any situations with the killswitch will apply debuffs. This system aims to add immersion and challenge."
+     strSetting(58)="Smell System"
+     varSetting(58)="bSmellsEnabled"
+     strDescription(58)="Toggle whether foods and blood can produce smell profiles. This system aims to be immersive and discourages excessive food storage and especially excessive murder."
+     strSetting(59)="Skill Talents System"
+     varSetting(59)="bSkillAugmentsEnabled"
+     strDescription(59)="Enable or disable the talents system on top of normal skill progression. These add functional upgrades. When disabled, 'essential' talents will be treated as if boughten."
+     strSetting(60)="Stress System"
+     varSetting(60)="bStressEnabled"
+     strDescription(60)="Toggle whether injuries and environmental factors can make your character get stressed. If enabled, good management gives benefit vs no stress system at all."
      
-     OverrideSettingCaps(59)=1
-     strSetting(59)=" "
-     varSetting(59)="BARF"
-     OverrideLabelValues(59)=" "
-     strDescription(59)=""
-     OverrideSettingCaps(60)=1
-     strSetting(60)="----Misc Settings------------"
-     varSetting(60)="BARF"
-     OverrideLabelValues(60)="----"
-     strDescription(60)=""
+     OverrideSettingCaps(61)=1
+     strSetting(61)=" "
+     varSetting(61)="BARF"
+     OverrideLabelValues(61)=" "
+     strDescription(61)=""
+     OverrideSettingCaps(62)=1
+     strSetting(62)="----Misc Settings------------"
+     varSetting(62)="BARF"
+     OverrideLabelValues(62)="----"
+     strDescription(62)=""
      
-     strSetting(61)="Allow Any NG Plus"
-     varSetting(61)="bAllowAnyNGPlus"
-     strDescription(61)="If enabled, female JCs are allowed to NG plus into campaigns with improper use of pronouns, which may otherwise harm immersion."
-     strSetting(62)="Allow Female JC"
-     varSetting(62)="bAllowFemJC"
-     strDescription(62)="Enable this if the Lay D Denton Project (or another parallel project) is installed."
-     strSetting(63)="Allow Vanilla Reskins"
-     varSetting(63)="bVanillaReskinsEnabled"
-     strDescription(63)="If enabled, non-critical NPCs throughout the vanilla campaign will have their skins updated. This setting is only applied during a map's first load."
-     strSetting(64)="Controller Augs Display Points"
-     varSetting(64)="bAugControllerShowEnergyPoints"
-     strDescription(64)="If enabled, the controller aug menu will display raw energy points and not a percentage. Recommended for DX Rando."
+     strSetting(63)="Allow Any NG Plus"
+     varSetting(63)="bAllowAnyNGPlus"
+     strDescription(63)="If enabled, female JCs are allowed to NG plus into campaigns with improper use of pronouns, which may otherwise harm immersion."
+     strSetting(64)="Allow Female JC"
+     varSetting(64)="bAllowFemJC"
+     strDescription(64)="Enable this if the Lay D Denton Project (or another parallel project) is installed."
+     strSetting(65)="Allow Vanilla Reskins"
+     varSetting(65)="bVanillaReskinsEnabled"
+     strDescription(65)="If enabled, non-critical NPCs throughout the vanilla campaign will have their skins updated. This setting is only applied during a map's first load."
+     strSetting(66)="Controller Augs Display Points"
+     varSetting(66)="bAugControllerShowEnergyPoints"
+     strDescription(66)="If enabled, the controller aug menu will display raw energy points and not a percentage. Recommended for DX Rando."
+     strSetting(67)="Damage Gate Break Noise"
+     varSetting(67)="bDamageGateBreakNoise"
+     strDescription(67)="If enabled, enemies on high difficulties will make a distinct feedback sound for having their damage gates broken."
+     strSetting(68)="Immersive Player Hands"
+     varSetting(68)="bPlayerHandsEnabled"
+     strDescription(68)="If enabled, your empty hands will draw your actual hands on your screen, instead of nothing."
+     strSetting(69)="Jump Duck Sound"
+     varSetting(69)="bJumpDuckFeedbackNoise"
+     strDescription(69)="If enabled, Fit as a Fiddle's jump duck will make a noise for more feedback."
      
-     //strSetting(65)="Direct Mouse Input"
-     //varSetting(65)="BarfUseDirectInput"
-     //strDescription(65)="If enabled, direct mouse input will be used instead of standard mouse input. This may solve weird mouse movement for some users. Requires a game restart to take effect."
+     //strSetting(69)="Direct Mouse Input"
+     //varSetting(69)="BarfUseDirectInput"
+     //strDescription(69)="If enabled, direct mouse input will be used instead of standard mouse input. This may solve weird mouse movement for some users. Requires a game restart to take effect."
      
-     strSetting(66)="MEGH Recon Ping"
-     varSetting(66)="bMEGHRadarPing"
-     strDescription(66)="If enabled, the MEGH drone will produce radar pings when spotting targets for the first time."
-     strSetting(67)="Modded NG Music"
-     varSetting(67)="bModdedCharacterSetupMusic"
-     strDescription(67)="If enabled, non-vanilla campaigns may change out the character setup music with their main theme. Ya' know. For fun factor."
-     OverrideSettingCaps(68)=4
-     strSetting(68)="Realistic Roll Camera"
-     varSetting(68)="bRealisticRollCamera"
-     strDescription(68)="If enabled, using talents to roll around will move your camera like it would in real life. This can affect either the dodge roll, the fall/tactical roll, or both."
-     OverrideLabelValues(68)="Off|Dodge|Fall|Both"
-     strSetting(69)="Immersive Player Hands"
-     varSetting(69)="bPlayerHandsEnabled"
-     strDescription(69)="If enabled, your empty hands will draw your actual hands on your screen, instead of nothing."
-     strSetting(70)="Jump Duck Sound"
-     varSetting(70)="bJumpDuckFeedbackNoise"
-     strDescription(70)="If enabled, Fit as a Fiddle's jump duck will make a noise for more feedback."
-     strSetting(71)="Realtime UI"
-     varSetting(71)="bRealtimeUI"
-     strDescription(71)="If enabled, menus won't pause the game (except for certain crafting windows, the main menu, and the controller-friendly aug menu)"
-     strSetting(72)="Realtime Controller Augs"
-     varSetting(72)="bRealtimeControllerAugs"
-     strDescription(72)="If enabled, the controller-friendly aug menu will play in real time, instead of pausing the game. This is not affected by the above setting."
+     strSetting(70)="MEGH Recon Ping"
+     varSetting(70)="bMEGHRadarPing"
+     strDescription(70)="If enabled, the MEGH drone will produce radar pings when spotting targets for the first time."
+     strSetting(71)="Modded NG Music"
+     varSetting(71)="bModdedCharacterSetupMusic"
+     strDescription(71)="If enabled, non-vanilla campaigns may change out the character setup music with their main theme. Ya' know. For fun factor."
+     OverrideSettingCaps(72)=4
+     strSetting(72)="Realistic Roll Camera"
+     varSetting(72)="bRealisticRollCamera"
+     strDescription(72)="If enabled, using talents to roll around will move your camera like it would in real life. This can affect either the dodge roll, the fall/tactical roll, or both."
+     OverrideLabelValues(72)="Off|Dodge|Fall|Both"
+     strSetting(73)="Realtime Controller Augs"
+     varSetting(73)="bRealtimeControllerAugs"
+     strDescription(73)="If enabled, the controller-friendly aug menu will play in real time, instead of pausing the game. This is not affected by the above setting."
+     strSetting(74)="Realtime UI"
+     varSetting(74)="bRealtimeUI"
+     strDescription(74)="If enabled, menus won't pause the game (except for certain crafting windows, the main menu, and the controller-friendly aug menu)"
 }
