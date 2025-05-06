@@ -373,6 +373,25 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				{
 					A.Event = 'JocksElevatorTop';
 				}
+				
+				//MADDRES, 4/6/25: Broken elevator behavior. Fun times.
+				A = FindActorBySeed(class'DeusExMover', 38);
+				if (A != None)
+				{
+					DeusExMover(A).StayOpenTime = 4.0;
+					A.GoToState('TriggerOpenTimed');
+					A.Tag = 'eledoor03';
+				}
+				A = FindActorBySeed(class'Trigger', 2);
+				if (A != None)
+				{
+					A.Event = 'eledoor03';
+				}
+				A = FindActorBySeed(class'Dispatcher', 8);
+				if (A != None)
+				{
+					Dispatcher(A).OutEvents[0] = 'eledoor03';
+				}
 			}
 		break;
 		//06_HONGKONG_WANCHAI_UNDERWORLD: Fix credits count on counter lady.
