@@ -102,7 +102,7 @@ event InitWindow()
 	}
 	else
 	{
-		AddTimer(0.1, True,, 'DoPop');
+		AddTimer(0.1, False,, 'DoPop');
 		return;
 	}
 	
@@ -427,7 +427,7 @@ function UpdateInfo()
 	}
  	else
 	{
-  		AddTimer(0.1, True,, 'DoPop');
+  		AddTimer(0.1, False,, 'DoPop');
  	}
 	
 	if ((ChkAutoReload == None) && (Megh.bCanHack))
@@ -639,7 +639,7 @@ function bool ButtonActivated( Window buttonPressed )
 	switch(ButtonPressed)
 	{
 		case DoneButton:
-			AddTimer(0.1, True,, 'DoPop');
+			AddTimer(0.1, False,, 'DoPop');
 			bHandled = True;
 		break;
 		case TurnOffButton:
@@ -647,7 +647,7 @@ function bool ButtonActivated( Window buttonPressed )
 			
 			Megh.ReturnToItem();
 			Megh = None; //Clear the memory reference.
-			AddTimer(0.1, True,, 'DoPop');
+			AddTimer(0.1, False,, 'DoPop');
 			bHandled = true;
 		break;
 		
@@ -1027,18 +1027,18 @@ defaultproperties
      SyringeButtonSize=(X=53,Y=15)
      
      CustomNameEditButtonText="Edit"
-     ReloadButtonText="Reload"
-     UnloadButtonText="Unload"
-     EquipButtonText="Equip"
-     SwapButtonText="Swap"
-     UnequipButtonText="Unequip"
-     RepairButtonText="Repair"
-     RechargeButtonText="Charge"
-     GiveSyringeButtonText="Give"
-     TakeSyringeButtonText="Take"
+     ReloadButtonText="|&Reload"
+     UnloadButtonText="U|&nload"
+     EquipButtonText="|&Equip"
+     SwapButtonText="|&Swap"
+     UnequipButtonText="|&Unequip"
+     RepairButtonText="R|&epair"
+     RechargeButtonText="|&Charge"
+     GiveSyringeButtonText="|&Give"
+     TakeSyringeButtonText="Ta|&ke"
      StrSyringesLeft="%d Syringe(s)"
      
-     StrAutoReload="Auto Reload"
+     StrAutoReload="|&Auto Reload"
      StrNoWeapon="No weapon"
      
      Title="M.E.G.H. Management"
