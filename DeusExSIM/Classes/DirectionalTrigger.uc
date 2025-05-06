@@ -24,7 +24,7 @@ singular function Touch(Actor Other)
 		if (dotp > 0.0)
 			bDoIt = False;
 	}
-
+	
 	if (bDoIt)
 		Super.Touch(Other);
 }
