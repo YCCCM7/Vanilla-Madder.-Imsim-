@@ -5,6 +5,7 @@ class ProdMagazine extends VMDWeaponMagazine;
 
 defaultproperties
 {
+     bAmmoLookalike=True
      Mesh=LODMesh'VMDProdMag'
      Fragments(0)=LODMesh'VMDProdMag'
      NumFragmentTypes=1
