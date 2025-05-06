@@ -208,7 +208,7 @@ function Frob(Actor Frobber, Inventory frobWith)
 			}
 			else
 			{
-				if ((VMP != None) && (VMP.bCraftingSystemEnabled) && (VMP.SkillSystem != None) && (VMP.SkillSystem.GetSkillLevel(class'SkillMedicine') > 0))
+				if ((VMP != None) && (VMP.CanCraftMedical(True, True)))
 				{
 					VMDInvokeCraftingScreen(DeusExRootWindow(VMP.RootWindow));
 				}
