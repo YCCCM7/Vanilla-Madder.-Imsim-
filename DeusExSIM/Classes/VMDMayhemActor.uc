@@ -23,7 +23,7 @@ function Tick(float DT)
  		if (TweakTimer < 0.6)
 		{
 			TweakTimer += DT;
-		} 
+		}
 		else if (TweakTimer > -10)
  		{
  	 		TweakTimer = -30;
@@ -1280,12 +1280,13 @@ function PatrolPoint GetPatrolByTag(name Find)
 
 function int SpawnMapSpecificGrenades(int TMayhem)
 {
-	local bool bSpawnAll;
+	local bool bSpawnAll, bCarone;
 	local int i, TMission, MissionGrenadeSize[2], GRand[2], LocWater[10];
 	local string TMap;
 	local Vector TLocs[10];
 	local Rotator TRots[10];
 	local Mover TMovers[10];
+	local class<Mover> LoadClass, LoadClass2; //Thanks, carone movers.
 	
 	if (TMayhem < 75) return TMayhem;
 	
@@ -1719,6 +1720,56 @@ function int SpawnMapSpecificGrenades(int TMayhem)
 				TLocs[5] = vect(-4875, -730.4, -998.5);
 				TRots[5] = rot(16383, 15585, 32768);
 			break;
+			//1616161616161616 CARONE! 1616161616161616
+			case "16_HOTELCARONE_HOTEL":
+				bCarone = true;
+				LoadClass = class<Mover>(DynamicLoadObject("HotelCarone.CaroneElevator", class'Class', false));
+				LoadClass2 = class<Mover>(DynamicLoadObject("HotelCarone.CEDoor", class'Class', false));
+				
+				MissionGrenadeSize[0] = 8;
+				MissionGrenadeSize[1] = 8;
+				
+				//Floor 2 alarm that's super easy to turn off.
+				TLocs[0] = vect(1711.5, -5027, -5944.5);
+				TRots[0] = rot(0, 16383, 0);
+				
+				//Elevator up to top floors, from lobby. Too easy.
+				TLocs[1] = vect(2441, -5151, -6414);
+				TRots[1] = rot(16383, -16431, 32768);
+				TMovers[1] = PinpointMover(LoadClass, 8);
+				
+				//Floor 3 breakable panel to hostages, sneak attack route.
+				TLocs[2] = vect(1014, -3501, -5571);
+				TRots[2] = rot(0, -16383, 0);
+				
+				//Penthouse vent to sneak attack and wallbang the hostage takers.
+				TLocs[3] = vect(361, -5233, -2677);
+				TRots[3] = rot(0, 0, 0);
+				
+				//Floor 16 standard entrance. Forces us to use the multimover.
+				TLocs[4] = vect(365.5, -5183, -3795.5);
+				TRots[4] = rot(16383, 49354, 32768);
+				
+				//Floor 2 restraunt towards free shit and also the penthouse entrance.
+				TLocs[5] = vect(606.5, -5143.5, -5940);
+				TRots[5] = rot(0, 0, 0);
+				TMovers[5] = PinpointMover(LoadClass2, 62);
+			break;
+			case "16_HOTELCARONE_DXD":
+				bCarone = true;
+				LoadClass = class<Mover>(DynamicLoadObject("HotelCarone.CBreakableGlass", class'Class', false));
+				
+				MissionGrenadeSize[0] = 8;
+				MissionGrenadeSize[1] = 8;
+				
+				//Underwater passage to DXD.
+				TLocs[6] = vect(1149.5, -4363.5, -2318);
+				TRots[6] = rot(11251, -11891, 0);
+				
+				//To warehouse full of free shit.
+				TLocs[7] = vect(2356, -3536.5, -1867.5);
+				TRots[7] = rot(0, 16383, 0);
+				TMovers[7] = PinpointMover(LoadClass, 70);
 		}
 	}
 	
@@ -1739,11 +1790,11 @@ function int SpawnMapSpecificGrenades(int TMayhem)
 		GRand[0] = AltFakeRand(MissionGrenadeSize[0]);
 		if ((TMayhem >= 100) && (MissionGrenadeSize[1] > 0)) GRand[1] = AltFakeRand(MissionGrenadeSize[1]);
 		
-		if ((TLocs[GRand[0]] != Vect(0,0,0)) && (MayhemPlaceGrenade(RandomGrenadeClass(TMission, bool(LocWater[GRand[0]])), TLocs[GRand[0]], TRots[GRand[0]], TMovers[GRand[0]]) != None))
+		if ((TLocs[GRand[0]] != Vect(0,0,0)) && (MayhemPlaceGrenade(RandomGrenadeClass(TMission, bool(LocWater[GRand[0]]), bCarone), TLocs[GRand[0]], TRots[GRand[0]], TMovers[GRand[0]]) != None))
 		{
 			TMayhem -= 5;
 		}
-		if ((GRand[1] > -1) && (GRand[1] != GRand[0]) && (TLocs[GRand[1]] != Vect(0,0,0)) && (MayhemPlaceGrenade(RandomGrenadeClass(TMission, bool(LocWater[GRand[1]])), TLocs[GRand[1]], TRots[GRand[1]], TMovers[GRand[1]]) != None))
+		if ((GRand[1] > -1) && (GRand[1] != GRand[0]) && (TLocs[GRand[1]] != Vect(0,0,0)) && (MayhemPlaceGrenade(RandomGrenadeClass(TMission, bool(LocWater[GRand[1]]), bCarone), TLocs[GRand[1]], TRots[GRand[1]], TMovers[GRand[1]]) != None))
 		{
 			TMayhem -= 5;
 		}
