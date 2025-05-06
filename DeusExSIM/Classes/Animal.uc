@@ -594,20 +594,38 @@ function bool IsValidFood(Actor foodActor)
 {
 	//DXT fix ported.
 	if (foodActor == None || FoodActor == Self)
+	{
 		return false;
+	}
 	//MADDERS: Don't eat fading food. Fragments, I'm looking at you.
 	else if (FoodActor.Lifespan > 0)
+	{
 		return false;
+	}
 	else if (foodActor.bDeleteMe)
+	{
 		return false;
+	}
 	else if (foodActor.Region.Zone.bWaterZone)
+	{
 		return false;
-	else if ((foodActor.Physics == PHYS_Swimming) || (foodActor.Physics == PHYS_Falling))
+	}
+	else if (foodActor.Physics == PHYS_Swimming || foodActor.Physics == PHYS_Falling)
+	{
 		return false;
+	}
 	else if (!ClassIsChildOf(foodActor.Class, FoodClass))
+	{
 		return false;
+	}
+	else if (FoodActor.GetPropertyText("bBlockAnimalFoodRoutines") ~= "True")
+	{
+		return false;
+	}
 	else
+	{
 		return true;
+	}
 }
 
 function bool InterestedInFood()
