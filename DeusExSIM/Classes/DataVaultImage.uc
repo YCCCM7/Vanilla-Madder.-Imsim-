@@ -109,8 +109,11 @@ auto state Pickup
 			bHidden = True;
 			bValid = DeusExPlayer(Other).AddImage(Self);
 		}
-		if (bValid)
-			Super.Frob(Other, frobWith);
+		
+		//MADDERS, 4/25/25: So uh... What if we didn't add these to the inventory chain?
+		//Does it matter? It doesn't seem to, unlike its impact on the inventory limit.
+		//if (bValid)
+		//	Super.Frob(Other, frobWith);
 	}
 
 }
