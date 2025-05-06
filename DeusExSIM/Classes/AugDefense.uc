@@ -115,7 +115,7 @@ state Active
 				if (mindist < LevelValues[CurrentLevel])
 				{
 					//MADDERS, 12/28/23: Hack so LAW stops insta-nuking walton. Similar to MP code anyways.
-					MinProj.Damage = MinProj.Damage/3;
+					MinProj.Damage = MinProj.Damage/4;
             				minproj.bAggressiveExploded = True;
 					minproj.Explode(minproj.Location, vect(0,0,1));
 					VMBP.PlaySound(sound'ProdFire', SLOT_None,,,, 2.0 * GSpeed);
