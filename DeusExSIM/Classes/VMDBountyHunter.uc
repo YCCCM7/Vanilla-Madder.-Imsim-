@@ -169,6 +169,28 @@ function VMDUpdateHunterBarks()
 {
 	local string OldPackageName;
 	local DeusExLevelInfo DXLI;
+	local VMDBufferPlayer VMP;
+	
+	VMP = GetLastVMP();
+	if (VMP == None) return;
+	
+	switch(VMP.SelectedCampaign)
+	{				
+		case "CARONE":
+		case "DISCLOSURE":
+		case "HOTEL CARONE":
+		case "MUTATIONS":
+		case "REVISION":
+		case "CUSTOM REVISION":
+		case "VANILLA":
+		case "ZODIAC":
+		case "":
+			//MADDERS, 3/26/25: These are A-Okay for us to be yelling "Denton" all the time.
+		break;
+		default:
+			return; //These however, are not.
+		break;
+	}
 	
 	//MADDERS, 6/22/24: Universal bark loading. Devious, but effective.
 	forEach AllActors(class'DeusExLevelInfo', DXLI)
