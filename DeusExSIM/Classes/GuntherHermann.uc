@@ -125,15 +125,17 @@ function Explode(optional vector HL)
 	HurtRadius(explosionDamage, explosionRadius, 'Exploded', explosionDamage*100, Location);
 }
 
-/*function GotoDisabledState(name damageType, EHitLocation hitPos)
+function GotoDisabledState(name damageType, EHitLocation hitPos)
 {
-	if (!bCollideActors && !bBlockActors && !bBlockPlayers)
+	/*if (!bCollideActors && !bBlockActors && !bBlockPlayers)
 		return;
 	if (CanShowPain())
 		TakeHit(hitPos);
 	else
-		GotoNextState();
-}*/
+		GotoNextState();*/
+	
+	Super.GoToDisabledState(DamageType, HitPos);
+}
 
 //
 // special Gunther killswitch animation state
