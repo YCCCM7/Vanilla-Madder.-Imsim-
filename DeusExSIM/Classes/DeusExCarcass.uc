@@ -79,6 +79,10 @@ var VMDSmellManager BloodSmell;
 //MADDERS, 8/26/23: Save this so our weight is consistent.
 var float BaseMass;
 
+//MADDERS, 4/29/25: For corpses that shouldn't be eaten.
+//We do not clone this to POV, because picking us up and dropping us implies we're no longer an exception.
+var bool bBlockAnimalFoodRoutines;
+
 //MADDERS: Allow us to return the firing sytem type. Currently only used for open chamber augment.
 function int VMDOwnerFiringSystem(Ammo A)
 {
@@ -568,6 +572,7 @@ function InitFor(Actor Other)
 	{
 		//MADDERS, 9/11/21: Clone fatness for goofy stuff.
 		Fatness = Other.Fatness;
+		DrawScale = Other.DrawScale;
 		
 		MyPawnSeed = class'VMDStaticFunctions'.Static.DeriveActorSeed(Other);
 		
@@ -644,6 +649,7 @@ function InitFor(Actor Other)
 
 		if (SP != None)
 		{
+			bImportant = SP.bImportant;
 			if (SP.bBurnedToDeath)
 			{
 				//G-Flex: Give burn victims close to 1/4 corpse-health instead of 1
@@ -2178,8 +2184,7 @@ function KillCarcass(pawn Killer, name damageType, vector HitLocation)
 		P.FlagBase.SetBool(PersonalFlag, True);
 		P.FlagBase.SetExpiration(PersonalFlag, FLAG_Bool, 0);
 		PersonalFlag = P.RootWindow.StringToName(FlagName$"_Unconscious");
-		P.FlagBase.SetBool(PersonalFlag, False);
-		P.FlagBase.SetExpiration(PersonalFlag, FLAG_Bool, 0);
+		P.FlagBase.DeleteFlag(PersonalFlag, FLAG_Bool);
 	}
 	
 	//Update our name.
