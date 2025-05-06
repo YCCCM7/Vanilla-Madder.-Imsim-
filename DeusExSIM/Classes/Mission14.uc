@@ -58,6 +58,7 @@ function Timer()
 	local ScubaDiver diver;
 	local GarySavage Gary;
 	local WaltonSimons Walton;
+	local ThrownProjectile grenades;
 	local Actor part;
 	local BobPage Bob;
 
@@ -102,6 +103,15 @@ function Timer()
 		{
 			if (flags.GetBool('DL_downloaded_Played'))
 			{
+				if (class'VMDStaticFunctions'.Static.VMDUseDifficultyModifier(Player, "ENEMY DISARM EXPLOSIVES"))
+				{
+					foreach AllActors(class'ThrownProjectile', grenades)
+					{
+						if ((grenades.IsA('LAM') || grenades.IsA('GasGrenade') || grenades.IsA('EMPGrenade') || grenades.IsA('NanovirusGrenade')) && !grenades.bDisabled)
+							grenades.bDisabled = True;
+					}
+				}
+				
 				foreach AllActors(class'WaltonSimons', Walton)
 				{
 					Walton.EnterWorld();
