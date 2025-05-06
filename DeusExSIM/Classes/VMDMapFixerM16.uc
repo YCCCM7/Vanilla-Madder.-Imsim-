@@ -92,6 +92,18 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				DXLI.MissionNumber = 15;
 			}
 			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				//MADDERS, 4/29/25: HCPaulDenton is a PaulDenton child class.
+				//Give him the supplies he needs to succeed.
+				VMBP = VMDBufferPawn(TPawn);
+				if (PaulDenton(VMBP) != None)
+				{
+					VMBP.AddToInitialInventory(class'BioelectricCell', 6);
+					VMBP.AddToInitialInventory(class'Medkit', 4);
+				}
+			}
+			
 			//MADDERS, 4/3/24: HC NG Plus.
 			//6/20/24: Actually found a better way to do this lol.
 			/*NGPortal = Spawn(class'VMDNGPlusPortal',,, Vect(8444, 29395, -8964), Rot(0, 0, 0));
@@ -102,6 +114,11 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		//Additionally, there's at least 1 keypad with bad collision vs drawscale. RS2020 flashbacks.
 		//Finally, there's some NPCs with vomit for names, so we gotta make it more human friendly, FFS.
 		case "16_HOTELCARONE_HOTEL":
+			Spawn(class'CrateUnbreakableLarge',,, Vect(799,-5562,-6360));
+			Spawn(class'CrateUnbreakableLarge',,, Vect(707,-5556,-6360));
+			Spawn(class'CrateUnbreakableMed',,, Vect(755,-5541,-6266));
+			Spawn(class'CrateUnbreakableSmall',,, Vect(693,-5519,-6274));
+			
 			forEach AllActors(class'Keypad', KP)
 			{
 				if (KP != None)
@@ -240,12 +257,40 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 			
 			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
 			{
-				SP = ScriptedPawn(TPawn);
-				/*if (JosephManderley(SP) != None)
+				//MADDERS, 4/29/25: This is Mr Leiderhosen, and he extends Walton Simons.
+				//Give him some supplies and new aug stats.
+				VMBP = VMDBufferPawn(TPawn);
+				if ((VMBP != None) && (VMBP.IsA('Langly')))
 				{
-					//MADDERS: Eliminate reactions here.
-					DumbAllReactions(SP);
-				}*/
+					VMBP.Energy = 150;
+					VMBP.EnergyMax = 150;
+					VMBP.AddToInitialInventory(class'BioelectricCell', 6);
+					VMBP.AddToInitialInventory(class'Medkit', 3);
+					VMBP.VMDWipeAllAugs();
+					VMBP.DefaultAugs[0] = class'AugBallistic';
+					VMBP.DefaultAugs[1] = class'AugShield';
+					VMBP.DefaultAugs[2] = class'AugEnviro';
+					VMBP.DefaultAugs[3] = class'AugVision';
+					VMBP.DefaultAugs[4] = class'AugHealing';
+					VMBP.DefaultAugs[5] = class'AugEMP';
+					VMBP.DefaultAugs[6] = class'AugMuscle';
+					VMBP.VMDInitializeSubsystems();
+					
+					VMBP.HealthHead = 300;
+					VMBP.HealthTorso = 300;
+					VMBP.HealthArmLeft = 300;
+					VMBP.HealthArmRight = 300;
+					VMBP.HealthLegLeft = 300;
+					VMBP.HealthLegRight = 300;
+					VMBP.Health = 300;
+					VMBP.StartingHealthValues[0] = VMBP.HealthHead;
+					VMBP.StartingHealthValues[1] = VMBP.HealthTorso;
+					VMBP.StartingHealthValues[2] = VMBP.HealthArmLeft;
+					VMBP.StartingHealthValues[3] = VMBP.HealthArmRight;
+					VMBP.StartingHealthValues[4] = VMBP.HealthLegLeft;
+					VMBP.StartingHealthValues[5] = VMBP.HealthLegRight;
+					VMBP.StartingHealthValues[6] = VMBP.Health;
+				}
 			}
 		break;
 		//16_THE_HQ: Broken door pivots galore.
