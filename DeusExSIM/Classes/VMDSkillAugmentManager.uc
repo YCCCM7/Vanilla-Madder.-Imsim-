@@ -686,7 +686,7 @@ defaultproperties
      SkillAugmentSkillRequired(12)=class'SkillDemolition'
      //4.) Mines to detonate faster and are disarmed more easily.
      SkillAugmentNames(13)="Frequency Tuning"
-     SkillAugmentDescs(13)="~The detection speed of your mines is boosted, scaling with skill level.|n~The detection speed of enemy mines is reduced by 75%, scaling with skill level."
+     SkillAugmentDescs(13)="~The detection speed of your mines is boosted, scaling with skill level.|n~The detection speed of enemy mines is reduced by 66%, scaling with skill level.|n~Your mines become immune to Aggressive Defense System."
      SkillAugmentIDs(13)=DemolitionMineHandling
      SkillAugmentAssumed(13)=1
      SkillAugmentLevel(13)=1
@@ -883,7 +883,7 @@ defaultproperties
      SkillAugmentSkillRequired(33)=class'SkillTech'
      //2.) Faster hack timeline	(trained)
      SkillAugmentNames(34)="Speed Dial"
-     SkillAugmentDescs(34)="~All electronic bypassing progresses 33% faster, although it is no more efficient in output.|n~Failed rush attempts now produce far less noise, scaling with skill level."
+     SkillAugmentDescs(34)="~All electronic bypassing progresses 66% faster, although it is no more efficient in output.|n~Failed rush attempts now produce far less noise, scaling with skill level."
      SkillAugmentIDs(34)=ElectronicsSpeed
      SkillAugmentAssumed(34)=0
      SkillAugmentLevel(34)=2
@@ -1330,5 +1330,16 @@ defaultproperties
      SecondarySkillAugmentRequired(75)=
      SecondarySkillAugmentSkillRequired(75)=class'SkillWeaponLowTech'
      
-     //ACTUAL LAST USED is 75!
+     //INFILTRATION EXPANSION!
+     //5.) Poison is less noticeable. Interesting, given that poison is not weapon type specific anymore.
+     SkillAugmentNames(76)="Null Aura"
+     SkillAugmentDescs(76)="~Tranquilizer poisons no longer alert animals of your presence|n~Tranquilizer poisons are no longer easily traced to you by neutral parties and allies.|n~Stealing noteworthy items found in the world no longer generates noise, although it can still be seen."
+     SkillAugmentIDs(76)=LockpickPoisonIdentity
+     SkillAugmentAssumed(76)=0
+     SkillAugmentLevel(76)=1
+     SkillAugmentLevelRequired(76)=1
+     SkillAugmentRequired(76)=
+     SkillAugmentSkillRequired(76)=class'SkillLockpicking'
+
+     //ACTUAL LAST USED is 76!
 }
