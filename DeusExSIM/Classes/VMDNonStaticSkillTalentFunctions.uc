@@ -836,7 +836,7 @@ defaultproperties
     SkillTalentPos(32)=(X=146,Y=863)
     SkillTalentIDs(33)=LockpickScent
     SkillTalentIcons(33)="Lockpicking"
-    SkillTalentPos(33)=(X=293,Y=1075)
+    SkillTalentPos(33)=(X=247,Y=1107)
     SkillTalentIDs(34)=LockpickStartStealth
     SkillTalentIcons(34)="Lockpicking"
     SkillTalentPos(34)=(X=145,Y=1074)
@@ -850,8 +850,8 @@ defaultproperties
     MapBranchingSize(35)=(X=128,Y=64)
     MapBranchingTexture(36)=Texture'SkillMapBranchLockpicking01D'
     MapBranchingTalent(36)=LockpickScent
-    MapBranchingPos(36)=(X=286,Y=1024)
-    MapBranchingSize(36)=(X=64,Y=64)
+    MapBranchingPos(36)=(X=276,Y=1024)
+    MapBranchingSize(36)=(X=64,Y=128)
     MapBranchingTexture(37)=Texture'SkillMapBranchLockpicking01C'
     MapBranchingTalent(37)=LockpickStartStealth
     MapBranchingPos(37)=(X=198,Y=1028)
@@ -1216,8 +1216,16 @@ defaultproperties
     MapBranchingPos(87)=(X=284,Y=420)
     MapBranchingSize(87)=(X=8,Y=256)
     
-    //ACTUAL LAST TALENT USED IS 75!
-    //ACTUAL LAST BRANCH USED IS 86!
+    SkillTalentIDs(76)=LockpickPoisonIdentity
+    SkillTalentIcons(76)="Lockpicking"
+    SkillTalentPos(76)=(X=339,Y=1107)
+    MapBranchingTexture(88)=Texture'SkillMapBranchLockpicking01E'
+    MapBranchingTalent(88)=LockpickPoisonIdentity
+    MapBranchingPos(88)=(X=290,Y=1025)
+    MapBranchingSize(88)=(X=128,Y=128)
+	
+    //ACTUAL LAST TALENT USED IS 76!
+    //ACTUAL LAST BRANCH USED IS 88!
     
     SkillCoreDescs(0)="The covert manipulation of computers, ATMS, security consoles. Actions taken during hacking will increase the risk of being detected."
     SkillLevelDescsA(0)="|n~An agent can use terminals normally, but cannot hack without resonating with Software.|n*If they are resonating, they may hack for 33%% less time and 50%% less cash rewards than standard."
