@@ -218,7 +218,7 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						SP.ChangeAlly('GoodGuyUNATCO', 1.0, true);
 						SP.ChangeAlly('UNATCO', 1.0, true);
 					}
-					else if (SP.Alliance == 'UNATCO')
+					else if ((SP != None) && (SP.Alliance == 'UNATCO'))
 					{
 						SP.ChangeAlly('GoodGuyUNATCO', 1.0, true);
 					}
