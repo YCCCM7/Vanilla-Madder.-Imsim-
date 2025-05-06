@@ -95,16 +95,13 @@ defaultproperties
      reloadTime=4.000000
      BaseAccuracy=0.250000
      MinWeaponAcc=0.200000
-     AmmoName=Class'DeusEx.Ammo762mm'
      bInstantHit=True
      shakemag=200.000000
-     FireSound=Sound'DeusExSounds.Weapons.AssaultGunFire'
      AltFireSound=Sound'DeusExSounds.Weapons.AssaultGunReloadEnd'
      CockingSound=Sound'DeusExSounds.Weapons.AssaultGunReload'
      SelectSound=Sound'DeusExSounds.Weapons.AssaultGunSelect'
      InventoryGroup=4
      bNameCaseSensitive=False
-     PlayerViewOffset=(X=16.000000,Y=-5.000000,Z=-11.500000)
      PlayerViewMesh=LodMesh'DeusExItems.AssaultGun'
      LeftPlayerViewMesh=LodMesh'AssaultGunLeft'
      PickupViewMesh=LodMesh'DeusExItems.AssaultGunPickup'
