@@ -598,6 +598,13 @@ function EEventAction SetupEventTransferObject( ConEventTransferObject event, ou
 		log("  Conversation = " $ con.conName);
 		return nextAction;
 	}
+	
+	if (event.giveObject == None)
+	{
+		Log("SetupEventTransferObject: WARNING! giveObject does not exist!");
+		log("  Conversation = " $ con.conName);
+		return nextAction;
+	}
 
 	// First, check to see if the giver actually has the object.  If not, then we'll
 	// fabricate it out of thin air.  (this is useful when we want to allow
