@@ -45,18 +45,18 @@ function PlayBeepSound( float Range, float Pitch, float volume )
 
 simulated function Tick(float deltaTime)
 {
-	local ScriptedPawn P;
-	local DeusExPlayer Player;
-	local Vector dist, HitLocation, HitNormal;
-	local float blinkRate, mult, skillDiff;
-	local float proxRelevance;
-	local Pawn curPawn;
 	local bool pass;
-	local Actor HitActor;
+	local float blinkRate, mult, skillDiff, proxRelevance;
+	local Vector dist, HitLocation, HitNormal;
+	local Actor A, HitActor;
+	local DeusExPlayer Player;
+	local Pawn curPawn;
+	local ScriptedPawn P;
 	
-	local Actor A, TSupported;
-	local float DetectMath, Volume;
 	local bool bTransCheck;
+	local float DetectMath, Volume, RadDiff, HeightDiff, HeightDiff2;
+	local Actor TSupported;
+	local Decoration TDeco;
 	
 	time += deltaTime;
 	
@@ -163,7 +163,7 @@ simulated function Tick(float deltaTime)
 							PlayBeepSound( 1280, 2.0*VMDGetMiscPitch2(), 3.0 );
 					}
 				}
-
+				
 				// if we have been triggered, count down based on skill
 				if (skillTime > 0)
 					skillTime -= deltaTime;
@@ -186,62 +186,90 @@ simulated function Tick(float deltaTime)
 				if (proxCheckTime>proxRelevance)
 				{
 					proxCheckTime = 0;
-
+					
 					// pre-placed explosives are only prox triggered by the player
-					if (Owner == None)
+					if ((Owner == None) && (SkillTime == 0))
 					{
-						foreach RadiusActors(class'DeusExPlayer', Player, proxRadius*4)
+						foreach RadiusActors(class'Actor', A, proxRadius*4)
 						{
-							//MADDERS, 3/10/21: Thanks DXT, gonna yoink that radar trans, too.
-							bTransCheck = false;
-							if ((Player != None) && (Player.AugmentationSystem != None))
+							Dist = A.Location - Location;
+							if (VSize(Dist) >= ProxRadius)
 							{
-            							if (player.AugmentationSystem.GetAugLevelValue(class'AugRadarTrans') != -1.0)
-								{
-               								bTransCheck = true;
-	  							}
+								continue;
 							}
-							
-							// the owner won't set it off, either
-							//MADDERS: Invisible cheat disables mine detonation now.
-							if ((Player != Owner) && (Player.bDetectable) && (!bTransCheck))
+							Player = DeusExPlayer(A);
+							TDeco = Decoration(A);
+							if ((TDeco != None) && (VSize(TDeco.Velocity) > 100) && (TDeco.Physics == PHYS_Falling))
 							{
-								dist = Player.Location - Location;
-								if ((VSize(dist) < proxRadius) && (FastTrace(Location, Player.Location)))
+								if (Carcass(TDeco) != None)
 								{
-									if (skillTime == 0)
+									if (FastTrace(TDeco.Location, Location))
 									{
-										DetectMath = VMDGetSkillLevel(Player);
-										//MADDERS: Hideous, nasty, ugly tweaks for skill levels and scaling them down.
-										if (Abs(DetectMath) <= 0.5)
-										{
-											DetectMath /= 1.5625;
-										}
-										
-										if ((VMDBufferPlayer(Player) != None) && (!VMDBufferPlayer(Player).HasSkillAugment('DemolitionMineHandling')))
-										{
-											skillTime = FClamp(-5.0 * DetectMath, 0.5, 5.0);
-										}
-										else
-										{
-											skillTime = FClamp(-20.0 * DetectMath, 0.5, 5.0);
-										}
+										SkillTime = 1.0;
+										break;
 									}
+								}
+								else
+								{
+									HeightDiff = Abs(TDeco.CollisionHeight - 47.5);
+									HeightDiff2 = Abs(TDeco.CollisionHeight - 32);
+									RadDiff = Abs(TDeco.CollisionRadius - 20.0);
+									if ((RadDiff < 10) && (HeightDiff < 25 || HeightDiff2 < 16) && (FastTrace(TDeco.Location, Location)))
+									{
+										skillTime = 1.0;
+										break;
+									}
+								}
+							}
+							else if (Player != None)
+							{
+								//MADDERS, 3/10/21: Thanks DXT, gonna yoink that radar trans, too.
+								bTransCheck = false;
+								//MADDERS, 3/26/25: Removed.
+								/*if ((Player != None) && (Player.AugmentationSystem != None))
+								{
+            								if (player.AugmentationSystem.GetAugLevelValue(class'AugRadarTrans') != -1.0)
+									{
+               									bTransCheck = true;
+	  								}
+								}*/
+								
+								// the owner won't set it off, either
+								//MADDERS: Invisible cheat disables mine detonation now.
+								if ((Player != Owner) && (Player.bDetectable) && (!bTransCheck) && (FastTrace(Location, Player.Location)))
+								{
+									DetectMath = VMDGetSkillLevel(Player);
+									//MADDERS: Hideous, nasty, ugly tweaks for skill levels and scaling them down.
+									//3/31/25: Removed. We now have better justification for frequency tuning.
+									/*if (Abs(DetectMath) <= 0.5)
+									{
+										DetectMath /= 1.5625;
+									}*/
+									
+									if ((VMDBufferPlayer(Player) != None) && (!VMDBufferPlayer(Player).HasSkillAugment('DemolitionMineHandling')))
+									{
+										skillTime = FClamp(-6.66 * DetectMath, 0.5, 5.0);
+									}
+									else
+									{
+										skillTime = FClamp(-20.0 * DetectMath, 0.5, 5.0);
+									}
+									break;
 								}
 							}
 						}
 					}
-					else
+					else if (SkillTime == 0)
 					{
 						// If in multiplayer, check other players
 						if (( Level.NetMode == NM_DedicatedServer) || ( Level.NetMode == NM_ListenServer))
 						{
 							curPawn = Level.PawnList;
-
+							
 							while ( curPawn != None )
 							{
 								pass = False;
-
+								
 								if ( curPawn.IsA('DeusExPlayer') )
 								{
 									Player = DeusExPlayer( curPawn );
@@ -290,28 +318,19 @@ simulated function Tick(float deltaTime)
 						{
 							foreach RadiusActors(class'ScriptedPawn', P, proxRadius*4)
 							{
+								dist = P.Location - Location;
 								// only "heavy" pawns will set this off
-								if ((P != None) && (VMDMegh(P) == None) && (VMDSidd(P) == None) && (P.Mass >= 40) && (FastTrace(P.Location, Location)))
+								if ((P != Owner) && (VMDMegh(P) == None) && (VMDSidd(P) == None) && (P.Mass >= 40) && (VSize(dist) < proxRadius) && (FastTrace(P.Location, Location)))
 								{
-									// the owner won't set it off, either
-									if (P != Owner)
+									if ((VMDBufferPlayer(Owner) != None) && (VMDBufferPlayer(Owner).HasSkillAugment('DemolitionMineHandling')))
 									{
-										dist = P.Location - Location;
-										if (VSize(dist) < proxRadius)
-										{
-											if (skillTime == 0)
-											{
-												if ((VMDBufferPlayer(Owner) != None) && (VMDBufferPlayer(Owner).HasSkillAugment('DemolitionMineHandling')))
-												{
-													skillTime = 1.0 + (VMDGetSkillLevel(VMDBufferPlayer(Owner)));
-												}
-												else
-												{
-													skillTime = 1.0;
-												}
-											}
-										}
+										skillTime = 1.0 + (VMDGetSkillLevel(VMDBufferPlayer(Owner)));
 									}
+									else
+									{
+										skillTime = 1.0;
+									}
+									break;
 								}
 							}
 						}
@@ -865,6 +884,14 @@ simulated function BeginPlay()
 	{
 		time = fuseLength;
 		bStuck = True;
+	}
+
+	if (VMDBufferPlayer(Owner) != None)
+	{
+		if (VMDBufferPlayer(Owner).HasSkillAugment('DemolitionMineHandling'))
+		{
+			bIgnoresNanoDefense = true;
+		}
 	}
 }
 
