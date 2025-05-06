@@ -5,6 +5,8 @@ class Mission02 extends MissionScript;
 
 var Keypad ClinicKeypad;
 
+var MissionScriptIntegerMemory BatteryMem;
+
 // ----------------------------------------------------------------------
 // FirstFrame()
 // 
@@ -13,9 +15,12 @@ var Keypad ClinicKeypad;
 
 function FirstFrame()
 {
-	local ScriptedPawn pawn;
+	local int TerrieCount;
 	local AnnaNavarre Anna;
-
+	local MissionScriptIntegerMemory TMem;
+	local ScriptedPawn pawn;
+	local Terrorist T;
+	
 	Super.FirstFrame();
 	
 	if (localURL == "02_NYC_BATTERYPARK")
@@ -30,9 +35,19 @@ function FirstFrame()
 				flags.SetBool('VMD_AnnaBatteryGoodies', True,, 3);
 			}
 		}
+		
+		foreach AllActors(class'Terrorist', T, 'ClintonTerrorist')
+		{
+			TerrieCount++;
+		}
+		
+		TMem = GetBatteryMem();
+		if (TMem != None)
+		{
+			TMem.TrackedValue = TerrieCount;
+		}
 	}
-	
-	if (localURL == "02_NYC_STREET")
+	else if (localURL == "02_NYC_STREET")
 	{
 		flags.SetBool('M02StreetLoaded', True,, 3);
 
@@ -151,32 +166,34 @@ function PreTravel()
 
 function Timer()
 {
-	local Terrorist T;
-	local TerroristCarcass carc;
-	local UNATCOTroop guard;
-	local ThugMale thug;
-	local ThugMale2 thug2;
-	local BumMale bum;
-	local BlackHelicopter chopper;
-	local Doctor doc;
-	local BarrelAmbrosia barrel;
-	local ScriptedPawn pawn;
-	local DeusExCarcass carc2;
-	local GuntherHermann Gunther;
-	local Actor A;
-	local SandraRenton Sandra;
 	local int count;
+	local Actor A;
+	local BlackHelicopter chopper;
+	local BarrelAmbrosia barrel;
+	local BumMale bum;
+	local DeusExCarcass carc2;
+	local Doctor doc;
+	local GuntherHermann Gunther;
 	local Pawn curPawn;
 	local POVCorpse povCarcass;
-	local UNATCOTroop troop;
+	local SandraRenton Sandra;
+	local ScriptedPawn pawn;
+	local Terrorist T;
+	local TerroristCarcass carc;
+	local ThugMale thug;
+	local ThugMale2 thug2;
+	local UNATCOTroop guard, troop;
 	
 	//VMD Additions.
 	local AllianceTrigger AllTrig;
+	local MissionScriptIntegerMemory TMem;
 	
 	Super.Timer();
-
+	
 	if (localURL == "02_NYC_BATTERYPARK")
 	{
+		TMem = GetBatteryMem();
+		
 		// after terrorists are dead, set guards to wandering
 		if ((!flags.GetBool('BatteryParkSlaughter')) && (!flags.GetBool('CastleClintonCleared')))
 		{
@@ -218,7 +235,8 @@ function Timer()
 			
 			//Bjorn: There are five terrorists in the Castle.
 			// if there are three or less, then the player killed at least two.  For shame.
-			if ((count <= 3) && (!flags.GetBool('BatteryParkSlaughter')))
+			//MADDERS, 4/21/25: TWeak for rando, so we have an accurate terrie count. Also works with infamy, if I'm not mistaken.
+			if ((TMem != None) && (TMem.TrackedValue - count > 2) && (!flags.GetBool('BatteryParkSlaughter')))
 			{
 				// free up the guards so they can kill 'em
 				for (curPawn=Level.PawnList; curPawn != None; curPawn=curPawn.nextPawn)
@@ -310,7 +328,7 @@ function Timer()
 		if (!flags.GetBool('VMDStreetAggroEngaged'))
 		{
 			count = 0;
-
+			
 			foreach AllActors(class'Terrorist', T)
 			{
 				if ((T != None) && (UNATCOTroop(T.Enemy) != None))
@@ -353,12 +371,14 @@ function Timer()
 		if (!flags.GetBool('ClinicCleared'))
 		{
 			count = 0;
-
+			
 			foreach AllActors(class'Terrorist', T, 'ClinicTerrorist')
 				count++;
-
+			
 			if (count == 0)
 			{
+				Log("TIMER! CLINIC CLEARED!");
+				
 				foreach AllActors(class'UNATCOTroop', guard, 'ClinicGuards')
 					guard.SetOrders('Wandering', '', True);
 
@@ -370,35 +390,37 @@ function Timer()
 		if (!flags.GetBool('StreetOpened'))
 		{
 			count = 0;
-
+			
 			foreach AllActors(class'Terrorist', T, 'StreetTerrorist')
 				count++;
-
+			
 			// Transcended - Added
 			foreach AllActors(class'Terrorist', T, 'LeadTerrorist')
 				count++;
-
+			
 			if (count == 0)
 			{
+				Log("TIMER! STREET OPENED!");
+				
 				foreach AllActors(class'UNATCOTroop', guard, 'HotelGuards')
 					guard.SetOrders('Wandering', '', True);
-
+				
 				flags.SetBool('StreetOpened', True,, 6);
-
+				
 				//G-Flex: there are 6 relevant dudes now, counting LeadTerrorist, so check for him too.
 				//G-Flex: if player killed 2 (was 3) or more, call it a slaughter
 				//G-Flex: count terrorists that were only KO'd or weren't killed by JC
 				foreach AllActors(class'TerroristCarcass', carc, 'StreetTerrorist')
 				{
-					if ((carc.KillerBindName != "JCDenton") || (carc.itemName == "Unconscious") || (carc.bNotDead))
+					if ((carc.KillerBindName != "JCDenton") || (carc.bNotDead))
 						count++;
 				}
-
+				
 				//count LeadTerrorist here too.
 				foreach AllActors(class'TerroristCarcass', carc, 'LeadTerrorist')
-					if ((carc.KillerBindName != "JCDenton") || (carc.itemName == "Unconscious") || (carc.bNotDead))
+					if ((carc.KillerBindName != "JCDenton") || (carc.bNotDead))
 						count++;
-
+				
 				if (count <= 4)
 					flags.SetBool('TenderloinSlaughter', True,, 6);
 			}
@@ -593,6 +615,28 @@ function Keypad GetClinicKeypad()
 	}
 	
 	return None;
+}
+
+function MissionScriptIntegerMemory GetBatteryMem()
+{
+	local PlayerPawn TPlayer;
+	
+	if (BatteryMem != None)
+	{
+		return BatteryMem;
+	}
+	
+	forEach AllActors(class'MissionScriptIntegerMemory', BatteryMem, 'BatteryMem')
+	{
+		return BatteryMem;
+	}
+	
+	TPlayer = GetPlayerPawn();
+	if (TPlayer != None)
+	{
+		BatteryMem = Spawn(class'MissionScriptIntegerMemory',, 'BatteryMem', TPlayer.Location);
+		return BatteryMem;
+	}
 }
 
 // ----------------------------------------------------------------------
