@@ -164,9 +164,9 @@ function Frob(Actor Frobber, Inventory frobWith)
    	// In singleplayer, do the old thing.  
    	if (Level.NetMode == NM_Standalone)
    	{
-		if ((VMP != None) && (VMP.bKillswitchEngaged) && (VMP.bImmersiveKillswitch))
+		if ((VMP != None) && (VMP.bKillswitchEngaged) && (!VMP.bNoKillswitchEnergyDrain) && (VMP.bImmersiveKillswitch))
 		{
-			if ((VMP.bCraftingSystemEnabled) && (VMP.SkillSystem != None) && (VMP.SkillSystem.GetSkillLevel(class'SkillTech') > 0))
+			if (VMP.CanCraftMechanical(True, True))
 			{
 				VMDInvokeCraftingScreen(DeusExRootWindow(VMP.RootWindow));
 			}
@@ -182,7 +182,7 @@ function Frob(Actor Frobber, Inventory frobWith)
 		}
 		else
 		{
-			if ((VMP != None) && (VMP.bCraftingSystemEnabled) && (VMP.SkillSystem != None) && (VMP.SkillSystem.GetSkillLevel(class'SkillTech') > 0))
+			if ((VMP != None) && (VMP.CanCraftMechanical(True, True)))
 			{
 				VMDInvokeCraftingScreen(DeusExRootWindow(VMP.RootWindow));
 			}
