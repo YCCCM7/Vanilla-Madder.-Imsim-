@@ -368,7 +368,7 @@ function Texture DeriveItemTexture(Name CheckName, int SliderValue)
 			{
 				TTex = Texture'SodaCanTex4';
 			}
-			else if (SliderValue == 3)
+			else if (SliderValue == 4)
 			{
 				TTex = Texture'VMDSodaCanTex5';
 			}
@@ -496,8 +496,8 @@ defaultproperties
      StrMaxUnits="Max Capacity: %d Unit(s)"
      
      Title="Food Selector"
-     ExitButtonText="Cancel"
-     LinkButtonText="Link Item"
+     ExitButtonText="|&Cancel"
+     LinkButtonText="|&Link Item"
      ClientWidth=512
      ClientHeight=244
      
