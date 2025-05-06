@@ -410,9 +410,9 @@ defaultproperties
      MaterialSliderSize=(X=177,Y=40)
      
      Title="Material/Paint Selector"
-     ExitButtonText="Cancel"
-     LinkButtonText="Link Appearance"
-     LinkButtonTextSpecific="Link Appearance [%d]"
+     ExitButtonText="|&Cancel"
+     LinkButtonText="|&Link Appearance"
+     LinkButtonTextSpecific="|&Link Appearance [%d]"
      ClientWidth=384
      ClientHeight=176
      
