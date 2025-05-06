@@ -1045,6 +1045,12 @@ exec function QuickSave()
 		return;
 	}
 	
+	//MADDERS, 4/26/25: Block phony keyboard inputs attempting to quick save/load the moment we travel. Input related bug, native side.
+	if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).bUpdateTravelTalents))
+	{
+		return;
+	}
+	
 	if (dataLinkPlay != None)
 		dataLinkPlay.AbortAndSaveHistory();
 	
@@ -1131,7 +1137,13 @@ exec singular function QuickLoad()
 	//Don't allow in multiplayer.
 	if (Level.Netmode != NM_Standalone)
 		return;
-
+	
+	//MADDERS, 4/26/25: Block phony keyboard inputs attempting to quick save/load the moment we travel. Input related bug, native side.
+	if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).bUpdateTravelTalents))
+	{
+		return;
+	}
+	
 	//Don't bother asking for confirmation if player is dead.
 	if (IsInState('Dying'))
 	{
@@ -3436,14 +3448,23 @@ function HighlightCenterObject()
 	// only do the trace every tenth of a second
 	if (FrobTime >= 0.1)
 	{
-		// figure out how far ahead we should trace
-		StartTrace = Location;
-		EndTrace = Location + (Vector(ViewRotation) * MaxFrobDistance);
-
-		// adjust for the eye height
-		StartTrace.Z += BaseEyeHeight;
-		EndTrace.Z += BaseEyeHeight;
-
+		//MADDERS, 5/3/25: Oopsies. Rearrange this a bit for dynamic camera.
+		if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).bUseDynamicCamera) && (VMDBufferPlayer(Self).VMDLastCameraLoc != Vect(0,0,0)))
+		{
+			StartTrace = VMDBufferPlayer(Self).VMDLastCameraLoc;
+			EndTrace = StartTrace + (Vector(ViewRotation) * MaxFrobDistance);
+		}
+		else
+		{
+			// figure out how far ahead we should trace
+			StartTrace = Location;
+			EndTrace = Location + (Vector(ViewRotation) * MaxFrobDistance);
+			
+			// adjust for the eye height
+			StartTrace.Z += BaseEyeHeight;
+			EndTrace.Z += BaseEyeHeight;
+		}
+		
 		smallestTarget = None;
 		minSize = 99999;
 		bFirstTarget = True;
@@ -3461,7 +3482,7 @@ function HighlightCenterObject()
 				SmallestMover = Target;
 			}
 			
-			if ((IsFrobbable(target)) && (target != CarriedDecoration))
+			if ((IsFrobbable(target)) && (target != CarriedDecoration) && (Target != Self))
 			{
 				if (target.IsA('ScriptedPawn'))
 				{
@@ -4710,7 +4731,7 @@ state PlayerWalking
 		defSpeed = GetCurrentGroundSpeed();
 		
       		// crouching makes you two feet tall
-		if (bIsCrouching || bForceDuck || bJumpDuck)
+		if (bIsCrouching || bForceDuck || bJumpDuck || (VMP != None && VMP.UIForceDuckTimer > 0))
 		{
 			//MADDERS: Allow for stop drop and roll.
 			if ((bOnFire) && (VMP != None) && (VMP.HasSkillAugment('HeavyDropAndRoll')) && (VSize(Velocity) > 60))
@@ -4766,7 +4787,7 @@ state PlayerWalking
 			}
 		}
 		
-		if (bCantStandUp || (VMP != None && (VMP.RollTimer > 0 || VMP.DodgeRollTimer > 0)))
+		if (bCantStandUp || (VMP != None && (VMP.RollTimer > 0 || VMP.DodgeRollTimer > 0 || VMP.UIForceDuckTimer > 0)))
 			bForceDuck = True;
 		else
 			bForceDuck = False;
@@ -4927,87 +4948,43 @@ state PlayerWalking
 		
 		// if we are moving or crouching, we can't lean
 		// uncomment below line to disallow leaning during crouch
-
-			if ((VSize(Velocity) < 10) && (aForward == 0))		// && !bIsCrouching && !bForceDuck)
-				bCanLean = True;
-			else
-				bCanLean = False;
-
-			// check leaning buttons (axis aExtra0 is used for leaning)
-			maxLeanDist = 40;
-
-			if (IsLeaning())
-			{
-				if ( PlayerIsClient() || (Level.NetMode == NM_Standalone) )
-					ViewRotation.Roll = curLeanDist * 20;
+		
+		if ((VSize(Velocity) < 10) && (aForward == 0))		// && !bIsCrouching && !bForceDuck)
+			bCanLean = True;
+		else
+			bCanLean = False;
+		
+		// check leaning buttons (axis aExtra0 is used for leaning)
+		maxLeanDist = 40;
+		
+		if (IsLeaning())
+		{
+			if ( PlayerIsClient() || (Level.NetMode == NM_Standalone) )
+				ViewRotation.Roll = curLeanDist * 20;
+		
+			if (!bIsCrouching && !bForceDuck)
+				SetBasedPawnSize(CollisionRadius, GetDefaultCollisionHeight() - Abs(curLeanDist) / 3.0);
+		}
+		if ((bCanLean) && (aExtra0 != 0))
+		{
+			// lean
+			DropDecoration();		// drop the decoration that we are carrying
+			if (AnimSequence != 'CrouchWalk')
+				PlayCrawling();
 			
-				if (!bIsCrouching && !bForceDuck)
-					SetBasedPawnSize(CollisionRadius, GetDefaultCollisionHeight() - Abs(curLeanDist) / 3.0);
-			}
-			if (bCanLean && (aExtra0 != 0))
+			alpha = maxLeanDist * aExtra0 * 2.0 * DeltaTime;
+			
+			loc = vect(0,0,0);
+			loc.Y = alpha;
+			if (Abs(curLeanDist + alpha) < maxLeanDist)
 			{
-				// lean
-				DropDecoration();		// drop the decoration that we are carrying
-				if (AnimSequence != 'CrouchWalk')
-					PlayCrawling();
-
-				alpha = maxLeanDist * aExtra0 * 2.0 * DeltaTime;
-
-				loc = vect(0,0,0);
-				loc.Y = alpha;
-				if (Abs(curLeanDist + alpha) < maxLeanDist)
-				{
-					// check to make sure the destination not blocked
-					checkpoint = (loc >> Rotation) + Location;
-					traceSize.X = CollisionRadius;
-					traceSize.Y = CollisionRadius;
-					traceSize.Z = CollisionHeight;
-					HitActor = Trace(HitLocation, HitNormal, checkpoint, Location, True, traceSize);
-
-					// check down as well to make sure there's a floor there
-					downcheck = checkpoint - vect(0,0,1) * CollisionHeight;
-					HitActorDown = Trace(HitLocation, HitNormal, downcheck, checkpoint, True, traceSize);
-					if ((HitActor == None) && (HitActorDown != None))
-					{
-						if ( PlayerIsClient() || (Level.NetMode == NM_Standalone))
-						{
-							SetLocation(checkpoint);
-							ServerUpdateLean( checkpoint );
-							curLeanDist += alpha;
-						}
-					}
-				}
-				else
-				{
-					if ( PlayerIsClient() || (Level.NetMode == NM_Standalone) )
-						curLeanDist = aExtra0 * maxLeanDist;
-				}
-			}
-			else if (IsLeaning())	//if (!bCanLean && IsLeaning())	// uncomment this to not hold down lean
-			{
-				// un-lean
-				if (AnimSequence == 'CrouchWalk')
-					PlayRising();
-
-				if ( PlayerIsClient() || (Level.NetMode == NM_Standalone))
-				{
-					prevLeanDist = curLeanDist;
-					alpha = FClamp(7.0 * DeltaTime, 0.001, 0.9);
-					curLeanDist *= 1.0 - alpha;
-					if (Abs(curLeanDist) < 1.0)
-						curLeanDist = 0;
-				}
-
-				loc = vect(0,0,0);
-				loc.Y = -(prevLeanDist - curLeanDist);
-
 				// check to make sure the destination not blocked
 				checkpoint = (loc >> Rotation) + Location;
 				traceSize.X = CollisionRadius;
 				traceSize.Y = CollisionRadius;
 				traceSize.Z = CollisionHeight;
 				HitActor = Trace(HitLocation, HitNormal, checkpoint, Location, True, traceSize);
-
+				
 				// check down as well to make sure there's a floor there
 				downcheck = checkpoint - vect(0,0,1) * CollisionHeight;
 				HitActorDown = Trace(HitLocation, HitNormal, downcheck, checkpoint, True, traceSize);
@@ -5015,11 +4992,55 @@ state PlayerWalking
 				{
 					if ( PlayerIsClient() || (Level.NetMode == NM_Standalone))
 					{
-						SetLocation( checkpoint );
+						SetLocation(checkpoint);
 						ServerUpdateLean( checkpoint );
-					}
+						curLeanDist += alpha;
+				}
 				}
 			}
+			else
+			{
+				if ( PlayerIsClient() || (Level.NetMode == NM_Standalone) )
+					curLeanDist = aExtra0 * maxLeanDist;
+			}
+		}
+		else if (IsLeaning())	//if (!bCanLean && IsLeaning())	// uncomment this to not hold down lean
+		{
+			// un-lean
+			if (AnimSequence == 'CrouchWalk')
+				PlayRising();
+			
+			if ( PlayerIsClient() || (Level.NetMode == NM_Standalone))
+			{
+				prevLeanDist = curLeanDist;
+				alpha = FClamp(7.0 * DeltaTime, 0.001, 0.9);
+				curLeanDist *= 1.0 - alpha;
+				if (Abs(curLeanDist) < 1.0)
+					curLeanDist = 0;
+			}
+			
+			loc = vect(0,0,0);
+			loc.Y = -(prevLeanDist - curLeanDist);
+			
+			// check to make sure the destination not blocked
+			checkpoint = (loc >> Rotation) + Location;
+			traceSize.X = CollisionRadius;
+			traceSize.Y = CollisionRadius;
+			traceSize.Z = CollisionHeight;
+			HitActor = Trace(HitLocation, HitNormal, checkpoint, Location, True, traceSize);
+			
+			// check down as well to make sure there's a floor there
+			downcheck = checkpoint - vect(0,0,1) * CollisionHeight;
+			HitActorDown = Trace(HitLocation, HitNormal, downcheck, checkpoint, True, traceSize);
+			if ((HitActor == None) && (HitActorDown != None))
+			{
+				if ( PlayerIsClient() || (Level.NetMode == NM_Standalone))
+				{
+					SetLocation( checkpoint );
+					ServerUpdateLean( checkpoint );
+				}
+			}
+		}
 		
 		//MADDERS: Make our controls inverse if high on crack!
 		if (bInverse)
@@ -5027,7 +5048,6 @@ state PlayerWalking
 		 	NewAccel *= -1;
 		}
 		
-		//MADDERS: Check for space being held, and mantle attempt if so!
 		if (VMP != None) VMP.VMDProcessMoveHook(deltaTime);
 		
 		Super.ProcessMove(DeltaTime, newAccel, DodgeMove, DeltaRot);
@@ -6343,6 +6363,8 @@ exec function ShowScores()
 
 exec function ParseLeftClick()
 {
+	local VMDBufferPlayer VMP;
+	
 	//
 	// ParseLeftClick deals with things in your HAND
 	//
@@ -6362,6 +6384,8 @@ exec function ParseLeftClick()
 		return;
 	}
 	
+	VMP = VMDBufferPlayer(Self);
+	
 	if ((inHand != None) && (!bInHandTransition))
 	{
 		if (inHand.bActivatable)
@@ -6374,9 +6398,9 @@ exec function ParseLeftClick()
 					DeusExPickup(InHand).UseOnce();
 	   				DeusExPickup(InHand).GoToState('Deactivated');
 				}
-				if ((DeusExPickup(InHand).NumCopies < 1) && (VMDBufferPlayer(Self) != None))
+				if ((DeusExPickup(InHand).NumCopies < 1) && (VMP != None))
 				{
-					VMDBufferPlayer(Self).CheckForAccessoryFood(InHand);
+					VMP.CheckForAccessoryFood(InHand);
 				}
 			}
 		}
@@ -6407,16 +6431,20 @@ exec function ParseLeftClick()
 	{
 	 	if (DeusExPickup(FrobTarget) != None)
 	 	{
-	  		if ((VMDBufferPlayer(Self) != None) && !(VMDBufferPlayer(Self).IsParseException(FrobTarget)))
+	  		if ((VMP != None) && !(VMP.IsParseException(FrobTarget)))
 	  		{
 				//MADDERS, 12/23/23: Send some mega futz if we're super owned. Yay.
 				if ((DeusExPickup(FrobTarget) != None) && (DeusExPickup(FrobTarget).bSuperOwned))
 				{
 					AISendEvent('MegaFutz', EAITYPE_Visual);
-					AISendEvent('MegaFutz', EAITYPE_Audio, 2.5, 192);
+					
+					if (!VMP.HasSkillAugment('LockpickPoisonIdentity'))
+					{
+						AISendEvent('MegaFutz', EAITYPE_Audio, 2.5, 192);
+					}
 				}
 				
-				VMDBufferPlayer(Self).MarkItemDiscovered(DeusExPickup(FrobTarget));
+				VMP.MarkItemDiscovered(DeusExPickup(FrobTarget));
 				
 	   			FrobTarget.SetOwner(Self);
 	   			DeusExPickup(FrobTarget).Activate();
@@ -6594,7 +6622,7 @@ exec function ParseRightClick()
 						DropItem();
 					else if (VMDPOVDeco(InHand) != None)
 						DropDecoration();
-					else
+					else if (DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload'))
 					{
 						PutInHand(None);
 					}
@@ -6606,7 +6634,7 @@ exec function ParseRightClick()
 					DropItem();
 				else if (VMDPOVDeco(InHand) != None)
 					DropDecoration();
-				else
+				else if (DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload'))
 				{
 					PutInHand(None);
 				}
@@ -6621,7 +6649,7 @@ exec function ParseRightClick()
 			DropItem();
 		else if (VMDPOVDeco(InHand) != None)
 			DropDecoration();
-		else
+		else if (DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload'))
 		{
 			PutInHand(None);
 		}
@@ -7195,17 +7223,20 @@ exec function GiveNanoKey(Name newKeyID, String newDescription)
 
 function DoFrob(Actor Frobber, Inventory frobWith)
 {
-	local DeusExRootWindow root;
+	local bool bWasOwned, bWasSuperOwned;
+	local Actor A;
 	local Ammo ammo;
 	local Inventory item;
-	local Actor A;
-	local bool bWasOwned, bWasSuperOwned;
+	local DeusExRootWindow root;
+	local VMDBufferPlayer VMP;
 	
 	//MADDERS, 8/8/23: Oops. This shouldn't ever be true, but hey, an accessed none is an accessed none.
 	if (FrobTarget == None)
 	{
 		return;
 	}
+	
+	VMP = VMDBufferPlayer(Self);
 	
 	bWasOwned = FrobTarget.bOwned;
 	if (bWasOwned)
@@ -7233,7 +7264,10 @@ function DoFrob(Actor Frobber, Inventory frobWith)
 		if (bWasSuperOwned)
 		{
 			AISendEvent('MegaFutz', EAITYPE_Visual);
-			AISendEvent('MegaFutz', EAITYPE_Audio, 2.5, 160);
+			if (VMP == None || !VMP.HasSkillAugment('LockpickPoisonIdentity'))
+			{
+				AISendEvent('MegaFutz', EAITYPE_Audio, 2.5, 160);
+			}
 		}
 		return;
 	}
@@ -7248,7 +7282,10 @@ function DoFrob(Actor Frobber, Inventory frobWith)
 	if (bWasSuperOwned)
 	{
 		AISendEvent('MegaFutz', EAITYPE_Visual);
-		AISendEvent('MegaFutz', EAITYPE_Audio, 2.5, 160);
+		if (VMP == None || !VMP.HasSkillAugment('LockpickPoisonIdentity'))
+		{
+			AISendEvent('MegaFutz', EAITYPE_Audio, 2.5, 160);
+		}
 	}
 	// alert NPCs that I'm messing with stuff
 	else if (bWasOwned)
@@ -8273,7 +8310,7 @@ function GrabDecoration()
 				AISendEvent('MegaFutz', EAITYPE_Visual);
 			}
 			
-			if (TDeco.IsA('HCTNT') || TDeco.IsA('AlistairTorso') || (TDeco.IsA('Barrel1') && Barrel1(TDeco).SkinColor == SC_Radioactive))
+			if (TDeco.IsA('HCTNT') || TDeco.IsA('DXRBigContainers') || TDeco.IsA('AlistairTorso') || (TDeco.IsA('Barrel1') && Barrel1(TDeco).SkinColor == SC_Radioactive))
 			{
 				CarriedDecoration = TDeco;
 				PutCarriedDecorationInHand();
