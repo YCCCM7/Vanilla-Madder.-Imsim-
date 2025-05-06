@@ -69,6 +69,7 @@ var(MADDERS) int CaptiveEscapeSteps;
 var float StartingGroundSpeed, StartingBuoyancy, StartingBaseAccuracy, LastEnemyHealthScale; //MADDERS, 5/26/23: For slowdown effects. Neat.
 var bool bDebugFractionalDamage;
 var bool bNoticedPoisonOrigin, bFirstSearchedForPoison;
+var VMDPoisonScout OwnedPoisonScout;
 var int TotalPoisonDamage, StartingHealthValues[7]; //Head, Body, Left Arm, Right Arm, Left Leg, Right Leg... And lastly, Health itself.
 var float PoisonGuessingFudge, MaxGuessingFudge;
 var float LastWeaponDamageSkillMult, LastFDamage, FloatDamageValues[6]; //Same as starting health values, but with no health brand health var.
@@ -4321,6 +4322,23 @@ function VMDInitializeSubsystems()
 	}
 }
 
+//MADDERS, 4/29/25: Scrub this stuff sometimes, like when giving child classes different augs.
+function VMDWipeAllAugs()
+{
+	if (AugmentationSystem != None)
+	{
+		AugmentationSystem.Destroy();
+		AugmentationSystem = None;
+	}
+	CurSpeedAug = None;
+	CurTargetAug = None;
+	CurCombatAug = None;
+	CurCloakAug = None;
+	CurVisionAug = None;
+	CurStealthAug = None;
+	BulkReferenceAug = None;
+}
+
 function VMDMaintainEnergy(float DeltaTime)
 {
 	local float EnergyUse, LastEnergy, TEnergy;
@@ -6081,6 +6099,25 @@ function ApplySpecialStats()
 	//MADDERS, 8/1/23: Zodiac commando noise patch. Neat.
 	if (VMDPawnIsCommando())
 	{
+		//MADDERS, 3/29/25: Force our balancing to be like vanilla. Less health, damage reducing armor.
+		if (IsA('ZodiacCommando'))
+		{
+			ArmorStrength = 0.75;
+			HealthArmLeft = Min(HealthArmLeft, 200);
+			HealthArmRight = Min(HealthArmRight, 200);
+			HealthLegLeft = Min(HealthLegLeft, 200);
+			HealthLegRight = Min(HealthLegRight, 200);
+			HealthTorso = Min(HealthTorso, 200);
+			HealthHead = Min(HealthHead, 200);
+			StartingHealthValues[0] = HealthHead;
+			StartingHealthValues[1] = HealthTorso;
+			StartingHealthValues[2] = HealthArmLeft;
+			StartingHealthValues[3] = HealthArmRight;
+			StartingHealthValues[4] = HealthLegLeft;
+			StartingHealthValues[5] = HealthLegRight;
+			StartingHealthValues[6] = Health;
+		}
+		bRobotVision = true;
 		HitSound1 = Sound'CommandoPainMedium';
 		HitSound2 = Sound'CommandoPainLarge';
 		Die = Sound'CommandoDeath';
