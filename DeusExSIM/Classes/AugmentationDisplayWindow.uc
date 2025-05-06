@@ -406,20 +406,39 @@ function PostDrawWindow(GC gc)
 {
 	local PlayerPawn pp;
 	
+	if (Player == None)
+	{
+		Player = DeusExPlayer(GetPlayerPawn());
+	}
+	
+	if (Player == None)
+	{
+		Log("WARNING! Failed to get player pawn in AugmentationDisplayWindow.PostDrawWindow!");
+		return;
+	}
+	
 	pp = Player.GetPlayerPawn();
 	
    	//DEUS_EX AMSD Draw vision first so that everything else doesn't get washed green
 	if (bVisionActive)
+	{
 		DrawVisionAugmentation(gc);
+	}
 	
-	if (Player.Level.NetMode != NM_Standalone)
+	if ((Player.Level != None) && (Player.Level.NetMode != NM_Standalone))
+	{
 		DrawMiscStatusMessages(gc);
+	}
 	
 	if (bDefenseActive)
+	{
 		DrawDefenseAugmentation(gc);
+	}
 	
 	if (Player.bSpyDroneActive)
+	{
 		DrawSpyDroneAugmentation(gc);
+	}
 	
    	// draw IFF and accuracy information all the time, return False if target aug is not active
 	DrawTargetAugmentation(gc);
@@ -429,7 +448,7 @@ function PostDrawWindow(GC gc)
 	gc.SetStyle(DSTY_Normal);
 	gc.SetTileColor(colBorder);
 	
-   	if ((pp != None) && (pp.bShowScores))
+   	if ((pp != None) && (pp.bShowScores) && (DeusExGameInfo(Player.DXGame) != None))
 	{
 		if ((!DeusExGameInfo(Player.DXGame).bIsTeamGame()))
 		{
@@ -1778,22 +1797,40 @@ function DrawVisionAugmentation(GC gc)
 
 function bool IsHeatSource(Actor A)
 {
-   	if ((A.bHidden) && (Player.Level.NetMode != NM_Standalone))
-      		return False;
-   	if (A.IsA('Pawn'))
-   	{
-      		if (A.IsA('ScriptedPawn'))
-         		return True;
-      		else if ( (A.IsA('DeusExPlayer')) && (A != Player) )//DEUS_EX AMSD For multiplayer.
-         		return True;
-      		return False;
-   	}
-	else if (A.IsA('DeusExCarcass'))
-		return True;   
-	else if (A.IsA('FleshFragment'))
-		return True;
-   	else
+	if ((A.bHidden) && (Player.Level.NetMode != NM_Standalone))
+	{
 		return False;
+	}
+	
+	if (A.IsA('Pawn'))
+	{
+		if (A.IsA('ScriptedPawn'))
+		{
+	 		return True;
+		}
+		else if ( (A.IsA('DeusExPlayer')) && (A != Player) )//DEUS_EX AMSD For multiplayer.
+		{
+			return True;
+		}
+		return False;
+	}
+	else if (A.IsA('DeusExCarcass'))
+	{
+		return True;
+	}
+	else if (A.IsA('FleshFragment'))
+	{
+		return True;
+	}
+	//MADDERS, 4/29/25: Show these in SP, too.
+	else if (A.IsA('AutoTurret') || A.IsA('AutoTurretGun') || A.IsA('SecurityCamera'))
+	{
+		return True;
+	}
+	else
+	{
+		return False;
+	}
 }
 
 // ----------------------------------------------------------------------
