@@ -11,8 +11,10 @@ defaultproperties
      maxRange=1400.000000
      WalkingSpeed=1.000000
      bEmitDistress=True
-     InitialInventory(0)=(Inventory=Class'DeusEx.WeaponSpiderBot')
-     InitialInventory(1)=(Inventory=Class'DeusEx.AmmoBattery',Count=99)
+     //InitialInventory(0)=(Inventory=Class'DeusEx.WeaponSpiderBot')
+     //InitialInventory(1)=(Inventory=Class'DeusEx.AmmoBattery',Count=99)
+     InitialInventory(0)=(Inventory=Class'DeusEx.WeaponSpiderBotTaserSlug',Count=1)
+     InitialInventory(2)=(Inventory=Class'DeusEx.WeaponSpiderBotGas',Count=1)
      WalkSound=Sound'DeusExSounds.Robot.SpiderBotWalk'
      GroundSpeed=80.000000
      WaterSpeed=50.000000
