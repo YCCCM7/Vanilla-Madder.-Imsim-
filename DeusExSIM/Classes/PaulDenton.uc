@@ -65,15 +65,17 @@ function DeusExLevelInfo GetLevelInfo()
 	return info;
 }
 
-/*function GotoDisabledState(name damageType, EHitLocation hitPos)
+function GotoDisabledState(name damageType, EHitLocation hitPos)
 {
-	if ((!bCollideActors) && (!bBlockActors) && (!bBlockPlayers))
+	/*if ((!bCollideActors) && (!bBlockActors) && (!bBlockPlayers))
 		return;
 	if (CanShowPain())
 		TakeHit(hitPos);
 	else
-		GotoNextState();
-}*/
+		GotoNextState();*/
+	
+	Super.GoToDisabledState(DamageType, HitPos);
+}
 
 // ----------------------------------------------------------------------
 // SetSkin()
