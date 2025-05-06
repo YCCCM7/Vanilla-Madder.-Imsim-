@@ -212,11 +212,14 @@ function bool SpawnHunters()
 		{
 			if ((VSize(THide.Location - VMP.Location) > 800) && (!FastTrace(VMP.Location, THide.Location)))
 			{
-				HideList[HideListSize] = THide;
-				HideListSize++;
-				if (HideListSize >= ArrayCount(HideList))
+				if (IsValidHidePoint(THide, VMDGetMapName()))
 				{
-					break;
+					HideList[HideListSize] = THide;
+					HideListSize++;
+					if (HideListSize >= ArrayCount(HideList))
+					{
+						break;
+					}
 				}
 			}
 		}
@@ -227,7 +230,7 @@ function bool SpawnHunters()
 		}
 		else
 		{
-			StartingID = Rand(3 - (SpawnStrength-1));
+			StartingID = Rand(3);
 			TIndex = Rand(HideListSize);
 			THide = HideList[TIndex];
 			BaseLoc = THide.Location;
@@ -250,7 +253,7 @@ function bool SpawnHunters()
 					if (THunters[i] != None)
 					{
 						SpawnedHunters += 1;
-						THunters[i].AssignedID = StartingID + i;
+						THunters[i].AssignedID = (StartingID + i) % 3;
 						THunters[i].InitializeBountyHunter(i, VMP, TMission);
 					}
 				}
@@ -276,7 +279,7 @@ function bool SpawnHunters()
 						if (THunters[i] != None)
 						{
 							SpawnedHunters += 1;
-							THunters[i].AssignedID = StartingID + i;
+							THunters[i].AssignedID = (StartingID + i) % 3;
 							THunters[i].InitializeBountyHunter(i, VMP, TMission);
 							break;
 						}
@@ -295,6 +298,26 @@ function bool SpawnHunters()
 	{
 		return false;
 	}
+}
+
+function bool IsValidHidePoint(HidePoint TPoint, string MapName)
+{
+	local int TSeed;
+	
+	if (TPoint == None) return false;
+	
+	TSeed = class'VMDStaticFunctions'.Static.StripBaseActorSeed(TPoint);
+	switch(MapName)
+	{
+		case "14_Vandenberg_Sub":
+			if (TSeed == 0)
+			{
+				return false;
+			}
+		break;
+	}
+	
+	return true;
 }
 
 function bool IsClearOfPlayer(Actor A, optional int TDist)
