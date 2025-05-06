@@ -455,7 +455,13 @@ function name GetAnimType(out int bFastAnim)
 				{
 					if (VelSize > 225)
 					{
-						if (VelDir == 1 || (VelDir == 2 && VelSize > 255))
+						//MADDERS, 3/29/25: Don't run with 1 arm. Looks terrible.
+						if (VMP.HealthArmRight <= 0 || VMP.HealthArmLeft <= 0)
+						{
+							bFastAnim = 1;
+							Ret = 'Walk';
+						}
+						else if (VelDir == 1 || (VelDir == 2 && VelSize > 255))
 						{
 							bFastAnim = 1;
 							Ret = 'Run';
