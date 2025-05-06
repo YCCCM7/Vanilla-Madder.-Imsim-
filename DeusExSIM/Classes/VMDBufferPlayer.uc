@@ -20,7 +20,7 @@ var travel int LastStressPhase, FoodSmellThresholds[2]; //MADDERS, 1/19/21: Stop
 
 //^^^^^^^^^^^^^^^^^^^^^
 //TIMER VARS!
-var travel bool bKillswitchEngaged; //Death. Is. My. Purse.
+var travel bool bKillswitchEngaged, bUpdateTravelTalents; //Death. Is. My. Purse.
 var travel float KSHealMult, KSHealthMult, LastEnergy;
 
 //=====================
@@ -69,7 +69,8 @@ var float TaseTimer, OverdoseTimer;
 var bool bRollAchieved, bWasFallRoll, bJumpDucked, bLastTouchingLadder;
 var int RollDir, VMDDodgeDir; //1 = forward, -1 = backward. 2 = right, -2 = left. Yay.
 var float RollCooldown, RollTimer, RollDuration, LastDuckTimer, RollTapMax, RollCapAccel,
-		DodgeRollCooldown, DodgeRollTimer, DodgeRollDuration, DodgeRollCapAccel;
+		DodgeRollCooldown, DodgeRollTimer, DodgeRollDuration, DodgeRollCapAccel,
+		UIForceDuckTimer, UIForceDuckTime;
 var Rotator VMDRollModifier;
 var travel float RollCooldownTimer, DodgeRollCooldownTimer;
 
@@ -211,6 +212,9 @@ var() globalconfig bool bUpdateVanillaSkins; //10/20/24: For those who prefer th
 var() globalconfig bool bJumpDuckFeedbackNoise; //11/27/24: Some people find this annoying.
 var() globalconfig bool bClassicSkillPurchasing; //2/19/25: For those who hate the new, modern means.
 var() globalconfig bool bAugControllerShowEnergyPoints; //2/25/25: For DX rando players, primarily.
+var() globalconfig bool bDamageGateBreakNoise; //5/1/25: For immersive purposes.
+var() globalconfig bool bUseGunplayVersionTwo; //5/2/25: EXPERIMENTAL! We want to have tactical shooter gameplay later. Phase 2.5?
+var() globalconfig bool FrobEmptyLowersWeapon; //5/4/25: For people who don't mind using backspace all the time.
 var() bool BarfStartupFullscreen, BarfUseDirectInput; //6/24/24: Purely temporary variables. Used in options menu as a metric.
 var() globalconfig int CustomUIScale;
 var() globalconfig float TacticalRollTime;
@@ -241,7 +245,7 @@ var travel int PreferredHandedness;
 //Anyways, here's some bools you can flick on for mod support reasons.
 //Ninja footsteps, custom mesh handling, energy rendering as "armor",
 //and just disabling OD in case you have something better to do with it.
-var bool bDisableReskin, bEnergyArmor, bSoftenFootsteps, bNegateOverdose, bUseSharedHealth, bCustomStress;
+var bool bDisableReskin, bEnergyArmor, bSoftenFootsteps, bNoKillswitchEnergyDrain, bNegateOverdose, bUseSharedHealth, bCustomStress;
 var travel float ModGroundSpeedMultiplier, ModWaterSpeedMultiplier, ModHealthMultiplier, ModHealingMultiplier,
 			ModOrganicVisibilityMultiplier, ModRobotVisibilityMultiplier;
 
@@ -252,7 +256,9 @@ var localized string CandyEatenDescs[2], SoyEatenDesc, FishEatenDesc, SodaDrankD
 			FoodSmellDesc[4], BloodSmellDesc[4], ZymeSmellDesc[2], SmokeSmellDesc[4],
 			HungerLevelDesc[7], StressLevelDesc[6],
 			EnergyBackfireDesc, KillswitchStateDescs[8],
-			RollCooldownDesc, DodgeRollCooldownDesc;
+			RollCooldownDesc, DodgeRollCooldownDesc,
+			MsgNoHardwareRecipes, MsgNoHardwareSkill, MsgNoMedicineRecipes, MsgNoMedicineSkill,
+			MsgCantCraftUnderwater, MsgAlreadyCrafting;
 
 //MADDERS, 1/18/21: Sound feedback stuff for various effects we run.
 var float HeartbeatTimer, LastHeartbeatPitch;
@@ -353,7 +359,7 @@ var travel float LastGenerousWeaponModAccuracy, LastGenerousWeaponModReloadCount
 var Mover LastMoverFrobTarget;
 
 //1/5/24: Weird shit for music not fixing on level transfer.
-var float BarfMusicFixTimer;
+var float BarfMusicFixTimer, MusicFixSkipWindow;
 var bool HackPatchedNihilumEnding;
 
 //~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1038,6 +1044,28 @@ singular function DripWater(float deltaTime)
 // Deus Ex: Transcended end [HACKZ]
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+function ClientSetMusic( music NewSong, byte NewSection, byte NewCdTrack, EMusicTransition NewTransition )
+{
+	//MADDERS, 4/28/25: If we're still fading, brute force
+	if (MusicFixSkipWindow > 0)
+	{
+		NewTransition = MTRAN_Instant;
+	}
+	
+	switch(NewTransition)
+	{
+		case MTRAN_SlowFade:
+			MusicFixSkipWindow = 6.0;
+		break;
+		case MTRAN_FastFade:
+		case MTRAN_Fade:
+			MusicFixSkipWindow = 4.0;
+		break;
+	}
+	
+	Super.ClientSetMusic(NewSong, NewSection, NewCDTrack, NewTransition);
+}
+
 exec function ShowProp(string NewProp)
 {
 	local DeusExRootWindow root;
@@ -1059,6 +1087,53 @@ exec function ShowProp(string NewProp)
 				root.actorDisplay.CustomProp = NewProp;
 				root.actorDisplay.ShowCustomProp(true);
 			}
+		}
+	}
+}
+
+exec function TestTargetLostLines()
+{
+	local float BestDist;
+	local VMDBountyHunter THunter, Best;
+	
+	BestDist = 9999;
+	forEach AllActors(class'VMDBountyHunter', THunter)
+	{
+		if (VSize(THunter.Location - Location) < BestDist)
+		{
+			Best = THunter;
+			BestDist = VSize(THunter.Location - Location);
+		}
+	}
+	
+	if (Best != None)
+	{
+		StartAIBarkConversation(Best, BM_TargetLost);
+	}
+}
+
+exec function TestGetMultiskin(int TarIndex)
+{
+	ClientMessage(class'VMDGenericNativeFunctions'.Static.GetArrayPropertyText(Self, "Engine.Actor.Multiskins", TarIndex));
+}
+
+exec function TestSetMultiskins(int TarIndex, string TextureName)
+{
+	local DeusExDecoration DXD;
+	local Texture TTex;
+	
+	TTex = Texture(DynamicLoadObject(TextureName, class'Texture', false));
+	if (TTex == None)
+	{
+		ClientMessage("Can't find texture"@TextureName$".");
+		return;
+	}
+	
+	foreach AllActors(class'DeusExDecoration', DXD)
+	{
+		if (!class'VMDGenericNativeFunctions'.Static.SetArrayPropertyText(DXD, "Engine.Actor.Multiskins", TarIndex, string(TTex)))
+		{
+			ClientMessage("Failed to set on"@DXD);
 		}
 	}
 }
@@ -2444,6 +2519,260 @@ simulated event RenderOverlays( canvas Canvas )
 	Super.RenderOverlays(Canvas);
 }
 
+exec function OpenMechanicalCraftingWindow()
+{
+	local DeusExRootWindow DXRW;
+	local RepairBot TBot;
+	local PersonaScreenInventory InvScreen;
+	local VMDToolbox TBox;
+	
+	if (RestrictInput()) return;
+	
+	DXRW = DeusExRootWindow(RootWindow);
+	
+	if (DXRW == None || DXRW.GetTopWindow() != None)
+	{
+		return;
+	}
+	
+	TBot = RepairBot(FrobTarget);
+	if (TBot != None)
+	{
+		if (!CanCraftMechanical(True))
+		{
+			return;
+		}
+		
+		DXRW.UIPauseGame(); //MADDERS, 4/23/15: Hack because we don't have the previous window locking down the bot.
+		TBot.VMDInvokeCraftingScreen(DXRW);
+	}
+	else
+	{
+		TBox = VMDToolbox(FindInventoryType(class'VMDToolbox'));
+		if (TBox != None)
+		{
+			if (!CanCraftMechanical(True))
+			{
+				return;
+			}
+			
+			TBox.OpenCraftingWindow(Self);
+		}
+		else
+		{
+			if (!CanCraftMechanical(False, False, True)) //Toolbox is not a recipe.
+			{
+				return;
+			}
+			
+			ShowInventoryWindow();
+			InvScreen = PersonaScreenInventory(DXRW.GetTopWindow());
+			if ((InvScreen != None) && (InvScreen.WinScrap != None) && (InvScreen.WinScrap.WinIcon != None))
+			{
+				InvScreen.SelectInventory(InvScreen.WinScrap.WinIcon);
+				InvScreen.UpdateMechanicalCraftingDisplay();
+			}
+		}
+	}
+}
+
+exec function OpenMedicalCraftingWindow()
+{
+	local DeusExRootWindow DXRW;
+	local MedicalBot TBot;
+	local PersonaScreenInventory InvScreen;
+	local VMDChemistrySet TSet;
+	
+	if (RestrictInput()) return;
+	
+	DXRW = DeusExRootWindow(RootWindow);
+	
+	if (DXRW == None || DXRW.GetTopWindow() != None)
+	{
+		return;
+	}
+	
+	TBot = MedicalBot(FrobTarget);
+	if (TBot != None)
+	{
+		if (!CanCraftMedical(True))
+		{
+			return;
+		}
+		
+		DXRW.UIPauseGame(); //MADDERS, 4/23/15: Hack because we don't have the previous window locking down the bot.
+		TBot.VMDInvokeCraftingScreen(DXRW);
+	}
+	else
+	{
+		TSet = VMDChemistrySet(FindInventoryType(class'VMDChemistrySet'));
+		if (TSet != None)
+		{
+			if (!CanCraftMedical(True))
+			{
+				return;
+			}
+			
+			TSet.OpenCraftingWindow(Self);
+		}
+		else
+		{
+			if (!CanCraftMedical(False, False, True)) //Chemistry set is not a recipe.
+			{
+				return;
+			}
+			
+			ShowInventoryWindow();
+			InvScreen = PersonaScreenInventory(DXRW.GetTopWindow());
+			if ((InvScreen != None) && (InvScreen.WinChemicals != None) && (InvScreen.WinChemicals.WinIcon != None))
+			{
+				InvScreen.SelectInventory(InvScreen.WinChemicals.WinIcon);
+				InvScreen.UpdateMedicalCraftingDisplay();
+			}
+		}
+	}
+}
+
+function bool CanCraftMechanical(bool bRequireRecipes, optional bool bNoFeedback, optional bool bNoSkillNameFeedback)
+{
+	local int i, Wins;
+	local VMDNonStaticCraftingFunctions CF;
+	local class<Inventory> TType;
+	
+	if (SkillSystem == None || !bCraftingSystemEnabled)
+	{
+		return false;
+	}
+	
+	if (bRequireRecipes)
+	{
+		if (CraftingManager == None || CraftingManager.StatRef == None)
+		{
+			return false;
+		}
+		
+		CF = CraftingManager.StatRef;
+		
+		if (CF != None)
+		{
+			for (i=1; i<ArrayCount(CF.Default.MechanicalItemsGlossary); i++)
+			{
+				TType = CF.GetMechanicalItemGlossary(i);
+				if (TType == None || !DiscoveredItem(TType))
+				{
+					continue;
+				}
+				Wins++;
+			}
+		}
+		
+		if (Wins <= 0)
+		{
+			if (!bNoFeedback)
+			{
+				ClientMessage(MsgNoHardwareRecipes);
+			}
+			return false;
+		}
+	}
+	
+	if ((SkillSystem.GetSkillLevel(class'SkillTech') < 1) && (!IsSpecializedInSkill(class'SkillTech')))
+	{
+		if ((!bNoFeedback) && (!bNoSkillNameFeedback))
+		{
+			ClientMessage(MsgNoHardwareSkill);
+		}
+		return false;
+	}
+	if ((Region.Zone != None) && (Region.Zone.bWaterZone))
+	{
+		if (!bNoFeedback)
+		{
+			ClientMessage(MsgCantCraftUnderwater);
+		}
+		return false;
+	}
+	if (VMDPlayerIsCrafting(False))
+	{
+		if (!bNoFeedback)
+		{
+			ClientMessage(MsgAlreadyCrafting);
+		}
+		return false;
+	}
+	return true;
+}
+
+function bool CanCraftMedical(bool bRequireRecipes, optional bool bNoFeedback, optional bool bNoSkillNameFeedback)
+{
+	local int i, Wins;
+	local VMDNonStaticCraftingFunctions CF;
+	local class<Inventory> TType;
+	
+	if (SkillSystem == None || !bCraftingSystemEnabled)
+	{
+		return false;
+	}
+	
+	if (bRequireRecipes)
+	{
+		if (CraftingManager == None || CraftingManager.StatRef == None)
+		{
+			return false;
+		}
+		
+		CF = CraftingManager.StatRef;
+		
+		if (CF != None)
+		{
+			for (i=1; i<ArrayCount(CF.Default.MedicalItemsGlossary); i++)
+			{
+				TType = CF.GetMedicalItemGlossary(i);
+				if (TType == None || !DiscoveredItem(TType))
+				{
+					continue;
+				}
+				Wins++;
+			}
+		}
+		
+		if (Wins <= 0)
+		{
+			if (!bNoFeedback)
+			{
+				ClientMessage(MsgNoMedicineRecipes);
+			}
+			return false;
+		}
+	}
+	
+	if ((SkillSystem.GetSkillLevel(class'SkillMedicine') < 1) && (!IsSpecializedInSkill(class'SkillMedicine')))
+	{
+		if ((!bNoFeedback) && (!bNoSkillNameFeedback))
+		{
+			ClientMessage(MsgNoMedicineSkill);
+		}
+		return false;
+	}
+	if ((Region.Zone != None) && (Region.Zone.bWaterZone))
+	{
+		if (!bNoFeedback)
+		{
+			ClientMessage(MsgCantCraftUnderwater);
+		}
+		return false;
+	}
+	if (VMDPlayerIsCrafting(False))
+	{
+		if (!bNoFeedback)
+		{
+			ClientMessage(MsgAlreadyCrafting);
+		}
+		return false;
+	}
+	return true;
+}
+
 exec function OpenControllerAugWindow()
 {
  	local DeusExRootWindow Root;
@@ -3617,6 +3946,7 @@ event PlayerCalcView( out actor ViewActor, out vector CameraLocation, out rotato
 {
 	local float AddGap;
 	local Rotator RollMod;
+	local Vector AddVect;
 	
 	// check for spy drone and freeze player's view
 	if (bSpyDroneActive)
@@ -3694,7 +4024,12 @@ event PlayerCalcView( out actor ViewActor, out vector CameraLocation, out rotato
 			
 			//Gnarly hack. If JC is bigger (for some reason) scale the offset, too.
 			AddGap *= (CollisionRadius / Default.CollisionRadius);
-			CameraLocation += Vector(ViewRotation) * AddGap;
+
+			//wCCC, 4/27/25: Don't do Z axis. It comes out bad.
+			AddVect = Vector(ViewRotation) * AddGap;
+			AddVect.Z = 0;
+			
+			CameraLocation += AddVect;
 			
 			VMDLastCameraLoc = CameraLocation;
 			return;
@@ -4298,6 +4633,7 @@ function bool VMDHasCinematicClickObjection()
 		case "69_TCP_INTRP":
 		case "69_ZODIAC_INTRO":
 		case "73_MUTATIONS_ENDING":
+		case "76_ZODIAC_EGYPT_TRANS":
 		case "77_ZODIAC_ENDGAME1":
 		case "77_ZODIAC_ENDGAME2":
 		case "80_BURDEN_INTRO":
@@ -4392,6 +4728,10 @@ function VMDSignalCinematicClick()
 		case "69_ZODIAC_INTRO":
 			if (!bNGPlusKeepInventory) LoadZodiacKit();
 			TravelTar = "70_Zodiac_HongKong_TongBase";
+		break;
+
+		case "76_ZODIAC_EGYPT_TRANS":
+			TravelTar = "76_Zodiac_Egypt_Entrance";
 		break;
 		
 		//MADDERS: Boot back to main menu. The player's wish is our command.
@@ -7163,7 +7503,7 @@ function BroadUpdateKillswitch()
 {
 	local float TEnergy;
 	
- 	if (!bKillswitchEngaged || !bImmersiveKillswitch) return;
+ 	if (!bKillswitchEngaged || !bImmersiveKillswitch || bNoKillswitchEnergyDrain) return;
 	
  	if (Energy > 0)
  	{
@@ -7261,8 +7601,26 @@ function float VMDConfigureAimModifier()
  	
 	if (IsInState('PlayerWalking'))
 	{
- 		TAdd = 0.05; //Balance the equation.
- 		if ((bDuck == 1) && (!bForceDuck || HealthLegLeft > 0 || HealthLegRight > 0)) TAdd -= 0.15; //MADDERS: Provide a boost for crouch shooting!
+		if (bUseGunplayVersionTwo)
+		{
+			//MADDERS, 5/4/25: In GP2, no penalty for not ducking, but reduced bonus. Walking also gives us this bonus.
+ 			if ((bDuck == 1) && (!bForceDuck || HealthLegLeft > 0 || HealthLegRight > 0))
+			{
+				TAdd -= 0.10;
+			}
+			else if (bIsWalking)
+			{
+				TAdd -= 0.10;
+			}
+		}
+		else
+		{
+ 			TAdd += 0.05; //Balance the equation.
+ 			if ((bDuck == 1) && (!bForceDuck || HealthLegLeft > 0 || HealthLegRight > 0))
+			{
+				TAdd -= 0.15; //MADDERS: Provide a boost for crouch shooting!
+			}
+		}
  	}
 	
 	if (IsInState('PlayerSwimming'))
@@ -7496,7 +7854,7 @@ function float VMDConfigureGroundSpeed(optional bool bNoiseReductionOnly)
 	}
 	
 	//Tasing and overdosing debilitates you massively.
-	if (((TaseDuration > 0) || (IsOverdosed())) && (!bTrestkon))
+	if ((TaseDuration > 0 || IsOverdosed()) && (!bTrestkon))
 	{
 		TMult = 0.65;
 	}
@@ -9385,18 +9743,88 @@ function VMDCloseMainMenuHook()
 	}
 }
 
+function VMDApplyScriptSwaps(string CampaignName)
+{
+	switch(CampaignName)
+	{
+		case "":
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("HotelCarone.HCPaulDenton.ShieldDamage", "DeusEx.PaulDenton.ShieldDamage"))
+			{
+				Log("VMD: Applied precautionary damage fix to HC Paul Denton!");
+			}
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("HotelCarone.Langly.ShieldDamage", "DeusEx.WaltonSimons.ShieldDamage"))
+			{
+				Log("VMD: Applied precautionary damage fix to HC Mr Leiderhosen!");
+			}
+			
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("FGRHK.EthanYoon.ShieldDamage", "DeusEx.PaulDenton.ShieldDamage"))
+			{
+				Log("VMD: Applied precautionary damage fix to Ethan Yoon!");
+			}
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("FGRHK.EthanYoon.GoToDisabledState", "DeusEx.PaulDenton.GoToDisabledState"))
+			{
+				Log("VMD: Applied precautionary disabled state fix to Ethan Yoon!");
+			}
+			
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("Zodiac.Hela.ModifyDamage", "DeusEx.AnnaNavarre.ModifyDamage"))
+			{
+				Log("VMD: Applied precautionary damage fix to Hela!");
+			}
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("Zodiac.Hela.GoToDisabledState", "DeusEx.AnnaNavarre.GoToDisabledState"))
+			{
+				Log("VMD: Applied precautionary disabled state fix to Hela!");
+			}
+		break;
+		
+		case "CARONE":
+		case "HOTEL CARONE":
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("HotelCarone.HCPaulDenton.ShieldDamage", "DeusEx.PaulDenton.ShieldDamage"))
+			{
+				Log("VMD: Applied damage fix to HC Paul Denton!");
+			}
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("HotelCarone.Langly.ShieldDamage", "DeusEx.WaltonSimons.ShieldDamage"))
+			{
+				Log("VMD: Applied damage fix to HC Mr Leiderhosen!");
+			}
+		break;
+		
+		case "NIHILUM":
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("FGRHK.EthanYoon.ShieldDamage", "DeusEx.PaulDenton.ShieldDamage"))
+			{
+				Log("VMD: Applied damage fix to Ethan Yoon!");
+			}
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("FGRHK.EthanYoon.GoToDisabledState", "DeusEx.PaulDenton.GoToDisabledState"))
+			{
+				Log("VMD: Applied disabled state fix to Ethan Yoon!");
+			}
+		break;
+		
+		case "ZODIAC":
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("Zodiac.Hela.ModifyDamage", "DeusEx.AnnaNavarre.ModifyDamage"))
+			{
+				Log("VMD: Applied damage fix to Hela!");
+			}
+			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("Zodiac.Hela.GoToDisabledState", "DeusEx.AnnaNavarre.GoToDisabledState"))
+			{
+				Log("VMD: Applied disabled state fix to Hela!");
+			}
+		break;
+	}
+}
+
 function VMDTravelPostAcceptHook()
 {
-	local int i, SkillLevel;
-	local float HUP, FoodScore, SmellMults[2];
+	local int i;
+	local float HUP;
 	local DeusExLevelInfo Info;
 	local DodgeRollCooldownAura DRCA;
 	local FireAura FA;
 	local PoisonEffectAura PEA;
-	local RollCooldownAura RCA;
 	local VMDBufferPawn VMBP;
 	local VMDHousingScriptedTextureManager VHSTM;
 	local VMDMEGHIntentionActor IA;
+	
+	VMDApplyScriptSwaps(SelectedCampaign);
 	
 	//MADDERS, 5/29/23: I, uh... Think this should work? Hmm...
 	Handedness = PreferredHandedness;
@@ -9419,8 +9847,7 @@ function VMDTravelPostAcceptHook()
 	}
 	if (StoredPlayerMeshLeft == "") bDefabricateQueued = true;
 	
-	SwimDuration = class'VMDStaticFunctions'.Static.GetPlayerSwimDuration(Self);
-	SwimTimer = SwimDuration;
+	bUpdateTravelTalents = true;
 	
 	if ((bHadMegh) && (!VMDUnpackDrones()))
 	{
@@ -9466,27 +9893,6 @@ function VMDTravelPostAcceptHook()
 			FA.Frob(Self, None);
 			FA.Activate();
 		}
-	}
-	
-	if (RollCooldownTimer > 0)
-	{
-		RCA = RollCooldownAura(FindInventoryType(class'RollCooldownAura'));
-		if (RCA == None)
-		{
-			RCA = Spawn(class'RollCooldownAura');
-			RCA.Frob(Self, None);
-			RCA.Activate();
-		}
-		else
-		{
-			RCA.Charge = int(RollCooldownTimer+0.5)*40;
-			RCA.UpdateAugmentStatus();
-		}
-	}
-	else
-	{
-		//MADDERS, 12/23/23: Stop new game roll cooldown sounds, thank you.
-		RollCooldownTimer = 0;
 	}
 	
 	if (DodgeRollCooldownTimer > 0)
@@ -9646,93 +10052,6 @@ function VMDTravelPostAcceptHook()
 			//else if (LastStressPhase == 2) ClientMessage(StressLevelDesc[3]);
 			//else if (LastStressPhase == 1) ClientMessage(StressLevelDesc[1]);
 		}
-	}
-	if (bSmellsEnabled)
-	{
-		if (SkillSystem != None)
-		{
-			SkillLevel = SkillSystem.GetSkillLevel(class'SkillLockpicking');
-		}
-		
-		//Scale smell with our augment for it now.
-		SmellMults[0] = 1.0;
-		SmellMults[1] = 1.0;
-		if (HasSkillAugment('LockpickScent'))
- 		{
-			SmellMults[0] = 1.25 + (0.25 * SkillLevel); //1.5;
-			SmellMults[1] = 1.15 + (0.15 * SkillLevel); //1.34;
-		}
-		
-		if (IsA('MagIngramPlayer'))
-		{
-			SmellMults[0] *= 1.65;
-		}
-		
-		if (BloodSmellLevel >= 90*SmellMults[0])
-		{
-			if (bSmellsEnabled)
-			{
-				ClientMessage(BloodSmellDesc[3]);
-				PlaySound(Sound'BloodSmellIncrease',,1.1,,,0.95 + (FRand() * 0.1));
-			}
-		}
- 		else if (BloodSmellLevel >= 45*SmellMults[0])
-		{
-			if (bSmellsEnabled)
-			{
-				ClientMessage(BloodSmellDesc[1]);
-				PlaySound(Sound'BloodSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
-			}
-		}
-		LastBloodSmellLevel = BloodSmellLevel;
-		
- 		FoodScore = ScoreFood();
-		
- 		if (FoodScore >= FoodSmellThresholds[1]*SmellMults[1])
-		{
-			if (bSmellsEnabled)
-			{
-				ClientMessage(FoodSmellDesc[3]);
-				PlaySound(Sound'FoodSmellIncrease',,1.1,,,0.95 + (FRand() * 0.1));
-			}
-		}
- 		else if (FoodScore >= FoodSmellThresholds[0]*SmellMults[1])
-		{
-			if (bSmellsEnabled)
-			{
-				ClientMessage(FoodSmellDesc[1]);
-				PlaySound(Sound'FoodSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
-			}
-		}
-		LastFoodSmellLevel = FoodScore;
-		
-		if (ZymeSmellLevel >= 45)
-		{
-			if (bSmellsEnabled)
-			{
-				ClientMessage(ZymeSmellDesc[1]);
-				//PlaySound(Sound'ZymeSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
-			}
-		}
-		LastZymeSmellLevel = ZymeSmellLevel;
-		
-		if (SmokeSmellLevel >= 90*SmellMults[0])
-		{
-			if (bSmellsEnabled)
-			{
-				ClientMessage(SmokeSmellDesc[3]);
-				//PlaySound(Sound'SmokeSmellIncrease',,1.1,,,0.95 + (FRand() * 0.1));
-			}
-		}
- 		else if (SmokeSmellLevel >= 45*SmellMults[0])
-		{
-			if (bSmellsEnabled)
-			{
-				ClientMessage(SmokeSmellDesc[1]);
-				//PlaySound(Sound'SmokeSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
-			}
-		}
-		LastSmokeSmellLevel = SmokeSmellLevel;
 	}
 	
 	//MADDERS, 5/10/22: HOUSING SHIT!
@@ -10151,16 +10470,135 @@ function VMDRunTickHook( float DT )
 {
 	local Actor A;
 	local bool bMetTiming;
- 	local int TFactor, HungerDamage, i;
-	local float HUP, LHUP, AppMod, BreathMod, AugLevel, TBreath1, TBreath2, TDist;
+ 	local int TFactor, HungerDamage, i, SkillLevel;
+	local float HUP, LHUP, AppMod, BreathMod, AugLevel, TBreath1, TBreath2, TDist, SmellMults[2], FoodScore;
  	local Vector TVect, TVect2;
 	local Actor TAct;
 	local Computers TComp;
+	local DeusExLevelInfo Info;
 	local MedicalBot TMed;
 	local RepairBot TRep;
+	local RollCooldownAura RCA;
 	local ShowerFaucet Fauc;
 	local VMDBountyHunter THunt, THunt2;
 	local VMDLadderPoint TLadder;
+	
+	if (bUpdateTravelTalents)
+	{
+		bUpdateTravelTalents = false;
+		
+		SwimDuration = class'VMDStaticFunctions'.Static.GetPlayerSwimDuration(Self);
+		SwimTimer = SwimDuration;
+		
+		if (RollCooldownTimer > 0)
+		{
+			RCA = RollCooldownAura(FindInventoryType(class'RollCooldownAura'));
+			if (RCA == None)
+			{
+				RCA = Spawn(class'RollCooldownAura');
+				RCA.Frob(Self, None);
+				RCA.Activate();
+			}
+			else
+			{
+				RCA.Charge = int(RollCooldownTimer+0.5)*40;
+				RCA.UpdateAugmentStatus();
+			}
+		}
+		else
+		{
+			//MADDERS, 12/23/23: Stop new game roll cooldown sounds, thank you.
+			RollCooldownTimer = 0;
+		}
+		
+		if (bSmellsEnabled)
+		{
+			if (SkillSystem != None)
+			{
+				SkillLevel = SkillSystem.GetSkillLevel(class'SkillLockpicking');
+			}
+			
+			//Scale smell with our augment for it now.
+			SmellMults[0] = 1.0;
+			SmellMults[1] = 1.0;
+			if (HasSkillAugment('LockpickScent'))
+	 		{
+				SmellMults[0] = 1.25 + (0.25 * SkillLevel); //1.5;
+				SmellMults[1] = 1.15 + (0.15 * SkillLevel); //1.34;
+			}
+			
+			if (IsA('MagIngramPlayer'))
+			{
+				SmellMults[0] *= 1.65;
+			}
+			
+			if (BloodSmellLevel >= 90*SmellMults[0])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(BloodSmellDesc[3]);
+					PlaySound(Sound'BloodSmellIncrease',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+	 		else if (BloodSmellLevel >= 45*SmellMults[0])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(BloodSmellDesc[1]);
+					PlaySound(Sound'BloodSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+			LastBloodSmellLevel = BloodSmellLevel;
+			
+ 			FoodScore = ScoreFood();
+			
+ 			if (FoodScore >= FoodSmellThresholds[1]*SmellMults[1])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(FoodSmellDesc[3]);
+					PlaySound(Sound'FoodSmellIncrease',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+ 			else if (FoodScore >= FoodSmellThresholds[0]*SmellMults[1])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(FoodSmellDesc[1]);
+					PlaySound(Sound'FoodSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+			LastFoodSmellLevel = FoodScore;
+			
+			if (ZymeSmellLevel >= 45)
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(ZymeSmellDesc[1]);
+					//PlaySound(Sound'ZymeSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+			LastZymeSmellLevel = ZymeSmellLevel;
+			
+			if (SmokeSmellLevel >= 90*SmellMults[0])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(SmokeSmellDesc[3]);
+					//PlaySound(Sound'SmokeSmellIncrease',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+ 			else if (SmokeSmellLevel >= 45*SmellMults[0])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(SmokeSmellDesc[1]);
+					//PlaySound(Sound'SmokeSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+			LastSmokeSmellLevel = SmokeSmellLevel;
+		}
+	}
 	
  	//Preamble. Store last deltatime for hacky stuff.
  	VMDLastTickChunk = DT;
@@ -10338,6 +10776,12 @@ function VMDRunTickHook( float DT )
  	if (BloodSmellLevel > 0) BloodSmellLevel -= DT;
 	if (ZymeSmellLevel > 0) ZymeSmellLevel -= DT;
 	if (SmokeSmellLevel > 0) SmokeSmellLevel -= DT;
+
+	if (MusicFixSkipWindow > 0)
+	{
+		MusicFixSkipWindow -= DT;
+	}
+	
 	if (BarfMusicFixTimer > 0)
 	{
 		BarfMusicFixTimer -= DT;
@@ -10541,9 +10985,16 @@ function VMDRunTickHook( float DT )
 		{
 			AutoSaveTimer -= DT;
 		}
-		else 
+		else
 		{
-			VMDAutoSave();
+			forEach AllActors(class'DeusExLevelInfo', Info) break;
+			
+			if (VMDShouldSave(Info))
+			{
+			    	AutoSaveTimer = 0;
+				//VMDAutoSave();
+				VMDQueueAutoSave();
+			}
 		}
 	}
 }
@@ -10555,7 +11006,8 @@ function VMDRunTickHook( float DT )
 
 function VMDRunTickHookLight(float DT)
 {
-	local int THand;
+	local int THand, SkillLevel;
+	local float SmellMults[2], FoodScore;
 	local string TName;
 	local Mesh TMesh;
 	local Actor A;
@@ -10563,6 +11015,123 @@ function VMDRunTickHookLight(float DT)
 	local DodgeRollCooldownAura DRCA;
 	local RollCooldownAura RCA;
 	local Window TWindow;
+	
+	if (bUpdateTravelTalents)
+	{
+		bUpdateTravelTalents = false;
+		
+		SwimDuration = class'VMDStaticFunctions'.Static.GetPlayerSwimDuration(Self);
+		SwimTimer = SwimDuration;
+		
+		if (RollCooldownTimer > 0)
+		{
+			RCA = RollCooldownAura(FindInventoryType(class'RollCooldownAura'));
+			if (RCA == None)
+			{
+				RCA = Spawn(class'RollCooldownAura');
+				RCA.Frob(Self, None);
+				RCA.Activate();
+			}
+			else
+			{
+				RCA.Charge = int(RollCooldownTimer+0.5)*40;
+				RCA.UpdateAugmentStatus();
+			}
+		}
+		else
+		{
+			//MADDERS, 12/23/23: Stop new game roll cooldown sounds, thank you.
+			RollCooldownTimer = 0;
+		}
+		
+		if (bSmellsEnabled)
+		{
+			if (SkillSystem != None)
+			{
+				SkillLevel = SkillSystem.GetSkillLevel(class'SkillLockpicking');
+			}
+			
+			//Scale smell with our augment for it now.
+			SmellMults[0] = 1.0;
+			SmellMults[1] = 1.0;
+			if (HasSkillAugment('LockpickScent'))
+	 		{
+				SmellMults[0] = 1.25 + (0.25 * SkillLevel); //1.5;
+				SmellMults[1] = 1.15 + (0.15 * SkillLevel); //1.34;
+			}
+			
+			if (IsA('MagIngramPlayer'))
+			{
+				SmellMults[0] *= 1.65;
+			}
+			
+			if (BloodSmellLevel >= 90*SmellMults[0])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(BloodSmellDesc[3]);
+					PlaySound(Sound'BloodSmellIncrease',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+	 		else if (BloodSmellLevel >= 45*SmellMults[0])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(BloodSmellDesc[1]);
+					PlaySound(Sound'BloodSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+			LastBloodSmellLevel = BloodSmellLevel;
+			
+ 			FoodScore = ScoreFood();
+			
+ 			if (FoodScore >= FoodSmellThresholds[1]*SmellMults[1])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(FoodSmellDesc[3]);
+					PlaySound(Sound'FoodSmellIncrease',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+ 			else if (FoodScore >= FoodSmellThresholds[0]*SmellMults[1])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(FoodSmellDesc[1]);
+					PlaySound(Sound'FoodSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+			LastFoodSmellLevel = FoodScore;
+			
+			if (ZymeSmellLevel >= 45)
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(ZymeSmellDesc[1]);
+					//PlaySound(Sound'ZymeSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+			LastZymeSmellLevel = ZymeSmellLevel;
+			
+			if (SmokeSmellLevel >= 90*SmellMults[0])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(SmokeSmellDesc[3]);
+					//PlaySound(Sound'SmokeSmellIncrease',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+ 			else if (SmokeSmellLevel >= 45*SmellMults[0])
+			{
+				if (bSmellsEnabled)
+				{
+					ClientMessage(SmokeSmellDesc[1]);
+					//PlaySound(Sound'SmokeSmellIncreaseSmall',,1.1,,,0.95 + (FRand() * 0.1));
+				}
+			}
+			LastSmokeSmellLevel = SmokeSmellLevel;
+		}
+	}
 	
 	DripWater(DT);
 	
@@ -10591,6 +11160,11 @@ function VMDRunTickHookLight(float DT)
 	else if ((bPlayerHandsEnabled) && (InHand == None) && (InHandPending == None) && (PlayerHandsLevel < PlayerHandsCap))
 	{
 		PlayerHandsLevel = FMin(PlayerHandsCap, PlayerHandsLevel + DT);
+	}
+	
+	if ((UIForceDuckTimer > 0) && (DeusExRootWindow(RootWindow) != None) && (DeusExRootWindow(RootWindow).GetTopWindow() == None))
+	{
+		UIForceDuckTimer -= DT;
 	}
 	
 	if (ForceLimpTime > 0)
@@ -10754,6 +11328,22 @@ function VMDRequestAutoSave(optional float delay)
 	AutoSaveTimer = Delay;
 }
 
+function VMDQueueAutoSave()
+{
+	local DeusExRootWindow DXRW;
+	
+	DXRW = DeusExRootWindow(RootWindow);
+	if (DXRW == None)
+	{
+		VMDAutoSave();
+	}
+	else
+	{
+		DXRW.UIPauseGame();
+		DXRW.AddTimer(0.01, False,, 'VMDInvokeAutoSave');
+	}
+}
+
 // Handle auto save.
 function VMDAutoSave()
 {
@@ -10782,7 +11372,16 @@ function VMDAutoSave()
 	info = GetLevelInfo();
 	if (!VMDShouldSave(info, bPendingNGPlusSave))
 	{
-        	return;
+		//MADDERS, 4/21/25: For these save fail conditions (we should be waiting), queue things again. Particularly, if we open a menu during our 0.1 second pause time.
+		if (DataLinkPlay != none || (DeusExRootWindow(RootWindow) != None && DeusExRootWindow(RootWindow).GetTopWindow() != None))
+		{
+			VMDQueueAutosave();
+			if (DeusExRootWindow(RootWindow) != None)
+			{
+				DeusExRootWindow(RootWindow).UnpauseGame(); //Force this through, to not lock up the game.
+			}     
+ 		}
+	  	return;
 	}
 	
     	bAutoSaving = false;
@@ -10835,9 +11434,9 @@ function bool VMDShouldSave(DeusExLevelInfo info, optional bool bNGPlus)
 		return false;
 	}
 	
-    	if (!bNGPlus)
-	{
-        	if (IsInState('Dying') || IsInState('Paralyzed') || IsInState('TrulyParalyzed') || IsInState('Interpolating')
+    	//if (!bNGPlus)
+	//{
+        	if (IsInState('Dying') || IsInState('Paralyzed') || IsInState('TrulyParalyzed') || IsInState('Interpolating') || IsInState('CheatFlying') || bIsTyping
         		|| dataLinkPlay != none
         		|| Level.NetMode != NM_Standalone
 			|| LastAutoSaveLoc ~= GetMissionLocation() //MADDERS: Don't save on the same map 2x in a row.
@@ -10845,7 +11444,7 @@ function bool VMDShouldSave(DeusExLevelInfo info, optional bool bNGPlus)
 		{
 	        	return false;
 		}
-    	}
+    	//}
 	
 	MN = class'VMDStaticFunctions'.Static.VMDGetMapName(Self);
 	switch(MN)
@@ -11754,6 +12353,12 @@ defaultproperties
      OverdoseDescs(0)="Your heart beats erratically and your breathing constrincts... You've probably had too much Zyme..."
      OverdoseDescs(1)="You feel queasy, as your nerves flail and your breathing pauses... You've definitely had too much alcohol..."
      OverdoseDescs(2)="You feel light headed and weak, as your chest constricts slightly... You've officially had too much water..."
+     MsgNoHardwareSkill="To be honest, you have no idea what you're doing with all this HARDWARE"
+     MsgNoHardwareRecipes="You don't actually know any hardware recipes, now that you think about it"
+     MsgNoMedicineSkill="This is of no use to you. It's not like you practice MEDICINE or anything..."
+     MsgNoMedicineRecipes="You don't actually know any medical recipes, now that you think about it"
+     MsgCantCraftUnderwater="You cannot craft underwater"
+     MsgAlreadyCrafting="You are already crafting"
      FoodSmellThresholds(0)=1000
      FoodSmellThresholds(1)=2000
      
@@ -11857,7 +12462,10 @@ defaultproperties
      bElectronicsDrawMultitool=True
      bUpdateVanillaSkins=True
      bJumpDuckFeedbackNoise=True
-     CustomUIScale=1
+     bDamageGateBreakNoise=True
+     bUseGunplayVersionTwo=False
+     FrobEmptyLowersWeapon=True
+     CustomUIScale=2
      
      PreferredHandedness=-1
      PlayerHandsCap=0.300000
@@ -11948,6 +12556,7 @@ defaultproperties
      StressMomentum=1.000000
      DodgeClickTime=0.100000
      TacticalRollTime=0.150000
+     UIForceDuckTime=0.350000
      InventoryFullNull="You cannot remove the %s"
      InventoryFullFeedback="You don't have enough room in your inventory to pick up the %s. You require %dx%d in space"
      
@@ -11977,8 +12586,7 @@ defaultproperties
      bSmartEnemyWeaponSwapEnabled=true
      bDrawMeleeEnabled=true
      bEnemyGEPLockEnabled=true
-
-
+     
      QuickSaveNumber=-1
      CountRemainingString="amount remaining:"
      CurScrap=100
