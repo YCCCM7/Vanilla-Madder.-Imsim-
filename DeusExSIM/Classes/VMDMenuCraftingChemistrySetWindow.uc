@@ -20,7 +20,7 @@ var VMDBufferPlayer VMP;
 var VMDMenuUIInfoWindow WinInfoTitle, WinInfoBody;
 var VMDMenuCraftingChoiceCraftQuantity QuantitySlider;
 
-var VMDButtonPos TileWindowPos, TileWindowSize, WinInfoPos[2], WinInfoSize[2], SliderTagSize, QuantitySliderPos, QuantitySliderSize,
+var VMDButtonPos TileWindowPos, TileWindowSize, WinInfoPos[2], WinInfoSize[2], WinLinesPos, WinLinesSize, SliderTagSize, QuantitySliderPos, QuantitySliderSize,
 			RequirementPos[5], RequirementIconOffset, RequirementTextOffset, RequirementTextOffset2, RequirementSize, RequirementIconSize, RequirementTextSize, RequirementTextExtensionSize;
 
 var bool bHasMedbot, bHasCraft, bCanCraft, bHasBreakdown, bCanBreakdown;
@@ -32,7 +32,7 @@ var localized string MsgBotRequired, MsgSkillRequired, MsgAllRequirementsMet, Sk
 			MsgBreakdownParamsA, MsgBreakdownParamsB, MsgDepleted,
 			MsgXOwned, MsgXOutOfY, MsgBreakdownGain, MsgItemSize;
 
-var VMDStylizedWindow RequirementBGs[5], RequirementPictures[5];
+var VMDStylizedWindow RequirementBGs[5], RequirementPictures[5], LineOverlayHack;
 var MenuUIHelpWindow RequirementLabels[6];
 
 var MedicalBot Medbot;
@@ -191,6 +191,15 @@ function CreateInfoWindows()
 		WinInfoBody.SetPos(WinInfoPos[1].X, WinInfoPos[1].Y);
 		WinInfoBody.SetSize(WinInfoSize[1].X, WinInfoSize[1].Y);
 		WinInfoBody.SetText("");
+		
+		LineOverlayHack = VMDStylizedWindow(WinInfoBody.NewChild(class'VMDStylizedWindow'));
+		LineOverlayHack.SetSize(WinLinesSize.X, WinLinesSize.Y);
+		LineOverlayHack.SetBackground(Texture'VMDCraftingWindowLinesOverlay');
+		LineOverlayHack.SetBackgroundStyle(DSTY_Masked);
+		LineOverlayHack.SetPos(WinLinesPos.X, WinLinesPos.Y);
+		LineOverlayHack.bBlockTranslucency = true;
+		LineOverlayHack.bMenuColors = true;
+		LineOverlayHack.StyleChanged();
 	}
 }
 
@@ -1235,8 +1244,10 @@ defaultproperties
      
      WinInfoPos(0)=(X=325,Y=9)
      WinInfoSize(0)=(X=429,Y=40)
-     WinInfoPos(1)=(X=325,Y=10)
-     WinInfoSize(1)=(X=429,Y=196)
+     WinInfoPos(1)=(X=325,Y=7) //325, 10
+     WinInfoSize(1)=(X=428,Y=217) //429, 196
+     WinLinesPos=(X=0,Y=22)
+     WinLinesSize=(X=162,Y=95)
      
      SliderTagSize=(X=67,Y=0)
      QuantitySliderPos=(X=335,Y=231)
