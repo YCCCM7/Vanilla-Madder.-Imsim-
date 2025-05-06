@@ -964,7 +964,7 @@ function RefreshInventoryItemButtons()
         	itemButton = PersonaInventoryItemButton(itemWindow);
         	itemWindow = itemWindow.GetLowerSibling();
         	if (itemButton != None)
-        	{          
+        	{
         	    	itemButton.Destroy();
         	}
     	}
@@ -1172,9 +1172,11 @@ function RemoveSelectedItem()
 	if (inv != None)
 	{
 		// Destroy the button
-		selectedItem.Destroy();
+		//MADDERS, 4/6/25: Do some froggy shit here, due to timing issues with unload from memory crashing the game.
+		//selectedItem.Destroy();
+		DeferDestroy(SelectedItem);
 		selectedItem = None;
-
+		
 		// Remove it from the object belt
 		invBelt.RemoveObject(inv);
 
