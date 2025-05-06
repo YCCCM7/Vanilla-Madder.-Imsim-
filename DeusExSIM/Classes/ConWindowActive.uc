@@ -283,15 +283,17 @@ function CalculateWindowSizes()
 function DisplayChoice( ConChoice choice )
 {
 	local ConChoiceWindow newButton;
-
+	
 	newButton = CreateConButton( HALIGN_Left, colConTextChoice, colConTextFocus );
-	newButton.SetText( "~ " $ choice.choiceText );
+	//MADDERS, 3/27/25: QOL indication.
+	//newButton.SetText( "~ " $ choice.choiceText );
+	NewButton.SetText( (numChoices+1) $ "." @ Choice.ChoiceText);
 	newButton.SetUserObject( choice );
-
+	
 	// These next two calls handle highlighting of the choice
 	newButton.SetButtonTextures(,Texture'Solid', Texture'Solid', Texture'Solid');
 	newButton.SetButtonColors(,colConTextChoice, colConTextChoice, colConTextChoice);
-
+	
 	// Add the button
 	AddButton( newButton );
 }
@@ -306,11 +308,13 @@ function DisplayChoice( ConChoice choice )
 function DisplaySkillChoice( ConChoice choice )
 {
 	local ConChoiceWindow newButton;
-
+	
 	newButton = CreateConButton( HALIGN_Left, colConTextSkill, colConTextFocus );
-	newButton.SetText( 	"~  " $ choice.choiceText $ "  (" $ choice.SkillNeeded $ ":" $ choice.SkillLevelNeeded $ ")" );
+	//MADDERS, 3/27/25: QOL indication. Is this function even used? Huh?
+	//newButton.SetText( 	"~  " $ choice.choiceText $ "  (" $ choice.SkillNeeded $ ":" $ choice.SkillLevelNeeded $ ")" );
+	newButton.SetText( (numChoices+1) $ "." @ choice.choiceText $ "  (" $ choice.SkillNeeded $ ":" $ choice.SkillLevelNeeded $ ")" );
 	newButton.SetUserObject( choice );
-
+	
 	// Add the button
 	AddButton( newButton );
 }
