@@ -3,9 +3,16 @@
 //=============================================================================
 class VMDWeaponMagazine extends DeusExFragment;
 
+var bool bAmmoLookAlike;
+
 function InitDropBy(Pawn Dropper)
 {
 	bHidden = true;
+	
+	if (bAmmoLookalike)
+	{
+		Lifespan = 30.0;
+	}
 	
 	if ((Mesh != None) && (PlayerPawn(Dropper) == None || PlayerPawn(Dropper).bBehindView))
 	{
@@ -35,7 +42,7 @@ simulated function HitWall (vector HitNormal, actor HitWall)
 defaultproperties
 {
      bHidden=True
-     Lifespan=30.000000
+     Lifespan=0.000000
      Elasticity=0.400000
      ImpactSound=None
      MiscSound=None
