@@ -54,7 +54,7 @@ var class<Inventory> StuckAmmoClass;
 var float StickAmmoRate;
 
 var Pawn AggressiveExplodedOwner; 
-var bool bHitFakeBackdrop;		// Have we hit a brush face with a fakebackdrop flag, and therefore should not spawn effects?
+var bool bHitFakeBackdrop, bOwnerless; // Have we hit a brush face with a fakebackdrop flag, and therefore should not spawn effects?
 
 //MADDERS, 2/19/25: The things I do for Zodiac C4, I swear.
 var bool bSticky, bStuckToWorld, bStuckToActor;
@@ -482,10 +482,18 @@ function HurtRadiusVMD( float DamageAmount, float DamageRadius, name DamageName,
 
 function PostBeginPlay()
 {
+	//MADDERS, 3/29/25: Initialize this here, in case our owner dies mid-check later, and clears its reference.
+	if (Owner == None)
+	{
+		bOwnerless = true;
+	}
+	
 	Super.PostBeginPlay();
-
- 	if (bEmitDanger)
+	
+ 	if ((bEmitDanger) && (!bOwnerless))
+	{
 		AIStartEvent('Projectile', EAITYPE_Visual);
+	}
 }
 
 //
@@ -497,7 +505,9 @@ function Frob(Actor Frobber, Inventory frobWith)
 
 	// if the player frobs it and it's stuck, the player can grab it
 	if (bStuck)
+	{
 		GrabProjectile(DeusExPlayer(Frobber));
+	}
 }
 
 function GrabProjectile(DeusExPlayer player)
@@ -1179,7 +1189,7 @@ auto simulated state Flying
       		//DEUS_EX AMSD Only do these server side
       		if (Role == ROLE_Authority)
       		{
-         		if (ImpactSound != None)
+         		if ((ImpactSound != None) && (!bOwnerless))
          		{
 				NoiseMult = VMDOpenSpaceRadiusMult();
 				VMDUseAIEventSender(GetPlayerPawn(), 'LoudNoise', EAITYPE_Audio, 2.0, blastRadius*24*NoiseMult);
