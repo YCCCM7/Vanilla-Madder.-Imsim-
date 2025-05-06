@@ -23,6 +23,17 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		//71_ZODIAC_LANGLEY_CIAHQ: Hiding portrait, in-line with prior changes.
 		//2/18/25: Also, add more paths for MEGH.
 		case "71_ZODIAC_LANGLEY_CIAHQ":
+			TCamp = Spawn(class'VMDCabinetCampActor',,, Vect(-3647,-4751,1160));
+			if (TCamp != None)
+			{
+				TCamp.MinCampLocation = Vect(-3647,-4751,1160);
+				TCamp.MaxCampLocation = Vect(-3618,-4705,1247);
+				TCamp.NumWatchedDoors = 1;
+				TCamp.CabinetDoors[0] = DeusExMover(FindActorBySeed(class'DeusExMover', 59));
+				TCamp.CabinetDoorClosedFrames[0] = 0;
+				TCamp.bLastOpened = true;
+			}
+			
 			Spawn(class'PathNodeMobile',,, Vect(-3185,-2564,1320));
 			Spawn(class'PathNodeMobile',,, Vect(-3252,-2745,1250));
 			Spawn(class'PathNodeMobile',,, Vect(-3020,-2585,1332));
@@ -178,6 +189,19 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		break;
 		//71_ZODIAC_LANGLEY_MJ12: Add more MEGH paths.
 		case "71_ZODIAC_LANGLEY_MJ12":
+			TCamp = Spawn(class'VMDCabinetCampActor',,, Vect(-2393,1121,617));
+			if (TCamp != None)
+			{
+				TCamp.MinCampLocation = Vect(-2393,1121,617);
+				TCamp.MaxCampLocation = Vect(-2336,1143,663);
+				TCamp.NumWatchedDoors = 2;
+				TCamp.CabinetDoors[0] = DeusExMover(FindActorBySeed(class'DeusExMover', 1));
+				TCamp.CabinetDoorClosedFrames[0] = 0;
+				TCamp.CabinetDoors[1] = DeusExMover(FindActorBySeed(class'DeusExMover', 27));
+				TCamp.CabinetDoorClosedFrames[1] = 0;
+				TCamp.bLastOpened = true;
+			}
+			
 			Spawn(class'PathNodeMobile',,, Vect(-559,1615,47));
 			Spawn(class'PathNodeMobile',,, Vect(-336,1534,47));
 			Spawn(class'PathNodeMobile',,, Vect(-295,1681,47));
