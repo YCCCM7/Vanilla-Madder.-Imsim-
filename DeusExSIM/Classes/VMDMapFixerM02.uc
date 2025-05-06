@@ -309,9 +309,19 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						SP.bHateCarcass = false;
 						SP.bHateDistress = false;
 					}
-					else if (UNATCOTroop(SP) != None || RiotCop(SP) != None)
+					else if (UNATCOTroop(SP) != None)
 					{
 						SP.ChangeAlly('Thugs', -1.0, true);
+					}
+					else if (RiotCop(SP) != None)
+					{
+						SP.ChangeAlly('Thugs', -1.0, true);
+						SP.ChangeAlly('NSF', -1.0, true);
+					}
+					//MADDERS, 4/28/25: Stop deleting all the terrorists when one dies. They all share the same bind name for fuck's sake.
+					else if ((Terrorist(SP) != None) && (SP.BindName == SP.Default.BindName) && (SP.bImportant))
+					{
+						SP.bImportant = false;
 					}
 					else if (ThugMale(SP) != None || SandraRenton(SP) != None)
 					{
