@@ -5340,8 +5340,12 @@ function VMDCleanFakeDroneActors()
 	
 	forEach AllActors(class'VMDFakePathNode', TPath)
 	{
-		TPath.Destroy();
+		if (VMDPoisonScout(TPath.Owner) == None)
+		{
+			TPath.Destroy();
+		}
 	}
+	
 	forEach AllActors(class'VMDFakePatrolPoint', TPat)
 	{
 		TPat.Destroy();
