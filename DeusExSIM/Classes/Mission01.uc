@@ -96,6 +96,7 @@ function Timer()
 	local SpawnPoint SP;
 	local Terrorist T;
 	local TerroristCarcass carc;
+	local ThrownProjectile TP;
 
 	Super.Timer();
 
@@ -187,7 +188,16 @@ function Timer()
 						M.lockStrength = 0.0;
 					}
 				}
-
+				
+				//MADDERS, 3/26/25: UNATCO disables explosives on way in. Why wouldn't they?
+				forEach AllActors(class'ThrownProjectile', TP)
+				{
+					if (TP.bProximityTriggered)
+					{
+						TP.bDisabled = true;
+					}
+				}
+				
 				// unhide the troop, delete the terrorists, Gunther, and teleport Paul
 				foreach AllActors(class'ScriptedPawn', P)
 				{
