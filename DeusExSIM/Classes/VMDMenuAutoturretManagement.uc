@@ -98,7 +98,7 @@ event InitWindow()
 	}
 	else
 	{
-		AddTimer(0.1, True,, 'DoPop');
+		AddTimer(0.1, False,, 'DoPop');
 		return;
 	}
 	
@@ -260,7 +260,7 @@ function UpdateInfo()
 	}
  	else
 	{
-  		AddTimer(0.1, True,, 'DoPop');
+  		AddTimer(0.1, False,, 'DoPop');
  	}
 	
 	ScrapLeftLabel.SetText(SprintF(StrScrapLeft, LastScrapCount));
@@ -312,7 +312,7 @@ function bool ButtonActivated( Window buttonPressed )
 	switch(ButtonPressed)
 	{
 		case DoneButton:
-			AddTimer(0.1, True,, 'DoPop');
+			AddTimer(0.1, False,, 'DoPop');
 			bHandled = True;
 		break;
 		
@@ -423,8 +423,8 @@ defaultproperties
      TurretIconSize=(X=148,Y=148)
      TurretIconPos=(X=31,Y=46)
      
-     LoadButtonText="Load %d"
-     EnhanceButtonText="Enhance"
+     LoadButtonText="|&Load %d"
+     EnhanceButtonText="|&Enhance"
      
      Title="AutoTurret Management"
      DoneButtonText="|&Done"
