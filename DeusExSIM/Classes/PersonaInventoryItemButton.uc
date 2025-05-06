@@ -61,7 +61,7 @@ event DrawWindow(GC gc)
 	local DeusExWeapon weapon;
 	local Inventory anItem;
 	
-	if (bDeleteMe)
+	if (bDeleteMe || GetClientObject() == None)
 		return;
 	
 	if ((!bDragging) || ((bDragging) && (bValidSlot)))
