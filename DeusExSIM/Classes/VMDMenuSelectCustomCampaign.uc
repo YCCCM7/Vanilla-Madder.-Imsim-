@@ -25,6 +25,9 @@ var MenuUILabelWindow ListLabel;
 var VMDButtonPos LabelHeaderPos, LabelListPos;
 var localized string ListLabelText;
 
+var bool bGavePlayerGuideTip;
+var localized string PlayerGuideTipHeader, PlayerGuideTipText;
+
 var VMDButtonPos CampaignIconPos[2];
 var Window CampaignIcons[2];
 
@@ -58,6 +61,8 @@ event InitWindow()
 	Show();
 	
 	StyleChanged();
+	
+	AddTimer(0.1, false,, 'GiveStartTip');
 }
 
 // ----------------------------------------------------------------------
@@ -104,19 +109,24 @@ function CreateCampaignLists()
 	local int i;
 	local VMDMissionNugget BarfStruct;
 	
-	winScroll = CreateScrollAreaWindow(winClient);
+	if (WinScroll == None)
+	{
+		winScroll = CreateScrollAreaWindow(winClient);
+		winScroll.SetPos(CampaignListPos.X, CampaignListPos.Y);
+		winScroll.SetSize(126, 331); //436
+	}
 	
-	winScroll.SetPos(CampaignListPos.X, CampaignListPos.Y);
-	winScroll.SetSize(126, 331); //436
-	
-	CampaignList = MenuUIListWindow(winScroll.clipWindow.NewChild(Class'MenuUIListWindow'));
-	//CampaignList.SetPos(CampaignListPos.X, CampaignListPos.Y);
-	CampaignList.EnableMultiSelect(False);
-	CampaignList.EnableAutoExpandColumns(False);
-	CampaignList.EnableHotKeys(False);
-	//CampaignList.SetNumColumns(1);
-	CampaignList.SetColumnWidth(0, 126);
-	CampaignList.SetColumnType(0, COLTYPE_String);
+	if (CampaignList == None)
+	{
+		CampaignList = MenuUIListWindow(winScroll.clipWindow.NewChild(Class'MenuUIListWindow'));
+		//CampaignList.SetPos(CampaignListPos.X, CampaignListPos.Y);
+		CampaignList.EnableMultiSelect(False);
+		CampaignList.EnableAutoExpandColumns(False);
+		CampaignList.EnableHotKeys(False);
+		//CampaignList.SetNumColumns(1);
+		CampaignList.SetColumnWidth(0, 126);
+		CampaignList.SetColumnType(0, COLTYPE_String);
+	}
 	
 	// First erase the old list
 	CampaignList.DeleteAllRows();
@@ -386,12 +396,41 @@ function ProcessAction(String actionKey)
 {
 	switch(CAPS(ActionKey))
 	{
+		case "FINDMODS":
+			InvokeModLocatorWindow();
+		break;
+		case "HELP":
+			root.MessageBox(PlayerGuideTipHeader, PlayerGuideTipText, 1, False, Self);
+		break;
 		case "START":
 			SaveConfig();
 			SaveSettings();
 			InvokeNewGameScreen(StoredCampaign, StoredStartMap, StoredBindName, StoredDatalinkID);
 		break;
 	}
+}
+
+function GiveStartTip()
+{
+	if ((VMDBufferPlayer(Player) == None) || (!VMDBufferPlayer(Player).bGaveNewGameTips))
+	{
+		root.MessageBox(PlayerGuideTipHeader, PlayerGuideTipText, 1, False, Self);
+	}
+	else
+	{
+		bGavePlayerGuideTip = true;
+	}
+}
+
+event bool BoxOptionSelected(Window msgBoxWindow, int buttonNumber)
+{
+	switch(ButtonNumber)
+	{
+		case 0:
+			Root.PopWindow();
+		break;
+	}
+	return true;
 }
 
 // ----------------------------------------------------------------------
@@ -489,6 +528,25 @@ function InvokeNewGameScreen(string Campaign, string StartMap, string BindName, 
 			break;
 		}
 	}
+}
+
+function InvokeModLocatorWindow()
+{
+	local VMDMenuModLocatorWindow StartingWindow;
+	
+  	if (Root != None)
+  	{
+   		StartingWindow = VMDMenuModLocatorWindow(Root.InvokeMenuScreen(Class'VMDMenuModLocatorWindow', True));
+		
+		if (StartingWindow != None)
+		{
+			Player.ConsoleCommand("Open https://www.moddb.com/mods/vanilla-madder/news/supported-vmd-mods-w-links");
+			
+			StartingWindow.VMP = VMDBufferPlayer(Player);
+			StartingWindow.CampaignWindow = Self;
+			StartingWindow.PopulateFileList();
+		}
+  	}
 }
 
 function Music LoadMusic(string LoadID)
@@ -621,26 +679,28 @@ defaultproperties
      KnownMissions(9)=(StartingMapName="CF_00_Intro",ListedName="Counterfeit (Demo)",InternalName="COUNTERFEIT",PlayerBindName="",DatalinkID="Counterfeit",MissionDesc="Dominic Bishop is sent on a mission in russia to investigate a possible leak in classified information.",IconLoadID="VMDAssets.CustomCampaignPictureCounterfeit01",IconLoadID2="VMDAssets.CustomCampaignPictureCounterfeit02")
      KnownMissions(10)=(StartingMapName="69_MutationsIntro",ListedName="MUTATIONS",InternalName="MUTATIONS",PlayerBindName="",DatalinkID="Mutations",MissionDesc="JC Denton is called back by Gary Savage several years after the events of Deus Ex 1. He is sent to investigate an unethical science lab lurking deep within a scottish dungeon.",IconLoadID="VMDAssets.CustomCampaignPictureMutations01",IconLoadID2="VMDAssets.CustomCampaignPictureMutations02")
      
-     KnownMissions(11)=(StartingMapName="Gotem",ListedName="Malkavian Mod",InternalName="OTHERNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="If you don't know what this is, just shut up and push 'Play'",IconLoadID="VMDAssets.CustomCampaignPictureMalkavianMod01",IconLoadID2="VMDAssets.CustomCampaignPictureMalkavianMod02")
-     KnownMissions(12)=(StartingMapName="01_Base",ListedName="Blood Like Venom",InternalName="BLOODLIKEVENOM",PlayerBindName="",DatalinkID="Blood Like Venom",MissionDesc="In this extra campy mission set, agent Venom sweeps into a religious extremist lab to disarm a nuclear stockpile before it's too late.",IconLoadID="VMDAssets.CustomCampaignPictureBLV01",IconLoadID2="VMDAssets.CustomCampaignPictureBLV02")
-     KnownMissions(13)=(StartingMapName="01_ApartmentBuilding",ListedName="Techforce",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="Tech Force",MissionDesc="Agent JC, new to Techforce HQ, is sent to defuse a terrorist situation in downtown Miami.",IconLoadID="VMDAssets.CustomCampaignPictureTechForce01",IconLoadID2="VMDAssets.CustomCampaignPictureTechForce02")
-     KnownMissions(14)=(StartingMapName="16_The_HQ",ListedName="Fatal Weapon",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="FatalWeapon",MissionDesc="JC Denton, fresh from defeating the NSF, is sent overseas to make a daring rescue and disarm a chemical weapons threat.",IconLoadID="VMDAssets.CustomCampaignPictureFatalWeapon01",IconLoadID2="VMDAssets.CustomCampaignPictureFatalWeapon02")
-     KnownMissions(15)=(StartingMapName="JH1_Intro",ListedName="Double Cross P. 1",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="Double Cross",MissionDesc="After the defeat of MJ12, JC Denton is called in to disarm a new, secret MJ12 lab beneath Ritter Park",IconLoadID="VMDAssets.CustomCampaignPictureRhitterPark01",IconLoadID2="VMDAssets.CustomCampaignPictureRhitterPark02")
-     KnownMissions(16)=(StartingMapName="Corruption_Intro",ListedName="Hints of Corruption",InternalName="OTHERPAULNOFOODNOINTRO",PlayerBindName="",DatalinkID="Hints Of Corruption",MissionDesc="Paul Denton is sent to assassinate one of the most powerful men in the world in a Los Angeles facility.",IconLoadID="VMDAssets.CustomCampaignPictureHintsOfCorruption01",IconLoadID2="VMDAssets.CustomCampaignPictureHintsOfCorruption02")
-     KnownMissions(17)=(StartingMapName="Bedroom_Remake",ListedName="Break In (Remake)",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="BreakIn",MissionDesc="JC Denton likes pugs and has a suburban life. Now in higher quality.",IconLoadID="VMDAssets.CustomCampaignPictureBreakInRemake01",IconLoadID2="VMDAssets.CustomCampaignPictureBreakInRemake02")
-     KnownMissions(18)=(StartingMapName="Bedroom",ListedName="Break In",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="Break In",MissionDesc="JC Denton likes pugs and has a suburban life.",IconLoadID="VMDAssets.CustomCampaignPictureBreakIn01",IconLoadID2="VMDAssets.CustomCampaignPictureBreakIn02")
-     KnownMissions(19)=(StartingMapName="16_Castle_Court",ListedName="Castle Court",InternalName="OTHERZEROFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="JC Denton goes to infiltrate a top secret MJ12 training facility after the organization's seeming defeat.",IconLoadID="",IconLoadID2="")
-     KnownMissions(20)=(StartingMapName="17_RescueStart",ListedName="Rescue (Great Aroo)",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="Searching for his lost parents, JC Denton investigates a secret facility where they are rumored to be held captive. [This mission is known to have a conflict with another.]",IconLoadID="VMDAssets.CustomCampaignPictureRescueAroo01",IconLoadID2="VMDAssets.CustomCampaignPictureRescueAroo02")
-     KnownMissions(21)=(StartingMapName="16_Rescue_Intro",ListedName="Rescue (Beast)",InternalName="OTHERZEROFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="JC Denton is sent is sent on a rescue mission [This mission is known to have a conflict with another.]",IconLoadID="VMDAssets.CustomCampaignPictureRescue01",IconLoadID2="VMDAssets.CustomCampaignPictureRescue02")
-     KnownMissions(22)=(StartingMapName="16_Flinschmap",ListedName="DXO: Prologue",InternalName="OTHERZEROFOOD",PlayerBindName="",DatalinkID="DXO",MissionDesc="Chief, I'm gonna be 100%. I don't speak german, but you're held prisoner in a mining camp or something.",IconLoadID="VMDAssets.CustomCampaignPictureDXO01",IconLoadID2="VMDAssets.CustomCampaignPictureDXO02")
-     KnownMissions(23)=(StartingMapName="20_Disclosure_Intro",ListedName="Disclosure (Demo)",InternalName="DISCLOSURE",PlayerBindName="",DatalinkID="",MissionDesc="JC Searches for his long lost brother in an abandoned mining facility, but something is wrong.",IconLoadID="VMDAssets.CustomCampaignPictureDisclosure01",IconLoadID2="VMDAssets.CustomCampaignPictureDisclosure02")
-     KnownMissions(24)=(StartingMapName="71_Whitehouse",ListedName="Presidential Emergency",InternalName="OTHERNOINTRO",PlayerBindName="",DatalinkID="Presidential Emergency",MissionDesc="Agent JC Denton is sent to rescue the president's daughter from a secret facility where she's being held.",IconLoadID="VMDAssets.CustomCampaignPicturePresidentialEmergency01",IconLoadID2="VMDAssets.CustomCampaignPicturePresidentialEmergency02")
-     KnownMissions(25)=(StartingMapName="FluchtWeg",ListedName="Flucht Weg",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="You find your way... Uh... It's more german. I dunno.",IconLoadID="VMDAssets.CustomCampaignPictureFluchtWeg01",IconLoadID2="VMDAssets.CustomCampaignPictureFluchtWeg02")
-     KnownMissions(26)=(StartingMapName="Underground_Lab_Intro",ListedName="Underground Lab",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="JC Denton is sent to investigate a genetics research project being carried out in an underground lab.",IconLoadID="VMDAssets.CustomCampaignPictureUndergroundLab01",IconLoadID2="VMDAssets.CustomCampaignPictureUndergroundLab02")
-     KnownMissions(27)=(StartingMapName="Utopia_Intro",ListedName="Utopia",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="JC Denton is sent to reinforce an island utopia that has come under siege from a terrorist organization.",IconLoadID="VMDAssets.CustomCampaignPictureUtopia01",IconLoadID2="VMDAssets.CustomCampaignPictureUtopia02")
-     KnownMissions(28)=(StartingMapName="17_FlinschMap",ListedName="DXO: Prologue",InternalName="DXO",PlayerBindName="",DatalinkID="",MissionDesc="You are a prisoner escaping from a german labor camp. Mein Deutsche ist schlecht.",IconLoadID="VMDAssets.CustomCampaignPictureDXO01",IconLoadID2="VMDAssets.CustomCampaignPictureDXO02")
+     //Fan mission start.
+     KnownMissions(11)=(StartingMapName="16_HiveDays_ApartmentComplex",ListedName="Supercarbon: Hive Days",InternalName="HIVEDAYS",PlayerBindName="",DatalinkID="Hive Days",MissionDesc="It is the 32nd millenium. You take the role of an unassuming ex-convict named Jack.",IconLoadID="",IconLoadID2="")
+     KnownMissions(12)=(StartingMapName="Gotem",ListedName="Malkavian Mod",InternalName="OTHERNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="If you don't know what this is, just shut up and push 'Play'",IconLoadID="VMDAssets.CustomCampaignPictureMalkavianMod01",IconLoadID2="VMDAssets.CustomCampaignPictureMalkavianMod02")
+     KnownMissions(13)=(StartingMapName="01_Base",ListedName="Blood Like Venom",InternalName="BLOODLIKEVENOM",PlayerBindName="",DatalinkID="Blood Like Venom",MissionDesc="In this extra campy mission set, agent Venom sweeps into a religious extremist lab to disarm a nuclear stockpile before it's too late.",IconLoadID="VMDAssets.CustomCampaignPictureBLV01",IconLoadID2="VMDAssets.CustomCampaignPictureBLV02")
+     KnownMissions(14)=(StartingMapName="01_ApartmentBuilding",ListedName="Techforce",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="Tech Force",MissionDesc="Agent JC, new to Techforce HQ, is sent to defuse a terrorist situation in downtown Miami.",IconLoadID="VMDAssets.CustomCampaignPictureTechForce01",IconLoadID2="VMDAssets.CustomCampaignPictureTechForce02")
+     KnownMissions(15)=(StartingMapName="16_The_HQ",ListedName="Fatal Weapon",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="FatalWeapon",MissionDesc="JC Denton, fresh from defeating the NSF, is sent overseas to make a daring rescue and disarm a chemical weapons threat.",IconLoadID="VMDAssets.CustomCampaignPictureFatalWeapon01",IconLoadID2="VMDAssets.CustomCampaignPictureFatalWeapon02")
+     KnownMissions(16)=(StartingMapName="JH1_Intro",ListedName="Double Cross P. 1",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="Double Cross",MissionDesc="After the defeat of MJ12, JC Denton is called in to disarm a new, secret MJ12 lab beneath Ritter Park",IconLoadID="VMDAssets.CustomCampaignPictureRhitterPark01",IconLoadID2="VMDAssets.CustomCampaignPictureRhitterPark02")
+     KnownMissions(17)=(StartingMapName="Corruption_Intro",ListedName="Hints of Corruption",InternalName="OTHERPAULNOFOODNOINTRO",PlayerBindName="",DatalinkID="Hints Of Corruption",MissionDesc="Paul Denton is sent to assassinate one of the most powerful men in the world in a Los Angeles facility.",IconLoadID="VMDAssets.CustomCampaignPictureHintsOfCorruption01",IconLoadID2="VMDAssets.CustomCampaignPictureHintsOfCorruption02")
+     KnownMissions(18)=(StartingMapName="Bedroom_Remake",ListedName="Break In (Remake)",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="BreakIn",MissionDesc="JC Denton likes pugs and has a suburban life. Now in higher quality.",IconLoadID="VMDAssets.CustomCampaignPictureBreakInRemake01",IconLoadID2="VMDAssets.CustomCampaignPictureBreakInRemake02")
+     KnownMissions(19)=(StartingMapName="Bedroom",ListedName="Break In",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="Break In",MissionDesc="JC Denton likes pugs and has a suburban life.",IconLoadID="VMDAssets.CustomCampaignPictureBreakIn01",IconLoadID2="VMDAssets.CustomCampaignPictureBreakIn02")
+     KnownMissions(20)=(StartingMapName="16_Castle_Court",ListedName="Castle Court",InternalName="OTHERZEROFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="JC Denton goes to infiltrate a top secret MJ12 training facility after the organization's seeming defeat.",IconLoadID="",IconLoadID2="")
+     KnownMissions(21)=(StartingMapName="17_RescueStart",ListedName="Rescue (Great Aroo)",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="Searching for his lost parents, JC Denton investigates a secret facility where they are rumored to be held captive. [This mission is known to have a conflict with another.]",IconLoadID="VMDAssets.CustomCampaignPictureRescueAroo01",IconLoadID2="VMDAssets.CustomCampaignPictureRescueAroo02")
+     KnownMissions(22)=(StartingMapName="16_Rescue_Intro",ListedName="Rescue (Beast)",InternalName="OTHERZEROFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="JC Denton is sent is sent on a rescue mission [This mission is known to have a conflict with another.]",IconLoadID="VMDAssets.CustomCampaignPictureRescue01",IconLoadID2="VMDAssets.CustomCampaignPictureRescue02")
+     KnownMissions(23)=(StartingMapName="16_Flinschmap",ListedName="DXO: Prologue",InternalName="OTHERZEROFOOD",PlayerBindName="",DatalinkID="DXO",MissionDesc="Chief, I'm gonna be 100%. I don't speak german, but you're held prisoner in a mining camp or something.",IconLoadID="VMDAssets.CustomCampaignPictureDXO01",IconLoadID2="VMDAssets.CustomCampaignPictureDXO02")
+     KnownMissions(24)=(StartingMapName="20_Disclosure_Intro",ListedName="Disclosure (Demo)",InternalName="DISCLOSURE",PlayerBindName="",DatalinkID="",MissionDesc="JC Searches for his long lost brother in an abandoned mining facility, but something is wrong.",IconLoadID="VMDAssets.CustomCampaignPictureDisclosure01",IconLoadID2="VMDAssets.CustomCampaignPictureDisclosure02")
+     KnownMissions(25)=(StartingMapName="71_Whitehouse",ListedName="Presidential Emergency",InternalName="OTHERNOINTRO",PlayerBindName="",DatalinkID="Presidential Emergency",MissionDesc="Agent JC Denton is sent to rescue the president's daughter from a secret facility where she's being held.",IconLoadID="VMDAssets.CustomCampaignPicturePresidentialEmergency01",IconLoadID2="VMDAssets.CustomCampaignPicturePresidentialEmergency02")
+     KnownMissions(26)=(StartingMapName="FluchtWeg",ListedName="Flucht Weg",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="You find your way... Uh... It's more german. I dunno.",IconLoadID="VMDAssets.CustomCampaignPictureFluchtWeg01",IconLoadID2="VMDAssets.CustomCampaignPictureFluchtWeg02")
+     KnownMissions(27)=(StartingMapName="Underground_Lab_Intro",ListedName="Underground Lab",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="JC Denton is sent to investigate a genetics research project being carried out in an underground lab.",IconLoadID="VMDAssets.CustomCampaignPictureUndergroundLab01",IconLoadID2="VMDAssets.CustomCampaignPictureUndergroundLab02")
+     KnownMissions(28)=(StartingMapName="Utopia_Intro",ListedName="Utopia",InternalName="OTHERNOFOODNOINTRO",PlayerBindName="",DatalinkID="",MissionDesc="JC Denton is sent to reinforce an island utopia that has come under siege from a terrorist organization.",IconLoadID="VMDAssets.CustomCampaignPictureUtopia01",IconLoadID2="VMDAssets.CustomCampaignPictureUtopia02")
+     KnownMissions(29)=(StartingMapName="17_FlinschMap",ListedName="DXO: Prologue",InternalName="DXO",PlayerBindName="",DatalinkID="",MissionDesc="You are a prisoner escaping from a german labor camp. Mein Deutsche ist schlecht.",IconLoadID="VMDAssets.CustomCampaignPictureDXO01",IconLoadID2="VMDAssets.CustomCampaignPictureDXO02")
      //Once again, we're bringing nothing to this experience.
-     //KnownMissions(29)=(StartingMapName="51_Gville_Downtown",ListedName="DX:IWR",InternalName="IWR",PlayerBindName="AlexDenton",DatalinkID="IWR",MissionDesc="IWR is a re-imagining of Deus Ex Invisible War. You play as the occasionally psychotic amnesiac Alex Denton as he struggles through the vast conspiracies he encounters during his dangerous career as a... delivery boy.",IconLoadID="VMDAssets.CustomCampaignPictureIWR01",IconLoadID2="VMDAssets.CustomCampaignPictureIWR02")
+     //KnownMissions(30)=(StartingMapName="51_Gville_Downtown",ListedName="DX:IWR",InternalName="IWR",PlayerBindName="AlexDenton",DatalinkID="IWR",MissionDesc="IWR is a re-imagining of Deus Ex Invisible War. You play as the occasionally psychotic amnesiac Alex Denton as he struggles through the vast conspiracies he encounters during his dangerous career as a... delivery boy.",IconLoadID="VMDAssets.CustomCampaignPictureIWR01",IconLoadID2="VMDAssets.CustomCampaignPictureIWR02")
      
      LabelListPos=(X=-2,Y=-39)
      LabelHeaderPos=(X=3,Y=-15)
@@ -650,7 +710,9 @@ defaultproperties
      DescBoxPos=(X=163,Y=304)
      
      actionButtons(0)=(Align=HALIGN_Left,Action=AB_Cancel)
-     actionButtons(1)=(Align=HALIGN_Right,Action=AB_Other,Text="|&Appearance",Key="START")
+     actionButtons(1)=(Align=HALIGN_Left,Action=AB_Other,Text="|&Help",Key="HELP")
+     actionButtons(2)=(Align=HALIGN_Right,Action=AB_Other,Text="|&Appearance",Key="START")
+     actionButtons(3)=(Align=HALIGN_Right,Action=AB_Other,Text="|&Find Mods",Key="FINDMODS")
      Title="Campaign Selection"
      ClientWidth=639
      ClientHeight=432
@@ -662,4 +724,7 @@ defaultproperties
      clientTextures(3)=Texture'CustomCampaignBackground_4'
      clientTextures(4)=Texture'CustomCampaignBackground_5'
      clientTextures(5)=Texture'CustomCampaignBackground_6'
+     
+     PlayerGuideTipHeader="To New Players"
+     PlayerGuideTipText="To play more campaigns, you can use VMD's in-game installer to find more mods you've downloaded."
 }
