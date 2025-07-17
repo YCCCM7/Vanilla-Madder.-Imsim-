@@ -33,7 +33,7 @@ function float VMDConfigurePickupDamageMult(name DT, int HitDamage, Vector HitLo
 			Ret = 0.0;
 		break;
 		
-		//Don't reduce these.
+		//Simply reduce these.
 		case 'Shot':
 		case 'AutoShot':
 		case 'Sabot':
