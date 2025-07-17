@@ -30,7 +30,8 @@ defaultproperties
      bCanRotateInInventory=True
      RotatedIcon=Texture'LargeIconCrowbarRotated'
      ShotTime=0.050000
-     
+     MoverDamageMult=1.500000
+          
      SelectTilt(0)=(X=25.000000,Y=35.000000)
      SelectTiltIndices=1
      SelectTiltTimer(0)=0.000000

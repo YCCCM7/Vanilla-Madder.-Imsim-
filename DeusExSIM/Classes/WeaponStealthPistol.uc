@@ -41,18 +41,21 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 {
 	if (Ammo10mmHEAT(AmmoType) != None)
 	{
+		AmmoDamageMultiplier = 1.0;
 		HitDamage = Default.HitDamage;
      		PenetrationHitDamage = 8;
      		RicochetHitDamage = 0;
 	}
 	else if (Ammo10mmGasCap(AmmoType) != None)
 	{
+		AmmoDamageMultiplier = (8.0 / Default.HitDamage);
 		HitDamage = 8;
      		PenetrationHitDamage = 0;
      		RicochetHitDamage = 8;
 	}
 	else
 	{
+		AmmoDamageMultiplier = 1.0;
 		HitDamage = Default.HitDamage;
      		PenetrationHitDamage = Default.PenetrationHitDamage;
      		RicochetHitDamage = Default.RicochetHitDamage;

@@ -54,24 +54,28 @@ function VMDAlertPostAmmoLoad( bool bInstant )
      		PenetrationHitDamage = 25 * EvoMod;
      		RicochetHitDamage = 10 * EvoMod;
 		HitDamage = Default.HitDamage * EvoMod;
+		AmmoDamageMultiplier = 1.0 * EvoMod;
 	}
 	if (Ammo3006Tranq(AmmoType) != None)
 	{
      		PenetrationHitDamage = 0 * EvoMod;
      		RicochetHitDamage = 0 * EvoMod;
 		HitDamage = Default.HitDamage * EvoMod * 0.5;
+		AmmoDamageMultiplier = 0.5 * EvoMod;
 	}
 	else if (Ammo3006HEAT(AmmoType) != None)
 	{
      		PenetrationHitDamage = 20 * EvoMod;
      		RicochetHitDamage = 0 * EvoMod;
 		HitDamage = Default.HitDamage * EvoMod;
+		AmmoDamageMultiplier = 1.0 * EvoMod;
 	}
 	else
 	{
      		PenetrationHitDamage = Default.PenetrationHitDamage * EvoMod;
      		RicochetHitDamage = Default.RicochetHitDamage * EvoMod;
 		HitDamage = Default.HitDamage * EvoMod;
+		AmmoDamageMultiplier = 1.0 * EvoMod;
 	}
 	ShotTime = Default.ShotTime;
 }

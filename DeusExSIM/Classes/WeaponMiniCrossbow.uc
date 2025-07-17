@@ -95,8 +95,26 @@ function float VMDGetCorrectHitDamage( float In )
 	}
 }
 
+//Update mover damage.
+function VMDAlertPostAmmoLoad( bool bInstant )
+{
+	if (AmmoDart(AmmoType) != None)
+	{
+     		MoverDamageMult = 0.5;
+	}
+	else if (AmmoDartFlare(AmmoType) != None)
+	{
+     		MoverDamageMult = 0.5;
+	}
+	else
+	{
+		MoverDamageMult = 1.0;
+	}
+}
+
 defaultproperties
 {
+     MoverDamageMult=1.000000
      PumpPurpose=1
      PumpStart=0.250000
      EvolvedName="Plus-Bow"

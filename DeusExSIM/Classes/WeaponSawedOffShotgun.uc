@@ -29,6 +29,7 @@ function VMDAlertPostAmmoLoad( bool bInstant )
      		FirePitchMax = 1.100000;
 		
 		//MADDERS: Note that this is multiplied by pellet count later.
+		MoverDamageMult = 1.0;
      		PenetrationHitDamage = 2;
      		RicochetHitDamage = 1;
 		BulletHoleSize = 0.175000;
@@ -38,6 +39,7 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 	{
      		FirePitchMin = 1.150000;
      		FirePitchMax = 1.400000;
+		MoverDamageMult = 0.0;
 		MaxRange = 4800;
 	}
 	else
@@ -45,6 +47,7 @@ function VMDAlertPostAmmoLoad( bool bInstant )
      		FirePitchMin = 0.900000;
      		FirePitchMax = 1.100000;
 		
+		MoverDamageMult = 4.0;
      		PenetrationHitDamage = Default.PenetrationHitDamage;
      		RicochetHitDamage = Default.RicochetHitDamage;
 		BulletHoleSize = 0.075000;
@@ -103,6 +106,7 @@ defaultproperties
      BaseAccuracy=0.600000 //Used to be 0.6.
      MaximumAccuracy=0.5000000
      FalloffStartRange=1200
+     MoverDamageMult=4.000000
      
      //HandSkinIndex=0 //MADDERS: Obsolete
      OverrideNumProj=12
@@ -213,7 +217,7 @@ defaultproperties
      largeIconWidth=131
      largeIconHeight=45
      invSlotsX=3
-     Description="The sawed-off, pump-action shotgun features a truncated barrel resulting in a wide spread at close range and will accept either buckshot or sabot shells."
+     Description="The sawed-off, pump-action shotgun features a truncated barrel resulting in a wide spread at close range and will accept buckshot, sabot, or taser shells."
      beltDescription="SAWED-OFF"
      Mesh=LodMesh'DeusExItems.ShotgunPickup'
      CollisionRadius=12.000000

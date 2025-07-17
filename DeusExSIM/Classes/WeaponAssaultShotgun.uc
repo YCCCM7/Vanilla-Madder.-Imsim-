@@ -49,6 +49,7 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 {
 	if (AmmoSabot(AmmoType) != None)
 	{
+		MoverDamageMult = 1.0;
 		MinSpreadAcc = 0.075000;
      		PenetrationHitDamage = 2;
      		RicochetHitDamage = 1;
@@ -58,6 +59,7 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 	}
 	else if (AmmoDragonsBreath(AmmoType) != None)
 	{
+		MoverDamageMult = 1.0; //Basically nil, with pellets.
 		MinSpreadAcc = 0.300000; //Quadruple width spread, possible to our benefit.
      		PenetrationHitDamage = 0;
      		RicochetHitDamage = 0;
@@ -66,6 +68,7 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 	}
 	else
 	{
+		MoverDamageMult = 4.0;
 		MinSpreadAcc = 0.075000;
      		PenetrationHitDamage = Default.PenetrationHitDamage;
      		RicochetHitDamage = Default.RicochetHitDamage;
@@ -266,7 +269,8 @@ defaultproperties
      BaseAccuracy=0.625000 //Used to be 0.8, then 0.7 pre-overhaul, then 0.625 before buff. Re-nerrfed to 0.625 lol. This thing shreds.
      MaximumAccuracy=0.5500000
      FalloffStartRange=900
-     
+     MoverDamageMult=4.000000
+          
      //MADDERS: Actual spam cannon.
      //HandSkinIndex=1
      //ProjectileClass=class'RocketGEP'
@@ -365,7 +369,7 @@ defaultproperties
      largeIconHeight=55
      invSlotsX=2
      invSlotsY=2
-     Description="The assault shotgun (sometimes referred to as a 'street sweeper') combines the best traits of a normal shotgun with a fully automatic feed that can clear an area of hostiles in a matter of seconds. Particularly effective in urban combat, the assault shotgun accepts either buckshot or sabot shells."
+     Description="The assault shotgun (sometimes referred to as a 'street sweeper') combines the best traits of a normal shotgun with a fully automatic feed that can clear an area of hostiles in a matter of seconds. Particularly effective in urban combat, the assault shotgun accepts bucket, sabot, or dragon's breath shells."
      beltDescription="SHOTGUN"
      Mesh=LodMesh'DeusExItems.AssaultShotgunPickup'
      CollisionRadius=15.000000
