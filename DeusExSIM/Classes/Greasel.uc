@@ -285,4 +285,5 @@ defaultproperties
      BindName="Greasel"
      FamiliarName="Greasel"
      UnfamiliarName="Greasel"
+     RotationRate=(Pitch=4096,Yaw=75000,Roll=3072)
 }
