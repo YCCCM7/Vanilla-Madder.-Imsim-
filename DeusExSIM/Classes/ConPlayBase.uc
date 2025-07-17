@@ -197,8 +197,10 @@ function Bool StartConversation(DeusExPlayer newPlayer, optional Actor newInvoke
 	// want to rebind all the events with this owner.  This allows conversations
 	// to be shared by more than one owner.
 	if ((con.ownerRefCount > 1) && (invokeActor != None))
+	{
 		con.BindActorEvents(invokeActor);
-
+	}
+	
 	// Check to see if all the actors are on the level.
 	// Don't check this for InfoLink conversations, since oftentimes
 	// the person speaking via InfoLink *won't* be on the map.
@@ -209,13 +211,17 @@ function Bool StartConversation(DeusExPlayer newPlayer, optional Actor newInvoke
 	// Hi Ken!
 
 	if ((!bForcePlay) && (!con.bDataLinkCon) && (!con.CheckActors()))
+	{
 		return False;
-
+	}
+	
 	// Now check to make sure that all the actors are a reasonable distance
 	// from one another (excluding the player)
 	if ((!bForcePlay) && (!con.CheckActorDistances(player)))
+	{
 		return False;
-
+	}
+	
 	// Save the mission number and location
 	foreach AllActors(class'DeusExLevelInfo', aDeusExLevelInfo)
 	{
@@ -963,10 +969,14 @@ function EEventAction SetupEventTransferObject( ConEventTransferObject event, ou
 				}
 			}
 		}
-		if (conWinThird != None)
+		if ((conWinThird != None) && (DeusExWeapon(InvItemTo) == None || !DeusExWeapon(InvItemTo).VMDHasJankyAmmo()))
+		{
 			conWinThird.ShowReceivedItem(invItemTo, itemsTransferred);
+		}
 		else
+		{
 			DeusExRootWindow(player.rootWindow).hud.receivedItems.AddItem(invItemTo, itemsTransferred);
+		}
 	}
 
 	nextAction = EA_NextEvent;
