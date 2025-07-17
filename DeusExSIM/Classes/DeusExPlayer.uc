@@ -2515,11 +2515,12 @@ function UpdateWarrenEMPField(float deltaTime)
 
 function UpdateTranslucency(float DeltaTime)
 {
-   	local float DarkVis;
-   	local float CamoVis;
-	local AdaptiveArmor armor;
    	local bool bMakeTranslucent;
-   	local DeusExMPGame Game;
+	local int FramesIndex, LensesIndex;
+  	local float DarkVis, CamoVis;
+	local AdaptiveArmor armor;
+    	local DeusExMPGame Game;
+	local VMDBufferPlayer VMP;
    	
    	// Don't do it in singleplayer.
    	/*if (Level.NetMode == NM_Standalone)
@@ -2534,9 +2535,18 @@ function UpdateTranslucency(float DeltaTime)
       		return;
    	}*/
 	
+	FramesIndex = -1;
+	LensesIndex = -1;
+	VMP = VMDBufferPlayer(Self);
+	if (VMP != None)
+	{
+		LensesIndex = VMP.CurMeshLensesIndex;
+		FramesIndex = VMP.CurMeshFramesIndex;
+	}
+	
    	bMakeTranslucent = false;
 	
-   	//DarkVis = AIVisibility(TRUE);
+   	//DarkVis = AIVisibility(True);
    	DarkVis = 1.0;
 	
    	CamoVis = 1.0;
@@ -2544,7 +2554,7 @@ function UpdateTranslucency(float DeltaTime)
    	//Check cloaking.
 	if ((AugmentationSystem != None) && (AugmentationSystem.GetAugLevelValue(class'AugCloak') != -1.0 || AugmentationSystem.GetAugLevelValue(class'AugMechCloak') != -1.0))
    	{
-      		bMakeTranslucent = TRUE;
+      		bMakeTranslucent = True;
 		if (Game != None)
 		{
       			CamoVis = Game.CloakEffect;
@@ -2560,7 +2570,7 @@ function UpdateTranslucency(float DeltaTime)
    	if ((inHand != None) && (Level != None) && (Level.NetMode != NM_Standalone) && (inHand.IsA('DeusExWeapon')) && (CamoVis < 1.0))
    	{
       		CamoVis = 1.0;
-      		bMakeTranslucent=FALSE;
+      		bMakeTranslucent = False;
       		ClientMessage(WeaponUnCloak);
 		
 		if ((AugmentationSystem != None) && (AugmentationSystem.FindAugmentation(class'AugCloak') != None))
@@ -2590,32 +2600,53 @@ function UpdateTranslucency(float DeltaTime)
    	if (bMakeTranslucent)
    	{
       		Style = STY_Translucent;
-      		if (IsA('JCDentonMale'))
+      		if (VMP != None)
       		{
-         		MultiSkins[6] = Texture'BlackMaskTex';
-         		MultiSkins[7] = Texture'BlackMaskTex';
-      		}
-   	}
-   	else if ((Game != None) && (Game.bDarkHiding))
-   	{
-      		if (CamoVis * DarkVis < Game.StartHiding)
-         		Style = STY_Translucent;
-      		if (CamoVis * DarkVis > Game.EndHiding)
-         		Style = Default.Style;
+			if (FramesIndex > -1)
+			{
+        			MultiSkins[FramesIndex] = Texture'BlackMaskTex';
+			}
+			if (LensesIndex > -1)
+			{
+				MultiSkins[LensesIndex] = Texture'BlackMaskTex';
+			}
+		}
+	}
+	else if ((Game != None) && (Game.bDarkHiding))
+	{
+		if (CamoVis * DarkVis < Game.StartHiding)
+			Style = STY_Translucent;
+		if (CamoVis * DarkVis > Game.EndHiding)
+			Style = Default.Style;
    	}
    	else if (!bMakeTranslucent)
    	{
-      		if ((JCDentonMale(Self) != None) && (!JCDentonMale(Self).bDefabricateQueued))
-      		{
-         		MultiSkins[6] = Default.MultiSkins[6];
-         		MultiSkins[7] = Default.MultiSkins[7];
-			if (VMDBufferPlayer(Self) != None)
+		if ((JCDentonMale(Self) != None) && (!JCDentonMale(Self).bDefabricateQueued))
+		{
+			if (VMP != None)
 			{
-				if (VMDBufferPlayer(Self).FabricatedSkins[6] != None) Multiskins[6] = VMDBufferPlayer(Self).FabricatedSkins[6];
-				if (VMDBufferPlayer(Self).FabricatedSkins[7] != None) Multiskins[7] = VMDBufferPlayer(Self).FabricatedSkins[7];
+				if (FramesIndex > -1)
+				{
+        				MultiSkins[FramesIndex] = VMP.FabricatedSkins[FramesIndex];
+				}
+				if (LensesIndex > -1)
+				{
+        				MultiSkins[LensesIndex] = VMP.FabricatedSkins[LensesIndex];
+				}
 			}
-      		}
-      		Style = Default.Style;
+			else
+			{
+				if (FramesIndex > -1)
+				{
+        				MultiSkins[FramesIndex] = Default.Multiskins[FramesIndex];
+				}
+				if (LensesIndex > -1)
+				{
+        				MultiSkins[LensesIndex] = Default.Multiskins[LensesIndex];
+				}
+			}
+		}
+ 		Style = Default.Style;
    	}
 }
 
@@ -4355,7 +4386,8 @@ function bool SetBasedPawnSize(float newRadius, float newHeight)
 			{
 				PrePivot.Z -= 4.5;
 			}
-			BaseEyeHeight -= 2;
+			//MADDERS, 5/11/25: Used to be -2, but oops, walk bob fucks everything up.
+			BaseEyeHeight -= 6;
 		}
 		
 		// Complaints that eye height doesn't seem like your crouching in multiplayer
@@ -6619,10 +6651,14 @@ exec function ParseRightClick()
 				if ((!DeusExMover(FrobTarget).bHighlight) || (!DeusExMover(FrobTarget).bFrobbable))
 				{
 					if (POVCorpse(inHand) != None)
+					{
 						DropItem();
-					else if (VMDPOVDeco(InHand) != None)
+					}
+					else if (VMDPOVDeco(InHand) != None || CarriedDecoration != None)
+					{
 						DropDecoration();
-					else if (DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload'))
+					}
+					else if ((DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload')) && (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).bFrobEmptyLowersWeapon))
 					{
 						PutInHand(None);
 					}
@@ -6631,10 +6667,14 @@ exec function ParseRightClick()
 			else if ((Mover(FrobTarget) != None) && (DeusExMover(FrobTarget) == None))
 			{
 				if (POVCorpse(inHand) != None)
+				{
 					DropItem();
-				else if (VMDPOVDeco(InHand) != None)
+				}
+				else if (VMDPOVDeco(InHand) != None || CarriedDecoration != None)
+				{
 					DropDecoration();
-				else if (DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload'))
+				}
+				else if ((DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload')) && (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).bFrobEmptyLowersWeapon))
 				{
 					PutInHand(None);
 				}
@@ -6646,10 +6686,14 @@ exec function ParseRightClick()
 		// if there's no FrobTarget, put away an inventory item or drop a decoration
 		// or drop the corpse
 		if (POVCorpse(inHand) != None)
+		{
 			DropItem();
-		else if (VMDPOVDeco(InHand) != None)
+		}
+		else if (VMDPOVDeco(InHand) != None || CarriedDecoration != None)
+		{
 			DropDecoration();
-		else if (DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload'))
+		}
+		else if ((DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload')) && (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).bFrobEmptyLowersWeapon))
 		{
 			PutInHand(None);
 		}
@@ -6850,7 +6894,7 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 				}
 				else if ((!DeusExWeapon(TFrobTarget).bItemRefusalOverride) && (Level.NetMode == NM_StandAlone))
 				{
-					if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExWeapon(TFrobTarget))))
+					if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExWeapon(TFrobTarget)) == 2))
 					{
 						TName = DeusExWeapon(TFrobTarget).ItemName;
 						if (!DeusExWeapon(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
@@ -6870,7 +6914,7 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 		{
 			if ((!DeusExWeapon(TFrobTarget).bItemRefusalOverride) && (Level.NetMode == NM_StandAlone))
 			{
-				if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExWeapon(TFrobTarget))))
+				if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExWeapon(TFrobTarget)) == 2))
 				{
 					TName = DeusExWeapon(TFrobTarget).ItemName;
 					if (!DeusExWeapon(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
@@ -6884,7 +6928,7 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 		{
 			if ((!DeusExPickup(TFrobTarget).bItemRefusalOverride) && (Level.NetMode == NM_StandAlone))
 			{
-				if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExPickup(TFrobTarget))))
+				if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExPickup(TFrobTarget)) == 2))
 				{
 					TName = DeusExPickup(TFrobTarget).ItemName;
 					if (!DeusExPickup(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
@@ -7785,7 +7829,7 @@ function Bool FindInventorySlot(Inventory anItem, optional Bool bSearchOnly)
 	{
 		if (((DeusExPickUp(anItem) != None) && (!DeusExPickUp(anItem).bItemRefusalOverride)) || ((DeusExWeapon(anItem) != None) && (!DeusExWeapon(anItem).bItemRefusalOverride)))
 		{
-			if (VMP.GetItemRefusalSetting(anItem))
+			if (VMP.GetItemRefusalSetting(anItem) == 2)
 			{
 				return False;
 			}
@@ -10354,9 +10398,16 @@ function bool AddInventory(Inventory Item)
 		
 		if (Item.bInObjectBelt)
 		{
-			if (Root != None)
+			if ((Root != None) && (Root.HUD != None) && (Root.HUD.Belt != None))
 			{
-				Root.HUD.Belt.AddObjectToBelt(Item, Item.BeltPos, True);
+				if (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).GetItemRefusalSetting(Item) < 1)
+				{
+					Root.HUD.Belt.AddObjectToBelt(Item, Item.BeltPos, True);
+				}
+				else
+				{
+					Root.HUD.Belt.RemoveObjectFromBelt(Item);
+				}
 			}
 		}
 		
@@ -10882,7 +10933,7 @@ function bool StartConversationByName(
 
 	if (conOwner == None)
 		return False;
-
+	
 	conListItem = ConListItem(conOwner.conListItems);
 
 	while( conListItem != None )
@@ -10956,14 +11007,16 @@ function bool StartConversation(
 	)
 {
 	local DeusExRootWindow root;
+	local VMDBufferPlayer VMP;
 
 	root = DeusExRootWindow(rootWindow);
 
 	// First check to see the actor has any conversations or if for some
 	// other reason we're unable to start a conversation (typically if 
 	// we're alread in a conversation or there's a UI screen visible)
-
-	if ((!bForcePlay) && ((invokeActor.conListItems == None) || (!CanStartConversation())))
+	
+	VMP = VMDBufferPlayer(Self);
+	if (!bForcePlay && (invokeActor.conListItems == None || (!CanStartConversation() && Inventory(InvokeActor) == None) || (VMP != None && !VMP.VMDCanStartFirstPersonConversation())))
 		return False;
 
 	// Make sure the other actor can converse
@@ -11259,7 +11312,9 @@ function Conversation GetActiveConversation( Actor invokeActor, EInvokeMethod in
 	}
 
 	if (bAbortConversation)
+	{
 		return None;
+	}
 	else
 		return con;
 }
@@ -15187,7 +15242,7 @@ exec function WhereActor(optional int Me)
 	if (hitActor != None)
 	{
 		Log( hitActor.Name $ " is at " $ hitActor.Location );
-		BroadcastMessage( hitActor.Name $ " is at " $ hitActor.Location );
+		ClientMessage( hitActor.Name $ " is at " $ hitActor.Location );
 	}
 }
 
