@@ -19,6 +19,7 @@ defaultproperties
      StuckAmmoClass=class'DeusEx.AmmoDart'
      Skin=Texture'DartTex1Flare'
      StickAmmoRate=0.650000
+     MoverDamageMult=0.500000
      
      mpDamage=10.000000
      DamageType=Burned

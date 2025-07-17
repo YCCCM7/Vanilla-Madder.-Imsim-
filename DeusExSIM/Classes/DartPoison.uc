@@ -18,7 +18,7 @@ defaultproperties
      //MADDERS: New stuck ammo drops.
      StuckAmmoClass=class'DeusEx.AmmoDart'
      Skin=Texture'DartTex1Poison'
-     StickAmmoRate=0.650000
+     StickAmmoRate=0.500000
      
      mpDamage=10.000000
      DamageType=Poison
