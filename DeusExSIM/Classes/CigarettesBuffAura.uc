@@ -43,7 +43,7 @@ function VMDFakeAuraTimerHook(bool bWhole)
 	VMP = VMDBufferPlayer(Owner);
 	if ((bWhole) && (VMP != None))
 	{
-		VMP.VMDModPlayerStress(-3,,,true);
+		VMP.VMDModPlayerStress(-4,,,true);
 	}
 }
 
