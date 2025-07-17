@@ -66,7 +66,7 @@ var localized string StressText;
 var int BarColX[4];
 
 //Prospective Nihilum hack?
-var bool bNihilumSetup;
+var bool bNihilumSetup, bUsingRebreather;
 var int NihilumStressOffset, NihilumHungerOffset;
 var int CurStressOffset, CurHungerOffset;
 
@@ -344,7 +344,7 @@ event DrawWindow(GC gc)
 	gc.SetFont(Font'FontTiny');
 	
 	//Energy.
-	if ((!bKS || Player.Energy > 0 || bBlockExtra) && ((VMP == None) || (!VMP.bEnergyArmor)))
+	if ((!bKS || Player.Energy > 0 || bBlockExtra) && (VMP == None || !VMP.bEnergyArmor) && (Player.EnergyMax > 0))
 	{
 	 	gc.SetTextColor(winEnergy.GetBarColor());
 	 	gc.DrawText(BarColX[0]-2, 74, 10, 8, EnergyText);
@@ -361,7 +361,7 @@ event DrawWindow(GC gc)
 	
 	//O2.
 	// If we're underwater draw the breathometer
-	if (Player.SwimTimer < Player.SwimDuration)
+	if (Player.SwimTimer < Player.SwimDuration || bUsingRebreather)
 	{
 		ypos = breathPercent * 0.55;
 		
@@ -521,6 +521,12 @@ event Tick(float deltaSeconds)
 		{
 			THealthMult = VMP.ModHealthMultiplier;
 		}
+
+		bUsingRebreather = VMP.UsingChargedPickup(class'Rebreather');
+	}
+	else
+	{
+		bUsingRebreather = false;
 	}
 	
    	// DEUS_EX AMSD Server doesn't need to do this.
@@ -621,7 +627,7 @@ event Tick(float deltaSeconds)
 		if (bUnderwater)
 		{
 			// if we are already underwater
-			if ((player.HeadRegion.Zone.bWaterZone) || (Player.SwimTimer < Player.SwimDuration))
+			if (bUsingRebreather || player.HeadRegion.Zone.bWaterZone || Player.SwimTimer < Player.SwimDuration)
 			{
 				// if we are still underwater
 				breathPercent = 100.0 * player.swimTimer / player.swimDuration;
@@ -634,7 +640,7 @@ event Tick(float deltaSeconds)
 				breathPercent = 100;
 			}
 		}
-		else if ((player.HeadRegion.Zone.bWaterZone) || (Player.SwimTimer < Player.SwimDuration))
+		else if (bUsingRebreather || player.HeadRegion.Zone.bWaterZone || Player.SwimTimer < Player.SwimDuration)
 		{
 			// if we just went underwater
 			bUnderwater = True;
