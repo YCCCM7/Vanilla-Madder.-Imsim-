@@ -44,7 +44,7 @@ var localized string	itemArticle;	// article much like those for weapons
 //MADDERS additions
 var int StartSoundSnap;
 var bool bClosedSystemHit;
-var float LastWeaponDamageSkillMult;
+var float LastWeaponDamageSkillMult, MoverDamageMult;
 
 var bool bSpentStress;
 var VMDBufferPlayer LastVMP;
@@ -319,6 +319,15 @@ function HurtRadiusVMD( float DamageAmount, float DamageRadius, name DamageName,
                					(damageScale * Momentum * dir),
                					DamageName);
 				}
+				else if (Brush(Victims) != None)
+				{
+            				Victims.TakeDamage(
+               					damageScale * MoverDamageMult * Default.Damage,
+               					Instigator, 
+               					Victims.Location - 0.5 * (Victims.CollisionHeight + Victims.CollisionRadius) * dir,
+               					(damageScale * Momentum * dir),
+               					DamageName);
+				}
 				else
 				{
             				Victims.TakeDamage(
@@ -409,6 +418,15 @@ function HurtRadiusVMD( float DamageAmount, float DamageRadius, name DamageName,
  	              				(damageScale * Momentum * dir),
  	              				DamageName);
 				}
+				else if (Brush(Victims) != None)
+				{
+            				Victims.TakeDamage(
+               					damageScale * MoverDamageMult * Default.Damage,
+               					Instigator, 
+               					Victims.Location - 0.5 * (Victims.CollisionHeight + Victims.CollisionRadius) * dir,
+               					(damageScale * Momentum * dir),
+               					DamageName);
+				}
 				else
 				{
  	           			Victims.TakeDamage(
@@ -459,7 +477,7 @@ function HurtRadiusVMD( float DamageAmount, float DamageRadius, name DamageName,
 			damageScale = 1 - FMax(0,(dist - M.CollisionRadius)/DamageRadius);
 			M.TakeDamage
 			(
-				damageScale * DamageAmount,
+				damageScale * MoverDamageMult * DamageAmount,
 				Instigator, 
 				M.Location - 0.5 * (M.CollisionHeight + M.CollisionRadius) * dir,
 				(damageScale * Momentum * dir),
@@ -1093,7 +1111,7 @@ auto simulated state Flying
 					if (Wall.IsA('Mover'))
 					{
 						SetBase(Wall);
-						Wall.TakeDamage(Damage, Pawn(Owner), Wall.Location, MomentumTransfer*Normal(Velocity), damageType);
+						Wall.TakeDamage(int(Damage * MoverDamageMult), Pawn(Owner), Wall.Location, MomentumTransfer*Normal(Velocity), damageType);
 					}
 				}
 			}
@@ -1170,6 +1188,10 @@ auto simulated state Flying
 					{
 						VMDBufferPlayer(Damagee).LastWeaponDamageSkillMult = LastWeaponDamageSkillMult;
 						damagee.TakeDamage(Default.Damage, Pawn(Owner), HitLocation, MomentumTransfer*Normal(Velocity), damageType);
+					}
+					else if (Mover(Damagee) != None)
+					{
+						damagee.TakeDamage(Damage * MoverDamageMult, Pawn(Owner), HitLocation, MomentumTransfer*Normal(Velocity), damageType);
 					}
 					else
 					{
@@ -1323,6 +1345,7 @@ function DamageRing();
 
 defaultproperties
 {
+     MoverDamageMult=1.000000
      LastWeaponDamageSkillMult=-1.000000
      StartSoundSnap=-1
      StickAmmoRate=0.800000
