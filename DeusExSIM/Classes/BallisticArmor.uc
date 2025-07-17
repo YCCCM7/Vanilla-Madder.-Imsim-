@@ -175,6 +175,7 @@ function VMDSignalDamageTaken(int Damage, name DamageType, vector HitLocation, b
 	{
 		case 'Shot':
 		case 'AutoShot':
+		case 'KnockedOut':
 			if (VMP != None)
 			{
 				Charge -= Max(1, Damage * SkillValue * 0.5);
