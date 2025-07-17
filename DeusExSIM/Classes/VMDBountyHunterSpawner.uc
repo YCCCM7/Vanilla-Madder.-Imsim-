@@ -309,6 +309,16 @@ function bool IsValidHidePoint(HidePoint TPoint, string MapName)
 	TSeed = class'VMDStaticFunctions'.Static.StripBaseActorSeed(TPoint);
 	switch(MapName)
 	{
+		case "06_HongKong_Storage":
+			if (TSeed == 13)
+			{
+				return false;
+			}
+			else
+			{
+				return false;
+			}
+		break;
 		case "14_Vandenberg_Sub":
 			if (TSeed == 0)
 			{
