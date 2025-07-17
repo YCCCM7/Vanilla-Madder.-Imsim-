@@ -526,10 +526,23 @@ function bool ActivateObjectInBelt(int pos)
 
 function AddInventory(inventory item)
 {
+	local VMDBufferPlayer VMP;
+	
+	VMP = VMDBufferPlayer(GetPlayerPawn());
+	
 	if ((item != None) && !item.IsA('DataVaultImage'))
-		if (hud != None)
-			if (hud.belt != None)
-				hud.belt.AddObjectToBelt(item, -1, false);
+	{
+		if (VMP == None || VMP.GetItemRefusalSetting(Item) < 1)
+		{
+			if (hud != None)
+			{
+				if (hud.belt != None)
+				{
+					hud.belt.AddObjectToBelt(item, -1, false);
+				}
+			}
+		}
+	}
 }
 
 // ----------------------------------------------------------------------
@@ -1285,6 +1298,8 @@ function bool ShouldNegatePause(class<Window> InvokeClass)
 			case 'VMDMenuSelectNGPlusOptions': //MADERS, 4/3/24: Best not die doing NG plus.
 			case 'MyMenuMain': //MADDERS, 3/25/24: Hello, Nihilum.
 			case 'MyMainMenu':
+			case 'DXRMenuMain':
+			case 'DXRMenuMainInGame':
 			break;
 			default:
 				return true;
