@@ -5,6 +5,7 @@ class PS20Magazine extends VMDWeaponMagazine;
 
 defaultproperties
 {
+     bAmmoLookalike=True
      Mesh=LODMesh'HideAGunPickup'
      Fragments(0)=LODMesh'HideAGunPickup'
      NumFragmentTypes=1
