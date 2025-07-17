@@ -324,6 +324,11 @@ function CommitMapFixing()
 		case 16:
 			switch(MN)
 			{
+				//CASTLE_COURT: Bad character in mission startup text. Jesus.
+				case "CASTLE STRONGHOLD":
+				case "CASTLE_STRONGHOLD":
+					LI.MapName = "Castle_Stronghold";
+				break;
 				//+++++++++++++++++++++++
 				//Utopia Maps
 				//UTOPIA_SUBWAY, AKA SUBWAY: Clean up shitty door.
@@ -333,15 +338,6 @@ function CommitMapFixing()
 					{
 						A.SetLocation(A.Location + Vect(0, 0, 10000));
 					}
-				break;
-			}
-		break;
-		case 21:
-			switch(MN)
-			{
-				//21_KABUKICHO: Paths crash if not rebuilt. Out of date?
-				case "21_KABUKICHO":
-					VMP.VMDRebuildPaths();
 				break;
 			}
 		break;
