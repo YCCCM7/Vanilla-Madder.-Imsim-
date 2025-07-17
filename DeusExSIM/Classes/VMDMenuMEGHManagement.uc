@@ -8,7 +8,7 @@ struct VMDButtonPos {
 	var int Y;
 };
 
-var MenuUIActionButtonWindow DoneButton,  TurnOffButton;
+var MenuUIActionButtonWindow DoneButton, TurnOffButton;
 
 var VMDMenuUIActionButtonWindow CustomNameEditButton, ReloadButton, UnloadButton, SwapButton, RepairButton, RechargeButton, SyringeButton;
 
@@ -31,7 +31,7 @@ var class<DeusExWeapon> LastWeapon;
 var MenuUIEditWindow CustomNameEntry;
 var MenuUIHelpWindow WinInfoWeaponName, MagCountLabel, AmmoLeftLabel, ScrapLeftLabel, CellsLeftLabel, SyringesLeftLabel;
 var VMDMenuUIInfoWindow WinInfoHealth, WinInfoEMPHealth;
-var PersonaCheckBoxWindow  ChkAutoReload;
+var PersonaCheckBoxWindow ChkAutoReload;
 
 var VMDButtonPos ReloadButtonPos, ReloadButtonSize, UnloadButtonPos, UnloadButtonSize, SwapButtonPos, SwapButtonSize, AutoReloadCheckboxPos,
 			RepairButtonPos, RepairButtonSize, RechargeButtonPos, RechargeButtonSize,
