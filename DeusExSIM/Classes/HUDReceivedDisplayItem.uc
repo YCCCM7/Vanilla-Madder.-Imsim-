@@ -61,7 +61,7 @@ event SetItem(Inventory invItem, int count)
 	winLabel.SetTextColor(colText);
 	winLabel.SetTextAlignments(HALIGN_Center, VALIGN_Top);
 	
-	labelText = invItem.beltDescription;
+	labelText = invItem.Class.Default.beltDescription;
 	if (count > 1)
 		labelText = labelText $ " (" $ String(count) $ ")";
 	
