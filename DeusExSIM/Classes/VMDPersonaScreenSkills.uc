@@ -218,7 +218,7 @@ function CreateTrees()
 			}
 		}
 		
-		if (VMP.bSkillAugmentsEnabled)
+		if (UseSkillAugments())
 		{
 			for (i=0; i<ArrayCount(MapBranchingFoundation); i++)
 			{
@@ -243,10 +243,10 @@ function CreateTrees()
 			TSkill = SM.GetSkillFromClass(SkillTypes[i]);
 			
 			SkillGems[i] = VMDSkillMapSkillGem(DragInterfaces[0].NewChild(Class'VMDSkillMapSkillGem'));
-			SkillGems[i].SetSkillData(VMP.SkillPointsTotal-VMP.SkillPointsSpent, TSpecialized, TSkill, VMP.bSkillAugmentsEnabled);
+			SkillGems[i].SetSkillData(VMP.SkillPointsTotal-VMP.SkillPointsSpent, TSpecialized, TSkill, UseSkillAugments());
 			SkillGems[i].SkillScreen = Self;
 		}
-		if (VMP.bSkillAugmentsEnabled)
+		if (UseSkillAugments())
 		{
 			for (i=0; i<ArrayCount(TalentGems); i++)
 			{
@@ -309,7 +309,7 @@ function CreateJumpGems()
 		{
 			TSkill = SM.GetSkillFromClass(SkillTypes[i]);
 			TSpec = VMP.IsSpecializedInSkill(SkillTypes[i]);
-			JumpGems[i].SetSkillData(TSkill, TSpec, JumpGemJumpLoc[i].X, JumpGemJumpLoc[i].Y, VMP.bSkillAugmentsEnabled);
+			JumpGems[i].SetSkillData(TSkill, TSpec, JumpGemJumpLoc[i].X, JumpGemJumpLoc[i].Y, UseSkillAugments());
 			
 			TPoints = VMP.GetSkillAugmentPointsFromSkill(SkillTypes[i]);
 			JumpGems[i].UpdatePointsLeft(TSkill.CurrentLevel, VMP.SkillPointsTotal-VMP.SkillPointsSpent, TPoints);
@@ -349,6 +349,13 @@ function CreateInfoWindow()
 
 function CreateButtons()
 {
+}
+
+function bool UseSkillAugments()
+{
+	if (VMP == None) return false;
+	
+	return VMP.ShouldUseSkillAugments();
 }
 
 // ----------------------------------------------------------------------
