@@ -532,7 +532,7 @@ function SetNetworkTerminal(NetworkTerminal newTerm)
 	
    	if (Player.Level.NetMode == NM_Standalone)
    	{
-		if (VMDBufferPlayer(GetPlayerPawn()) == None || !VMDBufferPlayer(GetPlayerPawn()).bSkillAugmentsEnabled)
+		if (VMDBufferPlayer(GetPlayerPawn()) == None || !VMDBufferPlayer(GetPlayerPawn()).ShouldUseSkillAugments())
 		{
 			if (WinTerm.GetSkillLevel() >= 2) bTurretOK = true;
 		}
