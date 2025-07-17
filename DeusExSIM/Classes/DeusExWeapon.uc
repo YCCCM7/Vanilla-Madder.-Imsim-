@@ -211,7 +211,8 @@ var float	TimeLockSet;
 var travel bool bHasEvolution;
 var travel bool bSemiautoTrigger, bBurstFire, bPocketReload, bSingleLoaded, bPumpAction; //Fire modes!
 var travel byte CurFiringMode, NumFiringModes, OverrideNumProj;
-var travel float OverrideAnimRate, NPCOverrideAnimRate, OverrideReloadAnimRate, MeleeAnimRates[3], FalloffStartRange, RelativeRange, LastDamageMult;
+var travel float OverrideAnimRate, NPCOverrideAnimRate, OverrideReloadAnimRate, MeleeAnimRates[3],
+			FalloffStartRange, RelativeRange, LastDamageMult, MoverDamageMult;
 var int SecondaryScopeFOV, ZoomInCount; //MADDERS, 11/29/21: Use this for second zoom functionality.
 
 //MADDERS, 7/2/22: Hacky bullshit for the assault 17 in nihilum.
@@ -238,10 +239,10 @@ var bool bForceSoundGeneration; //MADDERS, 4/11/21: For greasel spit, and possib
 
 //Firing system.
 var byte FiringSystemOperation; //0 = None, 1 = Closed, 2 = Open
-var float ExtraFloatDamage; //MADDERS, 4/28/25: Let us do fractional damage at base.
+var travel float AmmoDamageMultiplier, GunModDamageMultiplier, ExtraFloatDamage; //MADDERS, 4/28/25: Let us do fractional damage at base.
 var localized string MessageTooDirty, MessageTooWet, msgNoAmmo,
 			OpenSystemDesc, ClosedSystemDesc, GrimeLevelDesc[3], PenetrationDesc, RicochetDesc,
-			FiringSystemLabel, GrimeLevelLabel, PenetrationLabel, RicochetLabel,
+			FiringSystemLabel, GrimeLevelLabel, PenetrationLabel, RicochetLabel, msgInfoMoverDamageMult,
 			MsgGainedMod, MsgMergedMods[2], ModNames[9];
 
 //How much damage do we do on impact, if secondary?
@@ -290,6 +291,14 @@ var(GP2Experimental) float SwayProgress, SwayExcitement, SwayDistance, SwayDista
 //Aim packets
 var(GP2Experimental) rotator CurrentAimPackets[8];
 var(GP2Experimental) float AimPacketProgress[8], AimPacketRate[8];
+
+//Swerve and Bob
+var(GP2Experimental) float BobPacketProgress, PrimaryBobFactors[4], SecondaryBobFactors[4];
+var(GP2Experimental) rotator CurBobPacket;
+var(GP2Experimental) vector LastMoveNormal;
+
+var(GP2Experimental) float SwerveRecoveryFactors[4], SwervePitchMomentum, SwerveYawMomentum;
+var(GP2Experimental) rotator CurSwervePacket, LastViewRotation;
 
 //Anim set. Purely a power saver.
 var(GP2Experimental) name CurAnimSet;
@@ -366,6 +375,104 @@ var(TiltSequences) int ReloadBeginTiltIndices, ReloadEndTiltIndices,
            MeleeSwing1TiltIndices, MeleeSwing2TiltIndices, MeleeSwing3TiltIndices,
 	    SelectTiltIndices, SelectEmptyTiltIndices, DownTiltIndices, DownEmptyTiltIndices,
              SightInTiltIndices, SightOutTiltIndices, ShootTiltIndices;
+
+//MADDERS, 5/10/25: More about not interfering with weapon modding 2.
+//This function super duper sucks. It can't pull precise information from ammos and rando scaling our damage...
+//What it CAN do however is figure out what direction ammos and rando are pulling our damage, and shove our float damage in that direction as well.
+//This seems to work, according to 1 1/2 hours of crunching math, but it cannot be as precise as it needs to be, just because of the loss of information in transit.
+function float GetWM2FloatDamage()
+{
+	local float DamageVals[3], Ret;
+	
+	DamageVals[0] = (float(Default.HitDamage) + Default.ExtraFloatDamage) * GunModDamageMultiplier;
+	DamageVals[1] = (float(HitDamage) + ExtraFloatDamage);
+	DamageVals[2] = DamageVals[1] / DamageVals[0];
+	
+	Ret = DamageVals[2] * ExtraFloatDamage;
+	
+	return Ret;
+}
+
+function float FactorWM2DrawSpeedMultiplier()
+{
+	if (!ShouldUseWM2())
+	{
+		return 1.0;
+	}
+	return 1.0;
+}
+
+function float FactorWM2HolsterSpeedMultiplier()
+{
+	if (!ShouldUseWM2())
+	{
+		return 1.0;
+	}
+	return 1.0;
+}
+
+function float FactorWM2AccModifier()
+{
+	if (!ShouldUseWM2())
+	{
+		return 0.0;
+	}
+	return 0.0;
+}
+
+function float FactorWM2RecoilRecoveryMultiplier()
+{
+	if (!ShouldUseWM2())
+	{
+		return 1.0;
+	}
+	return 1.0;
+}
+
+function float FactorWM2ADSMultiplier()
+{
+	if (!ShouldUseWM2())
+	{
+		return 1.0;
+	}
+	return 1.0;
+}
+
+function float FactorWM2FocusMultiplier()
+{
+	if (!ShouldUseWM2())
+	{
+		return 1.0;
+	}
+	return 1.0;
+}
+
+function float FactorWM2SwayMultiplier()
+{
+	if (!ShouldUseWM2())
+	{
+		return 1.0;
+	}
+	return 1.0;
+}
+
+function float FactorWM2UniversalFocusMultiplier()
+{
+	if (!ShouldUseWM2())
+	{
+		return 1.0;
+	}
+	return 1.0;
+}
+
+function InvokeWM2Window(DeusExPlayer Player, DeusExWeapon DXW)
+{
+}
+
+function bool ShouldUseWM2()
+{
+	return false;
+}
 
 function bool ShouldUseGP2()
 {
@@ -476,7 +583,7 @@ function GP2AddRecoilPacket()
 	
 	if (!bZoomed)
 	{
-		GP2AddAimPacket(TRot, 1.0 / (ShotTime * 1.25 + (FRand() * RecoilRecoveryFactors[SkillLevel])), 0.0);
+		GP2AddAimPacket(TRot, 1.0 / (ShotTime * 1.25 + (FRand() * RecoilRecoveryFactors[SkillLevel] * FactorWM2RecoilRecoveryMultiplier())), 0.0);
 	}
 	SwayExcitement += RecoilStrength * 0.33;
 }
@@ -484,18 +591,20 @@ function GP2AddRecoilPacket()
 function GP2AimTick(float DT)
 {
 	local bool bSkillFocus;
-	local int i, SkillLevel;
-	local float TMult, TVel, TarExcitement, TarRate, TarStanding, FocusMult, PlayerFocusMod, AccFactor, ScopeMod, Recoil, FactoredRecoil;
-	local Rotator TRot, RollRot;
-	local Vector TAimOff;
+	local int i, SkillLevel, OldSign, NewDir;
+	local float TMult, TVel, TMath, TarExcitement, TarRate, TarStanding, TarDecayStanding, FocusMult, PlayerFocusMod, AccFactor, ScopeMod, Recoil, FactoredRecoil, SwerveFactor, BobFactors[2];
+	local Rotator TRot, RollRot, DiffRot, ViewRot;
+	local Vector TAimOff, TMove;
+	local DeusExPlayer DXP;
 	
-	if (DeusExPlayer(Owner) != None)
+	DXP = DeusExPlayer(Owner);
+	if (DXP != None)
 	{
-		if (DeusExPlayer(Owner).InHand == Self)
+		if (DXP.InHand == Self)
 		{
 			//WCCC, 5/2/25: Start by fetching some things for reference.
 			CurAnimSet = GP2GetAnimSet();
-			SkillLevel = DeusExPlayer(Owner).SkillSystem.GetSkillLevel(GoverningSkill);
+			SkillLevel = DXP.SkillSystem.GetSkillLevel(GoverningSkill);
 			if (VMDBufferPlayer(Owner) != None)
 			{
 				PlayerFocusMod = VMDBufferPlayer(Owner).ConfigureVMDAimSpeed();
@@ -562,7 +671,7 @@ function GP2AimTick(float DT)
 			//WCCC, 5/2/25: Then, fetch how much we should be scaling our distance in/out from center.
 			//Higher skill levels have less margin of error in holding, up to 60% less, in fact.
 			//Scopes also improve this factor even further, just like in older VMD code.
-			AccFactor = AccuracyFactorScalar; //SkillAccuracyFactors[SkillLevel] * 
+			AccFactor = AccuracyFactorScalar;
 			if (bZoomed)
 			{
 				ScopeMod = 3.0;
@@ -600,7 +709,7 @@ function GP2AimTick(float DT)
 					bSkillFocus = True;
 				break;
 			}
-			FocusMult = AimFocusMults[SkillLevel * (1 + int(bSkillFocus))];
+			FocusMult = AimFocusMults[SkillLevel * (1 + int(bSkillFocus))] * FactorWM2FocusMultiplier() * FactorWM2UniversalFocusMultiplier();
 			
 			//WCCC, 5/2/25: Recoil works like Phase 2 recoil, of not being constant.
 			//However, the twist is this is also scaling how crosshair blooms outwards.
@@ -622,6 +731,7 @@ function GP2AimTick(float DT)
 			{
 				TarStanding = AimFocusRanges[1] - ((TarExcitement-1) * 3.0);
 			}
+			TarDecayStanding = FMax(0.0, TarStanding - 3.0);
 			
 			if (StandingTimer > TarStanding)
 			{
@@ -636,18 +746,35 @@ function GP2AimTick(float DT)
 			//The distance out from the circle is shoved around by distance velocity.
 			//Distance velocity is random, but only updated so often as to not be too jittery.
 			//Trust me, this effect gets uncanny fast, so use a cooldown.
-			SwayProgress = (SwayProgress + GP2GetSwayRateMult() / PlayerFocusMod * DT) % 1.0;
+			SwayProgress = (SwayProgress + GP2GetSwayRateMult() * (1.0 + (VMDGetWoundAccuracyPenalty() * 6.0)) / PlayerFocusMod * FactorWM2SwayMultiplier() * DT) % 1.0;
 			if (SwayDistanceTimer > 0)
 			{
 				SwayDistanceTimer -= DT;
 			}
 			else
 			{
+				//MADDERS, 6/3/25: Doing some fucky math. We can be aimed pretty far in or pretty far out, but on average we wander back to 0.35.
+				//Fun twist: We can flip, and reverse pointing, but will still be weighted to come back to -0.35.
 				SwayDistanceTimer = SwayDistanceCooldown;
-				DistanceVelocity += SwayDistanceRate / PlayerFocusMod * DT / (SwayExcitement * SwayExcitementScalar) * (1 - (Rand(2) * 2));
-				DistanceVelocity *= Sqrt(Abs(DistanceVelocity));
+				NewDir = 1 - (Rand(2) * 2);
+				
+				//Weight this movement to be reduced slightly
+				if ((NewDir != Sign(DistanceVelocity)) == (Abs(SwayDistance) < 0.35) || (NewDir == Sign(DistanceVelocity)) == (Abs(SwayDistance) > 0.7))
+				{
+					TMath = FClamp(Abs(DistanceVelocity), 0.25, 0.75);
+					DistanceVelocity += SwayDistanceRate / PlayerFocusMod * DT / (SwayExcitement * SwayExcitementScalar) * (TMath * ((1.0 + TMath) * 0.5)) * NewDir;
+				}
+				//Weight this movement to be increased slightly
+				else
+				{
+					TMath = FClamp(Abs(DistanceVelocity), 0.25, 1.0);
+					DistanceVelocity += SwayDistanceRate / PlayerFocusMod * DT / (SwayExcitement * SwayExcitementScalar) * Sqrt(TMath) * NewDir;
+				}
+				
+				//And don't let us get too much momentum. Shit goes crazy.
+				DistanceVelocity = FClamp(DistanceVelocity, -0.005, 0.005);
 			}
-			SwayDistance = FClamp(SwayDistance + DistanceVelocity, 0.0, 1.0);
+			SwayDistance = FClamp(SwayDistance + DistanceVelocity, -1.0, 1.0);
 			RollRot.Roll = 65536.0 * SwayProgress;
 			
 			//WCCC, 5/2/25: Final leg of work: Construct a pointer, using Z as our distance from center.
@@ -675,6 +802,129 @@ function GP2AimTick(float DT)
 				TRot += CurrentAimPackets[i] * TMult;
 			}
 			
+			ViewRot = DXP.ViewRotation;
+			ViewRot.Roll = 0;
+			if (ViewRot.Pitch <= 18000)
+			{
+				ViewRot.Pitch += 65536;
+			}
+			
+			if (!bZoomed)
+			{
+				//WCCC, 5/23/25: Make our aim drag a bit, as per "swerve".
+				//This tightens up we hit higher skill levels, occurring less, and recovering faster.
+				//Things that lower sway tighten this up further. Things that raise sway expand this further.
+				if (LastViewRotation != Rot(0,0,0))
+				{
+					DiffRot = (ViewRot - LastViewRotation) / DT;
+					
+					SwerveFactor = SwerveRecoveryFactors[SkillLevel] / Sqrt(Mass);
+					if (Abs(DiffRot.Yaw) > SwerveFactor*0.104 || Abs(DiffRot.Pitch) > SwerveFactor*0.104)
+					{
+						StandingTimer = FMax(FMin(StandingTimer, TarDecayStanding), StandingTimer - Sqrt(Abs(DiffRot.Yaw) + Abs(DiffRot.Pitch)) * 0.035 * DT);
+						CurSwervePacket -= (DiffRot * GP2GetSwayRateMult() / PlayerFocusMod * FactorWM2SwayMultiplier() * DT);
+						SwerveYawMomentum = SwerveFactor * 0.5;
+						SwervePitchMomentum = SwerveFactor * 0.5;
+					}
+					else
+					{
+						SwerveYawMomentum += SwerveFactor * DT * 2.5;
+						SwervePitchMomentum += SwerveFactor * DT * 2.5;
+					}
+					
+					OldSign = Sign(CurSwervePacket.Yaw);
+					CurSwervePacket.Yaw = OldSign * (Abs(CurSwervePacket.Yaw) - SwerveYawMomentum * DT);
+					if (Sign(CurSwervePacket.Yaw) != OldSign)
+					{
+						CurSwervePacket.Yaw = 0;
+					}
+					else if (Abs(CurSwervePacket.Yaw) > 3072)
+					{
+						CurSwervePacket.Yaw = OldSign * 3072;
+					}
+					
+					OldSign = Sign(CurSwervePacket.Pitch);
+					CurSwervePacket.Pitch = OldSign * (Abs(CurSwervePacket.Pitch) - SwervePitchMomentum * DT);
+					if (Sign(CurSwervePacket.Pitch) != OldSign)
+					{
+						CurSwervePacket.Pitch = 0;
+					}
+					else if (Abs(CurSwervePacket.Pitch) > 3072)
+					{
+						CurSwervePacket.Pitch = OldSign * 3072;
+					}
+				}
+				TRot += CurSwervePacket;
+				
+				//WCCC, 5/23/25: Make our aim bob a bit as we move. Direction changes everything.
+				//As skill increases, dampen this down, first on its secondary axis, then on its primary axis.
+				TMove = Normal(DXP.Velocity << DXP.Rotation);
+				if (BobPacketProgress <= 0.0)
+				{
+					//Scale bob by our targeted excitement, so slower footsteps fuck things up less.
+					//At 0.33 * 4.0 at most, that's 133% bob at full sprint.
+					BobFactors[0] = PrimaryBobFactors[SkillLevel] * 0.33 * TarExcitement;
+					BobFactors[1] = SecondaryBobFactors[SkillLevel] * 0.33 * TarExcitement;
+					
+					//MADDERS, 5/23/25: Crouch walk is very slow, and abnormally disruptive for a pro-aiming state.
+					//As a result, nerf the shit out of bob when crouched.
+					if (DXP.AnimSequence == 'CrouchWalk')
+					{
+						BobFactors[0] *= 0.33;
+						BobFactors[1] *= 0.33;
+					}
+					
+					//On 50/50 split (Sqrt of 0.5), let X win out.
+					if (TMove.X > 0.706)
+					{
+						CurBobPacket.Pitch += BobFactors[0];
+						CurBobPacket.Yaw += ((Rand(2) * 2) - 1) * BobFactors[1];
+					}
+					else if (TMove.X < -0.706)
+					{
+						CurBobPacket.Pitch -= BobFactors[0];
+						CurBobPacket.Yaw -= ((Rand(2) * 2) - 1) * BobFactors[1];
+					}
+					
+					if (TMove.Y > 0.708)
+					{
+						CurBobPacket.Yaw -= BobFactors[0] * 2;
+						CurBobPacket.Pitch -= ((Rand(2) * 2) - 1) * BobFactors[1] * 0.5;
+					}
+					else if (TMove.Y < -0.708)
+					{
+						CurBobPacket.Yaw += BobFactors[0] * 2;
+						CurBobPacket.Pitch += ((Rand(2) * 2) - 1) * BobFactors[1] * 0.5;
+					}
+				}
+				
+				switch(DXP.AnimSequence)
+				{
+					case 'Run':
+					case 'Run2h':
+						BobPacketProgress += DXP.AnimRate * DT * 2.0 * (18.0 / 10.0);
+					break;
+					case 'Walk':
+					case 'Walk2h':
+						BobPacketProgress += DXP.AnimRate * DT * 2.0 * (10.0 / 10.0);
+					break;
+					case 'CrouchWalk':
+						BobPacketProgress += DXP.AnimRate * DT * 2.0 * (5.0 / 9.0);
+					break;
+					default:
+						BobPacketProgress += 1.0 * DT * 4.0;
+					break;
+				}
+				
+				if (BobPacketProgress >= 2.0)
+				{
+					BobPacketProgress = 0.0;
+					CurBobPacket = Rot(0,0,0);
+				}
+				TMult = 1.0 - Abs(1.0 - BobPacketProgress);
+				TRot += CurBobPacket * TMult;
+			}
+			
 			//WCCC, 5/2/25: At long last, we won.
 			CurrentAimOffset = TRot;
 		}
@@ -688,6 +938,22 @@ function GP2AimTick(float DT)
 			SwayDistance = 0.5;
 			DistanceVelocity = 0.0;
 		}
+		
+		LastViewRotation = ViewRot;
+		if (VSize(DXP.Velocity) > 3)
+		{
+			LastMoveNormal = Normal(DXP.Velocity << DXP.Rotation);
+		}
+		else
+		{
+			LastMoveNormal = Vect(0,0,0);
+		}
+	}
+	else
+	{
+		LastViewRotation = Rot(0,0,0);
+		CurBobPacket = Rot(0,0,0);
+		BobPacketProgress = 0.0;
 	}
 }
 
@@ -999,7 +1265,7 @@ function bool VMDGetSilencer()
 
 function string VMDGetItemName()
 {
-	if ((!VMDIsMeleeWeapon()) && (PickupAmmoCount > 0))
+	if ((!VMDIsMeleeWeapon()) && (PickupAmmoCount > 0) && (Pawn(Owner) == None))
 	{
 		return ItemName@"("$PickupAmmoCount$")";
 	}
@@ -1316,16 +1582,20 @@ simulated function VMDUpdateTiltEffects(float DT)
   		//030303030303030303030303030303
   		case 'Shoot':
   		case 'ShootEmpty':
-   			NumIndices = ShootTiltIndices;
-   			if (NumIndices < 1) return;
-   			for (i=0; i<NumIndices; i++)
-   			{
-    				if (AnimFrame > ShootTiltTimer[i])
+			//MADDERS, 6/2/25: Don't use tilt sequences during shooting in GP2.0. It feels weird.
+			if (!ShouldUseGP2() || bZoomed)
+			{
+ 	  			NumIndices = ShootTiltIndices;
+ 	  			if (NumIndices < 1) return;
+ 	  			for (i=0; i<NumIndices; i++)
+   				{
+   	 				if (AnimFrame > ShootTiltTimer[i])
     				{
-     					UseIndex = i;
-    				}
-   			}
-   			if (UseIndex > -1) UseVec = ShootTilt[UseIndex];
+   	  					UseIndex = i;
+   	 				}
+   				}
+   				if (UseIndex > -1) UseVec = ShootTilt[UseIndex];
+			}
   		break;
   		//040404040404040404040404040404
   		//MELEE TILT!
@@ -1641,6 +1911,15 @@ function VMDWeaponPostBeginPlayHook()
 {
 	local int i;
 	
+	if (AmmoDamageMultiplier <= 0)
+	{
+		AmmoDamageMultiplier = 1.0;
+	}
+	if (GunModDamageMultiplier <= 0)
+	{
+		GunModDamageMultiplier = 1.0;
+	}
+	
 	//MADDERS, 4/12/21: Nice try, Zodiac. You're not my real dad.
 	if (IsA('WeaponC4'))
 	{
@@ -1820,7 +2099,7 @@ function VMDUpdateWeaponModStats()
 //MADDERS, 1/10/21: For use in the LAW, primarily.
 function VMDDestroyOnFinishHook()
 {
-	if (bLasing) LaserOff();
+	LaserOff();
 	if (bZoomed) ScopeOff();
 }
 
@@ -2873,7 +3152,7 @@ function float VMDGetMaterialPenetration(Actor TTarget)
 	if (AmmoNone(AmmoType) != None) return 0;
 	if (!VMDIsBallisticDamageType()) return 0;
 	
- 	Ret = VMDGetCorrectHitDamage(float(HitDamage) + (ExtraFloatDamage * (float(HitDamage) / float(Default.HitDamage)))) / 1.5;
+ 	Ret = VMDGetCorrectHitDamage(float(HitDamage) + (GetWM2FloatDamage())) / 1.5;
 	
 	//MADDERS, 1/29/21: Cap off material penetration, as it can get quite silly at times.
 	if (Ret > 10)
@@ -3536,7 +3815,6 @@ function VMDAlertAmmoLoad( bool bInstant )
 		{
 			ShotTime = 0.150000;
 		}
-  		VMDUpdateEvolution();
  	}
  	else
  	{
@@ -3550,8 +3828,7 @@ function VMDAlertAmmoLoad( bool bInstant )
 		{
 			ShotTime = 0.150000;
 		}
-  		VMDUpdateEvolution();
- 	}
+	}
 }
 
 function VMDAlertPostAmmoLoad( bool bInstant )
@@ -3585,6 +3862,7 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 		if (Ammo762mm(AmmoType) != None)
 		{
 			SilencedFireSound = Default.SilencedFireSound;
+			bAutomatic = (FiringModes[CurFiringMode] ~= "Full Auto");
 			bBoltAction = false;
      			LowAmmoWaterMark = 30;
 		}
@@ -3592,6 +3870,7 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 		{
 			//MADDERS: Hack for silenced GL handling.
  			SilencedFireSound = Sound'AssaultGunFire20mm';
+			bAutomatic = false;
 			bBoltAction = true;
     			LowAmmoWaterMark = 4;
 		}
@@ -3674,7 +3953,7 @@ function VMDHandlePrimaryAmmoEffects(Actor Other, Vector L, Vector N)
 	local class<DeusExDecal> DecalType;
 	local DeusExDecal Decal;
 	
-	TDamage = VMDGetScaledDamage(float(HitDamage) + (ExtraFloatDamage * (float(HitDamage) / float(Default.HitDamage))));
+	TDamage = VMDGetScaledDamage(float(HitDamage) + (GetWM2FloatDamage()));
 	if ((Ammo10mmHEAT(AmmoType) != None || Ammo3006HEAT(AmmoType) != None) && (Other != None))
 	{
 		BlastMult = 1.0;
@@ -3715,6 +3994,10 @@ function VMDHandlePrimaryAmmoEffects(Actor Other, Vector L, Vector N)
 			{
 				VMDBufferPlayer(Other).LastWeaponDamageSkillMult = TDamage / VMDGetCorrectHitDamage(HitDamage);
 				Other.TakeDamage(VMDGetCorrectHitDamage(HitDamage)*2, Pawn(Owner), L, vect(0,0,0), 'Exploded');
+			}
+			else if (Brush(Other) != None)
+			{
+				Other.TakeDamage(int(TDamage*2 * MoverDamageMult), Pawn(Owner), L, Vect(0,0,0), 'Exploded');
 			}
 			else
 			{
@@ -4580,6 +4863,8 @@ function TravelPostAccept()
 	
 	//MADDERS: Update our evolution!
 	VMDUpdateEvolution();
+	//MADDERS, 5/8/25: Also update our weapon mods. For future stuff.
+	VMDUpdateWeaponModStats();
 	
 	//MADDERS: Fix for busted fire sounds.
 	VMDAlertPostAmmoLoad(bInstantHit);
@@ -4608,12 +4893,14 @@ function TravelPostAccept()
 		
 		bWasZoomed = False;
 		if (bZoomed)
+		{
 			ScopeOff();
-		if (bHasLaser)
-			LaserOff();
+		}
+		LaserOff();
 		if (DeusExPlayer(Owner) != None)
+		{
 			DeusExPlayer(Owner).DeleteInventory(Self);
-		
+		}
 		Destroy();
 	}
 }
@@ -4920,7 +5207,7 @@ function BringUp()
 	//MADDERS, 12/29/20: Apply religiously.
 	VMDFixInvGrouping();
 	
-	//MADDERS: Active automatically!
+	//MADDERS: Activate automatically!
 	if ((bHasLaser) && (!bLasing)) LaserOn();
 
 	ResetShake();
@@ -5019,76 +5306,37 @@ simulated function float GetWeaponSkill()
 // calculate the accuracy for this weapon and the owner's damage
 simulated function float CalculateAccuracy()
 {
-	local bool checkit, bLeftHanded, bWrongArm;
-	local int HealthArmRight, HealthArmLeft, HealthHead, BestArmRight, BestArmLeft, BestHead, THand, SkillLevel;
-	local float accuracy, tempacc, div, weapskill, HMult;
+	local bool bCheckIt;
+	local int THand, SkillLevel;
+	local float Accuracy, TAcc, TDiv, TSkill;
 	
 	local DeusExPlayer player;
+	local ScriptedPawn SP;
 	local VMDBufferPlayer VMP;
 	local float LasMod, SingleHanderPenalty;
 	
-	accuracy = BaseAccuracy;		// start with the weapon's base accuracy
-   	weapskill = VMDGetWeaponSkill("ACCURACY");
+	Accuracy = BaseAccuracy; // start with the weapon's base accuracy
+   	TSkill = VMDGetWeaponSkill("ACCURACY");
 	
-	//MADDERS, 3/27/25: Dying goons should not laser us. Make them spray wildly.
-	if ((Owner != None) && (Owner.IsInState('Dying')))
-	{
-		return 2.0;
-	}
-	
-	player = DeusExPlayer(Owner);
+	Player = DeusExPlayer(Owner);
 	VMP = VMDBufferPlayer(Owner);
+	SP = ScriptedPawn(Owner);
 	
-	HMult = 1.0;
 	if (VMP != None)
 	{
-		if (VMP.KSHealthMult > 0)
-		{
-			HMult *= VMP.KSHealthMult;
-		}
-		if (VMP.ModHealthMultiplier > 0)
-		{
-			HMult *= VMP.ModHealthMultiplier;
-		}
-		
 	 	Accuracy += VMP.VMDConfigureAimModifier();
-		
-		THand = GetHandType();
-		if (VMP.Handedness == 1)
-		{
-			if (THand == -1)
-			{
-				bLeftHanded = false;
-				bWrongArm = true;
-			}
-			else
-			{
-				bLeftHanded = true;
-			}
-		}
-		else if (VMP.Handedness == -1)
-		{
-			if (THand == 1)
-			{
-				bLeftHanded = true;
-				bWrongArm = true;
-			}
-			else
-			{
-				bLeftHanded = false;
-			}
-		}
 	}
 	
-	SingleHanderPenalty = 1.0;
-	if (player != None)
+	Accuracy += FactorWM2AccModifier();
+	
+	if (Player != None)
 	{
 		// check the player's skill
 		// 0.0 = dead on, 1.0 = way off
 		//MADDERS, 5/2/25: Let accuracy be more organic in GP2.0. We affect aim margin differently.
 		if (!ShouldUseGP2())
 		{
-			accuracy += weapskill;
+			Accuracy += TSkill;
 		}
 		else
 		{
@@ -5099,50 +5347,17 @@ simulated function float CalculateAccuracy()
 			}
 		}
 		
-		// get the health values for the player
-		HealthArmRight = player.HealthArmRight;
-		
-		//MADDERS, 12/14/21: One hander? Only one hand matters.
-		if (VMDIsTwoHandedWeapon())
-		{
-			HealthArmLeft = player.HealthArmLeft;
-		}
-		else
-		{
-			SingleHanderPenalty = 2.0;
-			if (bLeftHanded)
-			{
-				HealthArmLeft = player.HealthArmLeft;
-				HealthArmRight = 100;
-			}
-			else
-			{
-				HealthArmLeft = 100;
-				HealthArmRight = player.HealthArmRight;
-			}
-		}
-		HealthHead     = player.HealthHead;
-		BestArmRight   = player.Default.HealthArmRight;
-		BestArmLeft    = player.Default.HealthArmLeft;
-		BestHead       = player.Default.HealthHead;
-		checkit = True;
+		bCheckIt = True;
 	}
-	else if (ScriptedPawn(Owner) != None)
+	else if (SP != None)
 	{
 		// update the weapon's accuracy with the ScriptedPawn's BaseAccuracy
 		// (BaseAccuracy uses higher values for less accuracy, hence we add)
-		accuracy += ScriptedPawn(Owner).BaseAccuracy;
+		Accuracy += SP.BaseAccuracy;
 		
-		// get the health values for the NPC
-		HealthArmRight = ScriptedPawn(Owner).HealthArmRight;
-		HealthArmLeft  = ScriptedPawn(Owner).HealthArmLeft;
-		HealthHead     = ScriptedPawn(Owner).HealthHead;
-		BestArmRight   = ScriptedPawn(Owner).Default.HealthArmRight;
-		BestArmLeft    = ScriptedPawn(Owner).Default.HealthArmLeft;
-		BestHead       = ScriptedPawn(Owner).Default.HealthHead;
-		checkit = True;
+		bCheckIt = True;
 		
-		if ((VMDIsBulletWeapon()) && (WeaponRifle(Self) == None) && (VMDMEGH(ScriptedPawn(Owner).Enemy) != None || VMDSIDD(ScriptedPawn(Owner).Enemy) != None))
+		if ((VMDIsBulletWeapon()) && (WeaponRifle(Self) == None) && (VMDMEGH(SP.Enemy) != None || VMDSIDD(SP.Enemy) != None))
 		{
 			if (VMDBountyHunter(Owner) != None)
 			{
@@ -5150,7 +5365,7 @@ simulated function float CalculateAccuracy()
 			}
 			else
 			{
-				Accuracy -= 0.1 + (FMax(-0.1, ScriptedPawn(Owner).BaseAccuracy));
+				Accuracy -= 0.1 + (FMax(-0.1, SP.BaseAccuracy));
 			}
 		}
 		
@@ -5160,79 +5375,43 @@ simulated function float CalculateAccuracy()
 		}
 	}
 	else
-		checkit = False;
+	{
+		bCheckIt = False;
+	}
 	
 	// Disabled accuracy mods based on health in multiplayer
-	if (Level.NetMode != NM_Standalone || (ProjectileClass == None && !VMDIsBulletWeapon()))
-		checkit = False;
-	
-	if (checkit)
+	if (Level == None || Level.NetMode != NM_Standalone || (ProjectileClass == None && !VMDIsBulletWeapon()))
 	{
-		if (bLeftHanded)
-		{
-			if (HealthArmRight < 1)
-				accuracy += 0.5;
-			else if (HealthArmRight < BestArmRight * 0.34 * HMult)
-				accuracy += 0.2;
-			else if (HealthArmRight < BestArmRight * 0.67 * HMult)
-				accuracy += 0.1;
-			
-			if (HealthArmLeft < 1)
-				accuracy += 0.5 * SingleHanderPenalty;
-			else if (HealthArmLeft < BestArmLeft * 0.34 * HMult)
-				accuracy += 0.2 * SingleHanderPenalty;
-			else if (HealthArmLeft < BestArmLeft * 0.67 * HMult)
-				accuracy += 0.1 * SingleHanderPenalty;
-		}
-		else
-		{
-			if (HealthArmRight < 1)
-				accuracy += 0.5 * SingleHanderPenalty;
-			else if (HealthArmRight < BestArmRight * 0.34 * HMult)
-				accuracy += 0.2 * SingleHanderPenalty;
-			else if (HealthArmRight < BestArmRight * 0.67 * HMult)
-				accuracy += 0.1 * SingleHanderPenalty;
-			
-			if (HealthArmLeft < 1)
-				accuracy += 0.5;
-			else if (HealthArmLeft < BestArmLeft * 0.34 * HMult)
-				accuracy += 0.2;
-			else if (HealthArmLeft < BestArmLeft * 0.67 * HMult)
-				accuracy += 0.1;
-		}
-		
-		if (HealthHead < BestHead * 0.67 * HMult)
-			accuracy += 0.1;
-		
-		//MADDERS, 5/29/23: Wrong hand? Yeah, we aren't ambidextrous.
-		if (bWrongArm)
-		{
-			Accuracy += 0.1 * SingleHanderPenalty;
-		}
+		bCheckIt = False;
+	}
+	
+	if (bCheckIt)
+	{
+		Accuracy += VMDGetWoundAccuracyPenalty();
 		
 		//MADDERS: Alt ammos can change accuracy one way or the other.
 		//NOTE: We uniquely give exactly 0 fucks if the skill augments setting is off.
-		if ((VMP != None) && (VMP.bSkillAugmentsEnabled) && (AmmoType != None) && (AmmoNames[0] != None) && (AmmoType.Class != AmmoNames[0]))
+		if ((VMP != None) && (VMP.ShouldUseSkillAugments()) && (AmmoType != None) && (AmmoNames[0] != None) && (AmmoType.Class != AmmoNames[0]))
 		{
 			switch(GoverningSkill)
 			{
 				case class'SkillWeaponPistol':
 					if (VMDOtherIsName(Self, "Crossbow"))
 					{
-						if (VMDHasSkillAugment('PistolAltAmmos')) accuracy -= 0.3;
-						else accuracy += 0.15;
+						if (VMDHasSkillAugment('PistolAltAmmos')) Accuracy -= 0.3;
+						else Accuracy += 0.15;
 					}
 				break;
 				case class'SkillWeaponRifle':
 					if (AmmoSabot(AmmoType) != None || AmmoTaserSlug(AmmoType) != None)
 					{
-						if (VMDHasSkillAugment('RifleAltAmmos')) accuracy -= 0.15;
-						else accuracy += 0.15;
+						if (VMDHasSkillAugment('RifleAltAmmos')) Accuracy -= 0.15;
+						else Accuracy += 0.15;
 					}
 					if (Ammo3006Tranq(AmmoType) != None)
 					{
-						if (VMDHasSkillAugment('RifleAltAmmos')) accuracy += 0.15;
-						else accuracy += 0.45;
+						if (VMDHasSkillAugment('RifleAltAmmos')) Accuracy += 0.15;
+						else Accuracy += 0.45;
 					}
 				break;
 			}
@@ -5241,35 +5420,34 @@ simulated function float CalculateAccuracy()
 	
 	// increase accuracy (decrease value) if we haven't been moving for awhile
 	// this only works for the player, because NPCs don't need any more aiming help!
-	if (player != None)
+	if (Player != None)
 	{
-		tempacc = accuracy;
-		if (standingTimer > 0)
+		TAcc = Accuracy;
+		if (StandingTimer > 0)
 		{
-			
 			//MADDERS, 5/2/25: For GP2.0, go much finer.
 			if (ShouldUseGP2())
 			{
 				//GP2.0: We don't give a shit about skill anymore.
-				div = FMax(15.0, 0.0);
-				accuracy -= FClamp(standingTimer/div, 0.0, 0.6);
+				TDiv = FMax(15.0, 0.0);
+				Accuracy -= FClamp(StandingTimer/TDiv, 0.0, 0.6);
 				
 				// don't go too low
-				if ((accuracy < 0.05 * (1.0 - ModBaseAccuracy)) && (tempacc > 0.05 * (1.0 - ModBaseAccuracy)))
+				if ((Accuracy < 0.05 * (1.0 - ModBaseAccuracy)) && (TAcc > 0.05 * (1.0 - ModBaseAccuracy)))
 				{
-					accuracy = 0.05 * (1.0 - ModBaseAccuracy);
+					Accuracy = 0.05 * (1.0 - ModBaseAccuracy);
 				}
 			}
 			else
 			{
 				// higher skill makes standing bonus greater
-				div = FMax(15.0 + 29.0 * weapskill, 0.0);
-				accuracy -= FClamp(standingTimer/div, 0.0, 0.6);
+				TDiv = FMax(15.0 + 29.0 * TSkill, 0.0);
+				Accuracy -= FClamp(StandingTimer/TDiv, 0.0, 0.6);
 				
 				// don't go too low
-				if ((accuracy < 0.1) && (tempacc > 0.1))
+				if ((Accuracy < 0.1) && (TAcc > 0.1))
 				{
-					accuracy = 0.1;
+					Accuracy = 0.1;
 				}
 			}
 		}
@@ -5277,17 +5455,22 @@ simulated function float CalculateAccuracy()
 	
 	if (ShouldUseGP2())
 	{
-		SkillLevel = DeusExPlayer(Owner).SkillSystem.GetSkillLevel(GoverningSkill);
+		SkillLevel = Player.SkillSystem.GetSkillLevel(GoverningSkill);
 		Accuracy *= SkillAccuracyFactors[SkillLevel];
 	}
 	
 	// make sure we don't go negative
-	if (accuracy < 0.0)
-		accuracy = 0.0;
-	
+	if (Accuracy < 0.0)
+	{
+		Accuracy = 0.0;
+	}
    	if (Level.NetMode != NM_Standalone)
-      		if (accuracy < MinWeaponAcc)
-         		accuracy = MinWeaponAcc;
+	{
+		if (Accuracy < MinWeaponAcc)
+		{
+			Accuracy = MinWeaponAcc;
+		}
+	}
 	
 	//MADDERS: Apply buffs/nerfs for other things.
 	if (bLasing)
@@ -5325,16 +5508,13 @@ simulated function float CalculateAccuracy()
 		Accuracy /= LasMod;
 	}
 	
-	//MADDERS: Overhauled.
-	//if (FiringModes[CurFiringMode] ~= "Double Fire ") Accuracy += 0.6;
-	
 	//MADDERS, 4/2/21: Relocated from TraceFire/ProjectileFire.
 	//----------
 	// if there is a scope, but the player isn't using it, decrease the accuracy
 	// so there is an advantage to using the scope
 	//----------
 	//MADDERS, 3/22/23: Removed penalty for Nihilum LMG though.
-	if ((ScriptedPawn(Owner) == None) && (bHasScope) && (!bZoomed) && (WeaponLAW(Self) == None) && (!IsA('WeaponM249DXN') || !IsA('WeaponPara17')))
+	if ((SP == None) && (bHasScope) && (!bZoomed) && (WeaponLAW(Self) == None) && (!IsA('WeaponM249DXN') || !IsA('WeaponPara17')))
 	{
 		if (GoverningSkill != class'SkillWeaponPistol' || !VMDHasSkillAugment('PistolScope')) 
 		{
@@ -5343,6 +5523,188 @@ simulated function float CalculateAccuracy()
 	}
 	
 	return Accuracy;
+}
+
+function float VMDGetWoundAccuracyPenalty()
+{
+	local bool bLeftHanded, bWrongArm;
+	local int THand, HealthArmLeft, HealthArmRight, HealthHead, BestArmLeft, BestArmRight, BestHead;
+	local float HMult, ModMult, Ret, SingleHanderPenalty;
+	local DeusExPlayer Player;
+	local VMDBufferPlayer VMP;
+	local ScriptedPawn SP;
+	
+	//MADDERS, 3/27/25: Dying goons should not laser us. Make them spray wildly.
+	if ((Owner != None) && (Owner.IsInState('Dying')))
+	{
+		return 2.0;
+	}
+	
+	Player = DeusExPlayer(Owner);
+	VMP = VMDBufferPlayer(Owner);
+	SP = ScriptedPawn(Owner);
+	
+	HMult = 1.0;
+	ModMult = 1.0;
+	if (VMP != None)
+	{
+		if (VMP.KSHealthMult > 0)
+		{
+			HMult *= VMP.KSHealthMult;
+		}
+		if (VMP.ModHealthMultiplier > 0)
+		{
+			HMult *= VMP.ModHealthMultiplier;
+		}
+		
+		THand = GetHandType();
+		if (VMP.Handedness == 1)
+		{
+			if (THand == -1)
+			{
+				bLeftHanded = false;
+				bWrongArm = true;
+			}
+			else
+			{
+				bLeftHanded = true;
+			}
+		}
+		else if (VMP.Handedness == -1)
+		{
+			if (THand == 1)
+			{
+				bLeftHanded = true;
+				bWrongArm = true;
+			}
+			else
+			{
+				bLeftHanded = false;
+			}
+		}
+	}
+	
+	SingleHanderPenalty = 1.0;
+	if (Player != None)
+	{
+		if ((VMP != None) && (VMP.bUseSharedHealth))
+		{
+			ModMult *= 0.35;
+		}
+		
+		//MADDERS, 6/2/25: Halve effect of wounds on raw accuracy for GP2.0.
+		if (ShouldUseGP2())
+		{
+			ModMult *= 0.35;
+		}
+		
+		// get the health values for the player
+		HealthArmRight = Player.HealthArmRight;
+		
+		//MADDERS, 12/14/21: One hander? Only one hand matters.
+		if (VMDIsTwoHandedWeapon())
+		{
+			HealthArmLeft = Player.HealthArmLeft;
+		}
+		else
+		{
+			SingleHanderPenalty = 2.0;
+			if (bLeftHanded)
+			{
+				HealthArmLeft = Player.HealthArmLeft;
+				HealthArmRight = 100;
+			}
+			else
+			{
+				HealthArmLeft = 100;
+				HealthArmRight = Player.HealthArmRight;
+			}
+		}
+		HealthHead = Player.HealthHead;
+		BestArmRight = Player.Default.HealthArmRight;
+		BestArmLeft = Player.Default.HealthArmLeft;
+		BestHead = Player.Default.HealthHead;
+	}
+	else if (SP != None)
+	{
+		// get the health values for the NPC
+		HealthArmRight = SP.HealthArmRight;
+		HealthArmLeft = SP.HealthArmLeft;
+		HealthHead = SP.HealthHead;
+		BestArmRight = SP.Default.HealthArmRight;
+		BestArmLeft = SP.Default.HealthArmLeft;
+		BestHead = SP.Default.HealthHead;
+	}
+	
+	if (bLeftHanded)
+	{
+		if (HealthArmRight < 1)
+		{
+			Ret += 0.5 * ModMult;
+		}
+		else if (HealthArmRight < BestArmRight * 0.34 * HMult)
+		{
+			Ret += 0.2 * ModMult;
+		}
+		else if (HealthArmRight < BestArmRight * 0.67 * HMult)
+		{
+			Ret += 0.1 * ModMult;
+		}
+		
+		if (HealthArmLeft < 1)
+		{
+			Ret += 0.5 * SingleHanderPenalty * ModMult;
+		}
+		else if (HealthArmLeft < BestArmLeft * 0.34 * HMult)
+		{
+			Ret += 0.2 * SingleHanderPenalty * ModMult;
+		}
+		else if (HealthArmLeft < BestArmLeft * 0.67 * HMult)
+		{
+			Ret += 0.1 * SingleHanderPenalty * ModMult;
+		}
+	}
+	else
+	{
+		if (HealthArmRight < 1)
+		{
+			Ret += 0.5 * SingleHanderPenalty * ModMult;
+		}
+		else if (HealthArmRight < BestArmRight * 0.34 * HMult)
+		{
+			Ret += 0.2 * SingleHanderPenalty * ModMult;
+		}
+		else if (HealthArmRight < BestArmRight * 0.67 * HMult)
+		{
+			Ret += 0.1 * SingleHanderPenalty * ModMult;
+		}
+		
+		if (HealthArmLeft < 1)
+		{
+			Ret += 0.5 * ModMult;
+		}
+		else if (HealthArmLeft < BestArmLeft * 0.34 * HMult)
+		{
+			Ret += 0.2 * ModMult;
+		}
+		else if (HealthArmLeft < BestArmLeft * 0.67 * HMult)
+		{
+			Ret += 0.1 * ModMult;
+		}
+	}
+	
+	if (HealthHead < BestHead * 0.67 * HMult)
+	{
+		Ret += 0.1 * ModMult;
+	}
+	
+	//MADDERS, 5/29/23: Wrong hand? Yeah, we aren't ambidextrous.
+	if (bWrongArm)
+	{
+		Ret += 0.1 * SingleHanderPenalty;
+	}
+	
+	return Ret;
 }
 
 //
@@ -5457,6 +5819,7 @@ function bool LoadAmmo(int ammoNum)
 			
 			//MADDERS: Fix for GEP evolved form.
 			VMDUpdateEvolution();
+			VMDUpdateWeaponModStats();
 			
 			// AlexB had a new sound for 20mm but there's no mechanism for playing alternate sounds per ammo type
 			// Same for WP rocket
@@ -6311,7 +6674,7 @@ simulated function Tick(float deltaTime)
 		}
 		
 		//MADDERS: Turn off laser sights here, if we're dead.
-		if ((bLasing) && (Player.IsInState('Dying')))
+		if (Player.IsInState('Dying'))
 		{
 			LaserOff();
 		}
@@ -6401,6 +6764,8 @@ simulated function Tick(float deltaTime)
 	 		TMult *= 1 + ((0.5 * VPlayer.SkillSystem.GetSkillLevel(GoverningSkill)) / 2);
 		}
 		TMult *= AimFocusMult;
+		TMult *= FactorWM2UniversalFocusMultiplier();
+		TMult /= FactorWM2SwayMultiplier();
 	}
 	
 	// if were standing still, increase the timer
@@ -6682,11 +7047,14 @@ function LaserOn()
 			{
 				Emitter.SetHiddenBeam(True);
 				Emitter.AmbientSound = None;
+				Emitter.OverrideSpotScale = 0.055; //MADDERS, 6/5/25: Buff for baseline laser.
 				Emitter.TurnOn();
 			}
 		}
 		else
+		{
 			Emitter.TurnOn();
+		}
 		
 		bLasing = True;
 	}
@@ -7925,8 +8293,8 @@ function GetAIVolume(out float volume, out float radius)
 	
 	if (VMDGetSilencer())
 	{
-		Volume *= 0.5;
-		Radius *= 0.35;
+		Volume *= 0;
+		Radius *= 0;
 	}
 }
 
@@ -8000,6 +8368,15 @@ simulated function Projectile ProjectileFire(class<projectile> ProjClass, float 
 	// GetWeaponSkill returns 0.0 to -0.7 (max skill/aug)
 	mult = 1.0;
 	mult += (VMDGetWeaponSkill("DAMAGE") - 1.0);
+	
+	if (AmmoDamageMultiplier > 0)
+	{
+		Mult *= AmmoDamageMultiplier;
+	}
+	if (GunModDamageMultiplier > 0)
+	{
+		Mult *= GunModDamageMultiplier;
+	}
 	
 	// make noise if we are not silenced
 	if ((!VMDGetSilencer()) && (!bHandToHand) && (Owner != None))
@@ -8165,6 +8542,9 @@ simulated function Projectile ProjectileFire(class<projectile> ProjClass, float 
 					Proj.DamageType = 'Flamed';
 				}
 				
+				//MADDERS, 6/7/25: Pass on this key bit of info as well.
+				Proj.MoverDamageMult = MoverDamageMult;
+				
 				// AugCombat increases our damage as well
 				proj.Damage *= mult;
 				Proj.LastWeaponDamageSkillMult = Mult;
@@ -8259,6 +8639,9 @@ simulated function Projectile ProjectileFire(class<projectile> ProjClass, float 
 						{
 							Proj.DamageType = 'Flamed';
 						}
+						
+						//MADDERS, 6/7/25: Pass on this key bit of info as well.
+						Proj.MoverDamageMult = MoverDamageMult;
 						
 						proj.RemoteRole = ROLE_None;
 						// AugCombat increases our damage as well
@@ -9054,13 +9437,17 @@ simulated function ProcessTraceHit(Actor Other, Vector HitLocation, Vector HitNo
 				{
 					if (VMDBufferPawn(Other) != None)
 					{
-						VMDBufferPawn(Other).LastWeaponDamageSkillMult = VMDGetScaledDamage(float(HitDamage) + (ExtraFloatDamage * (float(HitDamage) / float(Default.HitDamage))), Mult) / VMDGetCorrectHitDamage(float(HitDamage));
+						VMDBufferPawn(Other).LastWeaponDamageSkillMult = VMDGetScaledDamage(float(HitDamage) + (GetWM2FloatDamage()), Mult) / VMDGetCorrectHitDamage(float(HitDamage));
 						Other.TakeDamage(VMDGetCorrectHitDamage(HitDamage), Pawn(Owner), HitLocation, 1000.0*X, damageType);
 					}
 					else if (VMDBufferPlayer(Other) != None)
 					{
-						VMDBufferPlayer(Other).LastWeaponDamageSkillMult = VMDGetScaledDamage(float(HitDamage) + (ExtraFloatDamage * (float(HitDamage) / float(Default.HitDamage))), Mult) / VMDGetCorrectHitDamage(float(HitDamage));
+						VMDBufferPlayer(Other).LastWeaponDamageSkillMult = VMDGetScaledDamage(float(HitDamage) + (GetWM2FloatDamage()), Mult) / VMDGetCorrectHitDamage(float(HitDamage));
 						Other.TakeDamage(VMDGetCorrectHitDamage(HitDamage), Pawn(Owner), HitLocation, 1000.0*X, damageType);
+					}
+					else if (Brush(Other) != None)
+					{
+						Other.TakeDamage(Max(1, VMDGetScaledDamage(HitDamage, Mult * MoverDamageMult)), Pawn(Owner), HitLocation, Vect(0,0,0), 'Exploded');
 					}
 					else
 					{
@@ -9079,13 +9466,17 @@ simulated function ProcessTraceHit(Actor Other, Vector HitLocation, Vector HitNo
 				{
 					if (VMDBufferPawn(Other) != None)
 					{
-						VMDBufferPawn(Other).LastWeaponDamageSkillMult = VMDGetScaledDamage(float(HitDamage) + (ExtraFloatDamage * (float(HitDamage) / float(Default.HitDamage))), Mult) / VMDGetCorrectHitDamage(float(HitDamage));
+						VMDBufferPawn(Other).LastWeaponDamageSkillMult = VMDGetScaledDamage(float(HitDamage) + (GetWM2FloatDamage()), Mult) / VMDGetCorrectHitDamage(float(HitDamage));
 						Other.TakeDamage(VMDGetCorrectHitDamage(HitDamage), Pawn(Owner), HitLocation, 1000.0*X, damageType);
 					}
 					else if (VMDBufferPlayer(Other) != None)
 					{
-						VMDBufferPlayer(Other).LastWeaponDamageSkillMult = VMDGetScaledDamage(float(HitDamage) + (ExtraFloatDamage * (float(HitDamage) / float(Default.HitDamage))), Mult) / VMDGetCorrectHitDamage(float(HitDamage));
+						VMDBufferPlayer(Other).LastWeaponDamageSkillMult = VMDGetScaledDamage(float(HitDamage) + (GetWM2FloatDamage()), Mult) / VMDGetCorrectHitDamage(float(HitDamage));
 						Other.TakeDamage(VMDGetCorrectHitDamage(HitDamage), Pawn(Owner), HitLocation, 1000.0*X, damageType);
+					}
+					else if (Brush(Other) != None)
+					{
+						Other.TakeDamage(Max(1, VMDGetScaledDamage(HitDamage, Mult * MoverDamageMult)), Pawn(Owner), HitLocation, Vect(0,0,0), 'Exploded');
 					}
 					else
 					{
@@ -9416,7 +9807,7 @@ simulated function bool UpdateInfo(Object winObject)
 		if (Level.NetMode != NM_Standalone)
 			dmg = VMDGetCorrectHitDamage(Default.MPHitDamage);
 		else
-			dmg = VMDGetCorrectHitDamage(float(HitDamage) + (ExtraFloatDamage * (float(HitDamage) / float(Default.HitDamage))));
+			dmg = VMDGetCorrectHitDamage(float(HitDamage) + (GetWM2FloatDamage()));
 	//}
 	TNumProj = 1;
 	if (AreaOfEffect == AOE_Cone)
@@ -9440,6 +9831,9 @@ simulated function bool UpdateInfo(Object winObject)
 	}
 	
 	winInfo.AddInfoItem(msgInfoDamage, str, (mod != 1.0));
+	
+	str = VMDFormatFloatString(MoverDamageMult * 100.0, 0.1, "Damage Mod")$"%";
+	WinInfo.AddInfoItem(msgInfoMoverDamageMult, str, false);
 	
 	//-------------------------
 	//MADDERS additions:
@@ -11197,6 +11591,8 @@ function PlaySelect()
 		Rate *= 1.2;
 	}
 	
+	Rate *= FactorWM2DrawSpeedMultiplier();
+	
 	PlayAnim('Select',1.0*Rate,0.0);
 	
 	//MADDERS: Don't shift the pitch of grenade selection.
@@ -11236,6 +11632,8 @@ simulated function TweenDown()
 	{
 		Rate *= 1.2;
 	}
+	
+	Rate *= FactorWM2HolsterSpeedMultiplier();
 	
 	if ( (AnimSequence != '') && (GetAnimGroup(AnimSequence) == 'Select') )
 		TweenAnim( AnimSequence, AnimFrame * 0.4 );
@@ -11377,6 +11775,7 @@ defaultproperties
      MeleeAnimRates(0)=1.000000
      MeleeAnimRates(1)=1.000000
      MeleeAnimRates(2)=1.000000
+     MoverDamageMult=1.000000
      
      FiringSystemOperation=0
      FiringSystemLabel="Part Style:"
@@ -11393,6 +11792,7 @@ defaultproperties
      PenetrationDesc="%d INCH(ES), %d%% effectiveness"
      RicochetLabel="Ricochets:"
      RicochetDesc="%d TIME(S), %d%% effectiveness"
+     msgInfoMoverDamageMult="Terrain Damage:"
      msgInfoBurst="BURST"
      FiringModesLabel="Firing modes:"
      ClipsLabel="CLIPS"
@@ -11426,22 +11826,34 @@ defaultproperties
      SkillAccuracyFactors(1)=0.775000
      SkillAccuracyFactors(2)=0.500000
      SkillAccuracyFactors(3)=0.300000
-     AccuracyFactorScalar=0.250000
+     SwerveRecoveryFactors(0)=49152.000000
+     SwerveRecoveryFactors(1)=73728.000000
+     SwerveRecoveryFactors(2)=98304.000000
+     SwerveRecoveryFactors(3)=147456.000000
+     PrimaryBobFactors(0)=256
+     PrimaryBobFactors(1)=128
+     PrimaryBobFactors(2)=64
+     PrimaryBobFactors(3)=32
+     SecondaryBobFactors(0)=128
+     SecondaryBobFactors(1)=64
+     SecondaryBobFactors(2)=16
+     SecondaryBobFactors(3)=0
+     AccuracyFactorScalar=0.150000
      RecoilDecayMult=12.000000
-     RecoilRecoveryFactors(0)=0.45
-     RecoilRecoveryFactors(1)=0.35
-     RecoilRecoveryFactors(2)=0.30
-     RecoilRecoveryFactors(3)=0.20
-     AimFocusMults(0)=1.000000
-     AimFocusMults(1)=1.102500
-     AimFocusMults(2)=1.205000
-     AimFocusMults(3)=1.365000
-     AimFocusMults(4)=1.500000
-     AimFocusMults(5)=1.615000
-     AimFocusMults(6)=1.720000
+     RecoilRecoveryFactors(0)=0.40
+     RecoilRecoveryFactors(1)=0.30
+     RecoilRecoveryFactors(2)=0.225
+     RecoilRecoveryFactors(3)=0.175
+     AimFocusMults(0)=1.500000
+     AimFocusMults(1)=1.680000
+     AimFocusMults(2)=1.860000
+     AimFocusMults(3)=2.040000
+     AimFocusMults(4)=2.220000
+     AimFocusMults(5)=2.400000
+     AimFocusMults(6)=2.580000
      AimFocusRanges(0)=3.000000
      AimFocusRanges(1)=9.000000
-     SwayDistanceCooldown=0.050000
+     SwayDistanceCooldown=0.025000
      SwayDistanceRate=0.200000
      SwayExcitementScalar=0.500000
 }
