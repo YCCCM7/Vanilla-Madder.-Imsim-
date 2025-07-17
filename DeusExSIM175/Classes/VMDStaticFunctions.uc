@@ -636,6 +636,11 @@ static function int GWARRRand(int ResultFloor, int RandFloor, DeusExWeapon DXW, 
 	if (DXA == None) return 0;
 	if (AmmoNone(DXA) != None) return 0;
 	
+	if ((ResultFloor < 1) && (DXW != None) && (DXW.bHandToHand) && (!DXW.bInstantHit) && (DXW.GoverningSkill == class'SkillDemolition'))
+	{
+		ResultFloor = 1;
+	}
+	
 	Ret = GWARR(DXW, DXA, VMP);
 	Ret = Max(RandFloor+1, Ret);
 	if (Ret < 2)

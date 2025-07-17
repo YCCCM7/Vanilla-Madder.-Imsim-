@@ -37,6 +37,10 @@ function SetSkin(VMDBufferPawn P)
 			{
 				Mesh = Mesh2;
 			}
+			if ((P.Region.Zone != None) && (P.Region.Zone.bWaterZone))
+			{
+				Mesh = Mesh3;
+			}
 	 	}
 	}
 }
@@ -59,6 +63,10 @@ function SetSkinPlayer(VMDBufferPlayer P)
 			if (P.AnimSequence == 'DeathFront')
 			{
 				Mesh = Mesh2;
+			}
+			if ((P.Region.Zone != None) && (P.Region.Zone.bWaterZone))
+			{
+				Mesh = Mesh3;
 			}
 	 	}
 	}

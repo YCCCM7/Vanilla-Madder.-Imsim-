@@ -3263,14 +3263,22 @@ function HighlightCenterObject()
 	// only do the trace every tenth of a second
 	if (FrobTime >= 0.1)
 	{
-		// figure out how far ahead we should trace
-		StartTrace = Location;
-		EndTrace = Location + (Vector(ViewRotation) * MaxFrobDistance);
-
-		// adjust for the eye height
-		StartTrace.Z += BaseEyeHeight;
-		EndTrace.Z += BaseEyeHeight;
-
+		//MADDERS, 5/3/25: Oopsies. Rearrange this a bit for dynamic camera.
+		if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).bUseDynamicCamera) && (VMDBufferPlayer(Self).VMDLastCameraLoc != Vect(0,0,0)))
+		{
+			StartTrace = VMDBufferPlayer(Self).VMDLastCameraLoc;
+			EndTrace = StartTrace + (Vector(ViewRotation) * MaxFrobDistance);
+		}
+		else
+		{
+			// figure out how far ahead we should trace
+			StartTrace = Location;
+			EndTrace = Location + (Vector(ViewRotation) * MaxFrobDistance);	
+			
+			// adjust for the eye height
+			StartTrace.Z += BaseEyeHeight;
+			EndTrace.Z += BaseEyeHeight;
+		}
 		smallestTarget = None;
 		minSize = 99999;
 		bFirstTarget = True;
@@ -3288,7 +3296,7 @@ function HighlightCenterObject()
 				SmallestMover = Target;
 			}
 			
-			if ((IsFrobbable(target)) && (target != CarriedDecoration))
+			if ((IsFrobbable(target)) && (target != CarriedDecoration) && (Target != Self))
 			{
 				if (target.IsA('ScriptedPawn'))
 				{
@@ -4033,7 +4041,8 @@ function bool SetBasedPawnSize(float newRadius, float newHeight)
 			{
 				PrePivot.Z -= 4.5;
 			}
-			BaseEyeHeight -= 2;
+			//MADDERS, 5/11/25: Used to be -2, but oops, walk bob fucks everything up.
+			BaseEyeHeight -= 6;
 		}
 		
 		// Complaints that eye height doesn't seem like your crouching in multiplayer

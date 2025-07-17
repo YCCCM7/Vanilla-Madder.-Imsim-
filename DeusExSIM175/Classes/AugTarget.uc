@@ -62,7 +62,7 @@ function float VMDConfigureWepDamageMult(DeusExWeapon DXW)
  	TSkill = DXW.GoverningSkill;
  	if (TSkill == None) return 1.0;
  	
- 	if ((!DXW.bHandToHand) && (TSkill != class'SkillWeaponLowTech') && (TSkill != class'SkillDemolition'))
+ 	if (!DXW.bHandToHand && (!DXW.bInstantHit || DXW.bPenetrating))
  	{
   		return 1.0-LevelValues[CurrentLevel];
  	}

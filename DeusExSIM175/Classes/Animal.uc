@@ -511,7 +511,10 @@ function PlayDying(name damageType, vector hitLoc)
 	    (damageType == 'Poison') || (damageType == 'PoisonEffect'))
 		bStunned = True;
 	
-	PlayDyingSound();
+	if (!bStunned)
+	{
+		PlayDyingSound();
+	}
 }
 
 function PlayPauseWhenEating()

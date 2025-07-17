@@ -1184,6 +1184,8 @@ function VMDWeaponPostBeginPlayHook()
 	}
 	if (IsA('WeaponM249DXN') || IsA('WeaponPara17'))
 	{
+		ShotTime = 0.150000;
+		NPCOverrideAnimRate = 0.65;
 		OverrideAnimRate = 4.0;
 		PenetrationHitDamage = HitDamage * 0.75;
 		RicochetHitDamage = HitDamage * 0.35;
@@ -1200,6 +1202,7 @@ function VMDWeaponPostBeginPlayHook()
 		FiringModes[1] = "Semi Auto";
 		ModeNames[0] = "Full Auto";
 		ModeNames[1] = "Semi Auto";
+		NPCOverrideAnimRate = 0.66;
 		OverrideAnimRate = 1.75;
 		
 		BulletHoleSize = 0.175;
@@ -2893,6 +2896,10 @@ function VMDAlertAmmoLoad( bool bInstant )
   		bBurstFire = Default.bBurstFire;
   		bAutomatic = Default.bAutomatic;
   		ShotTime = Default.ShotTime;
+		if (IsA('WeaponM249DXN') || IsA('WeaponPara17'))
+		{
+			ShotTime = 0.150000;
+		}
   		VMDUpdateEvolution();
  	}
  	else
@@ -2903,6 +2910,10 @@ function VMDAlertAmmoLoad( bool bInstant )
   		
  		bAutomatic = False;
   		ShotTime = 1.0;
+		if (IsA('WeaponM249DXN') || IsA('WeaponPara17'))
+		{
+			ShotTime = 0.150000;
+		}
   		VMDUpdateEvolution();
  	}
 }
@@ -4100,11 +4111,20 @@ function bool HandlePickupQuery(Inventory Item)
 			// There was an easy way to get 32 20mm shells, buy picking up another assault rifle with 20mm ammo selected
 			if ( AmmoType != None )
 			{
+				//MADDERS, 4/27/25: Let us loot what the gat has in it.
+				if (W.AmmoName != None)
+				{
+					DefAmmoClass = W.AmmoName;
+				}
 				// Add to default ammo only
-				if ( AmmoNames[0] == None )
+				else if ( AmmoNames[0] == None )
+				{
 					defAmmoClass = AmmoName;
+				}
 				else
+				{
 					defAmmoClass = AmmoNames[0];
+				}
 				
 				defAmmo = Ammo(player.FindInventoryType(defAmmoClass));
 				
@@ -5833,26 +5853,45 @@ function ServerHandleNotify( bool bInstantHit, class<projectile> ProjClass, floa
 simulated function HandToHandAttack()
 {
 	local bool bOwnerIsPlayerPawn;
-
+	
 	if (bOwnerWillNotify)
+	{
 		return;
-
+	}
+	
+	//MADDERS, 3/27/25: Okay, so I feel like I just smoked down an entire crack rock explaining this, but according to debug, here's a problem:
+	//When travel initiates, sometimes anim notifies can call themselves falsely, multiple times, in fact
+	//Thus, handtohandattack, if the game is feeling vindictive, can trigger multiple times on grenades and instantly deplete all their ammo...
+	//In fact, according to my log, I lost a stack of 4 LAMS in paris catacombs, and it HandToHandAttacked with 1 or less ammo TWICE in the same frame.
+	//The only way to stop this is to add a player traveling blocker here. It's a rare bug, so time will tell if it happens again.
+	if ((DeusExPlayer(Owner) != None) && (DeusExPlayer(Owner).FlagBase != None) && (DeusExPlayer(Owner).FlagBase.GetBool('PlayerTraveling')))
+	{
+		return;
+	}
+	
 	// The controlling animator should be the one to do the tracefire and projfire
 	if ((Level.NetMode != NM_Standalone) && (ScriptedPawn(Owner) == None))
 	{
 		bOwnerIsPlayerPawn = (DeusExPlayer(Owner) == DeusExPlayer(GetPlayerPawn()));
-
+		
 		if (( Role < ROLE_Authority ) && (bOwnerIsPlayerPawn || ScriptedPawn(Owner) != None))
+		{
 			ServerHandleNotify( bInstantHit, ProjectileClass, ProjectileSpeed, bWarnTarget );
+		}
 		else if ( !bOwnerIsPlayerPawn )
+		{
 			return;
+		}
 	}
-
+	
 	if (ScriptedPawn(Owner) != None)
+	{
 		ScriptedPawn(Owner).SetAttackAngle();
-
+	}
 	if (bInstantHit)
+	{
 		TraceFire(0.0);
+	}
 	else
 	{
 		if (ProjectileFire(ProjectileClass, ProjectileSpeed, bWarnTarget) != None)
@@ -5865,12 +5904,14 @@ simulated function HandToHandAttack()
 			bFireFudge = false;
 			
 			if (DeusExPlayer(Owner) != None)
+			{
 				DeusExPlayer(Owner).UpdateBeltText(Self);
+			}
 		}
 	}
-
+	
 	// if we are a thrown weapon and we run out of ammo, destroy the weapon
-	if ((bHandToHand) && (ReloadCount > 0 || VMDIsWeaponName("WeaponC4")) && (SimAmmoAmount <= 0))
+	if (bHandToHand && (ReloadCount > 0 || VMDIsWeaponName("WeaponC4")) && SimAmmoAmount <= 0)
 	{
 		DestroyOnFinish();
 		if ( Role < ROLE_Authority )

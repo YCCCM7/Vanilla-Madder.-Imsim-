@@ -172,8 +172,9 @@ function PreTravel()
 function Timer()
 {
 	local AnnaNavarre Anna;
-	local WaltonSimons Walton;
+	local DatalinkTrigger DT;
 	local DeusExMover M;
+	local WaltonSimons Walton;
 
 	Super.Timer();
 
@@ -269,7 +270,12 @@ function Timer()
 		if (!flags.GetBool('MS_DL_Played') &&
 			flags.GetBool('PaulInMedLab_Played'))
 		{
-			Player.StartDataLinkTransmission("DL_Paul");
+			//MADDERS, 5/21/25: Call the trigger like so, so Paul's alive datalink actually calls its skill award. Thanks.
+			//Player.StartDataLinkTransmission("DL_Paul");
+			forEach AllActors(class'DatalinkTrigger', DT, 'DL_Paul')
+			{
+				DT.Trigger(None, Player);
+			}
 			flags.SetBool('MS_DL_Played', True,, 6);
 		}
 	}
@@ -337,6 +343,11 @@ function VMDDumpItems(out Inventory ContinueItem, DeusExPlayer Player, Inventory
 		}
 		if (item != None)
 		{
+			if (ChargedPickup(Item) != None)
+			{
+				Player.RemoveChargedDisplay(ChargedPickup(Item));
+			}
+			
 			nextItem = item.Inventory;
 			Player.DeleteInventory(item);
 			

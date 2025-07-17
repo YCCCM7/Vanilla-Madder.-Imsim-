@@ -279,7 +279,8 @@ function Timer()
 	}
 	else if (localURL == "08_NYC_SMUG")
 	{
-		if (flags.GetBool('FordSchickRescued'))
+		//MADDERS, 4/28/25: we'll be bundling LDDP confix going forward from now on. This is redundant.
+		/*if (flags.GetBool('FordSchickRescued'))
 		{
 			if ((!flags.GetBool('M08MeetFordSchick_Played')) && (!flags.GetBool('FemJCM08MeetFordSchick_Played')))
 			{
@@ -317,7 +318,7 @@ function Timer()
 					Flags.SetBool('VMDFixedSchickAug', true,, 09);
 				}
 			}
-		}
+		}*/
 	}
 }
 

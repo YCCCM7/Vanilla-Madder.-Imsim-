@@ -174,6 +174,11 @@ function CommitMapFixing()
 		case 16:
 			switch(MN)
 			{
+				//CASTLE_COURT: Bad character in mission startup text. Jesus.
+				case "CASTLE STRONGHOLD":
+				case "CASTLE_STRONGHOLD":
+					LI.MapName = "Castle_Stronghold";
+				break;
 				//+++++++++++++++++++++++
 				//Utopia Maps
 				//UTOPIA_SUBWAY, AKA SUBWAY: Clean up shitty door.

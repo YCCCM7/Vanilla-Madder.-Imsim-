@@ -1118,19 +1118,21 @@ function RemoveSelectedItem()
 	if (inv != None)
 	{
 		// Destroy the button
-		selectedItem.Destroy();
+		//selectedItem.Destroy();
+		//MADDERS, 4/6/25: Timing issues can cause crashes when doing this. Defer destroy instead.
+		DeferDestroy(SelectedItem);
 		selectedItem = None;
-
+		
 		// Remove it from the object belt
 		invBelt.RemoveObject(inv);
-
+		
 		// Remove it from the inventory screen
 		UnequipItemInHand();
-
+		
 		ClearSpecialHighlights();
-
+		
 		SelectInventory(None);
-
+		
 		winInfo.Clear();
 		EnableButtons();
 	}

@@ -24,7 +24,10 @@ function Trigger(Actor Other, Pawn Instigator)
 		
 		//== Y|y: we need to ACTUALLY pay attention to the bTriggerOnceOnly variable
 		if(bTriggerOnceOnly)
+		{
 			Tag = '';
+			Destroy();
+		}
 	}
 }
 

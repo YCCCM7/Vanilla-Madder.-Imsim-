@@ -46,7 +46,7 @@ function float VMDConfigureWepDamageMult(DeusExWeapon DXW)
  	TSkill = DXW.GoverningSkill;
  	if (TSkill == None) return 1.0;
  	
- 	if ((DXW.bHandToHand) && (TSkill == class'SkillWeaponLowTech'))
+ 	if (DXW.bHandToHand || (DXW.bInstantHit && !DXW.bPenetrating))
  	{
   		return LevelValues[CurrentLevel];
  	}
@@ -62,7 +62,7 @@ function float VMDConfigureWepVelocityMult(DeusExWeapon DXW)
  	TSkill = DXW.GoverningSkill;
  	if (TSkill == None) return 1.0;
  	
- 	if (DXW.bHandToHand)
+ 	if (DXW.bHandToHand || (DXW.bInstantHit && !DXW.bPenetrating))
  	{
   		return LevelValues[CurrentLevel];
  	}
@@ -78,7 +78,7 @@ function float VMDConfigureWepSwingSpeedMult(DeusExWeapon DXW)
  	TSkill = DXW.GoverningSkill;
  	if (TSkill == None) return 1.0;
  	
- 	if ((DXW.bHandToHand) && (TSkill == class'SkillWeaponLowTech'))
+ 	if ((DXW.bHandToHand && TSkill == class'SkillWeaponLowTech') || (DXW.bInstantHit && !DXW.bPenetrating))
  	{
   		return Sqrt(LevelValues[CurrentLevel]);
  	}

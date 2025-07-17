@@ -1002,9 +1002,19 @@ function CommitMapFixing()
 								SP.bHateCarcass = false;
 								SP.bHateDistress = false;
 							}
-							else if (UNATCOTroop(SP) != None || RiotCop(SP) != None)
+							else if (UNATCOTroop(SP) != None)
 							{
 								SP.ChangeAlly('Thugs', -1, true);
+							}
+							else if (RiotCop(SP) != None)
+							{
+								SP.ChangeAlly('Thugs', -1.0, true);
+								SP.ChangeAlly('NSF', -1.0, true);
+							}
+							//MADDERS, 4/28/25: Stop deleting all the terrorists when one dies. They all share the same bind name for fuck's sake.
+							else if ((Terrorist(SP) != None) && (SP.BindName == SP.Default.BindName) && (SP.bImportant))
+							{
+								SP.bImportant = false;
 							}
 							else if (ThugMale(SP) != None || SandraRenton(SP) != None)
 							{
@@ -2102,6 +2112,25 @@ function CommitMapFixing()
 						{
 							A.Event = 'JocksElevatorTop';
 						}
+						
+						//MADDRES, 4/6/25: Broken elevator behavior. Fun times.
+						A = FindActorBySeed(class'DeusExMover', 38);
+						if (A != None)
+						{
+							DeusExMover(A).StayOpenTime = 4.0;
+							A.GoToState('TriggerOpenTimed');
+							A.Tag = 'eledoor03';
+						}
+						A = FindActorBySeed(class'Trigger', 2);
+						if (A != None)
+						{
+							A.Event = 'eledoor03';
+						}
+						A = FindActorBySeed(class'Dispatcher', 8);
+						if (A != None)
+						{
+							Dispatcher(A).OutEvents[0] = 'eledoor03';
+						}
 					}
 				break;
 				//06_HONGKONG_WANCHAI_UNDERWORLD: Fix credits count on counter lady.
@@ -2798,6 +2827,20 @@ function CommitMapFixing()
 									break;
 								}
 								DXM.bMadderPatched = true;
+							}
+						}
+					}
+				break;
+				//10_PARIS_CATACOMBS: Stupid bullshit ass fucking commando with bImportant and default bind name.
+				case "10_PARIS_CATACOMBS":
+					if (!bRevisionMapSet)
+					{
+						forEach AllActors(class'ScriptedPawn', SP)
+						{
+							//MADDERS, 4/28/25: Stop deleting all the terrorists when one dies. They all share the same bind name for fuck's sake.
+							if ((MJ12Commando(SP) != None) && (SP.BindName == SP.Default.BindName) && (SP.bImportant))
+							{
+								SP.bImportant = false;
 							}
 						}
 					}
@@ -4223,6 +4266,12 @@ function CommitMapFixing()
 								break;
 							}
 						}
+						//MADDERS, 6/30/25: Rare discovery by Teddy. These guys have invalid strings in their only convo, crashing the game.
+						else if (Mechanic(SP) != None)
+						{
+							Mechanic(SP).BindName = "";
+							SP.ConBindEvents();
+						}
 					}
 				break;
 			}
@@ -5015,6 +5064,13 @@ function CommitMapFixing()
 							}
 							DXM.bMadderPatched = true;
 						}
+					}
+					
+					//MADDERS, 4/29/25: Stop letting us trigger this early. Bad.
+					A = FindActorBySeed(class'MapExit', 0);
+					if (A != None)
+					{
+						A.SetCollision(False, False, False);
 					}
 				break;
 			}

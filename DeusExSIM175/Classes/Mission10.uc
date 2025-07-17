@@ -205,7 +205,8 @@ function Timer()
 			if ((BackroomKeypad != None) && (!BackroomKeypad.bIsSecretGoal))
 			{
 				BackroomKeypad.bIsSecretGoal = true;
-				Player.AddNote(StorageRoomHackStr);
+				//MADDERS, 5/12/25: LDDP Confix exists. Yay.
+				//Player.AddNote(StorageRoomHackStr);
 			}
 		}
 	}

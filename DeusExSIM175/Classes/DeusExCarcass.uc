@@ -413,6 +413,7 @@ function InitFor(Actor Other)
 	{
 		//MADDERS, 9/11/21: Clone fatness for goofy stuff.
 		Fatness = Other.Fatness;
+		DrawScale = Other.DrawScale;
 		
 		MyPawnSeed = class'VMDStaticFunctions'.Static.DeriveActorSeed(Other);
 		
@@ -487,6 +488,7 @@ function InitFor(Actor Other)
 
 		if (SP != None)
 		{
+			bImportant = SP.bImportant;
 			if (SP.bBurnedToDeath)
 			{
 				//G-Flex: Give burn victims close to 1/4 corpse-health instead of 1
@@ -500,13 +502,17 @@ function InitFor(Actor Other)
 		// Will this carcass spawn flies?
 		if (bAnimalCarcass)
 		{
-			if (FRand() < 0.2)
+			if ((FRand() < 0.2) && (!bNotDead))
+			{
 				bGenerateFlies = true;
+			}
 		}
 		else if (!Other.IsA('Robot') && !bNotDead)
 		{
 			if (FRand() < 0.1)
+			{
 				bGenerateFlies = true;
+			}
 			bEmitCarcass = true;
 		}
 
@@ -1885,8 +1891,7 @@ function KillCarcass(pawn Killer, name damageType, vector HitLocation)
 		P.FlagBase.SetBool(PersonalFlag, True);
 		P.FlagBase.SetExpiration(PersonalFlag, FLAG_Bool, 0);
 		PersonalFlag = P.RootWindow.StringToName(FlagName$"_Unconscious");
-		P.FlagBase.SetBool(PersonalFlag, False);
-		P.FlagBase.SetExpiration(PersonalFlag, FLAG_Bool, 0);
+		P.FlagBase.DeleteFlag(PersonalFlag, FLAG_Bool);
 	}
 	
 	//Update our name.

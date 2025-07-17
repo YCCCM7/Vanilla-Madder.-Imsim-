@@ -19,23 +19,58 @@ function SpawnScript()
 {
 	local MissionScript scr;
 	local bool bFound;
-
+	
 	// check to see if this script has already been spawned
 	if (Script != None)
 	{
 		bFound = False;
 		foreach AllActors(class'MissionScript', scr)
+		{
 			bFound = True;
-
+		}
+		
 		if (!bFound)
 		{
 			if (Spawn(Script) == None)
+			{
 				log("DeusExLevelInfo - WARNING! - Could not spawn mission script '"$Script$"'");
+			}
 			else
+			{
 				log("DeusExLevelInfo - Spawned new mission script '"$Script$"'");
+			}
 		}
 		else
+		{
 			log("DeusExLevelInfo - WARNING! - Already found mission script '"$Script$"'");
+		}
+	}
+	//MADDERS, 4/14/25: Filler script so we set travelling flag properly. My goodness.
+	else
+	{
+		Script = class'VMDFillerScript';
+		
+		bFound = False;
+		foreach AllActors(class'MissionScript', scr)
+		{
+			bFound = True;
+		}
+		
+		if (!bFound)
+		{
+			if (Spawn(Script) == None)
+			{
+				log("DeusExLevelInfo - WARNING! - Could not spawn BACKUP mission script '"$Script$"'");
+			}
+			else
+			{
+				log("DeusExLevelInfo - Spawned new backup mission script '"$Script$"'");
+			}
+		}
+		else
+		{
+			log("DeusExLevelInfo - WARNING! - Already found BACKUP mission script '"$Script$"'");
+		}
 	}
 }
 

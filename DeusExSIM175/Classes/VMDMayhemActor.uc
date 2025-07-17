@@ -746,6 +746,12 @@ function bool ExactPawnCanBeDuped(VMDBufferPawn SP, out Seat OutSeat)
 {
 	local Seat TSeat;
 	
+	//MADDERS, 6/24/25: Special exception for our special-but-not-special Hela.
+	if ((WIB(SP) != None) && (SP.BindName == "Hela"))
+	{
+		return false;
+	}
+	
 	if (SP.Orders != 'Standing' || FakeFrand() < 0.25)
 	{
 		return true;

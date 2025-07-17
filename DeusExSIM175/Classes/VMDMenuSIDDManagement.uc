@@ -98,7 +98,7 @@ event InitWindow()
 	}
 	else
 	{
-		AddTimer(0.1, True,, 'DoPop');
+		AddTimer(0.1, False,, 'DoPop');
 		return;
 	}
 	
@@ -333,7 +333,7 @@ function UpdateInfo()
 	}
  	else
 	{
-  		AddTimer(0.1, True,, 'DoPop');
+  		AddTimer(0.1, False,, 'DoPop');
  	}
 	
 	ScrapLeftLabel.SetText(SprintF(StrScrapLeft, LastScrapCount));
@@ -376,13 +376,13 @@ function bool ButtonActivated( Window buttonPressed )
 	switch(ButtonPressed)
 	{
 		case DoneButton:
-			AddTimer(0.1, True,, 'DoPop');
+			AddTimer(0.1, False,, 'DoPop');
 			bHandled = True;
 		break;
 		case TurnOffButton:
 			SIDD.ReturnToItem();
 			SIDD = None; //Clear the memory reference.
-			AddTimer(0.1, True,, 'DoPop');
+			AddTimer(0.1, False,, 'DoPop');
 			bHandled = true;
 		break;
 		

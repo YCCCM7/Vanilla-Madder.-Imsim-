@@ -101,7 +101,7 @@ event InitWindow()
 	}
 	else
 	{
-		AddTimer(0.1, True,, 'DoPop');
+		AddTimer(0.1, False,, 'DoPop');
 		return;
 	}
 	
@@ -402,7 +402,7 @@ function UpdateInfo()
 	}
  	else
 	{
-  		AddTimer(0.1, True,, 'DoPop');
+  		AddTimer(0.1, False,, 'DoPop');
  	}
 	
 	if (Megh.bCanHeal)
@@ -584,13 +584,13 @@ function bool ButtonActivated( Window buttonPressed )
 	switch(ButtonPressed)
 	{
 		case DoneButton:
-			AddTimer(0.1, True,, 'DoPop');
+			AddTimer(0.1, False,, 'DoPop');
 			bHandled = True;
 		break;
 		case TurnOffButton:
 			Megh.ReturnToItem();
 			Megh = None; //Clear the memory reference.
-			AddTimer(0.1, True,, 'DoPop');
+			AddTimer(0.1, False,, 'DoPop');
 			bHandled = true;
 		break;
 		

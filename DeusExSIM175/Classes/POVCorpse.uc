@@ -28,6 +28,7 @@ var travel string StoredFamiliarName, FlagName;
 var travel bool bBlockDamageTaken, bExplosive;
 
 var travel byte StoredFatness;
+var travel float StoredDrawScale;
 
 var travel float BaseMass;
 
@@ -256,8 +257,7 @@ function KillCarcass(pawn Killer, name damageType, vector HitLocation)
 		P.FlagBase.SetBool(PersonalFlag, True);
 		P.FlagBase.SetExpiration(PersonalFlag, FLAG_Bool, 0);
 		PersonalFlag = P.RootWindow.StringToName(FlagName$"_Unconscious");
-		P.FlagBase.SetBool(PersonalFlag, False);
-		P.FlagBase.SetExpiration(PersonalFlag, FLAG_Bool, 0);
+		P.FlagBase.DeleteFlag(PersonalFlag, FLAG_Bool);
 	}
 	
 	//Update our name.
@@ -417,6 +417,7 @@ function VMDTransferPOVPropertiesTo(DeusExCarcass Carc, POVCorpse POV)
 		carc.itemName = POV.CorpseItemName;
 		carc.CarcassName = POV.CarcassName;
 		carc.Fatness = StoredFatness;
+		Carc.DrawScale = StoredDrawScale;
 		carc.bHidden = False;
 		carc.SetPhysics(PHYS_Falling);
 		carc.SetScaleGlow();
@@ -492,6 +493,7 @@ function VMDTransferPOVPropertiesFrom(DeusExCarcass Carc, POVCorpse POV)
 		POV.CorpseItemName = Carc.itemName;
 		POV.CarcassName = Carc.CarcassName;
 		POV.StoredFatness = Carc.Fatness;
+		POV.StoredDrawScale = Carc.DrawScale;
 		
 		//MADDERS: Store this for later, for gib related hijinks.
 		POV.StoredSize = (Carc.CollisionRadius + Carc.CollisionHeight) / 2;

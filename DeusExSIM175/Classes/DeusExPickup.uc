@@ -124,6 +124,7 @@ function bool HandlePickupQuery( inventory Item )
 					NumAdded++;
 					VMDSignalCopiesAdded(Self, DeusExPickup(Item));
 					DeusExPickup(Item).NumCopies--;
+					DeusExPickup(Item).VMDSignalCopiesRemoved();
 					if (NumCopies >= VMDConfigureMaxCopies() || DeusExPickup(Item).NumCopies <= 0)
 					{
 						break;

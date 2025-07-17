@@ -21,7 +21,7 @@ var travel int LastStressPhase, FoodSmellThresholds[2]; //MADDERS, 1/19/21: Stop
 
 //^^^^^^^^^^^^^^^^^^^^^
 //TIMER VARS!
-var travel bool bKillswitchEngaged; //Death. Is. My. Purse.
+var travel bool bKillswitchEngaged, bUpdateTravelTalents; //Death. Is. My. Purse.
 var travel float KSHealMult, KSHealthMult, LastEnergy;
 
 //=====================
@@ -2289,6 +2289,7 @@ function AddChemicals(int AddAmount, optional bool bOverflow)
 event PlayerCalcView( out actor ViewActor, out vector CameraLocation, out rotator CameraRotation )
 {
 	local float AddGap;
+	local Vector AddVect;
 	
 	// check for spy drone and freeze player's view
 	if (bSpyDroneActive)
@@ -2353,7 +2354,12 @@ event PlayerCalcView( out actor ViewActor, out vector CameraLocation, out rotato
 			
 			//Gnarly hack. If JC is bigger (for some reason) scale the offset, too.
 			AddGap *= (CollisionRadius / Default.CollisionRadius);
-			CameraLocation += Vector(ViewRotation) * AddGap;
+			
+			//wCCC, 4/27/25: Don't do Z axis. It comes out bad.
+			AddVect = Vector(ViewRotation) * AddGap;
+			AddVect.Z = 0;
+			
+			CameraLocation += AddVect;
 			
 			VMDLastCameraLoc = CameraLocation;
 			return;
@@ -2892,6 +2898,7 @@ function bool VMDHasCinematicClickObjection()
 		case "69_MUTATIONSINTRO":
 		case "69_TCP_INTRP":
 		case "69_ZODIAC_INTRO":
+		case "76_ZODIAC_EGYPT_TRANS":
 		case "77_ZODIAC_ENDGAME1":
 		case "77_ZODIAC_ENDGAME2":
 		case "80_BURDEN_INTRO":
@@ -2968,6 +2975,10 @@ function VMDSignalCinematicClick()
 		case "69_ZODIAC_INTRO":
 			LoadZodiacKit();
 			TravelTar = "70_Zodiac_HongKong_TongBase";
+		break;
+		
+		case "76_ZODIAC_EGYPT_TRANS":
+			TravelTar = "76_Zodiac_Egypt_Entrance";
 		break;
 		
 		//MADDERS: Boot back to main menu. The player's wish is our command.
@@ -3292,7 +3303,8 @@ function FabricatePlayerAppearance()
 	//MADDERS: Update female sounds a bit here.
 	if (bAssignedFemale)
 	{
-		BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 2.0;
+		//MADDERS, 5/11/25: Used to be -2, but oops, walk bob fucks everything up.
+		BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 6.0;
 		Land = sound'VMDFJCLand';
 	}
 	else
@@ -7047,18 +7059,16 @@ function VMDCloseMainMenuHook()
 
 function VMDTravelPostAcceptHook()
 {
-	local int i, SkillLevel;
-	local float HUP, FoodScore, SmellMults[2];
+	local int i;
+	local float HUP;
 	local DeusExLevelInfo Info;
 	local FireAura FA;
 	local PoisonEffectAura PEA;
-	local RollCooldownAura RCA;
 	local VMDBufferPawn VMBP;
 	local VMDHousingScriptedTextureManager VHSTM;
 	local VMDMEGHIntentionActor IA;
 	
-	SwimDuration = class'VMDStaticFunctions'.Static.GetPlayerSwimDuration(Self);
-	SwimTimer = SwimDuration;
+	bUpdateTravelTalents = true;
 	
 	if ((bHadMegh) && (!VMDUnpackDrones()))
 	{
@@ -7105,27 +7115,6 @@ function VMDTravelPostAcceptHook()
 		}
 	}
 	
-	if (RollCooldownTimer > 0)
-	{
-		RCA = RollCooldownAura(FindInventoryType(class'RollCooldownAura'));
-		if (RCA == None)
-		{
-			RCA = Spawn(class'RollCooldownAura');
-			RCA.Frob(Self, None);
-			RCA.Activate();
-		}
-		else
-		{
-			RCA.Charge = int(RollCooldownTimer+0.5)*40;
-			RCA.UpdateAugmentStatus();
-		}
-	}
-	else
-	{
-		//MADDERS, 12/23/23: Stop new game roll cooldown sounds, thank you.
-		RollCooldownTimer = 0;
-	}
-	
 	Info = GetLevelInfo();
 	
 	//MADDERS: Sound stuff can get buggy if we don't restore this as it was. Icky, I know.
@@ -7147,6 +7136,39 @@ function VMDTravelPostAcceptHook()
 	if ((bSmellsEnabled) && (PlayerSmellNode == None)) SetupSmellNodes();
 	if (VMDBufferAugmentationManager(AugmentationSystem) != None) VMDBufferAugmentationManager(AugmentationSystem).CheckAugErrors();
 	if (InvokedBindName != "") InvokeBindName(InvokedBindName);
+	
+	switch(SelectedCampaign)
+	{
+		case "ZODIAC":
+		case "OTHERPAULNOFOOD":
+		case "OTHERPAULNOFOODNOINTRO":
+		case "OTHERPAULZEROFOOD":
+		case "OTHERPAULZEROFOODNOINTRO":
+			FamiliarName = "Paul Denton";
+			UnfamiliarName = "Paul Denton";
+		break;
+		case "REDSUN":
+		case "REDSUN2020":
+			FamiliarName = "Joseph";
+			UnfamiliarName = "Joseph";
+		break;
+		case "NIHILUM":
+			FamiliarName = "Mad Ingram";
+			UnfamiliarName = "Mad Ingram";
+		break;
+		case "COUNTERFEIT":
+			FamiliarName = "Dominic Bishop";
+			UnfamiliarName = "Dominic Bishop";
+		break;
+		case "IWR":
+			FamiliarName = "Alex Denton";
+			UnfamiliarName = "Alex Denton";
+		break;
+		case "BLOODLIKEVENOM":
+			FamiliarName = "Johnny Venom";
+			UnfamiliarName = "Johnny Venom";
+		break;
+	}
 	
 	if (FlagBase != None)
 	{
@@ -7230,44 +7252,6 @@ function VMDTravelPostAcceptHook()
 			//else if (LastStressPhase == 2) ClientMessage(StressLevelDesc[3]);
 			//else if (LastStressPhase == 1) ClientMessage(StressLevelDesc[1]);
 		}
-	}
-	if (bSmellsEnabled)
-	{
-		if (SkillSystem != None)
-		{
-			SkillLevel = SkillSystem.GetSkillLevel(class'SkillLockpicking');
-		}
-		
-		//Scale smell with our augment for it now.
-		SmellMults[0] = 1.0;
-		SmellMults[1] = 1.0;
-		if (HasSkillAugment("LockpickScent"))
- 		{
-			SmellMults[0] = 1.25 + (0.25 * SkillLevel); //1.5;
-			SmellMults[1] = 1.15 + (0.15 * SkillLevel); //1.34;
-		}
-		
-		if (BloodSmellLevel >= 90*SmellMults[0])
-		{
-			if (bSmellsEnabled) ClientMessage(BloodSmellDesc[3]);
-		}
- 		else if (BloodSmellLevel >= 45*SmellMults[0])
-		{
-			if (bSmellsEnabled) ClientMessage(BloodSmellDesc[1]);
-		}
-		LastBloodSmellLevel = BloodSmellLevel;
-		
- 		FoodScore = ScoreFood();
-		
- 		if (FoodScore >= FoodSmellThresholds[1]*SmellMults[1])
-		{
-			if (bSmellsEnabled) ClientMessage(FoodSmellDesc[3]);
-		}
- 		else if (FoodScore >= FoodSmellThresholds[0]*SmellMults[1])
-		{
-			if (bSmellsEnabled) ClientMessage(FoodSmellDesc[1]);
-		}
-		LastFoodSmellLevel = FoodScore;
 	}
 	
 	//MADDERS, 5/10/22: HOUSING SHIT!
@@ -7370,13 +7354,82 @@ function VMDSmellManager GenerateSmellNode(string SmellType, Texture NewIcon, in
 //MADDERS: Cheap hack for universal tick.
 function VMDRunTickHook( float DT )
 {
- 	local int TFactor, HungerDamage;
-	local float HUP, LHUP;
+ 	local int TFactor, HungerDamage, SkillLevel;
+	local float HUP, LHUP, FoodScore, SmellMults[2];
  	local Vector TVect, TVect2;
 	local Actor TAct;
 	local Computers TComp;
 	local MedicalBot TMed;
 	local RepairBot TRep;
+	local RollCooldownAura RCA;
+	
+	if (bUpdateTravelTalents)
+	{
+		bUpdateTravelTalents = false;
+		
+		SwimDuration = class'VMDStaticFunctions'.Static.GetPlayerSwimDuration(Self);
+		SwimTimer = SwimDuration;
+		
+		if (RollCooldownTimer > 0)
+		{
+			RCA = RollCooldownAura(FindInventoryType(class'RollCooldownAura'));
+			if (RCA == None)
+			{
+				RCA = Spawn(class'RollCooldownAura');
+				RCA.Frob(Self, None);
+				RCA.Activate();
+			}
+			else
+			{
+				RCA.Charge = int(RollCooldownTimer+0.5)*40;
+				RCA.UpdateAugmentStatus();
+			}
+		}
+		else
+		{
+			//MADDERS, 12/23/23: Stop new game roll cooldown sounds, thank you.
+			RollCooldownTimer = 0;
+		}
+		
+		if (bSmellsEnabled)
+		{
+			if (SkillSystem != None)
+			{
+				SkillLevel = SkillSystem.GetSkillLevel(class'SkillLockpicking');
+			}
+			
+			//Scale smell with our augment for it now.
+			SmellMults[0] = 1.0;
+			SmellMults[1] = 1.0;
+			if (HasSkillAugment("LockpickScent"))
+ 			{
+				SmellMults[0] = 1.25 + (0.25 * SkillLevel); //1.5;
+				SmellMults[1] = 1.15 + (0.15 * SkillLevel); //1.34;
+			}
+			
+			if (BloodSmellLevel >= 90*SmellMults[0])
+			{
+				if (bSmellsEnabled) ClientMessage(BloodSmellDesc[3]);
+			}
+ 			else if (BloodSmellLevel >= 45*SmellMults[0])
+			{
+				if (bSmellsEnabled) ClientMessage(BloodSmellDesc[1]);
+			}
+			LastBloodSmellLevel = BloodSmellLevel;
+			
+ 			FoodScore = ScoreFood();
+			
+ 			if (FoodScore >= FoodSmellThresholds[1]*SmellMults[1])
+			{
+				if (bSmellsEnabled) ClientMessage(FoodSmellDesc[3]);
+			}
+ 			else if (FoodScore >= FoodSmellThresholds[0]*SmellMults[1])
+			{
+				if (bSmellsEnabled) ClientMessage(FoodSmellDesc[1]);
+			}
+			LastFoodSmellLevel = FoodScore;
+		}
+	}
 	
  	//Preamble. Store last deltatime for hacky stuff.
  	VMDLastTickChunk = DT;
@@ -7587,7 +7640,12 @@ function VMDRunTickHook( float DT )
  	if (HUDEMPTimer > 0)
  	{
   		HUDEMPTimer -= DT;
-  		ShowHUD(False);
+		
+		if (!VMDIsInHandZoomed())
+		{
+	  		ShowHUD(False);
+		}
+		
   		if (IsEMPFlicker(HUDEMPTimer))
   		{
    			if (FRand() < 0.65) ShowHUD(True);
@@ -7624,9 +7682,79 @@ function VMDRunTickHook( float DT )
 
 function VMDRunTickHookLight(float DT)
 {
+	local int SkillLevel, SmellMults[2];
+	local float FoodScore;
 	local string TName;
 	local Actor A;
 	local RollCooldownAura RCA;
+	
+	if (bUpdateTravelTalents)
+	{
+		bUpdateTravelTalents = false;
+		
+		SwimDuration = class'VMDStaticFunctions'.Static.GetPlayerSwimDuration(Self);
+		SwimTimer = SwimDuration;
+		
+		if (RollCooldownTimer > 0)
+		{
+			RCA = RollCooldownAura(FindInventoryType(class'RollCooldownAura'));
+			if (RCA == None)
+			{
+				RCA = Spawn(class'RollCooldownAura');
+				RCA.Frob(Self, None);
+				RCA.Activate();
+			}
+			else
+			{
+				RCA.Charge = int(RollCooldownTimer+0.5)*40;
+				RCA.UpdateAugmentStatus();
+			}
+		}
+		else
+		{
+			//MADDERS, 12/23/23: Stop new game roll cooldown sounds, thank you.
+			RollCooldownTimer = 0;
+		}
+		
+		if (bSmellsEnabled)
+		{
+			if (SkillSystem != None)
+			{
+				SkillLevel = SkillSystem.GetSkillLevel(class'SkillLockpicking');
+			}
+			
+			//Scale smell with our augment for it now.
+			SmellMults[0] = 1.0;
+			SmellMults[1] = 1.0;
+			if (HasSkillAugment("LockpickScent"))
+ 			{
+				SmellMults[0] = 1.25 + (0.25 * SkillLevel); //1.5;
+				SmellMults[1] = 1.15 + (0.15 * SkillLevel); //1.34;
+			}
+			
+			if (BloodSmellLevel >= 90*SmellMults[0])
+			{
+				if (bSmellsEnabled) ClientMessage(BloodSmellDesc[3]);
+			}
+ 			else if (BloodSmellLevel >= 45*SmellMults[0])
+			{
+				if (bSmellsEnabled) ClientMessage(BloodSmellDesc[1]);
+			}
+			LastBloodSmellLevel = BloodSmellLevel;
+			
+ 			FoodScore = ScoreFood();
+			
+ 			if (FoodScore >= FoodSmellThresholds[1]*SmellMults[1])
+			{
+				if (bSmellsEnabled) ClientMessage(FoodSmellDesc[3]);
+			}
+ 			else if (FoodScore >= FoodSmellThresholds[0]*SmellMults[1])
+			{
+				if (bSmellsEnabled) ClientMessage(FoodSmellDesc[1]);
+			}
+			LastFoodSmellLevel = FoodScore;
+		}
+	}
 	
 	DripWater(DT);
 	
@@ -8342,7 +8470,8 @@ ignores SeePlayer, HearNoise, Bump;
 			//MADDERS: Update female size a bit here.
 			if (bAssignedFemale)
 			{
-				BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 2.0;
+				//MADDERS, 5/11/25: Used to be -2, but oops, walk bob fucks everything up.
+				BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 6.0;
 			}
 			else
 			{
@@ -8361,7 +8490,8 @@ function ClientReStart()
 	//MADDERS: Update female size a bit here.
 	if (bAssignedFemale)
 	{
-		BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 2.0;
+		//MADDERS, 5/11/25: Used to be -2, but oops, walk bob fucks everything up.
+		BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 6.0;
 	}
 	else
 	{
