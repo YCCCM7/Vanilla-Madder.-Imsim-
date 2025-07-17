@@ -159,10 +159,47 @@ function bool EvaluateFlag()
 
 function DatalinkFinished()
 {
+	local bool RestoreGroup;
+	local Actor A;
+	
 	if (bStartedViaTrigger)
+	{
 		Super.Trigger(triggerOther, triggerInstigator);
+		
+		//MADDERS, 5/21/25: Fix for Paul and possible other instances where a triggered datalink doesn't trigger its event.
+		// Broadcast the Trigger message to all matching actors.
+		if( Event != '' )
+		{
+			foreach AllActors( class 'Actor', A, Event )
+			{
+				// DEUS_EX CNN
+				// If the triggering actor doesn't have a group, then
+				// we copy the trigger's group into the group of the triggerer
+				// This will make LogicTriggers work correctly and won't
+				// affect anything else
+				if (TriggerOther.Group == '')
+				{
+					TriggerOther.Group = Group;
+					restoreGroup = True;
+				}
+				else
+				{
+					restoreGroup = False;
+				}
+				A.Trigger( TriggerOther, TriggerInstigator );
+				
+				// DEUS_EX CNN
+				if (restoreGroup)
+				{
+					TriggerOther.Group = '';
+				}
+			}
+		}
+	}
 	else if (bStartedViaTouch)
+	{
 		Super.Touch(triggerOther);
+	}
 }
 
 // ----------------------------------------------------------------------
