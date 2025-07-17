@@ -119,7 +119,27 @@ function VMDFakeAuraTimerHook(bool bWhole)
 		}
 	}
 	
+	if (SoundVolume > 0)
+	{
+		VMDUseAIEventSender(VMDBufferPlayer(Owner), 'LoudNoise', EAITYPE_Audio, 1.0, 320);
+	}
+	
 	Super.VMDFakeAuraTimerHook(bWhole);
+}
+
+//MADDERS, 6/24/25: Yoinked code, reused here.
+function VMDUseAIEventSender(Pawn NewInstigator, Name NewName, EAIEventType NewType, float NewVolume, float NewRadius)
+{
+	local VMDAIEventSender TSend;
+	
+	if (NewInstigator == None) return;
+	
+	TSend = Spawn(class'VMDAIEventSender');
+	if (TSend != None)
+	{
+		TSend.LoadEvent(NewInstigator, NewName, NewType, NewVolume, NewRadius);
+		TSend.SendEvent();
+	}
 }
 
 function VMDCancelCrafting()
@@ -451,7 +471,7 @@ function BeginNoise()
 	if ((SoundVolume < 128) && (VMDBufferPlayer(Owner) != None) && (VMDBufferPlayer(Owner).bEnvironmentalSoundsEnabled))
 	{
 		SoundVolume = 128;
-		AIStartEvent('LoudNoise', EAITYPE_Audio, 1.0, 320);
+		//AIStartEvent('LoudNoise', EAITYPE_Audio, 1.0, 320);
 	}
 }
 
@@ -460,7 +480,7 @@ function EndNoise()
 	if (SoundVolume > 0)
 	{
 		SoundVolume = 0;
-		AIEndEvent('LoudNoise', EAITYPE_Audio);
+		//AIEndEvent('LoudNoise', EAITYPE_Audio);
 	}
 }
 
