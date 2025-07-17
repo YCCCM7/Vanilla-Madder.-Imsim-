@@ -104,7 +104,7 @@ defaultproperties
      EMPHitPoints=40
      WalkingSpeed=1.000000
      bEmitDistress=True
-     InitialInventory(0)=(Inventory=Class'DeusEx.WeaponRobotMachinegun3')
+     InitialInventory(0)=(Inventory=Class'DeusEx.WeaponRobotMachinegunType3')
      InitialInventory(1)=(Inventory=Class'DeusEx.AmmoSecurityBot3',Count=24)
      GroundSpeed=95.000000
      WaterSpeed=50.000000
