@@ -26,8 +26,27 @@ function BeginPlay()
 	}
 }
 
+function Frob(Actor Frobber, Inventory FrobWith)
+{
+	local Vector TNorm, TVect;
+	
+	if (VMDBufferPlayer(Frobber) != None)
+	{
+		//MADDERS, 5/28/25: Ugly hack fix for being too close to racks.
+		TNorm = Normal(Frobber.Location - Location);
+		TVect = TNorm * 80;
+		TVect.Z = Frobber.Location.Z;
+		
+		Frobber.SetLocation(TVect);
+		VMDBufferPlayer(Frobber).ModifyPlayerAppearance();
+	}
+	
+	Super.Frob(Frobber, FrobWith);
+}
+
 defaultproperties
 {
+     bHighlight=True
      bFlammable=True
      FragType=Class'DeusEx.PaperFragment'
      ItemName="Hanging Clothes"
