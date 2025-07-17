@@ -263,7 +263,7 @@ function bool AddObjectToBelt(Inventory newItem, int pos, bool bOverride)
 	local bool retval;
 
 	retval = true;
-
+	
 	if ((newItem != None ) && (newItem.Icon != None))
 	{
 		// If this is the NanoKeyRing, force it into slot 0
