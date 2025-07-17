@@ -31,6 +31,7 @@ function InitFor(Actor Other)
 
 		//MADDERS, 9/11/21: Clone fatness for goofy stuff.
 		Fatness = Other.Fatness;
+		DrawScale = Other.DrawScale;
 		
 		//MADDERS, 11/14/24: Oops. Sickly boys look terrible when dead.
 		if (MJ12NanoAugBountyHunter(Other) != None)
@@ -102,6 +103,7 @@ function InitFor(Actor Other)
 
 		if (SP != None)
 		{
+			bImportant = SP.bImportant;
 			if (SP.bBurnedToDeath)
 			{
 				//G-Flex: Give burn victims close to 1/4 corpse-health instead of 1
@@ -128,8 +130,14 @@ function InitFor(Actor Other)
 		}
 
 		if (Other.AnimSequence == 'DeathFront')
+		{
 			Mesh = Mesh2;
-
+		}
+		if ((Other.Region.Zone != None) && (Other.Region.Zone.bWaterZone))
+		{
+			Mesh = Mesh3;
+		}
+		
 		// set the instigator and tag information
 		if (Other.Instigator != None)
 		{
@@ -180,6 +188,10 @@ function SetSkin(VMDBufferPawn P)
 			{
 				Mesh = Mesh2;
 			}
+			if ((P.Region.Zone != None) && (P.Region.Zone.bWaterZone))
+			{
+				Mesh = Mesh3;
+			}
 	 	}
 	}
 }
@@ -204,6 +216,10 @@ function SetSkinPlayer(VMDBufferPlayer P)
 			{
 				Mesh = Mesh2;
 			}
+			if ((P.Region.Zone != None) && (P.Region.Zone.bWaterZone))
+			{
+				Mesh = Mesh3;
+			}
 	 	}
 	}
 }
@@ -224,21 +240,42 @@ function Mesh ParseMesh(Mesh StartingMesh)
  	local Mesh M;
  	local String SelfString, Trim, OS;
  	
-	if (StartingMesh == LODMesh'GM_TrenchLeft')
+	switch(StartingMesh.Name)
 	{
-		StartingMesh = LODMesh'GM_Trench';
-	}
-	else if (StartingMesh == LODMesh'GM_Trench_FLeft')
-	{
-		StartingMesh = LODMesh'GM_Trench_F';
-	}
-	else if (StartingMesh == LODMesh'GFM_TrenchLeft')
-	{
-		StartingMesh = LODMesh'GFM_Trench';
-	}
-	else if (StartingMesh == LODMesh'MP_Jumpsuit')
-	{
-		StartingMesh = LODMesh'GM_Jumpsuit';
+		case 'GM_TrenchLeft':
+			StartingMesh = LODMesh'GM_Trench';
+		break;
+		case 'GM_Trench_FLeft':
+			StartingMesh = LODMesh'GM_Trench_F';
+		break;
+		case 'MP_Jumpsuit':
+		case 'MP_JumpsuitLeft':
+			StartingMesh = LODMesh'GM_Jumpsuit';
+		break;
+		case 'GM_SuitLeft':
+			StartingMesh = LODMesh'GM_Suit';
+		break;
+		case 'GM_DressShirt_SLeft':
+			StartingMesh = LODMesh'GM_DressShirt_S';
+		break;
+		case 'GM_DressShirtLeft':
+			StartingMesh = LODMesh'GM_DressShirt';
+		break;
+		case 'GM_DressShirt_FLeft':
+			StartingMesh = LODMesh'GM_DressShirt_F';
+		break;
+		case 'GFM_TrenchLeft':
+			StartingMesh = LODMesh'GFM_Trench';
+		break;
+		case 'GFM_SuitSkirtLeft':
+			StartingMesh = LODMesh'GFM_SuitSkirt';
+		break;
+		case 'GFM_SuitSkirt_FLeft':
+			StartingMesh = LODMesh'GFM_SuitSkirt_F';
+		break;
+		case 'VMDGFM_DressLeft':
+			StartingMesh = LODMesh'VMDGFM_Dress';
+		break;
 	}
 	
  	SelfString = String(Mesh);
