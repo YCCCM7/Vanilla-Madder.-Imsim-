@@ -92,6 +92,10 @@ function SyncSkins(Pawn TPawn)
 				}
 			}
 		}
+		
+		//MADDERS, 5/11/2025: I love writing strong code bases.
+		//Found out helmets weren't updating, one line to fix every instance in game.
+		VMBP.CheckForHelmets();
 	}
 }
 
