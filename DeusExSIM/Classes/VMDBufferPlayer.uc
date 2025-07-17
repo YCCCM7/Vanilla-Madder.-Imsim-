@@ -163,9 +163,9 @@ var localized string SaveGameGenders[2], StrDifficultyNames[8], StrCustomDifficu
 //---------------------
 var travel bool bAssignedFemale; //Somehow this language has overlapped with reality, but ok
 var(LDDPDEBUG) travel bool bDisableFemaleVoice; //8/9/23: For more accessibility by EditActor 
-var travel String StoredPlayerSkins[8], StoredPlayerMesh, StoredPlayerMeshLeft;
-var Texture FabricatedSkins[8];
-var int LastMeshHandedness;
+var travel String StoredPlayerSkins[8], StoredPlayerTexture, StoredPlayerMesh, StoredPlayerMeshLeft;
+var Texture FabricatedSkins[8], FabricatedTexture;
+var int LastMeshHandedness, CurMeshFramesIndex, CurMeshLensesIndex;
 var Mesh FabricatedMesh, FabricatedMeshLeft;
 var bool bFabricateQueued, bDefabricateQueued, bLastOverdosed;
 //---------------------
@@ -214,7 +214,8 @@ var() globalconfig bool bClassicSkillPurchasing; //2/19/25: For those who hate t
 var() globalconfig bool bAugControllerShowEnergyPoints; //2/25/25: For DX rando players, primarily.
 var() globalconfig bool bDamageGateBreakNoise; //5/1/25: For immersive purposes.
 var() globalconfig bool bUseGunplayVersionTwo; //5/2/25: EXPERIMENTAL! We want to have tactical shooter gameplay later. Phase 2.5?
-var() globalconfig bool FrobEmptyLowersWeapon; //5/4/25: For people who don't mind using backspace all the time.
+var() globalconfig bool bFrobEmptyLowersWeapon; //5/4/25: For people who don't mind using backspace all the time.
+var() globalconfig bool bDisplayUncraftableItems; //6/21/25: For optimizing crafting lists a little bit.
 var() bool BarfStartupFullscreen, BarfUseDirectInput; //6/24/24: Purely temporary variables. Used in options menu as a metric.
 var() globalconfig int CustomUIScale;
 var() globalconfig float TacticalRollTime;
@@ -383,15 +384,18 @@ var(DXTSettings) globalconfig /*int*/ bool bUseAutosave;
 
 var travel bool bCloaked, bRadarCloaked;
 
-var(ItemRefusal) globalconfig bool bRefuseWeaponAssaultGun, bRefuseWeaponAssaultShotgun, bRefuseWeaponBaton, bRefuseWeaponCombatKnife, bRefuseWeaponCrowbar, bRefuseWeaponEMPGrenade, bRefuseWeaponFlamethrower, bRefuseWeaponGasGrenade, bRefuseWeaponGEPGun, bRefuseWeaponHideAGun, bRefuseWeaponLAM, bRefuseWeaponLAW, bRefuseWeaponMiniCrossbow, bRefuseWeaponNanoSword, bRefuseWeaponNanoVirusGrenade, bRefuseWeaponPepperGun, bRefuseWeaponPistol, bRefuseWeaponPlasmaRifle, bRefuseWeaponProd, bRefuseWeaponRifle, bRefuseWeaponSawedOffShotgun, bRefuseWeaponShuriken, bRefuseWeaponStealthPistol, bRefuseWeaponSword;
+var(ItemRefusal) globalconfig int bRefuseWeaponAssaultGun, bRefuseWeaponAssaultShotgun, bRefuseWeaponBaton, bRefuseWeaponCombatKnife, bRefuseWeaponCrowbar, bRefuseWeaponEMPGrenade, bRefuseWeaponFlamethrower, bRefuseWeaponGasGrenade, bRefuseWeaponGEPGun, bRefuseWeaponHideAGun, bRefuseWeaponLAM, bRefuseWeaponLAW, bRefuseWeaponMiniCrossbow, bRefuseWeaponNanoSword, bRefuseWeaponNanoVirusGrenade, bRefuseWeaponPepperGun, bRefuseWeaponPistol, bRefuseWeaponPlasmaRifle, bRefuseWeaponProd, bRefuseWeaponRifle, bRefuseWeaponSawedOffShotgun, bRefuseWeaponShuriken, bRefuseWeaponStealthPistol, bRefuseWeaponSword;
 
-var(ItemRefusal) globalconfig bool bRefuseWeaponMod;
+var(ItemRefusal) globalconfig int bRefuseWeaponMod;
 
-var(ItemRefusal) globalconfig bool bRefuseAugmentationCannister, bRefuseAugmentationUpgradeCannister, bRefuseBinoculars, bRefuseBioelectricCell, bRefuseCandybar, bRefuseCigarettes, bRefuseFireExtinguisher, bRefuseFlare, bRefuseLiquor40oz, bRefuseLiquorBottle, bRefuseMedKit, bRefuseSodacan, bRefuseSoyFood, bRefuseVialAmbrosia, bRefuseVialCrack, bRefuseWineBottle;
+var(ItemRefusal) globalconfig int bRefuseAugmentationCannister, bRefuseAugmentationUpgradeCannister, bRefuseBinoculars, bRefuseBioelectricCell, bRefuseCandybar, bRefuseCigarettes, bRefuseVMDCombatStim, bRefuseFireExtinguisher, bRefuseFlare, bRefuseLiquor40oz, bRefuseLiquorBottle, bRefuseMedKit, bRefuseVMDMedigel, bRefuseSodacan, bRefuseSoyFood, bRefuseVialAmbrosia, bRefuseVialCrack, bRefuseWineBottle;
 
-var(ItemRefusal) globalconfig bool bRefuseMultitool, bRefuseLockpick;
+var(ItemRefusal) globalconfig int bRefuseMultitool, bRefuseLockpick, bRefuseVMDChemistrySet, bRefuseVMDToolbox;
 
-var(ItemRefusal) globalconfig bool bRefuseAdaptiveArmor, bRefuseBallisticArmor, bRefuseHazMatSuit, bRefuseRebreather, bRefuseTechGoggles;
+var(ItemRefusal) globalconfig int bRefuseAdaptiveArmor, bRefuseBallisticArmor, bRefuseHazMatSuit, bRefuseRebreather, bRefuseTechGoggles;
+
+//MADDERS, 6/21/25: Nihilum guns.
+var(ItemRefusal) globalconfig int bRefuseWeaponAssault17, bRefuseWeaponBRGlock, bRefuseWeaponM249DXN, bRefuseWeaponTakaraGun;
 
 var localized string ItemRefusedString;
 var localized string TooHotToLift;
@@ -954,17 +958,17 @@ Begin:
 	QuickLoadConfirmed();
 }
 
-function bool GetItemRefusalSetting(inventory anItem)
+function int GetItemRefusalSetting(inventory anItem)
 {
 	local string className;
 	local string checkString;
-	local bool result;
+	local int result;
 	
 	className = GetItemRefusalName(anItem);
 		
 	checkString = "bRefuse"$className;
 	
-	result = bool(GetPropertyText(checkString));
+	result = int(GetPropertyText(checkString));
 		return result;
 }
 
@@ -974,8 +978,28 @@ function string GetItemRefusalName(inventory anItem)
 
 	className = string(anItem.Class.Name);
 	if (anItem.IsA('WeaponMod'))
+	{
 		className = "WeaponMod";
-		
+	}
+	else
+	{
+		switch(AnItem.Class.Name)
+		{
+			case 'WeaponDXNGaussGun':
+				ClassName = "WeaponPlasmaRifle";
+			break;
+			case 'WeaponWaltherDXN':
+				ClassName = "WeaponBRGlock";
+			break;
+			case 'WeaponPara17':
+				ClassName = "WeaponM249DXN";
+			break;
+			case 'WeaponA17':
+				ClassName = "WeaponAssault17";
+			break;
+		}
+	}
+	
 	return className;
 }
 
@@ -1044,6 +1068,23 @@ singular function DripWater(float deltaTime)
 // Deus Ex: Transcended end [HACKZ]
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
+function bool VMDCanStartFirstPersonConversation()
+{
+	if ((conPlay != None && conPlay.CanInterrupt() == False) ||
+		(conPlay != None && !conPlay.con.bFirstPerson) ||
+		 //(( bForceDuck == True ) && ((HealthLegLeft > 0) || (HealthLegRight > 0))) ||
+		 ( IsInState('Dying') ) ||
+		 //( IsInState('PlayerSwimming') ) ||  
+		 ( IsInState('CheatFlying') ) ||
+		 //( Physics == PHYS_Falling ) || 
+		 ( Level.bPlayersOnly ) ||
+	     (!DeusExRootWindow(rootWindow).CanStartConversation()))
+		return False;
+	else	
+		return True;
+}
+
 function ClientSetMusic( music NewSong, byte NewSection, byte NewCdTrack, EMusicTransition NewTransition )
 {
 	//MADDERS, 4/28/25: If we're still fading, brute force
@@ -1064,6 +1105,16 @@ function ClientSetMusic( music NewSong, byte NewSection, byte NewCdTrack, EMusic
 	}
 	
 	Super.ClientSetMusic(NewSong, NewSection, NewCDTrack, NewTransition);
+}
+
+exec function PrintDistanceFromPlayer()
+{
+	local Pawn TPawn;
+	
+	for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+	{
+		ClientMessage(TPawn@TPawn.DistanceFromPlayer@TPawn.LastRendered());
+	}
 }
 
 exec function ShowProp(string NewProp)
@@ -1089,6 +1140,35 @@ exec function ShowProp(string NewProp)
 			}
 		}
 	}
+}
+
+exec function ModifyPlayerAppearance()
+{
+	local DeusExRootWindow Root;
+	local VMDMenuModifyAppearance StartingWindow;
+	
+	if (Physics != PHYS_Walking || CollisionHeight < 33 || IsInState('Dying'))
+	{
+		return;
+	}
+	
+	bBehindView = true;
+	bUnlit = true;
+	OverrideCameraLocation = Location + (Vect(80, 0, 24) >> Rotation);
+	OverrideCameraRotation.Yaw = Rotation.Yaw + 32768;
+	OverrideCameraRotation.Pitch = 65536 - 2048;
+	
+	Root = DeusExRootWindow(RootWindow);
+	
+  	if (Root != None)
+  	{
+   		StartingWindow = VMDMenuModifyAppearance(Root.InvokeMenuScreen(Class'VMDMenuModifyAppearance', True));
+		
+		if (StartingWindow != None)
+		{
+			StartingWindow.SetCampaignData(SelectedCampaign);
+		}
+  	}
 }
 
 exec function TestTargetLostLines()
@@ -1117,6 +1197,12 @@ exec function TestGetMultiskin(int TarIndex)
 	ClientMessage(class'VMDGenericNativeFunctions'.Static.GetArrayPropertyText(Self, "Engine.Actor.Multiskins", TarIndex));
 }
 
+exec function TestScriptRedundancy()
+{
+	ClientMessage(class'VMDGenericNativeFunctions'.Static.TargetScriptsAreEqual("DeusEx.ScriptedPawn.PostBeginPlay", "DeusEx.DeusExPlayer.PostBeginPlay"));
+	ClientMessage(class'VMDGenericNativeFunctions'.Static.TargetScriptsAreEqual("DeusEx.ScriptedPawn.PostBeginPlay", "DeusEx.ScriptedPawn.PostBeginPlay"));
+}
+
 exec function TestSetMultiskins(int TarIndex, string TextureName)
 {
 	local DeusExDecoration DXD;
@@ -1138,30 +1224,34 @@ exec function TestSetMultiskins(int TarIndex, string TextureName)
 	}
 }
 
-//Testing function for rebuilding AI pathing in real time.
-function VMDRebuildPaths()
+exec function GetTestFileList()
 {
-	local NavigationPoint TPoint;
-	local Pawn TScout;
-	local VMDPathRebuilder VMDPB;
+	local DeusExRootWindow Root;
+	local VMDMenuModLocatorWindow StartingWindow;
 	
-	VMDPB = Spawn(class'VMDPathRebuilder');
-	VMDPB.AllowScoutToSpawn();
+	Root = DeusExRootWindow(RootWindow);
 	
-	forEach AllActors(class'NavigationPoint', TPoint)
-	{
-		TScout = Spawn(class'Scout',,, TPoint.Location);
-		if (TScout != None)
+  	if (Root != None)
+  	{
+   		StartingWindow = VMDMenuModLocatorWindow(Root.InvokeMenuScreen(Class'VMDMenuModLocatorWindow', True));
+		
+		if (StartingWindow != None)
 		{
-			break;
+			StartingWindow.VMP = Self;
+			
+			StartingWindow.PopulateFileList();
 		}
-	}
+  	}
+}
+
+exec function TestPathBullshit()
+{
+	local Male2 SP;
 	
-	VMDPB.ScoutSetup(TScout);
-	VMDPB.RedefinePaths();
+	ConsoleCommand("KillAll HumanCivilian");
 	
-	TScout.Destroy();
-	VMDPB.Destroy();
+	SP = Spawn(class'Male2',,, Location + Vector(Rotation) * CollisionRadius * 2.25, Rotation);
+	SP.SetOrders('GoingTo', 'ExitGoal', true);
 }
 
 //MADDERS, 10/4/24: Shout out to DX rando for this one. Thanks.
@@ -2276,6 +2366,7 @@ function bool VMDUnpackDrones()
 	local DeusExLevelInfo DXLI;
 	local DeusExAmmo DXA;
 	local DeusExWeapon DXW;
+	local PathNode TNode;
 	local VMDMedigel TGel;
 	local VMDMeghPickup TMegh2;
 	local VMDMegh TMegh;
@@ -2403,6 +2494,22 @@ function bool VMDUnpackDrones()
 			if (TMegh == None) TMegh = Spawn(class'VMDMegh',,, Location + ((vect(1.75, 0, 0) * CollisionRadius) >> Rotation));
 			if (TMegh == None) TMegh = Spawn(class'VMDMegh',,, Location - ((vect(0, 1.75, 0) * CollisionRadius) >> Rotation));
 			if (TMegh == None) TMegh = Spawn(class'VMDMegh',,, Location + ((vect(0, 1.75, 0) * CollisionRadius) >> Rotation));
+			if (TMegh == None)
+			{
+				forEach AllActors(class'PathNode', TNode)
+				{
+					TMegh = Spawn(class'VMDMegh',,, TNode.Location);
+					if (TMegh != None)
+					{
+						break;
+					}
+				}
+				
+				if (TMegh == None)
+				{
+					Log("WARNING! FAILED TO SPAWN MEGH IN MAP "@class'VMDStaticFunctions'.Static.VMDGetMapName(Self));
+				}
+			}
 			
 			if (TMegh != None)
 			{
@@ -3794,6 +3901,20 @@ function bool VMDPlayerIsCrafting(optional bool bIntense)
 	return false;
 }
 
+function bool ShouldUseSkillAugments()
+{
+	switch(SelectedCampaign)
+	{
+		case "HiveDays":
+			return false;
+		break;
+	}
+	
+	if (bSkillAugmentsEnabled) return true;
+	
+	return false;
+}
+
 function SetupCraftingManager(optional bool bOverride)
 {
 	if (CraftingManager == None || bOverride)
@@ -3939,6 +4060,20 @@ function AddChemicals(int AddAmount, optional bool bOverflow)
 			TChem.NumCopies = AddAmount - AmountAdded;
 			TChem.UpdateModel();
 		}
+	}
+}
+
+function CalcBehindView(out vector CameraLocation, out rotator CameraRotation, float Dist)
+{
+	Super.CalcBehindView(CameraLocation, CameraRotation, Dist);
+	
+	if (OverrideCameraRotation != rot(0,0,0))
+	{
+		CameraRotation = OverrideCameraRotation;
+	}
+	if (OverrideCameraLocation != vect(0,0,0))
+	{
+		CameraLocation = OverrideCameraLocation;
 	}
 }
 
@@ -5097,6 +5232,11 @@ function FabricatePlayerAppearance()
 			Multiskins[i] = Default.Multiskins[i];
 		}
 	}
+	FabricatedTexture = Texture(DynamicLoadObject(StoredPlayerTexture, class'Texture', true));
+	if (FabricatedTexture != None)
+	{
+		Texture = FabricatedTexture;
+	}
 	
 	FabricatedMesh = Mesh(DynamicLoadObject(StoredPlayerMesh, class'Mesh', true));
 	FabricatedMeshLeft = Mesh(DynamicLoadObject(StoredPlayerMeshLeft, class'Mesh', true));
@@ -5113,7 +5253,8 @@ function FabricatePlayerAppearance()
 	//MADDERS: Update female sounds a bit here.
 	if (bAssignedFemale)
 	{
-		BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 2.0;
+		//MADDERS, 5/11/25: Used to be -2, but oops, walk bob fucks everything up.
+		BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 6.0;
 		Land = sound'VMDFJCLand';
 	}
 	else
@@ -5139,6 +5280,57 @@ function FabricatePlayerAppearance()
 	{
 		VMDPlayerHands(InHand).SetHand(PreferredHandedness);
 	}
+	
+	FlagBase.SetBool('JCOutfits_Equipped_NoLeather', True,, 99);
+	for(i=0; i<ArrayCount(Multiskins); i++)
+	{
+		if (Multiskins[i] == Texture'JCDentonTex3')
+		{
+			FlagBase.SetBool('JCOutfits_Equipped_NoLeather', False,, 99);
+			break;
+		}
+	}
+	
+	FlagBase.SetBool('JCOutfits_No_Coat', True,, 99);
+	switch(Mesh.Name)
+	{
+		case 'GM_Trench':
+		case 'GM_TrenchLeft':
+		case 'GM_Trench_F':
+		case 'GM_Trench_FLeft':
+		case 'GFM_Trench':
+		case 'GFM_TrenchLeft':
+			CurMeshLensesIndex = 7;
+			CurMeshFramesIndex = 6;
+			FlagBase.SetBool('JCOutfits_No_Coat', False,, 99);
+		break;
+		case 'MP_Jumpsuit':
+		case 'MP_JumpsuitLeft':
+			CurMeshLensesIndex = -1;
+			CurMeshFramesIndex = -1;
+		break;
+		case 'GM_Suit':
+		case 'GM_SuitLeft':
+			CurMeshLensesIndex = 6;
+			CurMeshFramesIndex = 5;
+		break;
+		case 'GM_DressShirt_S':
+		case 'GM_DressShirt':
+		case 'GM_DressShirt_F':
+		case 'GM_DressShirt_SLeft':
+		case 'GM_DressShirtLeft':
+		case 'GM_DressShirt_FLeft':
+			CurMeshLensesIndex = 7;
+			CurMeshFramesIndex = 6;
+		break;
+		case 'GFM_SuitSkirt':
+		case 'GFM_SuitSkirt_F':
+		case 'GFM_SuitSkirtLeft':
+		case 'GFM_SuitSkirt_FLeft':
+			CurMeshLensesIndex = 7;
+			CurMeshFramesIndex = 6;
+		break;
+	}
 }
 
 //MADDERS: You can't set arrays with set property text, so add a function for storing these retroactively.
@@ -5155,33 +5347,67 @@ function DeFabricatePlayerAppearance()
 		FabricatedSkins[i] = Multiskins[i];
 		StoredPlayerSkins[i] = string(Multiskins[i]);
 	}
+	FabricatedTexture = Texture;
+	StoredPlayerTexture = string(Texture);
+	
 	StoredPlayerMesh = string(Mesh);
 	switch(CAPS(StoredPlayerMesh))
 	{
 		case "DEUSEXCHARACTERS.GM_TRENCH":
-			StoredPlayerMeshLeft = "VMDAssets.GM_TrenchLeft";
-		break;
-		case "DEUSEXCHARACTERS.GM_TRENCH_F":
-			StoredPlayerMeshLeft = "VMDAssets.GM_Trench_FLeft";
-		break;
-		case "DEUSEXCHARACTERS.GFM_TRENCH":
-			StoredPlayerMeshLeft = "VMDAssets.GFM_TrenchLeft";
-		break;
-		
 		case "VMDASSETS.GM_TRENCH_LEFT":
 			StoredPlayerMesh = "DeusExCharacters.GM_Trench";
 			StoredPlayerMeshLeft = "VMDAssets.GM_TrenchLeft";
 		break;
+		case "DEUSEXCHARACTERS.GM_TRENCH_F":
 		case "VMDASSETS.GM_TRENCH_FLEFT":
 			StoredPlayerMesh = "DeusExCharacters.GM_Trench_F";
 			StoredPlayerMeshLeft = "VMDAssets.GM_Trench_FLeft";
 		break;
+		case "MPCHARACTERS.MP_JUMPSUIT":
+		case "VMDASSETS.MP_JUMPSUITLEFT":
+			StoredPlayerMesh = "MPCharacters.MP_Jumpsuit";
+			StoredPlayerMeshLeft = "VMDAssets.MP_JumpsuitLeft";
+		break;
+		case "DEUSEXCHARACTERS.GM_SUIT":
+		case "VMDASSETS.GM_SUITLEFT":
+			StoredPlayerMesh = "DeusExCharacters.GM_Suit";
+			StoredPlayerMeshLeft = "VMDAssets.GM_SuitLeft";
+		break;
+		case "DEUSEXCHARACTERS.GM_DRESSSHIRT_S":
+		case "VMDASSETS.GM_DRESSSHIRT_SLEFT":
+			StoredPlayerMesh = "DeusExCharacters.GM_DressShirt_S";
+			StoredPlayerMeshLeft = "VMDAssets.GM_DressShirt_SLeft";
+		break;
+		case "DEUSEXCHARACTERS.GM_DRESSSHIRT":
+		case "VMDASSETS.GM_DRESSSHIRTLEFT":
+			StoredPlayerMesh = "DeusExCharacters.GM_DressShirt";
+			StoredPlayerMeshLeft = "VMDAssets.GM_DressShirtLeft";
+		break;
+		case "DEUSEXCHARACTERS.GM_DRESSSHIRT_F":
+		case "VMDASSETS.GM_DRESSSHIRT_FLEFT":
+			StoredPlayerMesh = "DeusExCharacters.GM_DressShirt_F";
+			StoredPlayerMeshLeft = "VMDAssets.GM_DressShirt_FLeft";
+		break;
+		
+		case "DEUSEXCHARACTERS.GFM_TRENCH":
 		case "VMDASSETS.GFM_TRENCHLEFT":
 			StoredPlayerMesh = "DeusExCharacters.GFM_Trench";
 			StoredPlayerMeshLeft = "VMDAssets.GFM_TrenchLeft";
 		break;
-		default:
-			StoredPlayerMeshLeft = StoredPlayerMesh;
+		case "DEUSEXCHARACTERS.GFM_SUITSKIRT":
+		case "VMDASSETS.GFM_SUITSKIRTLEFT":
+			StoredPlayerMesh = "DeusExCharacters.GFM_SuitSkirt";
+			StoredPlayerMeshLeft = "VMDAssets.GFM_SuitSkirtLeft";
+		break;
+		case "DEUSEXCHARACTERS.GFM_SUITSKIRT_F":
+		case "VMDASSETS.GFM_SUITSKIRT_FLEFT":
+			StoredPlayerMesh = "DeusExCharacters.GFM_SuitSkirt_F";
+			StoredPlayerMeshLeft = "VMDAssets.GFM_SuitSkirt_FLeft";
+		break;
+		case "VMDASSETS.VMDGFM_DRESS":
+		case "VMDASSETS.VMDGFM_DRESSLEFT":
+			StoredPlayerMesh = "VMDAssets.VMDGFM_Dress";
+			StoredPlayerMeshLeft = "VMDAssets.VMDGFM_DressLeft";
 		break;
 	}
 	
@@ -5190,6 +5416,57 @@ function DeFabricatePlayerAppearance()
 	
 	if (TMesh != None) FabricatedMesh = TMesh;
 	if (TMeshLeft != None) FabricatedMeshLeft = TMeshLeft;
+	
+	FlagBase.SetBool('JCOutfits_Equipped_NoLeather', True,, 99);
+	for(i=0; i<ArrayCount(Multiskins); i++)
+	{
+		if (Multiskins[i] == Texture'JCDentonTex3')
+		{
+			FlagBase.SetBool('JCOutfits_Equipped_NoLeather', False,, 99);
+			break;
+		}
+	}
+	
+	FlagBase.SetBool('JCOutfits_No_Coat', True,, 99);
+	switch(Mesh.Name)
+	{
+		case 'GM_Trench':
+		case 'GM_TrenchLeft':
+		case 'GM_Trench_F':
+		case 'GM_Trench_FLeft':
+		case 'GFM_Trench':
+		case 'GFM_TrenchLeft':
+			CurMeshLensesIndex = 7;
+			CurMeshFramesIndex = 6;
+			FlagBase.SetBool('JCOutfits_No_Coat', False,, 99);
+		break;
+		case 'MP_Jumpsuit':
+		case 'MP_JumpsuitLeft':
+			CurMeshLensesIndex = -1;
+			CurMeshFramesIndex = -1;
+		break;
+		case 'GM_Suit':
+		case 'GM_SuitLeft':
+			CurMeshLensesIndex = 6;
+			CurMeshFramesIndex = 5;
+		break;
+		case 'GM_DressShirt_S':
+		case 'GM_DressShirt':
+		case 'GM_DressShirt_F':
+		case 'GM_DressShirt_SLeft':
+		case 'GM_DressShirtLeft':
+		case 'GM_DressShirt_FLeft':
+			CurMeshLensesIndex = 7;
+			CurMeshFramesIndex = 6;
+		break;
+		case 'GFM_SuitSkirt':
+		case 'GFM_SuitSkirt_F':
+		case 'GFM_SuitSkirtLeft':
+		case 'GFM_SuitSkirt_FLeft':
+			CurMeshLensesIndex = 7;
+			CurMeshFramesIndex = 6;
+		break;
+	}
 }
 
 exec function ReloadColorThemes()
@@ -5933,6 +6210,7 @@ function LoadNihilumKit()
 {
 	DonateNGItem(class'Ammo10mm', "AmmoAmount", "10");
 	LoadNGItem("FGRHK.Burger", "NumCopies", "2");
+	SkillPointsTotal += 575; //MADDERS, 5/13/25: Turns out nihilum has a difference between skillpointstotal and skillpointsavail. Why tho?
 	
 	//MADDERS: We're already wiping new game inventory with our main menu swap out, so skip this part.
 	//We wanted that damned sandwich, and we're gonna have it.
@@ -7239,6 +7517,9 @@ simulated function PlayFootStep()
 	//MADDERS, 3/29/21: Hack fix for fat JC making footstep noises still. Ech.
 	if ((bDuck == 1 || bForceDuck) && (Physics != PHYS_Falling)) return;
 	
+	//MADDERS, 7/11/25: Fix for weird shit on ladders. Sometimes you can play footsteps, sometimes not.
+	if (VMDUsingLadder()) return;
+	
 	// Only do this on ourself, since this takes into account aug stealth and such
 	if ( Level.NetMode != NM_StandAlone )
 		pp = DeusExPlayer( GetPlayerPawn() );
@@ -7597,12 +7878,18 @@ function RunOverdoseEffects(float DT)
 
 function float VMDConfigureAimModifier()
 {
- 	local float TAdd;
+ 	local float TAdd, TMult;
  	
 	if (IsInState('PlayerWalking'))
 	{
 		if (bUseGunplayVersionTwo)
 		{
+			TMult = 1.0;
+			if (DeusExWeapon(InHand) != None)
+			{
+				TMult = DeusExWeapon(InHand).FactorWM2ADSMultiplier();
+			}
+			
 			//MADDERS, 5/4/25: In GP2, no penalty for not ducking, but reduced bonus. Walking also gives us this bonus.
  			if ((bDuck == 1) && (!bForceDuck || HealthLegLeft > 0 || HealthLegRight > 0))
 			{
@@ -8951,24 +9238,24 @@ function UpdateStress()
  	//Step 1: Health multiplier.
  	//--------------------
  	//1b: Broad health.
- 	if (HTotal < 150*GetHealthMult("All")) THealthMult = 0.2;
- 	else if (HTotal < 300*GetHealthMult("All")) THealthMult = 0.15;
- 	else if (HTotal < 450*GetHealthMult("All")) THealthMult = 0.1;
+ 	if (HTotal < 150*GetHealthMult("All")) THealthMult = 0.135;
+ 	else if (HTotal < 300*GetHealthMult("All")) THealthMult = 0.10;
+ 	else if (HTotal < 450*GetHealthMult("All")) THealthMult = 0.065;
  	
  	//--------------------
  	//1c: Arms are "grazes" but can add up.
- 	if (HealthArmRight < 50*GetHealthMult("Right Arm") || HealthArmLeft < 50*GetHealthMult("Left Arm")) THealthMult += 0.05;
+ 	if (HealthArmRight < 50*GetHealthMult("Right Arm") || HealthArmLeft < 50*GetHealthMult("Left Arm")) THealthMult += 0.035;
 	
  	//1d: Legs are vital, and can really freak us out
- 	if (HealthLegLeft < 50*GetHealthMult("Left Leg") || HealthLegRight < 50*GetHealthMult("Right Leg")) THealthMult += 0.05;
- 	if ((HealthLegLeft < 15*GetHealthMult("Left Leg")) && (HealthLegRight < 15*GetHealthMult("Right Leg"))) THealthMult += 0.1;
+ 	if (HealthLegLeft < 50*GetHealthMult("Left Leg") || HealthLegRight < 50*GetHealthMult("Right Leg")) THealthMult += 0.035;
+ 	if ((HealthLegLeft < 15*GetHealthMult("Left Leg")) && (HealthLegRight < 15*GetHealthMult("Right Leg"))) THealthMult += 0.65;
  	
  	//1e: Vital organs fucking suck. Head especially.
- 	if (HealthTorso < 35*GetHealthMult("Torso")) THealthMult += 0.1;
- 	else if (HealthTorso < 65*GetHealthMult("Torso")) THealthMult += 0.05;
+ 	if (HealthTorso < 35*GetHealthMult("Torso")) THealthMult += 0.065;
+ 	else if (HealthTorso < 65*GetHealthMult("Torso")) THealthMult += 0.035;
  	
- 	if (HealthHead < 35*GetHealthMult("Head")) THealthMult += 0.15;
- 	else if (HealthHead < 65*GetHealthMult("Head")) THealthMult += 0.05;
+ 	if (HealthHead < 35*GetHealthMult("Head")) THealthMult += 0.10;
+ 	else if (HealthHead < 65*GetHealthMult("Head")) THealthMult += 0.035;
  	
 	//MADDERS: Turn off this stress when in god mode. Why not?
 	if (ReducedDamageType == 'All') THealthMult = 0;
@@ -9008,7 +9295,7 @@ function UpdateStress()
  	EnergyMult = 1.0;
  	if (Energy < EnergyMax*0.15)
 	{
-		EnergyMult = 1.25;
+		EnergyMult = 1.125;
 	}
  	else if (Energy > EnergyMax*0.85)
 	{
@@ -9022,8 +9309,8 @@ function UpdateStress()
 	}
  	else
 	{
-		if (HungerTimer > HungerCap*0.70) FoodMult = 1.15;
- 		if (HungerTimer > HungerCap*0.85) FoodMult = 1.30;
+		if (HungerTimer > HungerCap*0.70) FoodMult = 1.10;
+ 		if (HungerTimer > HungerCap*0.85) FoodMult = 1.20;
  	}
 	
  	//Step 6: Add up stress gained.
@@ -9044,17 +9331,17 @@ function UpdateStress()
  	//GOOD STATUS!
  	if ((THealthMult <= 0.1) && (!bSpotted))
 	{
-		VMDModPlayerStress(-6, true, 0, true); //BROAD
+		VMDModPlayerStress(-8, true, 0, true); //BROAD
 	}
  	else if (THealthMult <= 0.15)
 	{
-		VMDModPlayerStress(-3, true, 0, true); //BROAD
+		VMDModPlayerStress(-4, true, 0, true); //BROAD
 	}
  	else
  	{
-  		if (bIndoors) VMDModPlayerStress(-2, true, 0, false); //BROAD
-  		if (bDark) VMDModPlayerStress(-4, true, 0, true); //BROAD
-  		if (bDuck == 1 || bCrouchOn) VMDModPlayerStress(-2, true, 0, false); //BROAD
+  		if (bIndoors) VMDModPlayerStress(-2.65, true, 0, false); //BROAD
+  		if (bDark) VMDModPlayerStress(-5.35, true, 0, true); //BROAD
+  		if (bDuck == 1 || bCrouchOn) VMDModPlayerStress(-2.65, true, 0, false); //BROAD
   		if (DeusExWeapon(InHand) != None)
   		{
    			DXW = DeusExWeapon(InHand);
@@ -9743,13 +10030,27 @@ function VMDCloseMainMenuHook()
 	}
 }
 
+function int HackSpecialCost()
+{
+	Log("GETTING SPECIAL COST!"@Self);
+	return 0;
+}
+
+function HackAddPawn()
+{
+}
+
 function VMDApplyScriptSwaps(string CampaignName)
 {
+	local NavigationPoint TNav;
+	local ScriptedPawn SP;
+	
 	switch(CampaignName)
 	{
 		case "":
 			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("HotelCarone.HCPaulDenton.ShieldDamage", "DeusEx.PaulDenton.ShieldDamage"))
 			{
+				Log(class'VMDGenericNativeFunctions'.Static.TargetScriptsAreEqual("HotelCarone.HCPaulDenton.ShieldDamage", "DeusEx.PaulDenton.ShieldDamage"));
 				Log("VMD: Applied precautionary damage fix to HC Paul Denton!");
 			}
 			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("HotelCarone.Langly.ShieldDamage", "DeusEx.WaltonSimons.ShieldDamage"))
@@ -9941,6 +10242,43 @@ function VMDTravelPostAcceptHook()
 	if ((bSmellsEnabled) && (PlayerSmellNode == None)) SetupSmellNodes();
 	if (VMDBufferAugmentationManager(AugmentationSystem) != None) VMDBufferAugmentationManager(AugmentationSystem).CheckAugErrors();
 	if (InvokedBindName != "") InvokeBindName(InvokedBindName);
+	
+	switch(SelectedCampaign)
+	{
+		case "ZODIAC":
+		case "OTHERPAULNOFOOD":
+		case "OTHERPAULNOFOODNOINTRO":
+		case "OTHERPAULZEROFOOD":
+		case "OTHERPAULZEROFOODNOINTRO":
+			FamiliarName = "Paul Denton";
+			UnfamiliarName = "Paul Denton";
+		break;
+		case "REDSUN":
+		case "REDSUN2020":
+			FamiliarName = "Joseph";
+			UnfamiliarName = "Joseph";
+		break;
+		case "NIHILUM":
+			FamiliarName = "Mad Ingram";
+			UnfamiliarName = "Mad Ingram";
+		break;
+		case "COUNTERFEIT":
+			FamiliarName = "Dominic Bishop";
+			UnfamiliarName = "Dominic Bishop";
+		break;
+		case "IWR":
+			FamiliarName = "Alex Denton";
+			UnfamiliarName = "Alex Denton";
+		break;
+		case "BLOODLIKEVENOM":
+			FamiliarName = "Johnny Venom";
+			UnfamiliarName = "Johnny Venom";
+		break;
+		case "HIVEDAYS":
+			FamiliarName = "Jack Ruben";
+			UnfamiliarName = "Jack Ruben";
+		break;
+	}
 	
 	if (FlagBase != None)
 	{
@@ -10224,12 +10562,29 @@ function HCDiffHandle(actor A)
 
 function VMDCheckLadderPoints()
 {
+	local string MissionBit;
+	local DeusExLevelInfo DXLI;
 	local VMDLadderPointAdder VLA;
+	local class<VMDLadderPointAdder> LoadType;
 	
 	forEach AllActors(class'VMDLadderPointAdder', VLA) break;
 	if (VLA != None) return;
 	
-	VLA = Spawn(class'VMDLadderPointAdder');
+	forEach AllActors(Class'DeusExLevelInfo', DXLI) break;
+	if (DXLI != None)
+	{
+		MissionBit = string(DXLI.MissionNumber);
+		if (DXLI.MissionNumber < 10)
+		{
+			MissionBit = "0"$DXLI.MissionNumber;
+		}
+		
+		LoadType = class<VMDLadderPointAdder>(DynamicLoadObject("DeusEx.VMDLadderPointAdderM"$MissionBit, class'Class', true));
+		if (LoadType != None)
+		{
+			VLA = Spawn(LoadType);
+		}
+	}
 }
 
 function VMDCheckFastMapFixer()
@@ -10945,11 +11300,14 @@ function VMDRunTickHook( float DT )
  	{
   		HUDEMPTimer -= DT;
 		
-	  	ShowHUD(False);
-		
-		if ((DeusExRootWindow(RootWindow) != None) && (DeusExRootWindow(RootWindow).AugDisplay != None))
+		if (!VMDIsInHandZoomed())
 		{
-			DeusExRootWindow(RootWindow).AugDisplay.Hide();
+		  	ShowHUD(False);
+			
+			if ((DeusExRootWindow(RootWindow) != None) && (DeusExRootWindow(RootWindow).AugDisplay != None))
+			{
+				DeusExRootWindow(RootWindow).AugDisplay.Hide();
+			}
 		}
 		
   		if (IsEMPFlicker(HUDEMPTimer))
@@ -12086,7 +12444,8 @@ ignores SeePlayer, HearNoise, Bump;
 			//MADDERS: Update female size a bit here.
 			if (bAssignedFemale)
 			{
-				BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 2.0;
+				//MADDERS, 5/11/25: Used to be -2, but oops, walk bob fucks everything up.
+				BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 6.0;
 			}
 			else
 			{
@@ -12118,7 +12477,8 @@ function ClientReStart()
 	//MADDERS: Update female size a bit here.
 	if (bAssignedFemale)
 	{
-		BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 2.0;
+		//MADDERS, 5/11/25: Used to be -2, but oops, walk bob fucks everything up.
+		BaseEyeHeight = CollisionHeight - (GetDefaultCollisionHeight() - Default.BaseEyeHeight) - 6.0;
 	}
 	else
 	{
@@ -12464,7 +12824,8 @@ defaultproperties
      bJumpDuckFeedbackNoise=True
      bDamageGateBreakNoise=True
      bUseGunplayVersionTwo=False
-     FrobEmptyLowersWeapon=True
+     bFrobEmptyLowersWeapon=True
+     bDisplayUncraftableItems=False
      CustomUIScale=2
      
      PreferredHandedness=-1
@@ -12517,6 +12878,60 @@ defaultproperties
      
      LastBrowsedAug=-1
      LastBrowsedAugPage=-1
+     
+     bRefuseWeaponAssaultGun=0
+     bRefuseWeaponAssaultShotgun=0
+     bRefuseWeaponBaton=0
+     bRefuseWeaponCombatKnife=0
+     bRefuseWeaponCrowbar=0
+     bRefuseWeaponEMPGrenade=0
+     bRefuseWeaponFlamethrower=0
+     bRefuseWeaponGasGrenade=0
+     bRefuseWeaponGEPGun=0
+     bRefuseWeaponHideAGun=0
+     bRefuseWeaponLAM=0
+     bRefuseWeaponLAW=0
+     bRefuseWeaponMiniCrossbow=0
+     bRefuseWeaponNanoSword=0
+     bRefuseWeaponNanoVirusGrenade=0
+     bRefuseWeaponPepperGun=0
+     bRefuseWeaponPistol=0
+     bRefuseWeaponPlasmaRifle=0
+     bRefuseWeaponProd=0
+     bRefuseWeaponRifle=0
+     bRefuseWeaponSawedOffShotgun=0
+     bRefuseWeaponShuriken=0
+     bRefuseWeaponStealthPistol=0
+     bRefuseWeaponSword=0
+     
+     bRefuseWeaponMod=1
+     bRefuseAugmentationCannister=1
+     bRefuseAugmentationUpgradeCannister=1
+     bRefuseBinoculars=1
+     bRefuseBioelectricCell=0
+     bRefuseCandybar=1
+     bRefuseCigarettes=1
+     bRefuseFireExtinguisher=0
+     bRefuseFlare=1
+     bRefuseLiquor40oz=1
+     bRefuseLiquorBottle=1
+     bRefuseMedKit=0
+     bRefuseSodacan=1
+     bRefuseSoyFood=1
+     bRefuseVialAmbrosia=1
+     bRefuseVialCrack=1
+     bRefuseWineBottle=1
+     
+     bRefuseMultitool=0
+     bRefuseLockpick=0
+     bRefuseVMDChemistrySet=1
+     bRefuseVMDToolbox=1
+     
+     bRefuseAdaptiveArmor=1
+     bRefuseBallisticArmor=1
+     bRefuseHazMatSuit=1
+     bRefuseRebreather=1
+     bRefuseTechGoggles=1
      
      MayhemFactor=-1
      AllureFactor=-1
