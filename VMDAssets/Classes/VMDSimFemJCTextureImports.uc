@@ -42,6 +42,8 @@ class VMDSimFemJCTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="JCDentonFemaleTex6" FILE="Textures\FemJC\JCDentonFemaleTex6.pcx" GROUP=Skins
 #exec TEXTURE IMPORT NAME="JCDentonFemaleTex7" FILE="Textures\FemJC\JCDentonFemaleTex7.pcx" GROUP=Skins
 
+#exec TEXTURE IMPORT NAME="JCDentonFemaleSkirtLegs" FILE="Textures\FemJC\JCDentonFemaleSkirtLegs.pcx" GROUP=Skins
+
 //=============================
 //Female JC Textures, courtesy of my LupusDraconis.
 //=============================

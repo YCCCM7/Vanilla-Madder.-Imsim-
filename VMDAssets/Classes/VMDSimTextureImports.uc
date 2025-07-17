@@ -162,6 +162,12 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="MenuAppearanceBackground_5" FILE="Textures\MenuAppearanceBackground05.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="MenuAppearanceBackground_6" FILE="Textures\MenuAppearanceBackground06.pcx" GROUP=UI FLAGS=2
 
+//Modify variant
+#exec TEXTURE IMPORT NAME="MenuModifyAppearanceBackground_1" FILE="Textures\MenuModifyAppearanceBackground01.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="MenuModifyAppearanceBackground_2" FILE="Textures\MenuModifyAppearanceBackground02.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="MenuModifyAppearanceBackground_3" FILE="Textures\MenuModifyAppearanceBackground03.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="MenuModifyAppearanceBackground_4" FILE="Textures\MenuModifyAppearanceBackground04.pcx" GROUP=UI FLAGS=2
+
 //=============================
 //Difficulty Screen
 //=============================
@@ -333,6 +339,23 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="NewHealthBorder_5" FILE="Textures\HealthBorder_5.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="NewHealthBorder_6" FILE="Textures\HealthBorder_6.pcx" GROUP=UI FLAGS=2
 
+//=============================
+//New Logs Screen
+//=============================
+#exec TEXTURE IMPORT NAME="VMDLogsBackground_1" FILE="Textures\VMDLogsBackground_1.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDLogsBackground_2" FILE="Textures\VMDLogsBackground_2.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDLogsBackground_3" FILE="Textures\VMDLogsBackground_3.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDLogsBackground_4" FILE="Textures\VMDLogsBackground_4.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDLogsBackground_5" FILE="Textures\VMDLogsBackground_5.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDLogsBackground_6" FILE="Textures\VMDLogsBackground_6.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDLogsBorder_1" FILE="Textures\VMDLogsBorder_1.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDLogsBorder_2" FILE="Textures\VMDLogsBorder_2.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDLogsBorder_3" FILE="Textures\VMDLogsBorder_3.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDLogsBorder_4" FILE="Textures\VMDLogsBorder_4.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDLogsBorder_5" FILE="Textures\VMDLogsBorder_5.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDLogsBorder_6" FILE="Textures\VMDLogsBorder_6.pcx" GROUP=UI FLAGS=2
+
 //+++++++++++++++++++++++++++++
 //Status icons.
 //+++++++++++++++++++++++++++++
@@ -412,6 +435,26 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="VMDMenuLoadSaveBackground_4" FILE="Textures\MenuLoadSaveBackground_4.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="VMDMenuLoadSaveBackground_5" FILE="Textures\MenuLoadSaveBackground_5.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="VMDMenuLoadSaveBackground_6" FILE="Textures\MenuLoadSaveBackground_6.pcx" GROUP=UI FLAGS=2
+
+//=============================
+//File Finder
+//=============================
+#exec TEXTURE IMPORT NAME="VMDFileFinderFileIcon" FILE="Textures\VMDFileFinderFileIcon.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDFileFinderFolderIcon" FILE="Textures\VMDFileFinderFolderIcon.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDFileFinderKeyFolderIcon" FILE="Textures\VMDFileFinderKeyFolderIcon.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDFileFinderListTile0" FILE="Textures\VMDFileFinderListTile0.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDFileFinderListTile1" FILE="Textures\VMDFileFinderListTile1.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDFileFinderListTile2" FILE="Textures\VMDFileFinderListTile2.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDFileFinderListTile0Highlight" FILE="Textures\VMDFileFinderListTileHighlight0.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDFileFinderListTile1Highlight" FILE="Textures\VMDFileFinderListTileHighlight1.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDFileFinderListTile2Highlight" FILE="Textures\VMDFileFinderListTileHighlight2.pcx" GROUP=UI FLAGS=2
+
+#exec TEXTURE IMPORT NAME="VMDModLocatorListWindowBG01" FILE="Textures\VMDModLocatorListWindowBG01.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="VMDModLocatorListWindowBG02" FILE="Textures\VMDModLocatorListWindowBG02.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDModLocatorListWindowBG03" FILE="Textures\VMDModLocatorListWindowBG03.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="VMDModLocatorListWindowBG04" FILE="Textures\VMDModLocatorListWindowBG04.pcx" GROUP=UI FLAGS=2
 
 //=============================
 //Persona Screen
@@ -512,6 +555,13 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="BeltIconWeaponModEvolution" FILE="Textures\BeltIconWeaponModEvolution.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="LargeIconWeaponModEvolution" FILE="Textures\LargeIconWeaponModEvolution.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="WeaponModEvolution" FILE="Textures\WeaponModEvolution.pcx" GROUP=Skins FLAGS=2
+
+#exec TEXTURE IMPORT NAME="BeltIconWeaponModMinor" FILE="Textures\BeltIconWeaponModMinor.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="LargeIconWeaponModMinor" FILE="Textures\LargeIconWeaponModMinor.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="WeaponModMinor" FILE="Textures\WeaponModMinor.pcx" GROUP=Skins FLAGS=2
+#exec TEXTURE IMPORT NAME="BeltIconWeaponModMajor" FILE="Textures\BeltIconWeaponModMajor.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="LargeIconWeaponModMajor" FILE="Textures\LargeIconWeaponModMajor.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="WeaponModMajor" FILE="Textures\WeaponModMajor.pcx" GROUP=Skins FLAGS=2
 
 #exec TEXTURE IMPORT NAME="BeltIconWeaponModWinning" FILE="Textures\BeltIconWeaponModWinning.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="LargeIconWeaponModWinning" FILE="Textures\LargeIconWeaponModWinning.pcx" GROUP=UI FLAGS=2
@@ -804,7 +854,12 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="VMDHUDScopeCrosshair" FILE="Textures\DXTHUDScopeCrosshair.bmp" GROUP=UI
 #exec TEXTURE IMPORT NAME="VMDHUDScopeView" FILE="Textures\DXTHUDScopeView.bmp" GROUP=UI
 
-#exec TEXTURE IMPORT NAME="ItemRefusalBackground" FILE="Textures\ItemRefusalBackground.bmp" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="ItemRefusalBackground01" FILE="Textures\ItemRefusalBackground01.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="ItemRefusalBackground02" FILE="Textures\ItemRefusalBackground02.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="ItemRefusalBackground03" FILE="Textures\ItemRefusalBackground03.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="ItemRefusalBackground04" FILE="Textures\ItemRefusalBackground04.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="ItemRefusalBackground05" FILE="Textures\ItemRefusalBackground05.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="ItemRefusalBackground06" FILE="Textures\ItemRefusalBackground06.pcx" GROUP=UI FLAGS=2
 
 #exec TEXTURE IMPORT NAME="PersonaScrollHScale" FILE="Textures\PersonaScrollHScale.bmp" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="PersonaScrollHThumb_Bottom" FILE="Textures\PersonaScrollHThumb_Bottom.bmp" GROUP=UI FLAGS=2
