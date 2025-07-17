@@ -27,9 +27,9 @@ var MenuUIListHeaderButtonWindow	btnHeaderCategory;
 var MenuUIListHeaderButtonWindow	btnHeaderItem;
 var MenuUIListHeaderButtonWindow	btnHeaderValue;
 
-var bool bNumberSortOrder;
-var bool bTitleSortOrder;
-var bool bCompletedSortOrder;
+//var bool bNumberSortOrder;
+//var bool bTitleSortOrder;
+//var bool bCompletedSortOrder;
 
 var localized string 	strItemsRifle[4];
 var string 				varItemsRifle[4];
@@ -43,10 +43,25 @@ var localized string 	strItemsLowTech[8];
 var string 				varItemsLowTech[8];
 var localized string 	strItemsEnviro[5];
 var string 				varItemsEnviro[5];
-var localized string 	strItemsTools[10];
-var string 				varItemsTools[10];
+var localized string 	strItemsTools[14];
+var string 				varItemsTools[14];
 var localized string	strItemsConsumables[9];
 var string 				varItemsConsumables[9];
+
+var localized string strItemsNihilum[4];
+var string VarItemsNihilum[4];
+
+var MenuUISliderButtonWindowMini MiniSliders[128], LastMiniSlider;
+
+//MADDERS, 6/16/25: Upgrading this system a bit.
+var localized string StrRefusalLevels[3];
+
+struct VMDButtonPos {
+	var int X;
+	var int Y;
+};
+
+var VMDButtonPos MiniSliderBarPos;
 
 // ----------------------------------------------------------------------
 // InitWindow()
@@ -86,8 +101,8 @@ function CreateControls()
 function CreateHeaderButtons()
 {
 	btnHeaderCategory 	= CreateHeaderButton( 7,   17, 99,  HeaderTypeLabel,      winClient );
-	btnHeaderItem     	= CreateHeaderButton( 108, 17, 320, HeaderTitleLabel,     winClient );
-	btnHeaderValue 	 	= CreateHeaderButton( 428, 17, 58, HeaderValueLabel,	  winClient );
+	btnHeaderItem     	= CreateHeaderButton( 108, 17, 330, HeaderTitleLabel,     winClient );
+	btnHeaderValue 	 	= CreateHeaderButton( 438, 17, 78, HeaderValueLabel,	  winClient );
 }
 
 function CreateItemListWindow()
@@ -95,7 +110,7 @@ function CreateItemListWindow()
 	winScroll = CreateScrollAreaWindow(winClient);
 
 	winScroll.SetPos(7, 40);
-	winScroll.SetSize(477, 316);
+	winScroll.SetSize(507, 316);
 
 	lstItems = MenuUIListWindow(winScroll.clipWindow.NewChild(Class'MenuUIListWindow'));
 
@@ -104,8 +119,8 @@ function CreateItemListWindow()
 	lstItems.SetNumColumns(5);
 
 	lstItems.SetColumnWidth(0, 106);
-	lstItems.SetColumnWidth(1, 320);
-	lstItems.SetColumnWidth(2, 58);
+	lstItems.SetColumnWidth(1, 330);
+	lstItems.SetColumnWidth(2, 78);
 	lstItems.SetColumnWidth(3, 0);
 	lstItems.SetColumnWidth(4, 0);
 	lstItems.SetColumnAlignment(1, HALIGN_Left);
@@ -116,8 +131,8 @@ function CreateItemListWindow()
 	lstItems.SetColumnFont(0, Font'FontMenuHeaders');
 	lstItems.SetColumnFont(1, Font'FontMenuHeaders');
 	lstItems.SetColumnFont(2, Font'FontMenuHeaders');
-	lstItems.SetSortColumn(0, False);
-	lstItems.EnableAutoSort(True);
+	//lstItems.SetSortColumn(0, False);
+	//lstItems.EnableAutoSort(True);
 
 	SetFocusWindow(lstItems);
 }
@@ -132,52 +147,130 @@ function populateItemList()
 	for (i=0; i<arrayCount(strItemsRifle); i++)
 	{
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
+		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+		MiniSliders[j].SetTicks(3, 0, 2);
+		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsRifle[i])));
+		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsRifle[i])));
+		MiniSliders[j].ConfigSetting = VarItemsRifle[i];
+		MiniSliders[j].ParentWindow = Self;
+		MiniSliders[j].ArrayIndex = j;
+		MiniSliders[j].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * j));
 		j++;
 	}
 	allSection++;
 	for (i=0; i<arrayCount(strItemsPistol); i++)
 	{
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
+		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+		MiniSliders[j].SetTicks(3, 0, 2);
+		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsPistol[i])));
+		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsPistol[i])));
+		MiniSliders[j].ConfigSetting = VarItemsPistol[i];
+		MiniSliders[j].ParentWindow = Self;
+		MiniSliders[j].ArrayIndex = j;
+		MiniSliders[j].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * j));
 		j++;
 	}
 	allSection++;
 	for (i=0; i<arrayCount(strItemsHeavy); i++)
 	{
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
+		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+		MiniSliders[j].SetTicks(3, 0, 2);
+		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsHeavy[i])));
+		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsHeavy[i])));
+		MiniSliders[j].ConfigSetting = VarItemsHeavy[i];
+		MiniSliders[j].ParentWindow = Self;
+		MiniSliders[j].ArrayIndex = j;
+		MiniSliders[j].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * j));
 		j++;
 	}
 	allSection++;
 	for (i=0; i<arrayCount(strItemsDemo); i++)
 	{
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
+		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+		MiniSliders[j].SetTicks(3, 0, 2);
+		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsDemo[i])));
+		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsDemo[i])));
+		MiniSliders[j].ConfigSetting = VarItemsDemo[i];
+		MiniSliders[j].ParentWindow = Self;
+		MiniSliders[j].ArrayIndex = j;
+		MiniSliders[j].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * j));
 		j++;
 	}
 	allSection++;
 	for (i=0; i<arrayCount(strItemsLowTech); i++)
 	{
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
+		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+		MiniSliders[j].SetTicks(3, 0, 2);
+		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsLowTech[i])));
+		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsLowTech[i])));
+		MiniSliders[j].ConfigSetting = VarItemsLowTech[i];
+		MiniSliders[j].ParentWindow = Self;
+		MiniSliders[j].ArrayIndex = j;
+		MiniSliders[j].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * j));
 		j++;
 	}
 	allSection++;
 	for (i=0; i<arrayCount(strItemsEnviro); i++)
 	{
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
+		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+		MiniSliders[j].SetTicks(3, 0, 2);
+		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsEnviro[i])));
+		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsEnviro[i])));
+		MiniSliders[j].ConfigSetting = VarItemsEnviro[i];
+		MiniSliders[j].ParentWindow = Self;
+		MiniSliders[j].ArrayIndex = j;
+		MiniSliders[j].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * j));
 		j++;
 	}
 	allSection++;
 	for (i=0; i<arrayCount(strItemsTools); i++)
 	{
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
+		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+		MiniSliders[j].SetTicks(3, 0, 2);
+		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsTools[i])));
+		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsTools[i])));
+		MiniSliders[j].ConfigSetting = VarItemsTools[i];
+		MiniSliders[j].ParentWindow = Self;
+		MiniSliders[j].ArrayIndex = j;
+		MiniSliders[j].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * j));
 		j++;
 	}
 	allSection++;
 	for (i=0; i<arrayCount(strItemsConsumables); i++)
 	{
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
+		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+		MiniSliders[j].SetTicks(3, 0, 2);
+		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsConsumables[i])));
+		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsConsumables[i])));
+		MiniSliders[j].ConfigSetting = VarItemsConsumables[i];
+		MiniSliders[j].ParentWindow = Self;
+		MiniSliders[j].ArrayIndex = j;
+		MiniSliders[j].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * j));
 		j++;
 	}
-
-	lstItems.Sort();
+	allSection++;
+	for (i=0; i<arrayCount(strItemsNihilum); i++)
+	{
+		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
+		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+		MiniSliders[j].SetTicks(3, 0, 2);
+		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsNihilum[i])));
+		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsNihilum[i])));
+		MiniSliders[j].ConfigSetting = VarItemsNihilum[i];
+		MiniSliders[j].ParentWindow = Self;
+		MiniSliders[j].ArrayIndex = j;
+		MiniSliders[j].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * j));
+		j++;
+	}
+	
+	//lstItems.Sort();
 	lstItems.SelectRow(lstItems.IndexToRowId(selectedRowIdBackup), True);
 	lstItems.SetFocusRow(lstItems.IndexToRowId(selectedRowIdBackup), True);
 	selectedRowId = selectedRowIdBackup;
@@ -185,12 +278,11 @@ function populateItemList()
 
 function String BuildItemString(int num, optional int allSection, optional int num2)
 {
-	local String section;
 	local bool allowed;
-	local String variable;
-	local String itemString;
-	local String itemName;
-
+	local String section, variable, itemString, itemName;
+	//MADDERS, 6/16/25: New label logic.
+	local int GetVal;
+	
 	section = String(num2+1);
 	if (Len(section) == 1)
 		section = (0 $ section);
@@ -199,92 +291,80 @@ function String BuildItemString(int num, optional int allSection, optional int n
 	{
 		case 1: // Rifle
 			allowed = !bool(Player.GetPropertyText(varItemsRifle[num]));
-			variable = (varItemsRifle[num]);
+			//variable = (varItemsRifle[num]);
+			GetVal = int(Player.GetPropertyText(VarItemsRifle[num]));
 			itemName = strItemsRifle[num];
 			section = strItemType[allSection];
 			break;
 		case 2: // Pistol
 			allowed = !bool(Player.GetPropertyText(varItemsPistol[num]));
-			variable = (varItemsPistol[num]);
+			//variable = (varItemsPistol[num]);
+			GetVal = int(Player.GetPropertyText(VarItemsPistol[num]));
 			itemName = strItemsPistol[num];
 			section = strItemType[allSection];
 			break;
 		case 3: // Heavy
 			allowed = !bool(Player.GetPropertyText(varItemsHeavy[num]));
-			variable = (varItemsHeavy[num]);
+			//variable = (varItemsHeavy[num]);
+			GetVal = int(Player.GetPropertyText(VarItemsHeavy[num]));
 			itemName = strItemsHeavy[num];
 			section = strItemType[allSection];
 			break;
 		case 4: // Demo
 			allowed = !bool(Player.GetPropertyText(varItemsDemo[num]));
-			variable = (varItemsDemo[num]);
+			//variable = (varItemsDemo[num]);
+			GetVal = int(Player.GetPropertyText(VarItemsDemo[num]));
 			itemName = strItemsDemo[num];
 			section = strItemType[allSection];
 			break;
 		case 5: // Low Tech
 			allowed = !bool(Player.GetPropertyText(varItemsLowTech[num]));
-			variable = (varItemsLowTech[num]);
+			//variable = (varItemsLowTech[num]);
+			GetVal = int(Player.GetPropertyText(VarItemsLowTech[num]));
 			itemName = strItemsLowTech[num];
 			section = strItemType[allSection];
 			break;
 		case 6: // Charged Pickups
 			allowed = !bool(Player.GetPropertyText(varItemsEnviro[num]));
-			variable = (varItemsEnviro[num]);
+			//variable = (varItemsEnviro[num]);
+			GetVal = int(Player.GetPropertyText(VarItemsEnviro[num]));
 			itemName = strItemsEnviro[num];
 			section = strItemType[allSection];
 			break;
 		case 7: // Tools
 			allowed = !bool(Player.GetPropertyText(varItemsTools[num]));
-			variable = (varItemsTools[num]);
+			//variable = (varItemsTools[num]);
+			GetVal = int(Player.GetPropertyText(VarItemsTools[num]));
 			itemName = strItemsTools[num];
 			section = strItemType[allSection];
 			break;
 		case 8: // Consumables
 			allowed = !bool(Player.GetPropertyText(varItemsConsumables[num]));
-			variable = (varItemsConsumables[num]);
+			//variable = (varItemsConsumables[num]);
+			GetVal = int(Player.GetPropertyText(VarItemsConsumables[num]));
 			itemName = strItemsConsumables[num];
 			section = strItemType[allSection];
 			break;
+		case 9: // Nihilum
+			allowed = !bool(Player.GetPropertyText(varItemsNihilum[num]));
+			GetVal = int(Player.GetPropertyText(VarItemsNihilum[num]));
+			itemName = strItemsNihilum[num];
+			section = strItemType[allSection];
+		break;
 		Default:
 			allowed = true;
 			itemName = "?????";
 			section = "??";
 			break;
 	}
-
-	itemString = section $ ";" $ itemName $ ";" $ allowed $ ";" $ variable $ ";" $ num2;
-
+	
+	//MADDERS, 6/16/25: Just get from a prebuilt array.
+	Variable = StrRefusalLevels[GetVal];
+	
+	//itemString = section $ ";" $ itemName $ ";" $ allowed $ ";" $ variable $ ";" $ num2;
+	itemString = section $ ";" $ itemName $ ";" $ Variable $ ";" $ variable $ ";" $ num2;
+	
 	return itemString;
-}
-
-function String BuildElapsedTimeString(float seconds)
-{
-	local int mins;
-	local float secs;
-	local string str;
-
-	mins = seconds / 60;
-	secs = seconds % 60;
-
-	if (mins < 10)
-		str = "0";
-	str = str $ mins $ ":";
-	if (secs < 10)
-		str = str $ "0";
-	str = str $ secs;
-
-	return Left(str, InStr(str, ":")) $ Mid(str, InStr(str, ":"), 7); // Draw as many minutes as required, then two seconds, then three milliseconds.
-}
-
-// ----------------------------------------------------------------------
-// TwoDigits()
-// ----------------------------------------------------------------------
-function String TwoDigits(int number)
-{
-	if ( number < 10 )
-		return "0" $ number;
-	else
-		return String(number);
 }
 
 // ----------------------------------------------------------------------
@@ -298,7 +378,7 @@ function bool ButtonActivated( Window buttonPressed )
 
 	switch( buttonPressed )
 	{
-		case btnHeaderCategory:
+		/*case btnHeaderCategory:
 			bNumberSortOrder = !bNumberSortOrder;
 			lstItems.SetSortColumn( 0, bNumberSortOrder );
 			lstItems.Sort();
@@ -314,7 +394,7 @@ function bool ButtonActivated( Window buttonPressed )
 			bCompletedSortOrder = !bCompletedSortOrder;
 			lstItems.SetSortColumn( 2, bCompletedSortOrder );
 			lstItems.Sort();
-			break;
+			break;*/
 
 		default:
 			bHandled = False;
@@ -344,7 +424,7 @@ event bool ListSelectionChanged(window list, int numSelections, int focusRowId)
 
 event bool ListRowActivated(window list, int rowId)
 {
-	SwitchVariable();
+	//SwitchVariable();
 	return true;
 }
 
@@ -453,6 +533,10 @@ function SetAllFalse()
 	
 	for (i=0; i<arrayCount(varItemsConsumables); i++)
 		Player.SetPropertyText(varItemsConsumables[i], "True");
+	
+	for (i=0; i<arrayCount(varItemsNihilum); i++)
+		Player.SetPropertyText(varItemsNihilum[i], "True");
+	
 	Player.SaveConfig();
 		
 	populateItemList();
@@ -486,9 +570,195 @@ function SetAllTrue()
 	
 	for (i=0; i<arrayCount(varItemsConsumables); i++)
 		Player.SetPropertyText(varItemsConsumables[i], "False");
+
+	for (i=0; i<arrayCount(varItemsNihilum); i++)
+		Player.SetPropertyText(varItemsNihilum[i], "False");
+
 	Player.SaveConfig();
 		
 	populateItemList();
+}
+
+function int GetCategoryThreshold(string Category)
+{
+	local int Ret;
+	
+	switch(Category)
+	{
+		case "Nihilum":
+			Ret += ArrayCount(VarItemsConsumables);
+		case "Consumables":
+			Ret += ArrayCount(VarItemsTools);
+		case "Tools":
+			Ret += ArrayCount(VarItemsEnviro);
+		case "Enviro":
+			Ret += ArrayCount(VarItemsLowTech);
+		case "LowTech":
+			Ret += ArrayCount(VarItemsDemo);
+		case "Demo":
+			Ret += ArrayCount(VarItemsHeavy);
+		case "Heavy":
+			Ret += ArrayCount(VarItemsPistol);
+		case "Pistol":
+			Ret += ArrayCount(VarItemsRifle);
+		break;
+	}
+	
+	return ret;
+}
+
+function SetRowVariable(int UseRow, int NewVal)
+{
+	local int allSection, num, num2;
+	local bool allowed;
+	local String Section, variable, itemString, itemName;
+	//MADDERS, 6/16/25: New label logic.
+	local int GetVal;
+	
+	Num2 = UseRow;
+	if (UseRow < GetCategoryThreshold("Pistol"))
+	{
+		AllSection = 1;
+		Num = UseRow;
+	}
+	else if (UseRow < GetCategoryThreshold("Heavy"))
+	{
+		AllSection = 2;
+		Num = UseRow - GetCategoryThreshold("Pistol");
+	}
+	else if (UseRow < GetCategoryThreshold("Demo"))
+	{
+		AllSection = 3;
+		Num = UseRow - GetCategoryThreshold("Heavy");
+	}
+	else if (UseRow < GetCategoryThreshold("LowTech"))
+	{
+		AllSection = 4;
+		Num = UseRow - GetCategoryThreshold("Demo");
+	}
+	else if (UseRow < GetCategoryThreshold("Enviro"))
+	{
+		AllSection = 5;
+		Num = UseRow - GetCategoryThreshold("LowTech");
+	}
+	else if (UseRow < GetCategoryThreshold("Tools"))
+	{
+		AllSection = 6;
+		Num = UseRow - GetCategoryThreshold("Enviro");
+	}
+	else if (UseRow < GetCategoryThreshold("Consumables"))
+	{
+		AllSection = 7;
+		Num = UseRow - GetCategoryThreshold("Tools");
+	}
+	else if (UseRow < GetCategoryThreshold("Nihilum"))
+	{
+		AllSection = 8;
+		Num = UseRow - GetCategoryThreshold("Consumables");
+	}
+	else
+	{
+		AllSection = 9;
+		Num = UseRow - GetCategoryThreshold("Nihilum");
+	}
+	
+	//NOTE: We are only supposed to be used artificially.
+	UseRow = LstItems.IndexToRowId(UseRow);
+	
+	switch(allSection)
+	{
+		case 1: // Rifle
+			allowed = !bool(Player.GetPropertyText(varItemsRifle[num]));
+			//variable = (varItemsRifle[num]);
+			Player.SetPropertyText(VarItemsRifle[num], String(NewVal));
+			GetVal = int(Player.GetPropertyText(VarItemsRifle[num]));
+			itemName = strItemsRifle[num];
+			section = strItemType[allSection];
+			break;
+		case 2: // Pistol
+			allowed = !bool(Player.GetPropertyText(varItemsPistol[num]));
+			//variable = (varItemsPistol[num]);
+			Player.SetPropertyText(VarItemsPistol[num], String(NewVal));
+			GetVal = int(Player.GetPropertyText(VarItemsPistol[num]));
+			itemName = strItemsPistol[num];
+			section = strItemType[allSection];
+			break;
+		case 3: // Heavy
+			allowed = !bool(Player.GetPropertyText(varItemsHeavy[num]));
+			//variable = (varItemsHeavy[num]);
+			Player.SetPropertyText(VarItemsHeavy[num], String(NewVal));
+			GetVal = int(Player.GetPropertyText(VarItemsHeavy[num]));
+			itemName = strItemsHeavy[num];
+			section = strItemType[allSection];
+			break;
+		case 4: // Demo
+			allowed = !bool(Player.GetPropertyText(varItemsDemo[num]));
+			//variable = (varItemsDemo[num]);
+			Player.SetPropertyText(VarItemsDemo[num], String(NewVal));
+			GetVal = int(Player.GetPropertyText(VarItemsDemo[num]));
+			itemName = strItemsDemo[num];
+			section = strItemType[allSection];
+			break;
+		case 5: // Low Tech
+			allowed = !bool(Player.GetPropertyText(varItemsLowTech[num]));
+			//variable = (varItemsLowTech[num]);
+			Player.SetPropertyText(VarItemsLowTech[num], String(NewVal));
+			GetVal = int(Player.GetPropertyText(VarItemsLowTech[num]));
+			itemName = strItemsLowTech[num];
+			section = strItemType[allSection];
+			break;
+		case 6: // Charged Pickups
+			allowed = !bool(Player.GetPropertyText(varItemsEnviro[num]));
+			//variable = (varItemsEnviro[num]);
+			Player.SetPropertyText(VarItemsEnviro[num], String(NewVal));
+			GetVal = int(Player.GetPropertyText(VarItemsEnviro[num]));
+			itemName = strItemsEnviro[num];
+			section = strItemType[allSection];
+			break;
+		case 7: // Tools
+			allowed = !bool(Player.GetPropertyText(varItemsTools[num]));
+			//variable = (varItemsTools[num]);
+			Player.SetPropertyText(VarItemsTools[num], String(NewVal));
+			GetVal = int(Player.GetPropertyText(VarItemsTools[num]));
+			itemName = strItemsTools[num];
+			section = strItemType[allSection];
+			break;
+		case 8: // Consumables
+			allowed = !bool(Player.GetPropertyText(varItemsConsumables[num]));
+			//variable = (varItemsConsumables[num]);
+			Player.SetPropertyText(VarItemsConsumables[num], String(NewVal));
+			GetVal = int(Player.GetPropertyText(VarItemsConsumables[num]));
+			itemName = strItemsConsumables[num];
+			section = strItemType[allSection];
+			break;
+		case 9: // Nihilum
+			allowed = !bool(Player.GetPropertyText(varItemsNihilum[num]));
+			Player.SetPropertyText(VarItemsNihilum[num], String(NewVal));
+			GetVal = int(Player.GetPropertyText(VarItemsNihilum[num]));
+			itemName = strItemsNihilum[num];
+			section = strItemType[allSection];
+		break;
+		Default:
+			allowed = true;
+			itemName = "?????";
+			section = "??";
+			break;
+	}
+	
+	//MADDERS, 6/16/25: Just get from a prebuilt array.
+	Variable = StrRefusalLevels[GetVal];
+	
+	//itemString = section $ ";" $ itemName $ ";" $ allowed $ ";" $ variable $ ";" $ num2;
+	itemString = section $ ";" $ itemName $ ";" $ Variable $ ";" $ variable $ ";" $ num2;
+	lstItems.ModifyRow(UseRow, ItemString);
+}
+
+function MiniSliderChanged()
+{
+	if (LastMiniSlider != None)
+	{
+		SetRowVariable(LastMiniSlider.ArrayIndex, int(Player.GetPropertyText(LastMiniSlider.ConfigSetting)));
+	}
 }
 
 // ----------------------------------------------------------------------
@@ -500,17 +770,25 @@ defaultproperties
      HeaderTitleLabel="Item"
      HeaderValueLabel="Allowed"
      actionButtons(0)=(Align=HALIGN_Right,Action=AB_OK)
-     actionButtons(1)=(Action=AB_Other,Text="|&Switch",Key="SWITCH")
-	 actionButtons(2)=(Action=AB_Other,Text="All |&True",Key="ALLTRUE")
-	 actionButtons(3)=(Action=AB_Other,Text="All |&False",Key="ALLFALSE")
+     //actionButtons(1)=(Action=AB_Other,Text="|&Switch",Key="SWITCH")
+	// actionButtons(2)=(Action=AB_Other,Text="All |&True",Key="ALLTRUE")
+	// actionButtons(3)=(Action=AB_Other,Text="All |&False",Key="ALLFALSE")
      Title="Item Refusal"
-     ClientWidth=489
+     ClientWidth=519
      ClientHeight=402
-     clientTextures(0)=Texture'VMDAssets.ItemRefusalBackground'
+     clientTextures(0)=Texture'VMDAssets.ItemRefusalBackground01'
+     clientTextures(1)=Texture'VMDAssets.ItemRefusalBackground02'
+     clientTextures(2)=Texture'VMDAssets.ItemRefusalBackground03'
+     clientTextures(3)=Texture'VMDAssets.ItemRefusalBackground04'
+     clientTextures(4)=Texture'VMDAssets.ItemRefusalBackground05'
+     clientTextures(5)=Texture'VMDAssets.ItemRefusalBackground06'
      textureRows=2
-     textureCols=2
+     textureCols=3
      bUsesHelpWindow=False
      bEscapeSavesSettings=False
+     
+     MiniSliderBarPos=(X=335,Y=12)
+     
      strItemType(0)="???"
      strItemType(1)="Rifles"
      strItemType(2)="Pistols"
@@ -520,6 +798,7 @@ defaultproperties
      strItemType(6)="Environmental"
      strItemType(7)="Tools"
      strItemType(8)="Consumable"
+     strItemType(9)="Nihilum"
 
      strItemsRifle(0)="Assault Guns"
      strItemsRifle(1)="Assault Shotguns"
@@ -595,6 +874,10 @@ defaultproperties
      strItemsTools(7)="Augmentation Canisters"
      strItemsTools(8)="Augmentation Upgrade Canisters"
      strItemsTools(9)="Binoculars"
+     strItemsTools(10)="Compound 23"
+     strItemsTools(11)="Ritegel Medical Gel"
+     strItemsTools(12)="Chemistry Set"
+     strItemsTools(13)="Toolbox"
      varItemsTools(0)="bRefuseMultitool"
      varItemsTools(1)="bRefuseLockpick"
      varItemsTools(2)="bRefuseWeaponMod"
@@ -605,6 +888,10 @@ defaultproperties
      varItemsTools(7)="bRefuseAugmentationCannister"
      varItemsTools(8)="bRefuseAugmentationUpgradeCannister"
      varItemsTools(9)="bRefuseBinoculars"
+     varItemsTools(10)="bRefuseVMDCombatStim"
+     varItemsTools(11)="bRefuseVMDMedigel"
+     varItemsTools(12)="bRefuseVMDChemistrySet"
+     varItemsTools(13)="bRefuseVMDToolbox"
 
      strItemsConsumables(0)="Candybars"
      strItemsConsumables(1)="Soda"
@@ -624,4 +911,17 @@ defaultproperties
      varItemsConsumables(6)="bRefuseCigarettes"
      varItemsConsumables(7)="bRefuseVialAmbrosia"
      varItemsConsumables(8)="bRefuseVialCrack"
+     
+     StrItemsNihilum(0)="XVA Assault Rifle"
+     VarItemsNihilum(0)="bRefuseWeaponAssault17"
+     StrItemsNihilum(1)="DXN Pistol"
+     VarItemsNihilum(1)="bRefuseWeaponBRGlock"
+     StrItemsNihilum(2)="Paratrooper Rifle"
+     VarItemsNihilum(2)="bRefuseWeaponM249DXN"
+     StrItemsNihilum(3)="Modified Assault Rifle"
+     VarItemsNihilum(3)="bRefuseWeaponTakaraGun"
+     
+     StrRefusalLevels(0)="Okay"
+     StrRefusalLevels(1)="No Belt"
+     StrRefusalLevels(2)="Refuse"
 }
