@@ -663,8 +663,10 @@ function InitFor(Actor Other)
 		// Will this carcass spawn flies?
 		if (bAnimalCarcass)
 		{
-			if (FRand() < 0.2)
+			if ((FRand() < 0.2) && (!bNotDead))
+			{
 				bGenerateFlies = true;
+			}
 		}
 		else if (!Other.IsA('Robot') && (!bNotDead || bKOEmitCarcass))
 		{
@@ -1522,7 +1524,7 @@ function int LootPickups(DeusExPlayer Player)
 			else
 			{
 				// Transcended - Drop the item on the ground
-				if ((VMP != None) && (VMP.GetItemRefusalSetting(DXP)))
+				if ((VMP != None) && (VMP.GetItemRefusalSetting(DXP) == 2))
 				{
 					VMP.ClientMessage(SprintF(VMP.ItemRefusedString, DXP.ItemName));
 					VMDRemoveInventory(DXP, Level.NetMode == NM_Standalone);
@@ -1716,7 +1718,7 @@ function int LootWeaponsAmmo(DeusExPlayer Player)
 				if ((FindWeapon == None) && (!FindAdvancedInventorySlot(Player, DXW, true)))
 				{
 					// Transcended - Drop the item on the ground
-					if ((VMP != None) && (VMP.GetItemRefusalSetting(DXW)))
+					if ((VMP != None) && (VMP.GetItemRefusalSetting(DXW) == 2))
 					{
 						TName = DXW.ItemName;
 						if (!DXW.bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
