@@ -53,6 +53,7 @@ var localized String CannotBeDroppedLabel;
 var localized String AmmoInfoText;
 var localized String AmmoTitleLabel;
 var localized String NoAmmoLabel;
+var localized string ModWeaponLabel;
 
 // Vanilla Matters
 var float VM_mouseX;									// Just something to keep track of mouse position during a drag.
@@ -103,12 +104,22 @@ var bool bQueuedScrollFix;
 
 event InitWindow()
 {
+	local VMDBufferPlayer VMP;
+	
 	Super.InitWindow();
 	
 	//MADDERS, 5/17/22: Crafting now toggleable. How about that?
-	if ((VMDBufferPlayer(Player) != None) && (VMDBufferPlayer(Player).bCraftingSystemEnabled))
+	VMP = VMDBufferPlayer(Player);
+	if ((VMP != None) && (VMP.bCraftingSystemEnabled))
 	{
-		bCraftingEnabled = true;
+		switch(VMP.SelectedCampaign)
+		{
+			case "HiveDays":
+			break;
+			default:
+				bCraftingEnabled = true;
+			break;
+		}
 	}
 	
 	PersonaNavBarWindow(winNavBar).btnInventory.SetSensitivity(False);
@@ -153,13 +164,22 @@ function Tick(float deltaTime)
 function CreateControls()
 {
 	local Texture OldTex;
+	local VMDBufferPlayer VMP;
 	
 	Super.CreateControls();
 	
 	//MADDERS, 5/17/22: Crafting now toggleable. How about that?
-	if ((VMDBufferPlayer(Player) != None) && (VMDBufferPlayer(Player).bCraftingSystemEnabled))
+	VMP = VMDBufferPlayer(Player);
+	if ((VMP != None) && (VMP.bCraftingSystemEnabled))
 	{
-		bCraftingEnabled = true;
+		switch(VMP.SelectedCampaign)
+		{
+			case "HiveDays":
+			break;
+			default:
+				bCraftingEnabled = true;
+			break;
+		}
 	}
 	
 	CreateTitleWindow(9, 5, InventoryTitleText);
@@ -1025,6 +1045,12 @@ function UseSelectedItem()
 
 	if ((inv != None) && (Player != None))
 	{
+		if ((DeusExWeapon(Inv) != None) && (DeusExWeapon(Inv).ShouldUseWM2()))
+		{
+			DeusExWeapon(Inv).InvokeWM2Window(Player, DeusExWeapon(Inv));
+			return;
+		}
+		
 		// If this item was equipped in the inventory screen, 
 		// make sure we set inHandPending to None so it's not
 		// drawn when we exit the Inventory screen
@@ -1481,12 +1507,14 @@ function EnableButtons()
 		btnDrop.DisableWindow();
 		btnEquip.DisableWindow();
 		btnUse.DisableWindow();
+		btnUse.SetButtonText(UseButtonLabel);
 	}
 	else
 	{
 		btnChangeAmmo.EnableWindow();
 		btnEquip.EnableWindow();
 		btnUse.EnableWindow();
+		btnUse.SetButtonText(UseButtonLabel);
 		btnDrop.EnableWindow();
 
 		inv = Inventory(selectedItem.GetClientObject());
@@ -1543,10 +1571,20 @@ function EnableButtons()
 			// equipped.  If so, enable the "AMMO" button.
 			if ( inv.IsA('DeusExWeapon') )
 			{
-				btnUse.DisableWindow();
-
+				if (DeusExWeapon(Inv).ShouldUseWM2())
+				{
+					BtnUse.SetButtonText(ModWeaponLabel);
+				}
+				else
+				{
+					btnUse.DisableWindow();
+					btnUse.SetButtonText(UseButtonLabel);
+				}
+				
 				if ( DeusExWeapon(inv).NumAmmoTypesAvailable() < 2 )
+				{
 					btnChangeAmmo.DisableWindow();
+				}
 			}
 			else
 			{
@@ -1559,6 +1597,7 @@ function EnableButtons()
 			btnDrop.DisableWindow();
 			btnEquip.DisableWindow();
 			btnUse.DisableWindow();
+			btnUse.SetButtonText(UseButtonLabel);
 		}
 	}
 }
@@ -2000,6 +2039,9 @@ function FinishButtonDrag()
 	local PersonaInventoryItemButton invButton;
 	local int i;
 	
+	//VMD, 5/11/25: We're not savages. Store a cast.
+	local DeusExWeapon DXW;
+	
 	// Take a look at the last window we were over to determine
 	// what to do now.  If we were over the Inventory Items window,
 	// then move the item to a new slot.  If we were over the Object belt,
@@ -2020,30 +2062,42 @@ function FinishButtonDrag()
 		dragTarget = PersonaInventoryItemButton(lastDragOverButton);
 		
 		// Check if this is a weapon mod and we landed on a weapon
-		if ( (dragInv.IsA('WeaponMod')) && (dragTarget != None) && (dragTarget.GetClientObject().IsA('DeusExWeapon')) )
+		if (DragTarget != None)
 		{
-			if (WeaponMod(dragInv).CanUpgradeWeapon(DeusExWeapon(dragTarget.GetClientObject())))
+			DXW = DeusExWeapon(DragTarget.GetClientObject());
+		}
+		
+		if ((dragInv.IsA('WeaponMod')) && (DXW != None))
+		{
+			if (WeaponMod(dragInv).CanUpgradeWeapon(DXW))
 			{
-				// 0.  Unhighlight highlighted weapons
-				// 1.  Apply the weapon upgrade
-				// 2.  Remove from Object Belt
-				// 3.  Destroy the upgrade (will cause button to be destroyed)
-				// 4.  Highlight the weapon.
-				
-				WeaponMod(dragInv).ApplyMod(DeusExWeapon(dragTarget.GetClientObject()));
-				
-            			Player.RemoveObjectFromBelt(dragInv);
-            			//invBelt.objBelt.RemoveObjectFromBelt(dragInv);
-				
-				// Send status message
-				winStatus.AddText(Sprintf(WeaponUpgradedLabel, DeusExWeapon(dragTarget.GetClientObject()).itemName));
-				
-            			//DEUS_EX AMSD done here for multiplayer propagation.
-            			WeaponMod(draginv).DestroyMod();
-				//player.DeleteInventory(dragInv);
-				
-				dragButton = None;
-				SelectInventory(dragTarget);
+				if (DXW.ShouldUseWM2())
+				{
+					DXW.InvokeWM2Window(Player, DXW);
+				}
+				else
+				{
+					// 0.  Unhighlight highlighted weapons
+					// 1.  Apply the weapon upgrade
+					// 2.  Remove from Object Belt
+					// 3.  Destroy the upgrade (will cause button to be destroyed)
+					// 4.  Highlight the weapon.
+					
+					WeaponMod(dragInv).ApplyMod(DXW);
+					
+            				Player.RemoveObjectFromBelt(dragInv);
+            				//invBelt.objBelt.RemoveObjectFromBelt(dragInv);
+					
+					// Send status message
+					winStatus.AddText(Sprintf(WeaponUpgradedLabel, DXW.itemName));
+					
+            				//DEUS_EX AMSD done here for multiplayer propagation.
+            				WeaponMod(draginv).DestroyMod();
+					//player.DeleteInventory(dragInv);
+					
+					dragButton = None;
+					SelectInventory(dragTarget);
+				}
 			}
 			else
 			{
@@ -2053,12 +2107,12 @@ function FinishButtonDrag()
 		}
 		
 		// Check if this is ammo and we landed on a weapon
-		else if ((dragInv.IsA('DeusExAmmo')) && (dragTarget != None) && (dragTarget.GetClientObject().IsA('DeusExWeapon')) )
+		else if ((dragInv.IsA('DeusExAmmo')) && (DXW != None))
 		{
-			if (DeusExWeapon(dragTarget.GetClientObject()).CanLoadAmmoType(DeusExAmmo(dragInv)))
+			if (DXW.CanLoadAmmoType(DeusExAmmo(dragInv)))
 			{
 				// Load this ammo into the weapon
-				DeusExWeapon(dragTarget.GetClientObject()).LoadAmmoType(DeusExAmmo(dragInv));
+				DXW.LoadAmmoType(DeusExAmmo(dragInv));
 				
 				// Send status message
 				winStatus.AddText(Sprintf(AmmoLoadedLabel, DeusExAmmo(dragInv).itemName));
@@ -2462,7 +2516,7 @@ function PopulateSwapOthers( Inventory item, int slotX, int slotY )
 			
 			if ((win != None) && (win.IsA('PersonaInventoryItemButton')) && (Inventory(win.GetClientObject()) != item))
 			{
-				if (WeaponMod(Item) == None || Weapon(win.GetClientObject()) == None)
+				if (WeaponMod(Item) == None || DeusExWeapon(win.GetClientObject()) == None || !DeusExWeapon(Win.GetClientObject()).ShouldUseWM2())
 				{
 					AddSwapOther(PersonaInventoryItemButton(win));
 				}
@@ -3893,6 +3947,7 @@ defaultproperties
      clientBorderTextureRows=2
      clientBorderTextureCols=3
      
+     ModWeaponLabel="Mod|&..."
      CancelCraftingLabel="Cancel Crafting"
      ScrapCountLabel="Scrap:"
      ChemicalsCountLabel="Chemicals:"
