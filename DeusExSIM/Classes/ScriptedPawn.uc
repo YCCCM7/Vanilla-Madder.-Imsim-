@@ -717,6 +717,10 @@ function InitializeInventory()
 					{
 						Weapons[i].AmmoType.AmmoAmount = 2;
 					}
+					else
+					{
+						Weapons[i].AmmoType.AmmoAmount = Weapons[i].PickupAmmoCount;
+					}
 					weapons[i].AmmoType.InitialState = 'Idle2';
 					weapons[i].AmmoType.GiveTo(Self);
 					weapons[i].AmmoType.SetBase(Self);
@@ -1633,14 +1637,20 @@ function StartFalling(Name resumeState, optional Name resumeLabel)
 function Actor GetNextWaypoint(Actor destination)
 {
 	local Actor moveTarget;
-
+	
 	if (destination == None)
+	{
 		moveTarget = None;
+	}
 	else if (ActorReachable(destination))
+	{
 		moveTarget = destination;
+	}
 	else
+	{
 		moveTarget = FindPathToward(destination);
-
+	}
+	
 	return (moveTarget);
 }
 
@@ -4061,7 +4071,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	local EHitLocation hitPos;
 	local float        shieldMult, ShieldMult2, AugLevel;
 	
-	local bool bPoisonReact;
+	local bool bPoisonReact, bCombatesque;
 	local int LegSum, TPos, TRand;
 	local float LegMod, PoisonMod, FDamage, BonusFDamage;
 	local Vector TLoc, HitLocs[5], HitNorm, StartTraces[6], EndTraces[6];
@@ -4089,6 +4099,14 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	//IE if we're running for the alarm, don't give us extra time.
 	if ((!CanShowPain()) && (DamageType != 'PoisonEffect'))
 		bPlayAnim = false;
+	
+	//MADDERS, 5/25/25: Don't show pain when in combat states, because handling hit fucks up our flow.
+	//MADDERS, 6/26/25: This isn't as reliable as I'd hoped. Just stop doing this in general, since it basically never matters.
+	if (DamageType == 'Fell')
+	// && (IsInState('Attacking') || IsInState('HandlingEnemy') || IsInState('Fleeing') || IsInState('RunningTo') || IsInState('Alerting')))
+	{
+		bPlayAnim = false;
+	}
 	
 	// Prevent injury if the NPC is intangible
 	if ((!bBlockActors) && (!bBlockPlayers) && (!bCollideActors))
@@ -4528,7 +4546,9 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 		}
 	}
 	
-	if ((bPoisonReact) && (VMBP != None) && (!IsInState('Attacking')) && (!IsInState('Fleeing')) && (!IsInState('Alerting')) && (!ShouldFlee() || Weapon != None))
+	bCombatesque = (IsInState('Attacking') || IsInState('Fleeing') || IsInState('Alerting') || !IsInState('HandlingEnemy'));
+	
+	if ((bPoisonReact) && (VMBP != None) && (!bCombatesque) && (!ShouldFlee() || Weapon != None))
 	{
 		if ((GetPawnAllianceType(InstigatedBy) != ALLIANCE_Hostile) && (ShouldReactToInjuryType(damageType, bHateInjury, bHateIndirectInjury)))
 		{
@@ -4591,7 +4611,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	{
 		ReactToInjury(instigatedBy, damageType, hitPos);
 	}
-	else if ((DamageType == 'Poison' || DamageType == 'PoisonEffect') && (GetPawnAllianceType(InstigatedBy) != ALLIANCE_Hostile || Animal(Self) != None || VMDBufferPlayer(InstigatedBy) == None || IsInState('Attacking')))
+	else if ((DamageType == 'Poison' || DamageType == 'PoisonEffect') && !IsInState('RubbingEyes') && !IsInState('Stunned') && (GetPawnAllianceType(InstigatedBy) != ALLIANCE_Hostile || Animal(Self) != None || VMDBufferPlayer(InstigatedBy) == None || IsInState('Attacking')))
 	{
 		if (VMDBufferPlayer(InstigatedBy) == None || IsInState('Attacking'))
 		{
@@ -7322,6 +7342,11 @@ function HandleLoudNoise(Name event, EAIEventState state, XAIParams params)
 
 	local Actor bestActor;
 	local Pawn  instigator;
+	
+	//MADDERS, 6/23/25: Rare issue of misfiring our booleans somehow during fleeing.
+	//I can't explain this for the fucking life of me, having ran through all reaction code 3 times.
+	//So instead install a shitty blocker.
+	if (IsInState('Fleeing') || (IsInState('RunningTo') && ShouldFlee())) return;
 	
 	if (state == EAISTATE_Begin || state == EAISTATE_Pulse)
 	{
@@ -10226,7 +10251,7 @@ function bool SwitchToBestWeapon()
 					CurFallbackLevel += 1;
 				}
 				
-				//MADDERS, 6/25/24: 
+				//MADDERS, 6/25/24: Better wallbanging = better gun, in this case.
 				if ((Robot(Enemy) == None) && (Enemy != None) && (!bTraceEnemy) && (VMBP != None) && (VMBP.VMDCanSeeThroughWalls() || AICanSee(Enemy, ComputeActorVisibility(Enemy), false, true, true, true) > 0))
 				{
 					Score += CurWeapon.VMDGetMaterialPenetration(None) * 10;
@@ -10267,7 +10292,13 @@ function bool SwitchToBestWeapon()
 							break;
 							
 						case 'TearGas':
-							if (enemyPawn != None)
+							//MADDERS, 5/4/25: Always open with a tear gas barrage.
+							if (SpiderBot(Self) != None)
+							{
+								CurFallbackLevel = 5;
+								Score -= 10000;
+							}
+							else if (enemyPawn != None)
 							{
 								if (enemyPawn.bStunned)
 									score += 10000;
@@ -13747,7 +13778,9 @@ Begin:
 	}
 	Acceleration = vect(0,0,0);
 	if (!PickDestinationBool())
+	{
 		Goto('DoneSeek');
+	}
 
 GoToLocation:
 	bInterruptSeek = true;
@@ -13874,7 +13907,15 @@ TurnToLocation:
 	bInterruptSeek = false;
 
 	PlayWaiting();
-	Sleep((FRand()*1.5+3.0) * Sqrt(SurprisePeriod / 2.0));
+	//MADDERS, 5/4/25: Weird patch for robots who try to act immediately but haven't finished seeking the target yet.
+	if (SurprisePeriod > 0)
+	{
+		Sleep((FRand()*1.5+3.0) * Sqrt(SurprisePeriod / 2.0));
+	}
+	else
+	{
+		Sleep(FRand()*1.5+3.0);
+	}
 
 LookAround:
 	if (bCanTurnHead)
@@ -13923,7 +13964,15 @@ LookAround:
 	{
 		if (!bSeekLocation)
 		{
-			Sleep(1.0 * Sqrt(SurprisePeriod / 2.0));
+			//MADDERS, 5/4/25: Weird patch for robots who try to act immediately but haven't finished seeking the target yet.
+			if (SurprisePeriod > 0)
+			{
+				Sleep(1.0 * Sqrt(SurprisePeriod / 2.0));
+			}
+			else
+			{
+				Sleep(1.0);
+			}
 		}
 	}
 	
@@ -15497,7 +15546,7 @@ ClimbLadder:
 	}
 	else
 	{
-		if ((VMDBufferPawn(Self).VMDClearTargetTime > 0.15) && (VMDBufferPawn(Self).VMDClearTargetTime < 2.75) && (VMDBufferPawn(Self).VMDIsTouchingLadder()))
+		if ((VMDBufferPawn(Self).VMDClearTargetTime > 0.4) && (VMDBufferPawn(Self).VMDClearTargetTime < 2.75) && (VMDBufferPawn(Self).VMDIsTouchingLadder()))
 		{
 			TweenAnim('BreatheLight', 0.1);
 			if (Region.Zone.bWaterZone)
@@ -15640,7 +15689,7 @@ LadderFire:
 	{
 		SetPhysics(PHYS_Rotating);
 	}
-	if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bClimbingLadder) && (VMDBufferPawn(Self).VMDClearTargetTime < 0.15 || VMDBufferPawn(Self).VMDClearTargetTime > 2.75))
+	if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bClimbingLadder) && (VMDBufferPawn(Self).VMDClearTargetTime < 0.4 || VMDBufferPawn(Self).VMDClearTargetTime > 2.75))
 	{
 		GoTo('ClimbLadder');
 	}
@@ -15704,7 +15753,7 @@ LadderFire:
 		Sleep(0);
 	}
 	
-	if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).VMDClearTargetTime > 0.15) && (VMDBufferPawn(Self).VMDClearTargetTime < 2.75) && (VMDBufferPawn(Self).VMDIsTouchingLadder()))
+	if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).VMDClearTargetTime > 0.4) && (VMDBufferPawn(Self).VMDClearTargetTime < 2.75) && (VMDBufferPawn(Self).VMDIsTouchingLadder()))
 	{
 		if (VMDBufferPawn(Self).bClimbingLadder)
 		{
@@ -15882,7 +15931,7 @@ Fire:
 	bReadyToReload = true;
 
 ContinueFire:
-	if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bClimbingLadder) && (VMDBufferPawn(Self).VMDClearTargetTime < 0.15 || VMDBufferPawn(Self).VMDClearTargetTime > 2.75))
+	if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bClimbingLadder) && (VMDBufferPawn(Self).VMDClearTargetTime < 0.4 || VMDBufferPawn(Self).VMDClearTargetTime > 2.75))
 	{
 		GoTo('ClimbLadder');
 	}
