@@ -337,6 +337,7 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				}
 			}
 		break;
+		//22_TOKYOSTATION: Unhidden TNT, and now we buff Adam and Kaneko as well.
 		case "22_TOKYOSTATION":
 			forEach AllActors(class'CrateExplosiveSmall', CExpSmall)
 			{
@@ -394,6 +395,7 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				NGPortal.FlagRequired = '';
 			}*/
 		break;
+		//22_OTEMACHI_RETURN: Floating chef, plus travel item glitch post-cinematic.
 		case "22_OTEMACHIRETURN":
 			VMP.InHand = None;
 			VMP.InHandPending = None;
@@ -411,6 +413,22 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						break;
 					}
 				}
+				//MADDERS, 6/30/25: Rare discovery by Teddy. These guys have invalid strings in their only convo, crashing the game.
+				else if (Mechanic(SP) != None)
+				{
+					Mechanic(SP).BindName = "";
+					SP.ConBindEvents();
+				}
+			}
+		break;
+		//22_TMG_MILITARY_2: Bad cigarette machine placement.
+		case "22_TMG_MILITARY_2":
+			A = FindActorBySeed(class'CigaretteMachine', 0);
+			if (A != None)
+			{
+				A.SetCollisionSize(0, 0);
+				A.SetLocation(Vect(3593, -103, -842));
+				A.SetCollisionSize(A.Default.CollisionRadius, A.Default.CollisionHeight);
 			}
 		break;
 	}

@@ -19,17 +19,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		case "70_MUTATIONS":
 			VMP.BigClientMessage(VMP.MutationsMapTip);
 		break;
-		
-		//70_ZODIAC_HONGKONG_TONGBASE: Add some more path nodes for MEGH.
-		case "70_ZODIAC_HONGKONG_TONGBASE":
-			Spawn(class'PathNodeMobile',,, Vect(-530,92,15));
-			Spawn(class'PathNodeMobile',,, Vect(-526,-320,15));
-			Spawn(class'PathNodeMobile',,, Vect(-630,-320,15));
-			Spawn(class'PathNodeMobile',,, Vect(-1013,-320,143));
-			Spawn(class'PathNodeMobile',,, Vect(-1229,-320,143));
-			Spawn(class'PathNodeMobile',,, Vect(-1488,-305,143));
-			VMP.VMDRebuildPaths();
-		break;
 	}
 }
 

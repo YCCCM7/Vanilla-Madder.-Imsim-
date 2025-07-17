@@ -184,6 +184,17 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		case "10_PARIS_CATACOMBS":
 			if (!bRevisionMapSet)
 			{
+				//MADDERS, 6/4/25: God dammit, Ion. Stop fucking this up for everyone.
+				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+				{
+					SP = ScriptedPawn(TPawn);
+					
+					if ((MJ12Commando(SP) != None) && (SP.BindName == SP.Default.BindName) && (SP.bImportant))
+					{
+						SP.bImportant = false;
+					}
+				}
+				
 				TCamp = Spawn(class'VMDCabinetCampActor',,, Vect(-1280,-1092,6));
 				if (TCamp != None)
 				{

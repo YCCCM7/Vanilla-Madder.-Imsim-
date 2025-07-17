@@ -131,6 +131,17 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				}
 			}*/
 		break;
+		//21_HIBIYAPARK_PLAZA: Broken cigarette machine
+		case "21_HIBIYAPARK_PLAZA":
+			A = FindActorBySeed(class'CigaretteMachine', 0);
+			if (A != None)
+			{
+				A.SetRotation(Rot(0, 16384, 0));
+				A.SetCollisionSize(0, 0);
+				A.SetLocation(Vect(2865, 5204, 502));
+				A.SetCollisionSize(A.Default.CollisionRadius, A.Default.CollisionHeight);
+			}
+		break;
 		//21_HIBIYAPARK_TOWERS: Hide this mover, for the sake of exploration.
 		//Also, fix these rogue turrets.
 		case "21_HIBIYAPARK_TOWERS":
@@ -153,6 +164,36 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 					DXM.bMadderPatched = true;
 				}
+			}
+			
+			//MADDERS, 5/5/25: Fix these 2 machines being busted.
+			A = FindActorBySeed(class'CigaretteMachine', 0);
+			if (A != None)
+			{
+				A.SetRotation(Rot(0, 16384, 0));
+				A.SetCollisionSize(0, 0);
+				A.SetLocation(Vect(-143, -1580, -938));
+				A.SetCollisionSize(A.Default.CollisionRadius, A.Default.CollisionHeight);
+			}
+			
+			A = FindActorBySeed(class'CigaretteMachine', 1);
+			if (A != None)
+			{
+				A.SetRotation(Rot(0, 32768, 0));
+				A.SetCollisionSize(0, 0);
+				A.SetLocation(Vect(144, -2095, -682));
+				A.SetCollisionSize(A.Default.CollisionRadius, A.Default.CollisionHeight);
+			}
+		break;
+		//21_SHUTTLE_BUS_VID: One last fucking broken cigarette machine.
+		case "21_SHUTTLE_BUS_VID":
+			A = FindActorBySeed(class'CigaretteMachine', 1);
+			if (A != None)
+			{
+				A.SetRotation(Rot(0, 0, 0));
+				A.SetCollisionSize(0, 0);
+				A.SetLocation(Vect(1664, 23921, -326));
+				A.SetCollisionSize(A.Default.CollisionRadius, A.Default.CollisionHeight);
 			}
 		break;
 		//21_SHINJUKUSTATION: Sound volume gets fucked up for some players after travel.
