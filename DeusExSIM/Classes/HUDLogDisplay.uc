@@ -163,22 +163,30 @@ function Bool MessagesWaiting()
 
 event Tick(float deltaSeconds)
 {
-	// If a DataLink or Conversation is being played, then don't count down,
-	// so we don't miss any log messages the player might receive.
-
-	if ((player.dataLinkPlay == None) && 
-	    ((player.conPlay == None) ||
-		 ((player.conPlay != None) && (player.conPlay.GetDisplayMode() == DM_FirstPerson))))
+	local bool bNoDataLink, bNoConv;
+	local DeusExRootWindow root;
+	
+	root = DeusExRootWindow(GetRootWindow());
+	if ((Player != None) && (Root != None))
 	{
-		if (( lastLogMsg > 0.0 ) && ( lastLogMsg + deltaSeconds > displayTime ))
+	    	// DXRando: allow counting down during datalink if your window is wide enough
+		bNoDataLink = (player.dataLinkPlay == None || root.hud.width >= root.hud.infolink_and_logs_min_width);
+		
+		// DXRando: if there is a conversation, first-person conversations don't count (barks) because our window still shows
+		bNoConv = (player.conPlay == None || (player.conPlay != None && player.conPlay.GetDisplayMode() == DM_FirstPerson));
+		
+		if ((bNoDataLink) && (bNoConv))
 		{
-			bTickEnabled     = False;
-			bMessagesWaiting = False;
-			Hide();
-			winLog.PauseLog(False);
-			AskParentForReconfigure();
+			if (( lastLogMsg > 0.0 ) && ( lastLogMsg + deltaSeconds > displayTime ))
+			{
+				bTickEnabled     = False;
+				bMessagesWaiting = False;
+				Hide();
+				winLog.PauseLog(False);
+				AskParentForReconfigure();
+			}
+			lastLogMsg = lastLogMsg + deltaSeconds;
 		}
-		lastLogMsg = lastLogMsg + deltaSeconds;
 	}
 }
 
@@ -207,7 +215,7 @@ function AddLog(coerce String newLog, Color linecol)
 		//
 		// Don't show the log if a DataLink is playing
 
-		if (( GetParent().IsVisible() ) && ( root.hud.infolink == None ) && (VMDBufferPlayer(Player) == None || VMDBufferPlayer(Player).bLogVisible))
+		if ((GetParent().IsVisible()) && (root.hud.infolink == None || root.hud.width >= root.hud.infolink_and_logs_min_width) && (VMDBufferPlayer(Player) == None || VMDBufferPlayer(Player).bLogVisible))
 		{
 			Show();
 		}
