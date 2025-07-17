@@ -52,10 +52,6 @@ function Tick(float DT)
 	if (ColorUpdateTimer > 0)
 	{
 		ColorUpdateTimer -= DT;
-		if (ColorUpdateTimer > VisUpdateRate)
-		{
-			Log("WARNING! VERY LONG UPDATE TIMER!"@ColorUpdateTimer);
-		}
 	}
 	else
 	{
