@@ -431,10 +431,11 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 //SKILL MULTS!
 /*static*/ function float GetCraftSkillMult(int SkillLevel, bool bHasTalent)
 {
-	local int LevelDiff;
+	local int LevelDiff, OrigSkillLevel;
 	local float TMath, Ret;
 	
 	SkillLevel += 1;
+	OrigSkillLevel = SkillLevel;
 	if (bHasTalent)
 	{
 		SkillLevel *= 2;
@@ -444,15 +445,27 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 	TMath = Sqrt(float(LevelDiff) / 3);
 	Ret = 1.0 * TMath;
 	
+	//MADDERS, 7/7/25: Ease up on cost tables.
+	if (OrigSkillLevel != 4 || bHasTalent)
+	{
+		Ret = (Ret + 1.154556) * 0.5;
+	}
+	//MADDERS, 7/7/25: Hack for plateauing master without the talent. Still better than advanced, but not amazing.
+	else
+	{
+		Ret = ((Ret*3) + (1.154556 * 2)) * 0.2;
+	}
+	
 	return Ret;
 }
 
 /*static*/ function float GetBreakdownSkillMult(int SkillLevel, bool bHasTalent)
 {
-	local int LevelDiff;
+	local int LevelDiff, OrigSkillLevel;
 	local float TMath, Ret;
 	
 	SkillLevel += 1;
+	OrigSkillLevel = SkillLevel;
 	if (bHasTalent)
 	{
 		SkillLevel *= 2;
@@ -461,6 +474,16 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 	LevelDiff = 12 - SkillLevel;
 	TMath = Sqrt(float(LevelDiff) / 3);
 	Ret = 1.0 / TMath;
+	
+	if (OrigSkillLevel != 4 || bHasTalent)
+	{
+		Ret = (Ret + 0.866133) * 0.5;
+	}
+	//MADDERS, 7/7/25: Hack for plateauing master without the talent. Still better than advanced, but not amazing.
+	else
+	{
+		Ret = ((Ret*3) + (0.866133 * 2)) * 0.2;
+	}
 	
 	return Ret;
 }
