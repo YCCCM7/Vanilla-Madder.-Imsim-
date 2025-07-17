@@ -377,8 +377,6 @@ function Timer()
 			
 			if (count == 0)
 			{
-				Log("TIMER! CLINIC CLEARED!");
-				
 				foreach AllActors(class'UNATCOTroop', guard, 'ClinicGuards')
 					guard.SetOrders('Wandering', '', True);
 
@@ -400,8 +398,6 @@ function Timer()
 			
 			if (count == 0)
 			{
-				Log("TIMER! STREET OPENED!");
-				
 				foreach AllActors(class'UNATCOTroop', guard, 'HotelGuards')
 					guard.SetOrders('Wandering', '', True);
 				
