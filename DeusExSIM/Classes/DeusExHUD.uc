@@ -35,6 +35,9 @@ var VMDHUDLightGem LightGem;
 var bool bNihilumSetup;
 var int TimesConfiguredThisFrame;
 
+//DXRando stuff.
+var float infolink_and_logs_min_width;
+
 // ----------------------------------------------------------------------
 // InitWindow()
 // ----------------------------------------------------------------------
@@ -180,12 +183,29 @@ function ConfigurationChanged()
 	local float LightWidth, LightHeight;
 	local float NotifierWidth, NotifierHeight;
 	
-	//MADDERS, 4/19/24: Weirdass fix for supposed runaway loop I got in mutations.
+	//DXRando stuff.
+	local float infolinkWidth;
+	
+	//MADDERS, 6/26/25: Doing some work here for better min size.
+	local float UIScale;
+	
+	//MADDERS, 4/19/24: Weirdass fix for supposed runaway loop I got in Mutations.
 	if (TimesConfiguredThisFrame > 199)
 	{
 		return;
 	}
 	TimesConfiguredThisFrame += 1;
+	
+	UIScale = float(GetPlayerPawn().GetPropertyText("CustomUIScale"));
+	if (UIScale <= 1)
+	{
+		UIScale = 2.0; //Assume the worst.
+	}
+	else
+	{
+		UIScale -= 1.0;
+	}
+	infolink_and_logs_min_width = 475 * (UIScale);
 	
 	//MADDERS: Cram in our smell overlays and such if needed if we're in DXN.
 	if ((string(Class) ~= "FGRHK.MyGameHUD") && (!bNihilumSetup))
@@ -323,35 +343,46 @@ function ConfigurationChanged()
 		itemsWidth = activeItems.QueryPreferredWidth(height - beltHeight);
 		activeItems.ConfigureChild(width - itemsWidth, 0, itemsWidth, height - beltHeight);
 	}
-
-	// Display the Log in the upper-left corner, to the right of
-	// the hit display.
-
-	if (msgLog != None)
-	{
-		qHeight = msgLog.QueryPreferredHeight(width - hitWidth - itemsWidth - 40);
-		msgLog.ConfigureChild(hitWidth + 20, 10, width - hitWidth - itemsWidth - 40, qHeight);
-
-		if (msgLog.IsVisible())
-			logTop = max(infoTop, 10 + qHeight);
-	}
 	
 	// Display the infolink to the right of the hit display
 	// and underneath the Log window if it's visible.
-
+	
 	if (infolink != None)
 	{
-		infolink.QueryPreferredSize(qWidth, qHeight);
-
-		if ((msgLog != None) && (msgLog.IsVisible()))
-			infolink.ConfigureChild(hitWidth + 20, msgLog.Height + 20, qWidth, qHeight);
+		infolink.QueryPreferredSize(infolinkWidth, qHeight);
+		
+		//DXRando: old yucky vanilla layout
+        	if ((msgLog != None) && (msgLog.IsVisible()) && (width < infolink_and_logs_min_width))
+		{
+			infolink.ConfigureChild(hitWidth + 20, msgLog.Height + 20, infolinkWidth, qHeight);
+		}
+		// DXRando: side-by-side infolink with logs
 		else
-			infolink.ConfigureChild(hitWidth + 20, 0, qWidth, qHeight);
-
+		{
+			infolink.ConfigureChild(hitWidth + 10, 0, infolinkWidth, qHeight);
+		}
+		
 		if (infolink.IsVisible())
+		{
 			infoTop = max(infoTop, 10 + qHeight);
+		}
 	}
-
+	
+    	// Display the Log in the upper-left corner, to the right of
+    	// the hit display.
+	
+	// DXRando: side by side infolink and logs
+    	if ((msgLog != None) && (infolink != None) && (width >= infolink_and_logs_min_width))
+    	{
+        	qHeight = msgLog.QueryPreferredHeight(width - hitWidth - itemsWidth - 0 - infolinkWidth);
+        	msgLog.ConfigureChild(hitWidth + 10 + infolinkWidth, 10, width - hitWidth - itemsWidth - 0 - infolinkWidth, qHeight);
+    	}
+    	else if (msgLog != None)
+    	{
+        	qHeight = msgLog.QueryPreferredHeight(width - hitWidth - itemsWidth - 40);
+        	msgLog.ConfigureChild(hitWidth + 20, 10, width - hitWidth - itemsWidth - 40, qHeight);
+    	}
+	
 	// First-person conversation window
 
 	if (conWindow != None)
@@ -480,10 +511,12 @@ function HUDInfoLinkDisplay CreateInfoLinkWindow()
 
 	infolink = HUDInfoLinkDisplay(NewChild(Class'HUDInfoLinkDisplay'));
 
-	// Hide Log window
-	if ( msgLog != None )
+    	// Hide Log window DXRando: or don't
+    	if ((msgLog != None) && (width < infolink_and_logs_min_width))
+	{
 		msgLog.Hide();
-
+	}
+	
 	infolink.AskParentForReconfigure();
 
 	return infolink;
@@ -501,7 +534,13 @@ function DestroyInfoLinkWindow()
 
 		// If the msgLog window was visible, show it again
 		if (( msgLog != None ) && ( msgLog.MessagesWaiting() ))
+		{
 			msgLog.Show();
+		}
+        	if ((msgLog != None) && (msgLog.IsVisible())) // DXRando: reconfigure the window so the logs can be the proper width again
+		{
+        		msgLog.AskParentForReconfigure();
+        	}
 	}
 }
 
