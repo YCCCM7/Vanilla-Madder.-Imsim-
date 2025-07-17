@@ -792,7 +792,7 @@ function class<Weapon> ObtainHighLevelWeapon(VMDBufferPawn TP, out class<Ammo> O
 		case 4:
 		case 5:
 		case 6:
-			if (!TP.IsA('HumanCivilian'))
+			if (!TP.IsA('HumanCivilian') && !TP.IsA('Cop'))
 			{
 				if (TMission < 10)
 				{
@@ -811,7 +811,7 @@ function class<Weapon> ObtainHighLevelWeapon(VMDBufferPawn TP, out class<Ammo> O
 		case 7:
 		case 8:
 		case 9:
-			if (!TP.IsA('HumanCivilian'))
+			if (!TP.IsA('HumanCivilian') && !TP.IsA('Cop'))
 			{
 				Ret = class'WeaponGEPGun';
 			}
@@ -970,13 +970,13 @@ function class<Inventory> ObtainLowLevelPickup(VMDBufferPawn TP)
 			Ret = class'BallisticArmor';
 		break;
 		case 2:
-			if (!TP.IsA('HumanCivilian'))
+			if (!TP.IsA('HumanCivilian') && !TP.IsA('Cop'))
 			{
 				Ret = class'TechGoggles';
 			}
 		break;
 		case 3:
-			if (!TP.IsA('HumanCivilian'))
+			if (!TP.IsA('HumanCivilian') && !TP.IsA('Cop'))
 			{
 				Ret = class'HazmatSuit';
 			}
@@ -1000,7 +1000,7 @@ function class<Inventory> ObtainMediumLevelPickup(VMDBufferPawn TP)
 	switch(R)
 	{
 		case 0:
-			if (!TP.IsA('HumanCivilian'))
+			if (!TP.IsA('HumanCivilian') && !TP.IsA('Cop'))
 			{
 				Ret = class'FireExtinguisher';
 			}
@@ -1034,14 +1034,14 @@ function class<Inventory> ObtainHighLevelPickup(VMDBufferPawn TP)
 		break;
 		case 2:
 		case 3:
-			if (!TP.IsA('HumanCivilian'))
+			if (!TP.IsA('HumanCivilian') && !TP.IsA('Cop'))
 			{
 				Ret = MutateItem(VMDBufferPlayer(GetPlayerPawn()), class'WeaponLAM');
 			}
 		break;
 		case 4:
 		case 5:
-			if (TMission < 10 || TP.IsA('HumanCivilian'))
+			if (TMission < 10 || TP.IsA('HumanCivilian') || TP.IsA('Cop'))
 			{
 			}
 			else
@@ -1100,6 +1100,12 @@ function class<Inventory> LoadItem(string LoadStr)
 function bool ExactPawnCanBeDuped(VMDBufferPawn SP, out Seat OutSeat)
 {
 	local Seat TSeat;
+	
+	//MADDERS, 6/24/25: Special exception for our special-but-not-special Hela.
+	if ((WIB(SP) != None) && (SP.BindName == "Hela"))
+	{
+		return false;
+	}
 	
 	if (SP.Orders != 'Standing' || FakeFrand() < 0.25)
 	{
