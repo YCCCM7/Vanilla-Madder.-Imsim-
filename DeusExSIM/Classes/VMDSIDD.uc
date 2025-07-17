@@ -39,7 +39,6 @@ singular function SupportActor(Actor standingActor)
 		// We've been stomped!
 		if (zVelocity < -500)
 		{
-			BroadcastMessage("RECEIVING STOMP!");
 			standingMass = FMax(1, standingActor.Mass);
 			baseMass = FMax(1, Mass);
 			TakeDamage((1 - standingMass/baseMass * zVelocity/30), standingActor.Instigator, standingActor.Location, 0.2*standingActor.Velocity, 'stomped');
