@@ -338,8 +338,7 @@ function Timer()
 	else if (localURL == "03_NYC_747")
 	{
 		// check for Lebedev's death
-		if (flags.GetBool('JuanLebedev_Dead') &&
-			!flags.GetBool('MS_Anna747Unhidden'))
+		if ((flags.GetBool('JuanLebedev_Dead') || Flags.GetBool('JuanLebedev_Unconscious')) && !flags.GetBool('MS_Anna747Unhidden'))
 		{
 			foreach AllActors(class'AnnaNavarre', Anna)
 			{
