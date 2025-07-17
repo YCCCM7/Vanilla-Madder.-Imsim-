@@ -148,14 +148,21 @@ function MarkItemDiscovered(class<Inventory> TItem)
 				bGaveMessage = true;
 				if (Player.bCraftingSystemEnabled)
 				{
-					Player.ClientMessage(SprintF(StrDiscoveredItem, TypeDescStrings[TType], TItem.Default.ItemName));
-					if ((TType == 0) && (Player.SkillSystem != None) && (Player.SkillSystem.GetSkillLevel(class'SkillTech') > 0 || Player.IsSpecializedInSkill(class'SkillTech')))
+					switch(Player.SelectedCampaign)
 					{
-						Player.PlayItemDiscoverySound();
-					}
-					else if ((TType == 1) && (Player.SkillSystem != None) && (Player.SkillSystem.GetSkillLevel(class'SkillMedicine') > 0 || Player.IsSpecializedInSkill(class'SkillMedicine')))
-					{
-						Player.PlayItemDiscoverySound();
+						case "HiveDays":
+						break;
+						default:
+							Player.ClientMessage(SprintF(StrDiscoveredItem, TypeDescStrings[TType], TItem.Default.ItemName));
+							if ((TType == 0) && (Player.SkillSystem != None) && (Player.SkillSystem.GetSkillLevel(class'SkillTech') > 0 || Player.IsSpecializedInSkill(class'SkillTech')))
+							{
+								Player.PlayItemDiscoverySound();
+							}
+							else if ((TType == 1) && (Player.SkillSystem != None) && (Player.SkillSystem.GetSkillLevel(class'SkillMedicine') > 0 || Player.IsSpecializedInSkill(class'SkillMedicine')))
+							{
+								Player.PlayItemDiscoverySound();
+							}
+						break;
 					}
 				}
 			}
