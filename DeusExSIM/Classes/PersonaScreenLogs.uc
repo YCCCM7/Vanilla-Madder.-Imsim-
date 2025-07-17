@@ -79,7 +79,7 @@ function CreateLogWindow()
 {
 	winScroll = CreateScrollAreaWindow(winClient);
 	winScroll.SetPos(16, 21);
-	winScroll.SetSize(394, 361);
+	winScroll.SetSize(585, 361);
 
 	lstLogs = PersonaListWindow(winScroll.clipWindow.NewChild(Class'PersonaListWindow'));
 	lstLogs.EnableMultiSelect(False);
@@ -87,7 +87,7 @@ function CreateLogWindow()
 	lstLogs.SetNumColumns(2);
 	lstLogs.SetSortColumn(1, True);
 	lstLogs.SetColumnType(1, COLTYPE_Float);
-	lstLogs.SetColumnWidth(0, 394);
+	lstLogs.SetColumnWidth(0, 585);
 	lstLogs.HideColumn(1);
 	lstLogs.EnableAutoSort(False);
 }
@@ -160,22 +160,24 @@ defaultproperties
 {
      LogsTitleText="Logs"
      ClearButtonLabel="Cl|&ear Log"
-     ClientWidth=426
+     ClientWidth=617
      ClientHeight=407
-     clientOffsetX=105
+     clientOffsetX=15
      clientOffsetY=17
-     clientTextures(0)=Texture'DeusExUI.UserInterface.LogsBackground_1'
-     clientTextures(1)=Texture'DeusExUI.UserInterface.LogsBackground_2'
-     clientTextures(2)=Texture'DeusExUI.UserInterface.LogsBackground_3'
-     clientTextures(3)=Texture'DeusExUI.UserInterface.LogsBackground_4'
-     clientBorderTextures(0)=Texture'DeusExUI.UserInterface.ConversationsBorder_1'
-     clientBorderTextures(1)=Texture'DeusExUI.UserInterface.ConversationsBorder_2'
-     clientBorderTextures(2)=Texture'DeusExUI.UserInterface.ConversationsBorder_3'
-     clientBorderTextures(3)=Texture'DeusExUI.UserInterface.ConversationsBorder_4'
-     clientBorderTextures(4)=Texture'DeusExUI.UserInterface.ConversationsBorder_5'
-     clientBorderTextures(5)=Texture'DeusExUI.UserInterface.ConversationsBorder_6'
+     clientTextures(0)=Texture'VMDLogsBackground_1'
+     clientTextures(1)=Texture'VMDLogsBackground_2'
+     clientTextures(2)=Texture'VMDLogsBackground_3'
+     clientTextures(3)=Texture'VMDLogsBackground_4'
+     clientTextures(4)=Texture'VMDLogsBackground_5'
+     clientTextures(5)=Texture'VMDLogsBackground_6'
+     clientBorderTextures(0)=Texture'VMDLogsBorder_1'
+     clientBorderTextures(1)=Texture'VMDLogsBorder_2'
+     clientBorderTextures(2)=Texture'VMDLogsBorder_3'
+     clientBorderTextures(3)=Texture'VMDLogsBorder_4'
+     clientBorderTextures(4)=Texture'VMDLogsBorder_5'
+     clientBorderTextures(5)=Texture'VMDLogsBorder_6'
      clientTextureRows=2
-     clientTextureCols=2
+     clientTextureCols=3
      clientBorderTextureRows=2
      clientBorderTextureCols=3
 }
