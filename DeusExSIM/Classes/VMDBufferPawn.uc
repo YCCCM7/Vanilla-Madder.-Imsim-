@@ -7,6 +7,7 @@ class VMDBufferPawn extends ScriptedPawn
 //++++++++++++++++++++++++
 //MADDERS ADDITIONS!
 var(MADDERS) int AttackStateLaps, ConsecutiveShittyPaths;
+var(MADDERS) Actor LastShittyPathTarget;
 
 var bool bSetupBuffedHealth, bAppliedSpecial, bAppliedSpecial2, bBuffedVision, bBuffedSenses, bBuffedAccuracy; //Already better health scaling than &%)*. God save us all
 var int MedkitHealthLevel; //MADDERS, 12/27/23: In some special cases, we may have a special threshold.
@@ -243,7 +244,17 @@ function NavigationPoint VMDFindShittyPathTo(Vector Destination, Vector Start, f
 		}
 	}
 	
-	return BestPoint;
+	//MADDERS, 5/4/25: Forced cludge to stop repetitive paths when we think this is a "solution", but is just on repeat.
+	//Don't clear this after returning none either
+	if (BestPoint != LastShittyPathTarget)
+	{
+		LastShittyPathTarget = BestPoint;
+		return BestPoint;
+	}
+	else
+	{
+		return None;
+	}
 }
 
 function float VMDGetGuessingFudge()
@@ -1348,12 +1359,14 @@ function Actor VMDFakeGetNextWaypoint(Pawn TEnemy, Actor destination)
 
 function bool VMDFindCheekyGrenadeAngle(Out Vector FinalLocation, Out Rotator NeededRotationTweak, optional Weapon InputWeapon)
 {
+	local bool bFoundAlly;
 	local int i;
-	local float TTime, MaxTime, Elasticity, LandingSpeed, Range, TDist, BestDist;
+	local float TTime, MaxTime, Elasticity, LandingSpeed, Range, TDist, BestDist, TRadius;
 	local Rotator TRot, BestRot;
 	local Vector FinalPos, TExtent, FireLoc, SimulatedVelocity, X, Y, Z, BestPlacement, HL, HN;
 	local CandyBar TBar;
 	local DeusExWeapon DXW;
+	local ScriptedPawn SP;
 	local SodaCan TCan;
 	local class<ThrownProjectile> ThrownProj;
 	
@@ -1384,6 +1397,7 @@ function bool VMDFindCheekyGrenadeAngle(Out Vector FinalLocation, Out Rotator Ne
 	MaxTime = Max(2, ThrownProj.Default.FuseLength);
 	
 	Elasticity = ThrownProj.Default.Elasticity;
+	TRadius = ThrownProj.Default.BlastRadius * 0.66;
 	
 	Range = CollisionRadius + 60;
 	Range += ThrownProj.Default.BlastRadius;
@@ -1391,6 +1405,8 @@ function bool VMDFindCheekyGrenadeAngle(Out Vector FinalLocation, Out Rotator Ne
 	BestDist = 9999;
 	for (i=0; i<25; i++)
 	{
+		bFoundAlly = false;
+		
 		TRot.Yaw = -8192 + (4096 * (i%5));
 		TRot.Pitch = 4096 - (2048 * (i/5));
 		TRot = TRot + ViewRotation;
@@ -1421,11 +1437,22 @@ function bool VMDFindCheekyGrenadeAngle(Out Vector FinalLocation, Out Rotator Ne
 		if (TTime > 0)
 		{
 			TDist = VSize(Location - FinalPos);
-			if ((FastTrace(FinalPos, Enemy.Location)) && (TDist < ThrownProj.Default.BlastRadius * 0.66) && (TDist < BestDist))
+			if ((FastTrace(FinalPos, Enemy.Location)) && (TDist < TRadius) && (TDist < BestDist))
 			{
-				BestDist = TDist;
-				BestPlacement = FinalPos;
-				BestRot = TRot - ViewRotation;
+				forEach RadiusActors(class'ScriptedPawn', SP, TRadius, FinalPos)
+				{
+					if (SP.Alliance == Alliance)
+					{
+						bFoundAlly = true;
+						break;
+					}
+				}
+				if (!bFoundAlly)
+				{
+					BestDist = TDist;
+					BestPlacement = FinalPos;
+					BestRot = TRot - ViewRotation;
+				}
 			}
 		}
 	}
@@ -6535,6 +6562,7 @@ function bool BypassesHelmet( name DT )
   		case 'Shot':
   		case 'Poison':
   		case 'KnockedOut':
+		case 'Stunned': //MADDERS, 6/22/25: Taser and taser slug can be reduced by helmets now, too.
    			return False;
   		break;
   		default:
