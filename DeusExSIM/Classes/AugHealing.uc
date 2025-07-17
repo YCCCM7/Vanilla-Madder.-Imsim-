@@ -4,7 +4,7 @@
 class AugHealing extends VMDBufferAugmentation;
 
 var float mpAugValue, mpEnergyDrain;
-var localized string HungerDescription, AdvancedHungerDescription;
+var localized string HungerDescription, AdvancedHungerDescription, HealedPointsLabel, HealedPointLabel;
 
 state Active
 {
@@ -15,7 +15,9 @@ Loop:
 	if ((Player != None) && (IsPlayerDamaged(Player)) && (Player.Energy > GetNeededEnergy()))
 	{
 		Player.Energy -= GetNeededEnergy();
-		Player.HealPlayer(GetHealAmount(), False);
+		//MADDERS, 5/4/25: Redirect healing to broken limbs now.
+		//Player.HealPlayer(GetHealAmount(), False);
+		HealPlayer(Player, GetHealAmount());
 		VMDBufferPlayer(Player).VMDRegisterFoodEaten(1, "Regen");
 	}
 	else if ((VMBP != None) && (IsVMBPDamaged(VMBP)) && (VMBP.Energy > GetNeededEnergy()))
@@ -57,6 +59,153 @@ function int GetHealAmount()
 	}
 	
 	return int(Ret);
+}
+
+function HealPlayer(DeusExPlayer DXP, int HealAmount)
+{
+	local int THealth, TDam, MostDam, MostDamIndex, i;
+	local float ModMult;
+	local VMDBufferPlayer VMP;
+	
+	if (DXP == None || DXP.IsInState('Dying')) return;
+	
+	VMP = VMDBufferPlayer(DXP);
+	
+	ModMult = 1.0;
+	if ((VMP != None) && (VMP.ModHealthMultiplier > 0.0))
+	{
+		ModMult = VMP.ModHealthMultiplier;
+	}
+	
+	for (i=0; i<6; i++)
+	{
+		switch(i)
+		{
+			case 0:
+				if (VMP == None)
+				{
+					THealth = DXP.Default.HealthHead;
+					TDam = THealth - DXP.HealthHead;
+				}
+				else
+				{
+					THealth = float(DXP.Default.HealthHead) * VMP.KSHealthMult * ModMult;
+					TDam = THealth - DXP.HealthHead;
+				}
+			break;
+			case 1:
+				if (VMP == None)
+				{
+					THealth = DXP.Default.HealthTorso;
+					TDam = THealth - DXP.HealthTorso;
+				}
+				else
+				{
+					THealth = float(DXP.Default.HealthTorso) * VMP.KSHealthMult * ModMult;
+					TDam = THealth - DXP.HealthTorso;
+				}
+			break;
+			case 2:
+				if (VMP == None)
+				{
+					THealth = DXP.Default.HealthArmLeft;
+					TDam = THealth - DXP.HealthArmLeft;
+				}
+				else
+				{
+					THealth = float(DXP.Default.HealthArmLeft) * VMP.KSHealthMult * ModMult;
+					TDam = THealth - DXP.HealthArmLeft;
+				}
+			break;
+			case 3:
+				if (VMP == None)
+				{
+					THealth = DXP.Default.HealthArmRight;
+					TDam = THealth - DXP.HealthArmRight;
+				}
+				else
+				{
+					THealth = float(DXP.Default.HealthArmRight) * VMP.KSHealthMult * ModMult;
+					TDam = THealth - DXP.HealthArmRight;
+				}
+			break;
+			case 4:
+				if (VMP == None)
+				{
+					THealth = DXP.Default.HealthLegLeft;
+					TDam = THealth - DXP.HealthLegLeft;
+				}
+				else
+				{
+					THealth = float(DXP.Default.HealthLegLeft) * VMP.KSHealthMult * ModMult;
+					TDam = THealth - DXP.HealthLegLeft;
+				}
+			break;
+			case 5:
+				if (VMP == None)
+				{
+					THealth = DXP.Default.HealthLegRight;
+					TDam = THealth - DXP.HealthLegRight;
+				}
+				else
+				{
+					THealth = float(DXP.Default.HealthLegRight) * VMP.KSHealthMult * ModMult;
+					TDam = THealth - DXP.HealthLegRight;
+				}
+			break;
+		}
+		
+		if ((TDam > MostDam) && (TDam >= THealth))
+		{
+			MostDam = TDam;
+			MostDamIndex = i;
+		}
+	}
+	
+	if (MostDam >= HealAmount)
+	{
+		HealPart(DXP, MostDamIndex, HealAmount);
+	}
+	else
+	{
+		DXP.HealPlayer(HealAmount, False);
+	}
+}
+
+function HealPart(DeusExPlayer DXP, int HealIndex, int HealAmount)
+{
+	if (DXP == None || DXP.IsInState('Dying')) return;
+	
+	switch(HealIndex)
+	{
+		case 0:
+			DXP.HealthHead += HealAmount;
+		break;
+		case 1:
+			DXP.HealthTorso += HealAmount;
+		break;
+		case 2:
+			DXP.HealthArmLeft += HealAmount;
+		break;
+		case 3:
+			DXP.HealthArmRight += HealAmount;
+		break;
+		case 4:
+			DXP.HealthLegLeft += HealAmount;
+		break;
+		case 5:
+			DXP.HealthLegRight += HealAmount;
+		break;
+	}
+	
+	if (HealAmount == 1)
+	{
+		DXP.ClientMessage(Sprintf(HealedPointLabel, HealAmount));
+	}
+	else
+	{
+		DXP.ClientMessage(Sprintf(HealedPointsLabel, HealAmount));
+	}
 }
 
 function Deactivate()
@@ -129,11 +278,11 @@ function float GetVelMod()
 	
 	if (Player != None)
 	{
-		Ret = 1.0 + (FClamp(VSize(Player.Velocity * vect(1,1,0)) / 700.0, 0.0, 1.0));
+		Ret = 1.0 + (FClamp(VSize(Player.Velocity * vect(1,1,0)) / 1050.0, 0.0, 1.0));
 	}
 	else if (VMBP != None)
 	{
-		Ret = 1.0 + (FClamp(VSize(VMBP.Velocity * vect(1,1,0)) / 700.0, 0.0, 1.0));
+		Ret = 1.0 + (FClamp(VSize(VMBP.Velocity * vect(1,1,0)) / 1050.0, 0.0, 1.0));
 	}
 	
 	return Ret;
@@ -146,11 +295,11 @@ function float GetVelModInv()
 	
 	if (Player != None)
 	{
-		Ret = 1.0 - (FClamp(VSize(Player.Velocity * vect(1,1,0)) / 700.0, 0.0, 1.0));
+		Ret = 1.0 - (FClamp(VSize(Player.Velocity * vect(1,1,0)) / 1050.0, 0.0, 1.0));
 	}
 	else if (VMBP != None)
 	{
-		Ret = 1.0 - (FClamp(VSize(VMBP.Velocity * vect(1,1,0)) / 700.0, 0.0, 1.0));
+		Ret = 1.0 - (FClamp(VSize(VMBP.Velocity * vect(1,1,0)) / 1050.0, 0.0, 1.0));
 	}
 	
 	return Ret;
@@ -330,6 +479,8 @@ defaultproperties
 {
      AdvancedDescription="Programmable polymerase automatically directs construction of proteins in injured cells, restoring an agent to full health over time. However, this process performs best when the body is not burdened by excess movement."
      AdvancedHungerDescription="Programmable polymerase automatically directs construction of proteins in injured cells, restoring an agent to full health over time. However, this process performs best when the body is not burdened by excess movement. Additionally, rapidly constructing the body's tissues can increase the amount of food an agent requires."
+     HealedPointsLabel="Healed %d points"
+     HealedPointLabel="Healed %d point"
      AdvancedDescLevels(0)="TECH ONE: Healing occurs at up to %d units per tick."
      AdvancedDescLevels(1)="TECH TWO: Healing occurs at up to %d units per tick."
      AdvancedDescLevels(2)="TECH THREE: Healing occurs at up to %d units per tick."
