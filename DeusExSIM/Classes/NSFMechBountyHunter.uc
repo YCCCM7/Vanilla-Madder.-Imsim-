@@ -851,8 +851,9 @@ function class<DeusExPickup> ObtainUtilityItem(int MissionNumber, out int ItemCo
 			Ret = class'TechGoggles';
 		break;
 		case 9:
+			//MADDERS, 6/24/25: This makes these guys OP. Axe it.
 			ItemCount = 1;
-			Ret = class'AdaptiveArmor';
+			//Ret = class'AdaptiveArmor';
 		break;
 	}
 	

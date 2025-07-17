@@ -66,7 +66,7 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 				break;
 			}
 		break;
-		case 1: //Jumpsuit look.
+		case 1: //Suit look.
 			Mesh = LODMesh'TransGM_Suit';
 			
 			PantsIndex = 1;
@@ -628,8 +628,9 @@ function class<DeusExPickup> ObtainUtilityItem(int MissionNumber, out int ItemCo
 			Ret = class'FireExtinguisher';
 		break;
 		case 2:
+			//MADDERS, 6/24/25: This makes these guys OP. Axe it.
 			ItemCount = 1;
-			Ret = class'AdaptiveArmor';
+			//Ret = class'AdaptiveArmor';
 		break;
 	}
 	
