@@ -1227,9 +1227,15 @@ function Frob(Actor Frobber, Inventory frobWith)
 
 	// Trigger event if we aren't hackable
 	if (!IsA('HackableDevices'))
+	{
 		if (Event != '')
+		{
 			foreach AllActors(class 'Actor', A, Event)
+			{
 				A.Trigger(Self, P);
+			}
+		}
+	}
 }
 
 // ----------------------------------------------------------------------
