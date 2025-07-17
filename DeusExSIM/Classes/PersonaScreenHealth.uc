@@ -48,6 +48,21 @@ var localized string ShowHealthInfoLabel, ShowStatInfoLabel,
 			StrRollCooldownDesc[2], StrDodgeRollCooldownDesc[2],
 			StrStressDesc[8], StrStressModifiers[23];
 
+var Window LastOverdoseIcons[3], LastPoisonIcon, LastFireIcon, LastNanoVirusIcon, LastDeathNegateIcon,
+		LastKillswitchIcon, LastMayhemIcon, LastMedkitReductionIcon, LastHungerIcon,
+		LastSmellIcons[4], LastAddictionIcons[5], LastCombatStimIcon, LastMedigelIcon,
+		LastPharmacistIcon, LastSodaIcon, LastCandyIcon, LastCigarettesIcon, LastZymeIcon, LastDrunkIcon,
+		LastBallisticIcon, LastHazmatIcon, LastTechGogglesIcon, LastRebreatherIcon, LastAdaptiveArmorIcon,
+		LastRollIcon, LastDodgeRollIcon, LastStressIcon;
+
+var PersonaNormalTextWindow LastOverdoseStatuses[3], LastPoisonStatus, LastFireStatus, LastNanoVirusStatus, LastDeathNegateStatus,
+				LastKillswitchStatus, LastMayhemStatus, LastMedkitReductionStatus, LastHungerStatus,
+				LastSmellStatuses[4], LastAddictionStatuses[5], LastCombatStimStatus, LastMedigelStatus,
+				LastPharmacistStatus, LastSodaStatus, LastCandyStatus, LastCigarettesStatus, LastZymeStatus, LastDrunkStatus,
+				LastBallisticStatus, LastHazmatStatus, LastTechGogglesStatus, LastRebreatherStatus, LastAdaptiveArmorStatus,
+				LastRollStatus, LastDodgeRollStatus, LastStressStatus;
+var int LastStatusCount, CurStatusCount;
+
 struct VMDButtonPos {
 	var int X;
 	var int Y;
@@ -75,13 +90,14 @@ event InitWindow()
 		if (VMP.bShowHealthStatuses || IsA('HUDMedBotHealthScreen'))
 		{
 			bShowingStatuses = true;
-			VMDShowStatusInfo();
+			VMDShowStatusInfo(false);
+			LastStatusCount = CurStatusCount;
 		}
 		
 		if (VMP.bRealTimeUI)
 		{
-			AddTimer(0.5, True,, 'VMDUpdateStatusInfo');
-			AddTimer(0.5, True,, 'UpdateRegionWindows');
+			AddTimer(0.05, True,, 'VMDUpdateStatusInfo');
+			AddTimer(0.2, True,, 'UpdateRegionWindows');
 		}
 	}
 }
@@ -438,7 +454,7 @@ function bool ButtonActivated(Window buttonPressed)
 		//MADDERS, 6/5/22: Update status info. Groovy.
 		if (bShowingStatuses)
 		{
-			VMDShowStatusInfo();
+			VMDUpdateStatusInfo();
 		}
 	}
 	else if (buttonPressed.GetParent().IsA('PersonaHealthRegionWindow'))
@@ -481,7 +497,8 @@ function bool ButtonActivated(Window buttonPressed)
 					VMDBufferPlayer(Player).bShowHealthStatuses = true;
 					VMDBufferPlayer(Player).SaveConfig();
 				}
-				VMDShowStatusInfo();
+				VMDShowStatusInfo(false);
+				LastStatusCount = CurStatusCount;
 			break;
 			default:
 				bHandled = False;
@@ -599,7 +616,7 @@ function int HealAllParts()
 	//MADDERS, 6/5/22: Update status info. Groovy.
 	if (bShowingStatuses)
 	{
-		VMDShowStatusInfo();
+		VMDUpdateStatusInfo();
 	}
 
 	winStatus.AddText(Sprintf(PointsHealedLabel, pointsHealed));
@@ -867,10 +884,15 @@ function VMDUpdateStatusInfo()
 {
 	if (WinInfo == None || !bShowingStatuses) return;
 	
-	VMDShowStatusInfo();
+	VMDShowStatusInfo(true);
+	if (CurStatusCount != LastStatusCount)
+	{
+		VMDShowStatusInfo(false);
+	}
+	LastStatusCount = CurStatusCount;
 }
 
-function VMDShowStatusInfo()
+function VMDShowStatusInfo(optional bool bUpdateOnly)
 {
 	local bool bUnderwaterMedkitBad, bArmsBroken;
 	local int OverdoseDamage,
@@ -886,6 +908,9 @@ function VMDShowStatusInfo()
 	local VMDFakeBuffAura Auras[6];
 	local MedigelAura GelAura;
 	local ChargedPickup TPickup;
+	
+	//MADDERS, 5/11/25: Real time UI nonsense. Keep a running count, and figure out when our list changes.
+	CurStatusCount = 0;
 	
 	VMP = VMDBufferPlayer(Player);
 	if (WinInfo == None || VMP == None) return;
@@ -929,8 +954,12 @@ function VMDShowStatusInfo()
 		BurnTimeInt = int((BurnTime - VMP.BurnTimer) + 0.5);
 	}
 	
-	WinInfo.Clear();
-	WinInfo.SetTitle(StrStatusTitle);
+	if (!bUpdateOnly)
+	{
+		WinInfo.Clear();
+		WinInfo.SetTitle(StrStatusTitle);
+		ClearAllStatusPointers(); //Lovely.
+	}
 	
 	//0. OOPS! Almost forgot: Overdose!
 	if (VMP.IsOverdosed())
@@ -946,7 +975,7 @@ function VMDShowStatusInfo()
 			
 			TStr[0] = SprintF(StrOverdoseDesc[0], StrSubstanceNames[4]);
 			TStr[1] = SprintF(StrOverdoseDesc[1], OverdoseDamage);
-			AddStatusListing(Texture'StatusIconOverdose', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastOverdoseIcons[0], LastOverdoseStatuses[0], Texture'StatusIconOverdose', TStr[0]$CR()$TStr[1]);
 		}
 		if (VMP.AddictionTimers[3] > VMP.AddictionThresholds[3]*3)
 		{
@@ -959,14 +988,14 @@ function VMDShowStatusInfo()
 			
 			TStr[0] = SprintF(StrOverdoseDesc[0], StrSubstanceNames[3]);
 			TStr[1] = SprintF(StrOverdoseDesc[1], OverdoseDamage);
-			AddStatusListing(Texture'StatusIconOverdose', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastOverdoseIcons[1], LastOverdoseStatuses[1], Texture'StatusIconOverdose', TStr[0]$CR()$TStr[1]);
 		}
 		if (VMP.WaterBuildup > 300)
 		{
 			OverdoseDamage = 3;
 			TStr[0] = SprintF(StrOverdoseDesc[0], StrSubstanceNames[5]);
 			TStr[1] = SprintF(StrOverdoseDesc[1], OVerdoseDamage);
-			AddStatusListing(Texture'StatusIconOverdose', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastOverdoseIcons[2], LastOverdoseStatuses[2], Texture'StatusIconOverdose', TStr[0]$CR()$TStr[1]);
 		}
 	}
 	
@@ -976,21 +1005,21 @@ function VMDShowStatusInfo()
 	{
 		TStr[0] = StrPoisonDesc[0];
 		TStr[1] = SprintF(StrPoisonDesc[1], VMP.PoisonCounter, int(VMP.PoisonDamage*2.0*DMult), (VMP.PoisonCounter*2));
-		AddStatusListing(Texture'StatusIconPoisonEffect', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastPoisonIcon, LastPoisonStatus, Texture'StatusIconPoisonEffect', TStr[0]$CR()$TStr[1]);
 	}
 	//2. Fire
 	if (BurnTimeInt > 0)
 	{
 		TStr[0] = StrFireDesc[0];
 		TStr[1] = SprintF(StrFireDesc[1], BurnTimeInt, int(BurnDamage*2.0*DMult2), BurnTimeInt);
-		AddStatusListing(Texture'StatusIconFire', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastFireIcon, LastFireStatus, Texture'StatusIconFire', TStr[0]$CR()$TStr[1]);
 	}
 	//3. Nanovirus
 	if (VMP.HUDScramblerTimer > 0)
 	{
 		TStr[0] = StrNanoVirusDesc[0];
 		TStr[1] = SprintF(StrNanoVirusDesc[1], int(VMP.HUDScramblerTimer+0.5));
-		AddStatusListing(Texture'StatusIconNanoVirus', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastNanoVirusIcon, LastNanoVirusStatus, Texture'StatusIconNanoVirus', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//4. Death Negate
@@ -998,7 +1027,7 @@ function VMDShowStatusInfo()
 	{
 		TStr[0] = StrDeathNegateDesc[0];
 		TStr[1] = SprintF(StrDeathNegateDesc[1], int(VMP.NegateDeathCooldown+0.5));
-		AddStatusListing(Texture'StatusIconDeathNegate', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastDeathNegateIcon, LastDeathNegateStatus, Texture'StatusIconDeathNegate', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//5. EMP. Skipped.
@@ -1138,7 +1167,7 @@ function VMDShowStatusInfo()
 			
 			TStr[1] = TStr[1]$CR()$StrKillswitchDesc[2]@KSBarfStr[1];
 		}
-		AddStatusListing(Texture'StatusIconKillswitch', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastKillswitchIcon, LastKillswitchStatus, Texture'StatusIconKillswitch', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//7. Infamy active? On nightmare plus, it will be.
@@ -1156,7 +1185,7 @@ function VMDShowStatusInfo()
 		{
 			TStr[1] = SprintF(StrMayhemDesc[1], VMP.MayhemFactor, MayhemMod);
 		}
-		AddStatusListing(Texture'StatusIconMayhem', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastMayhemIcon, LastMayhemStatus, Texture'StatusIconMayhem', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//7b, I guess? List medkit fuckery, because it's pretty bad.
@@ -1184,7 +1213,7 @@ function VMDShowStatusInfo()
 		{
 			TStr[1] = SprintF(StrMedkitReductionDesc[3], VMP.CalculateSkillHealAmount(30));
 		}
-		AddStatusListing(Texture'StatusIconMedkitReduction', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastMedkitReductionIcon, LastMedkitReductionStatus, Texture'StatusIconMedkitReduction', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//8. Always list hunger, options allowing.
@@ -1207,7 +1236,7 @@ function VMDShowStatusInfo()
 		{
 			TStr[1] = SprintF(StrHungerDesc[1], HungerPercentInt, HungerTimeLeftInt);
 		}
-		AddStatusListing(Texture'StatusIconHunger', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastHungerIcon, LastHungerStatus, Texture'StatusIconHunger', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//9/10: Smell stuff. Lovely.
@@ -1248,7 +1277,7 @@ function VMDShowStatusInfo()
 				TStr[1] = SprintF(StrBloodSmellDesc[2], SmellUnits, SmellUnitsThresh[0]);
 			}
 			
-			AddStatusListing(Texture'StatusIconBloodSmell', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastSmellIcons[0], LastSmellStatuses[0], Texture'StatusIconBloodSmell', TStr[0]$CR()$TStr[1]);
 		}
 		
 		//9b. If zyme smell is too high, list it.
@@ -1260,7 +1289,7 @@ function VMDShowStatusInfo()
 			TStr[0] = StrZymeSmellDesc[0];
 			TStr[1] = SprintF(StrZymeSmellDesc[1], SmellUnits, SmellUnitsThresh[0]);
 			
-			AddStatusListing(Texture'StatusIconZymeSmell', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastSmellIcons[1], LastSmellStatuses[1], Texture'StatusIconZymeSmell', TStr[0]$CR()$TStr[1]);
 		}
 		
 		//9c. If smoke smell is too high, list it.
@@ -1281,7 +1310,7 @@ function VMDShowStatusInfo()
 				TStr[1] = SprintF(StrSmokeSmellDesc[2], SmellUnits, SmellUnitsThresh[0]);
 			}
 			
-			AddStatusListing(Texture'StatusIconSmokeSmell', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastSmellIcons[2], LastSmellStatuses[2], Texture'StatusIconSmokeSmell', TStr[0]$CR()$TStr[1]);
 		}
 		
 		//10. Regardless of level, ALWAYS list food smell.
@@ -1305,7 +1334,7 @@ function VMDShowStatusInfo()
 			TStr[1] = SprintF(StrFoodSmellDesc[3], SmellUnits, SmellUnitsThresh[0]);
 		}
 		
-		AddStatusListing(Texture'StatusIconFoodSmell', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastSmellIcons[3], LastSmellStatuses[3], Texture'StatusIconFoodSmell', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//11. Next up is addictions. Ugh.
@@ -1324,7 +1353,7 @@ function VMDShowStatusInfo()
 				TStr[1] = SprintF(StrAddictionDesc[2], int(VMP.AddictionTimers[0]));
 			}
 			
-			AddStatusListing(Texture'StatusIconAddiction', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastAddictionIcons[0], LastAddictionStatuses[0], Texture'StatusIconAddiction', TStr[0]$CR()$TStr[1]);
 		}
 		if (VMP.AddictionStates[1] > 0)
 		{
@@ -1339,7 +1368,7 @@ function VMDShowStatusInfo()
 				TStr[1] = SprintF(StrAddictionDesc[2], int(VMP.AddictionTimers[1]));
 			}
 			
-			AddStatusListing(Texture'StatusIconAddiction', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastAddictionIcons[1], LastAddictionStatuses[1], Texture'StatusIconAddiction', TStr[0]$CR()$TStr[1]);
 		}
 	}
 	if (VMP.bAddictionEnabled > 0)
@@ -1357,7 +1386,7 @@ function VMDShowStatusInfo()
 				TStr[1] = SprintF(StrAddictionDesc[2], int(VMP.AddictionTimers[2]));
 			}
 			
-			AddStatusListing(Texture'StatusIconAddiction', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastAddictionIcons[2], LastAddictionStatuses[2], Texture'StatusIconAddiction', TStr[0]$CR()$TStr[1]);
 		}
 		if (VMP.AddictionStates[3] > 0)
 		{
@@ -1372,7 +1401,7 @@ function VMDShowStatusInfo()
 				TStr[1] = SprintF(StrAddictionDesc[2], int(VMP.AddictionTimers[3]));
 			}
 			
-			AddStatusListing(Texture'StatusIconAddiction', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastAddictionIcons[3], LastAddictionStatuses[3], Texture'StatusIconAddiction', TStr[0]$CR()$TStr[1]);
 		}
 		if (VMP.AddictionStates[4] > 0)
 		{
@@ -1387,7 +1416,7 @@ function VMDShowStatusInfo()
 				TStr[1] = SprintF(StrAddictionDesc[2], int(VMP.AddictionTimers[4]));
 			}
 			
-			AddStatusListing(Texture'StatusIconAddiction', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastAddictionIcons[4], LastAddictionStatuses[4], Texture'StatusIconAddiction', TStr[0]$CR()$TStr[1]);
 		}
 	}
 	
@@ -1406,7 +1435,7 @@ function VMDShowStatusInfo()
 		}
 		
 		//BARF! We are filler.
-		AddStatusListing(Texture'BeltIconCombatStim', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastCombatStimIcon, LastCombatStimStatus, Texture'BeltIconCombatStim', TStr[0]$CR()$TStr[1]);
 	}
 	
 	GelAura = MedigelAura(VMP.FindInventoryType(class'MedigelAura'));
@@ -1428,7 +1457,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrMedigelDesc[1], int((float(GelAura.Charge) / 40.0) + 0.5), THeal);
 		
 		//BARF! We are filler.
-		AddStatusListing(Texture'BeltIconMedigel', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastMedigelIcon, LastMedigelStatus, Texture'BeltIconMedigel', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//13. Pharmacist.
@@ -1439,7 +1468,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrPharmacistDesc[1], int((float(Auras[1].Charge) / 40.0) + 0.5));
 		
 		//BARF! We are filler.
-		AddStatusListing(Texture'StatusIconPharmacistBuff', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastPharmacistIcon, LastPharmacistStatus, Texture'StatusIconPharmacistBuff', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//14a. Soda buff.
@@ -1450,7 +1479,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrSodaBuffDesc[1], int((float(Auras[2].Charge) / 40.0) + 0.5));
 		
 		//BARF! We are filler.
-		AddStatusListing(Texture'StatusIconSodaBuff', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastSodaIcon, LastSodaStatus, Texture'StatusIconSodaBuff', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//14b. Candy buff.
@@ -1461,7 +1490,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrCandyBuffDesc[1], int((float(Auras[3].Charge) / 40.0) + 0.5));
 		
 		//BARF! We are filler.
-		AddStatusListing(Texture'StatusIconCandyBuff', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastCandyIcon, LastCandyStatus, Texture'StatusIconCandyBuff', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//14c. Cigarettes buff.
@@ -1472,7 +1501,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrCigarettesBuffDesc[1], int((float(Auras[4].Charge) / 40.0) + 0.5));
 		
 		//BARF! We are filler.
-		AddStatusListing(Texture'StatusIconCigarettesBuff', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastCigarettesIcon, LastCigarettesStatus, Texture'StatusIconCigarettesBuff', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//14d. Zyme buff.
@@ -1483,7 +1512,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrZymeBuffDesc[1], int((float(Auras[5].Charge) / 40.0) + 0.5));
 		
 		//BARF! We are filler.
-		AddStatusListing(Texture'StatusIconZymeBuff', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastZymeIcon, LastZymeStatus, Texture'StatusIconZymeBuff', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//14e. Inebriation.
@@ -1493,7 +1522,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrInebriationDesc[1], int(VMP.DrugEffectTimer + 0.5));
 		
 		//BARF! We are filler.
-		AddStatusListing(Texture'StatusIconDrunk', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastDrunkIcon, LastDrunkStatus, Texture'StatusIconDrunk', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//15a. Ballistic Armor.
@@ -1507,7 +1536,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrBallisticArmorDesc[1], int(100 - (SkillValue2 * 50)), int(100 - (SkillValue2 * 75)), (TPickup.Charge * 100 / TPickup.Default.Charge));
 		
 		//BARF! We are filler.
-		AddStatusListing(TPickup.Icon, TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastBallisticIcon, LastBallisticStatus, TPickup.Icon, TStr[0]$CR()$TStr[1]);
 	}
 
 	//15b. Hazmat Suit.
@@ -1521,7 +1550,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrHazmatSuitDesc[1], int(100 - (SkillValue2 * 50)), int(100 - (SkillValue2 * 75)), (TPickup.Charge * 100 / TPickup.Default.Charge));
 		
 		//BARF! We are filler.
-		AddStatusListing(TPickup.Icon, TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastHazmatIcon, LastHazmatStatus, TPickup.Icon, TStr[0]$CR()$TStr[1]);
 	}
 	
 	//15c. Infrared Goggles.
@@ -1535,7 +1564,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrTechGogglesDesc[1], int(TMath));
 		
 		//BARF! We are filler.
-		AddStatusListing(TPickup.Icon, TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastTechGogglesIcon, LastTechGogglesStatus, TPickup.Icon, TStr[0]$CR()$TStr[1]);
 	}
 	
 	//15d. Rebreather.
@@ -1549,7 +1578,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrRebreatherDesc[1], int(TMath));
 		
 		//BARF! We are filler.
-		AddStatusListing(TPickup.Icon, TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastRebreatherIcon, LastRebreatherStatus, TPickup.Icon, TStr[0]$CR()$TStr[1]);
 	}
 	
 	//15e. Thermoptic Camo.
@@ -1563,7 +1592,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrAdaptiveArmorDesc[1], int(TMath));
 		
 		//BARF! We are filler.
-		AddStatusListing(TPickup.Icon, TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastAdaptiveArmorIcon, LastAdaptiveArmorStatus, TPickup.Icon, TStr[0]$CR()$TStr[1]);
 	}
 	
 	//16. Roll cooldown.
@@ -1573,7 +1602,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrRollCooldownDesc[1], int(VMP.RollCooldownTimer + 0.5));
 		
 		//BARF! We are filler.
-		AddStatusListing(Texture'StatusIconRollCooldown', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastRollIcon, LastRollStatus, Texture'StatusIconRollCooldown', TStr[0]$CR()$TStr[1]);
 	}
 	
 	if (VMP.DodgeRollCooldownTimer > 0)
@@ -1582,7 +1611,7 @@ function VMDShowStatusInfo()
 		TStr[1] = SprintF(StrDodgeRollCooldownDesc[1], int(VMP.DodgeRollCooldownTimer + 0.5));
 		
 		//BARF! We are filler.
-		AddStatusListing(Texture'StatusIconDodgeRollCooldown', TStr[0]$CR()$TStr[1]);
+		AddStatusListing(bUpdateOnly, LastDodgeRollIcon, LastDodgeRollStatus, Texture'StatusIconDodgeRollCooldown', TStr[0]$CR()$TStr[1]);
 	}
 	
 	//17. Stress system and modifiers.
@@ -1593,25 +1622,25 @@ function VMDShowStatusInfo()
 		{
 			TStr[0] = StrStressDesc[3];
 			TStr[1] = StrStressDesc[7]$CR()$StressBarfStr;
-			AddStatusListing(Texture'StatusIconStress03', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastStressIcon, LastStressStatus, Texture'StatusIconStress03', TStr[0]$CR()$TStr[1]);
 		}
 		else if (VMP.ActiveStress > 60)
 		{
 			TStr[0] = StrStressDesc[2];
 			TStr[1] = StrStressDesc[6]$CR()$StressBarfStr;
-			AddStatusListing(Texture'StatusIconStress02', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastStressIcon, LastStressStatus, Texture'StatusIconStress02', TStr[0]$CR()$TStr[1]);
 		}
 		else if (VMP.ActiveStress > 30)
 		{
 			TStr[0] = StrStressDesc[1];
 			TStr[1] = StrStressDesc[5]$CR()$StressBarfStr;
-			AddStatusListing(Texture'StatusIconStress01', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastStressIcon, LastStressStatus, Texture'StatusIconStress01', TStr[0]$CR()$TStr[1]);
 		}
 		else
 		{
 			TStr[0] = StrStressDesc[0];
 			TStr[1] = StrStressDesc[4]$CR()$StressBarfStr;
-			AddStatusListing(Texture'StatusIconStress00', TStr[0]$CR()$TStr[1]);
+			AddStatusListing(bUpdateOnly, LastStressIcon, LastStressStatus, Texture'StatusIconStress00', TStr[0]$CR()$TStr[1]);
 		}
 	}
 }
@@ -1661,17 +1690,17 @@ function string GetStressBarfStr(VMDBufferPlayer VMP)
  	//1b: Broad health.
  	if (HTotal < 150*VMP.GetHealthMult("All"))
 	{
-		THealthMult = 0.2;
+		THealthMult = 0.135;
 		TallyStr[TalliedStrings++] = StrStressModifiers[2];
 	}
  	else if (HTotal < 300*VMP.GetHealthMult("All"))
 	{
-		THealthMult = 0.15;
+		THealthMult = 0.10;
 		TallyStr[TalliedStrings++] = StrStressModifiers[1];
 	}
  	else if (HTotal < 450*VMP.GetHealthMult("All"))
 	{
-		THealthMult = 0.10;
+		THealthMult = 0.065;
 		TallyStr[TalliedStrings++] = StrStressModifiers[0];
  	}
 	
@@ -1679,42 +1708,42 @@ function string GetStressBarfStr(VMDBufferPlayer VMP)
  	//1c: Arms are "grazes" but can add up.
  	if (VMP.HealthArmRight < 50*VMP.GetHealthMult("Right Arm") || VMP.HealthArmLeft < 50*VMP.GetHealthMult("Left Arm"))
 	{
-		THealthMult += 0.05;
+		THealthMult += 0.035;
 		TallyStr[TalliedStrings++] = StrStressModifiers[3];
 	}
 	
  	//1d: Legs are vital, and can really freak us out
  	if ((VMP.HealthLegLeft < 15*VMP.GetHealthMult("Left Leg")) && (VMP.HealthLegRight < 15*VMP.GetHealthMult("Right Leg")))
 	{
-		THealthMult += 0.1;
+		THealthMult += 0.065;
 		TallyStr[TalliedStrings++] = StrStressModifiers[5];
 	}
  	else if (VMP.HealthLegLeft < 50*VMP.GetHealthMult("Left Leg") || VMP.HealthLegRight < 50*VMP.GetHealthMult("Right Leg"))
 	{
-		THealthMult += 0.05;
+		THealthMult += 0.035;
 		TallyStr[TalliedStrings++] = StrStressModifiers[4];
  	}
 	
  	//1e: Vital organs fucking suck. Head especially.
  	if (VMP.HealthTorso < 35*VMP.GetHealthMult("Torso"))
 	{
-		THealthMult += 0.1;
+		THealthMult += 0.065;
 		TallyStr[TalliedStrings++] = StrStressModifiers[7];
 	}
  	else if (VMP.HealthTorso < 65*VMP.GetHealthMult("Torso"))
 	{
-		THealthMult += 0.05;
+		THealthMult += 0.035;
 		TallyStr[TalliedStrings++] = StrStressModifiers[6];
  	}
 	
  	if (VMP.HealthHead < 35*VMP.GetHealthMult("Head"))
 	{
-		THealthMult += 0.15;
+		THealthMult += 0.10;
 		TallyStr[TalliedStrings++] = StrStressModifiers[9];
 	}
  	else if (VMP.HealthHead < 65*VMP.GetHealthMult("Head"))
 	{
-		THealthMult += 0.05;
+		THealthMult += 0.035;
 		TallyStr[TalliedStrings++] = StrStressModifiers[8];
  	}
 	
@@ -1842,61 +1871,124 @@ function string GetStressBarfStr(VMDBufferPlayer VMP)
 	Ret = CAPS(Left(Ret, 1))$Right(Ret, Len(Ret)-1);
 	
 	return Ret;
-	
-	/*StrStressDesc[8], StrStressModifiers[11], StrStressModifiers[25]
-		
-     	StrStressModifiers(0)="your health is lackluster"
-     	StrStressModifiers(1)="your health is low"
-     	StrStressModifiers(2)="your health is very low"
-     	StrStressModifiers(3)="your arms are injured"
-     	StrStressModifiers(4)="your legs are injured"
-     	StrStressModifiers(5)="your legs are heavily injured"
-     	StrStressModifiers(6)="your torso is injured"
-     	StrStressModifiers(7)="your torso is heavily injured"
-     	StrStressModifiers(8)="your head is injured"
-     	StrStressModifiers(9)="your head is heavily injured"
-     	StrStressModifiers(10)="you are under the coaxing cover of darkness"
-     	StrStressModifiers(11)="you are nearly invisible beneath the cover of darkness"
-     	StrStressModifiers(12)="you are calmed by your state of inebriation"
-     	StrStressModifiers(13)="you are well charged"
-     	StrStressModifiers(14)="you bio energy is low"
-     	StrStressModifiers(15)="you are well fed"
-     	StrStressModifiers(16)="you are hungry"
-     	StrStressModifiers(17)="you are famished"
-     	StrStressModifiers(18)="you are surrounded by enemies"
-     	StrStressModifiers(19)="you are surrounded by unknown parties"
-     	StrStressModifiers(20)="you are comfortable from being indoors"
-     	StrStressModifiers(21)="you are steady and ducked low"
-     	StrStressModifiers(22)="your weapon is low on ammo"*/
 }
 
-function AddStatusListing(Texture TTex, string InStr)
+function AddStatusListing(bool bUpdateOnly, out Window WinIcon, out PersonaNormalTextWindow WinText, Texture TTex, string InStr)
 {
 	local AlignWindow TAlign;
-	local PersonaNormalTextWindow winText;
-	local Window winIcon;
+	//local PersonaNormalTextWindow winText;
+	//local Window winIcon;
 	
 	if (WinInfo == None || WinInfo.WinTile == None) return;
 	
-	TAlign = AlignWindow(WinInfo.WinTile.NewChild(Class'AlignWindow'));
-	TAlign.SetChildVAlignment(VALIGN_Top);
-	TAlign.SetChildSpacing(4);
+	CurStatusCount += 1;
+	if (bUpdateOnly)
+	{
+		WinIcon.SetBackground(TTex);
+		WinText.SetText(InStr);
+	}
+	else
+	{
+		TAlign = AlignWindow(WinInfo.WinTile.NewChild(Class'AlignWindow'));
+		TAlign.SetChildVAlignment(VALIGN_Top);
+		TAlign.SetChildSpacing(4);
+		
+		//Add icon
+		winIcon = TAlign.NewChild(Class'Window');
+		winIcon.SetBackground(TTex);
+		winIcon.SetBackgroundStyle(DSTY_Masked);
+		winIcon.SetSize(42, 42);
+		
+		//Add description
+		winText = PersonaNormalTextWindow(TAlign.NewChild(Class'PersonaNormalTextWindow'));
+		winText.SetWordWrap(True);
+		winText.SetTextMargins(0, 0);
+		winText.SetTextAlignments(HALIGN_Left, VALIGN_Top);
+		
+		winText.AppendText(InStr);
+		
+		WinInfo.AddLine();
+	}
+}
+
+//MADDERS, 5/11/25: Part of realtime UI rewrites. This super sucks, but it does the job reliably.
+function ClearAllstatusPointers()
+{
+	local int i;
 	
-	//Add icon
-	winIcon = TAlign.NewChild(Class'Window');
-	winIcon.SetBackground(TTex);
-	winIcon.SetBackgroundStyle(DSTY_Masked);
-	winIcon.SetSize(42, 42);
+	for (i=0; i<ArrayCount(LastOverdoseIcons); i++)
+	{
+		LastOverdoseIcons[i] = None;
+	}
+	LastPoisonIcon = None;
+	LastFireIcon = None;
+	LastNanoVirusIcon = None;
+	LastDeathNegateIcon = None;
+	LastKillswitchIcon = None;
+	LastMayhemIcon = None;
+	LastMedkitReductionIcon = None;
+	LastHungerIcon = None;
+	for (i=0; i<ArrayCount(LastSmellIcons); i++)
+	{
+		LastSmellIcons[i] = None;
+	}
+	for (i=0; i<ArrayCount(LastAddictionIcons); i++)
+	{
+		LastAddictionIcons[i] = None;
+	}
+	LastCombatStimIcon = None;
+	LastMedigelIcon = None;
+	LastPharmacistIcon = None;
+	LastSodaIcon = None;
+	LastCandyIcon = None;
+	LastCigarettesIcon = None;
+	LastZymeIcon = None;
+	LastDrunkIcon = None;
+	LastBallisticIcon = None;
+	LastHazmatIcon = None;
+	LastTechGogglesIcon = None;
+	LastRebreatherIcon = None;
+	LastAdaptiveArmorIcon = None;
+	LastRollIcon = None;
+	LastDodgeRollIcon = None;
+	LastStressIcon = None;
 	
-	//Add description
-	winText = PersonaNormalTextWindow(TAlign.NewChild(Class'PersonaNormalTextWindow'));
-	winText.SetWordWrap(True);
-	winText.SetTextMargins(0, 0);
-	winText.SetTextAlignments(HALIGN_Left, VALIGN_Top);
-	
-	winText.AppendText(InStr);
-	
-	WinInfo.AddLine();
+	for (i=0; i<ArrayCount(LastOverdoseStatuses); i++)
+	{
+		LastOverdoseStatuses[i] = None;
+	}
+	LastPoisonStatus = None;
+	LastFireStatus = None;
+	LastNanoVirusStatus = None;
+	LastDeathNegateStatus = None;
+	LastKillswitchStatus = None;
+	LastMayhemStatus = None;
+	LastMedkitReductionStatus = None;
+	LastHungerStatus = None;
+	for (i=0; i<ArrayCount(LastSmellStatuses); i++)
+	{
+		LastSmellStatuses[i] = None;
+	}
+	for (i=0; i<ArrayCount(LastAddictionStatuses); i++)
+	{
+		LastAddictionStatuses[i] = None;
+	}
+	LastCombatStimStatus = None;
+	LastMedigelStatus = None;
+	LastPharmacistStatus = None;
+	LastSodaStatus = None;
+	LastCandyStatus = None;
+	LastCigarettesStatus = None;
+	LastZymeStatus = None;
+	LastDrunkStatus = None;
+	LastBallisticStatus = None;
+	LastHazmatStatus = None;
+	LastTechGogglesStatus = None;
+	LastRebreatherStatus = None;
+	LastAdaptiveArmorStatus = None;
+	LastRollStatus = None;
+	LastDodgeRollStatus = None;
+	LastStressStatus = None;
 }
 
 defaultproperties
