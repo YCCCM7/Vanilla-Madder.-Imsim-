@@ -15,6 +15,9 @@ var bool bHiddenBeam;			// is this beam hidden?
 
 var LaserProxy proxy;
 
+//MADDERS, 5/8/25: Future of laser sights = bigger laser?
+var float OverrideSpotScale;
+
 function CalcTrace(float deltaTime)
 {
 	local vector StartTrace, EndTrace, HitLocation, HitNormal, Reflection;
@@ -64,8 +67,17 @@ function CalcTrace(float deltaTime)
 		if (spot[i] == None)
 		{
 			spot[i] = Spawn(class'LaserSpot', Self, , HitLocation, Rotator(HitNormal));
-			if ((bBlueBeam) && (spot[i] != None))
-				spot[i].Skin = Texture'LaserSpot2';
+			if (spot[i] != None)
+			{
+				if (bBlueBeam)
+				{
+					spot[i].Skin = Texture'LaserSpot2';
+				}
+				if (OverrideSpotScale >= 0)
+				{
+					Spot[i].DrawScale = OverrideSpotScale;
+				}
+			}
 		}
 		else
 		{
@@ -227,6 +239,7 @@ function SetHiddenBeam(bool bHide)
 
 defaultproperties
 {
+     OverrideSpotScale=-1.000000
      SoundRadius=16
      AmbientSound=Sound'Ambient.Ambient.Laser'
      CollisionRadius=40.000000
