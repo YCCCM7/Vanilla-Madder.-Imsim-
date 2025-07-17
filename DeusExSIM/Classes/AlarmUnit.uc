@@ -21,6 +21,9 @@ var float confusionDuration;	// how long does EMP hit last?
 
 var localized string MsgActiveAlarm;
 
+//MADDERS, 6/26/25: Feedback for not reaching alarm units properly.
+var localized String MsgCannotReach;
+
 function UpdateAIEvents()
 {
 	local VMDBufferPlayer VMP;
@@ -290,6 +293,8 @@ function string VMDGetItemName()
 
 defaultproperties
 {
+     MsgCannotReach="You can't reach the alarm from here"
+     
      alarmTimeout=30
      msgActivated="Alarm activated"
      msgDeactivated="Alarm deactivated"
