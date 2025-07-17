@@ -63,6 +63,7 @@ function ZoneChange(ZoneInfo NewZone)
 
 defaultproperties
 {
+     MoverDamageMult=0.000000
      bBlood=True
      bStickToWall=True
      DamageType=stunned
