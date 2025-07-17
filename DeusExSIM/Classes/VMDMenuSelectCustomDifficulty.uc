@@ -362,17 +362,20 @@ function LoadPreset(int PresetIndex)
 			SetRowVariable(VMDGetSettingIndex("Weak Grenade Climbing"), 1); //Turn on weak grenade climbing.
 			
 			//MADDERS, 8/11/23: Add some seriously jacked senses for Phase 2.
-			SetRowVariable(VMDGetSettingIndex("Enemy Search Extension"), 3); //Extend enemy search time.
-			SetRowVariable(VMDGetSettingIndex("Enemy General Vision Boost"), 3);
-			SetRowVariable(VMDGetSettingIndex("Enemy Shadow Vision Boost"), 3);
-			SetRowVariable(VMDGetSettingIndex("Enemy Hearing Boost"), 3);
+			//MADDERS, 6/5/25: After much play testing and fucking around... It's too much. It really is just too much.
+			//The enemy outnumbers you, often outprepares you, and has a large toolset to hit you with.
+			//Being a quickdraw comparable to a high reflexes player is just overkill.
+			SetRowVariable(VMDGetSettingIndex("Enemy Search Extension"), 2); //Extend enemy search time.
+			SetRowVariable(VMDGetSettingIndex("Enemy General Vision Boost"), 2);
+			SetRowVariable(VMDGetSettingIndex("Enemy Shadow Vision Boost"), 2);
+			SetRowVariable(VMDGetSettingIndex("Enemy Hearing Boost"), 2);
 			SetRowVariable(VMDGetSettingIndex("Enemy Guessing Enhancement"), 3); //Do some moderately enhanced guessing. Shit doesn't fuck around, bruv. Don't do T3.
-			SetRowVariable(VMDGetSettingIndex("Enemy Reaction Speed Boost"), 2); //Moderately faster reflexes on Condemned, for now.
-			SetRowVariable(VMDGetSettingIndex("Enemy Surprise Period Reduction"), 2); //Do some moderately enhanced surprise window. Stuff is potent.
+			SetRowVariable(VMDGetSettingIndex("Enemy Reaction Speed Boost"), 1); //Moderately faster reflexes on Condemned, for now.
+			SetRowVariable(VMDGetSettingIndex("Enemy Surprise Period Reduction"), 1); //Do some moderately enhanced surprise window. Stuff is potent.
 			
 			//Also, boost our gunnery like hell.
-			SetRowVariable(VMDGetSettingIndex("Enemy Gunnery Boost"), 2);
-			SetRowVariable(VMDGetSettingIndex("Enemy Weapon Speed Boost"), 2);
+			SetRowVariable(VMDGetSettingIndex("Enemy Gunnery Boost"), 1);
+			SetRowVariable(VMDGetSettingIndex("Enemy Weapon Speed Boost"), 1);
 			
 			EnableAllStealthModifiers();
 			EnableAllCombatModifiers();
