@@ -238,7 +238,7 @@ function PopulateItemsList()
 		for (i=1; i<ArrayCount(CF.Default.MedicalItemsGlossary); i++)
 		{
 			TType = CF.GetMedicalItemGlossary(i);
-			if (TType == None || !VMP.DiscoveredItem(TType))
+			if (TType == None || !VMP.DiscoveredItem(TType) || (CF.GetMedicalItemArray(TType) == -1 && VMP.FindInventoryType(TType) == None))
 			{
 				continue;
 			}

@@ -240,7 +240,7 @@ function PopulateItemsList()
 		for (i=1; i<ArrayCount(CF.Default.MechanicalItemsGlossary); i++)
 		{
 			TType = CF.GetMechanicalItemGlossary(i);
-			if (TType == None || !VMP.DiscoveredItem(TType))
+			if (TType == None || !VMP.DiscoveredItem(TType) || (CF.GetMechanicalItemArray(TType) == -1 && VMP.FindInventoryType(TType) == None))
 			{
 				continue;
 			}
