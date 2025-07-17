@@ -208,6 +208,15 @@ function Frob(Actor Frobber, Inventory frobWith)
 	if (P == None)
 		return;
 	
+	if (AlarmUnit(Self) != None)
+	{
+		if (!VMDTargetIsFacing(32768, 16384, P))
+		{
+			P.ClientMessage(AlarmUnit(Self).MsgCannotReach);
+			return;
+		}
+	}
+	
 	TGun = AutoTurretGun(Self);
 	if (TGun != None)
 	{
