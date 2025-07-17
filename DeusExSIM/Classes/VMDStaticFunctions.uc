@@ -432,6 +432,7 @@ static function StartCampaign(DeusExPlayer Player, string StoredCampaign)
 			break;
 			case "IWR":
 			case "OMEGA":
+			case "HIVEDAYS":
 			case "OTHERZEROFOOD":
 			case "OTHERNOINTRO":
 			case "OTHERNOFOODNOINTRO":
@@ -549,24 +550,31 @@ static function AddReceivedItem(DeusExPlayer TPlay, Inventory AddType, int Count
 	
 	if (TPlay == None || AddType == None || Count <= 0) return;
 	
-	DXRW = DeusExRootWindow(TPlay.RootWindow);
-	if (DXRW == None || DXRW.HUD == None || DXRW.HUD.ReceivedItems == None) return;
-	
-	//MADDERS, 2/9/21: Clear display per each item now.
-        if (!bNoRemove)
+	if ((TPlay.ConPlay != None) && (TPlay.ConPlay.ConWinThird != None) && (DeusExWeapon(AddType) == None || !DeusExWeapon(AddType).VMDHasJankyAmmo()))
 	{
-		DXRW.HUD.ReceivedItems.RemoveItems();
-	}
-	DXRW.HUD.ReceivedItems.AddItem(AddType, Count);
-	
-	// Make sure the object belt is updated
-	if (AddType.IsA('Ammo'))
-	{
-		TPlay.UpdateAmmoBeltText(Ammo(AddType));
+		TPlay.ConPlay.ConWinThird.ShowReceivedItem(AddType, Count);
 	}
 	else
 	{
-		TPlay.UpdateBeltText(AddType);
+		DXRW = DeusExRootWindow(TPlay.RootWindow);
+		if (DXRW == None || DXRW.HUD == None || DXRW.HUD.ReceivedItems == None) return;
+		
+		//MADDERS, 2/9/21: Clear display per each item now.
+	        if (!bNoRemove)
+		{
+			DXRW.HUD.ReceivedItems.RemoveItems();
+		}
+		DXRW.HUD.ReceivedItems.AddItem(AddType, Count);
+		
+		// Make sure the object belt is updated
+		if (AddType.IsA('Ammo'))
+		{
+			TPlay.UpdateAmmoBeltText(Ammo(AddType));
+		}
+		else
+		{
+			TPlay.UpdateBeltText(AddType);
+		}
 	}
 }
 
