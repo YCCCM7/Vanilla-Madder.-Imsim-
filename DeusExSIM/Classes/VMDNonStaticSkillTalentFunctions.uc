@@ -81,7 +81,7 @@ function string BuildLevelString(class<Skill> InSkill, int InLevel, String DescS
 	if (TSkill == None) return "ERR NO SKILL";
 	
 	bCrafting = TPlayer.bCraftingSystemEnabled;
-	bTalents = TPlayer.bSkillAugmentsEnabled;
+	bTalents = TPlayer.ShouldUseSkillAugments();
 	GetVal = TSkill.LevelValues[InLevel];
 	switch(InSkill.Name)
 	{
@@ -401,14 +401,14 @@ function string BuildLevelString(class<Skill> InSkill, int InLevel, String DescS
 	
 	if (InWindow == None) return 0;
 	
+	if (Component == 0) Ret += SkillTalentPos[TArray].X;
+	if (Component == 1) Ret += SkillTalentPos[TArray].Y;
+	
 	if (!InWindow.IsA('VMDPersonaScreenSkills'))
 	{
 		if (Component == 0) Ret += NewGameSkillTalentPosMod.X;
 		if (Component == 1) Ret += NewGameSkillTalentPosMod.Y;
 	}
-	
-	if (Component == 0) Ret += SkillTalentPos[TArray].X;
-	if (Component == 1) Ret += SkillTalentPos[TArray].Y;
 	
 	return Ret;
 }
@@ -505,22 +505,42 @@ function string BuildLevelString(class<Skill> InSkill, int InLevel, String DescS
 
 /*static*/ function int GetSkillMapJumpPos(class<Skill> TSkill, int Component)
 {
-	local int TArray;
+	local int TArray, Ret;
+	local VMDBufferPlayer VMP;
 	
 	TArray = GetSkillIndex(TSkill);
 	
-	if (Component == 0) return JumpGemJumpLoc[TArray].X;
-	return JumpGemJumpLoc[TArray].Y;
+	if (Component == 0) Ret = JumpGemJumpLoc[TArray].X;
+	else Ret = JumpGemJumpLoc[TArray].Y;
+	
+	VMP = GetVMDBufferPlayer();
+	if (!VMP.ShouldUseSkillAugments())
+	{
+		Ret *= 0.5;
+		if (Component == 0) Ret += 120;
+		else Ret += 73;
+	}
+	
+	return Ret;
 }
 
 /*static*/ function int GetSkillMapPos(class<Skill> TSkill, int Component)
 {
-	local int TArray;
+	local int TArray, Ret;
+	local VMDBufferPlayer VMP;
 	
 	TArray = GetSkillIndex(TSkill);
 	
-	if (Component == 0) return SkillGemPos[TArray].X;
-	return SkillGemPos[TArray].Y;
+	if (Component == 0) Ret = SkillGemPos[TArray].X;
+	else Ret = SkillGemPos[TArray].Y;
+	
+	VMP = GetVMDBufferPlayer();
+	if (!VMP.ShouldUseSkillAugments())
+	{
+		Ret *= 0.5;
+	}
+	
+	return Ret;
 }
 
 function VMDBufferPlayer GetVMDBufferPlayer()
@@ -1263,9 +1283,9 @@ defaultproperties
     SkillCoreDescs(4)="The efficiency with which medkits can be activated, and medical crafting can occur."
     SkillLevelDescsA(4)="|n~Medkits heal for %d units.|n*Crafting cannot occur without a specialization."
     AltSkillLevelDescsA(4)="|n~Medkits heal for %d units.|n*Crafting cannot occur without a specialization."
-    SkillLevelDescsB(4)="|n~Medkits heal for %d units.|n~Crafting occurs with 10%% more efficiency.|n~Crafting occurs up to 124%% faster."
-    SkillLevelDescsC(4)="|n~Medkits heal for %d units.|n~Crafting occurs with 22%% more efficiency.|n~Crafting occurs up to 192%% faster."
-    SkillLevelDescsD(4)="|n~Medkits heal for %d units.|n~Crafting occurs with 37%% more efficiency.|n~Crafting occurs up to 235%% faster."
+    SkillLevelDescsB(4)="|n~Medkits heal for %d units.|n~Crafting occurs with 7%% more efficiency.|n~Crafting occurs up to 124%% faster."
+    SkillLevelDescsC(4)="|n~Medkits heal for %d units.|n~Crafting occurs with 15%% more efficiency.|n~Crafting occurs up to 192%% faster."
+    SkillLevelDescsD(4)="|n~Medkits heal for %d units.|n~Crafting occurs with 17%% more efficiency.|n~Crafting occurs up to 235%% faster."
     NoCraftingSkillLevelDescsA(4)="|n~Medkits heal for %d units."
     AltNoCraftingSkillLevelDescsA(4)="|n~Medkits heal for %d units."
     NoCraftingSkillLevelDescsB(4)="|n~Medkits heal for %d units."
@@ -1287,9 +1307,9 @@ defaultproperties
     SkillCoreDescs(6)="The effectiveness with which multitools can be handled, and mechanical crafting can occur."
     SkillLevelDescsA(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise.|n*Crafting cannot occur without a specialization."
     AltSkillLevelDescsA(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise.|n*Crafting cannot occur without a specialization."
-    SkillLevelDescsB(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise.|n~Crafting occurs with 10%% more efficiency.|n~Crafting occurs up to 124%% faster."
-    SkillLevelDescsC(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise.|n~Crafting occurs with 22%% more efficiency.|n~Crafting occurs up to 192%% faster."
-    SkillLevelDescsD(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise.|n~Crafting occurs with 37%% more efficiency.|n~Crafting occurs up to 235%% faster."
+    SkillLevelDescsB(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise.|n~Crafting occurs with 7%% more efficiency.|n~Crafting occurs up to 124%% faster."
+    SkillLevelDescsC(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise.|n~Crafting occurs with 15%% more efficiency.|n~Crafting occurs up to 192%% faster."
+    SkillLevelDescsD(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise.|n~Crafting occurs with 17%% more efficiency.|n~Crafting occurs up to 235%% faster."
     NoCraftingSkillLevelDescsA(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise."
     AltNoCraftingSkillLevelDescsA(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise."
     NoCraftingSkillLevelDescsB(6)="|n~Multitools can weaken devices by %d%% per unit.|n~Failed rush attempts generate %d%% noise."
