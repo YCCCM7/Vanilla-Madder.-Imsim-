@@ -195,7 +195,7 @@ function bool HasSkillAugment(Name S)
  	if (i == -1 || i >= ArrayCount(SkillAugmentAcquired)) return false;
  	if (VMDBufferPlayer(Player) == None) return false;
 	
- 	if ((VMDBufferPlayer(Player).bSkillAugmentsEnabled) && (!VMDHasSkillAugmentObjection(VMDBufferPlayer(Player))))
+ 	if ((VMDBufferPlayer(Player).ShouldUseSkillAugments()) && (!VMDHasSkillAugmentObjection(VMDBufferPlayer(Player))))
  	{
   		if (SkillAugmentAcquired[i] > 0) return true;
  	}
@@ -939,7 +939,7 @@ defaultproperties
      SkillAugmentSkillRequired(39)=class'SkillTech'
      //8.) Doubled crafting efficiency.
      SkillAugmentNames(40)="Elbow Grease"
-     SkillAugmentDescs(40)="~Relative to skill level, your mechanical crafting efficiency bonus is doubled.|n*This bonus also benefits your MEGH and SIDD repair costs."
+     SkillAugmentDescs(40)="~Relative to skill level, your mechanical crafting efficiency bonus is significantly improved.|n*This bonus also benefits your MEGH and SIDD repair costs."
      SkillAugmentIDs(40)=ElectronicsCrafting
      SkillAugmentAssumed(40)=0
      SkillAugmentLevel(40)=2
@@ -1080,7 +1080,7 @@ defaultproperties
      SkillAugmentSkillRequired(54)=class'SkillMedicine'
      //5.) More efficiency for medicinal crafting. This is, controversially, not cross class.
      SkillAugmentNames(55)="PHD in Chemistry"
-     SkillAugmentDescs(55)="~Relative to skill level, your chemical crafting efficiency bonus is doubled."
+     SkillAugmentDescs(55)="~Relative to skill level, your chemical crafting efficiency bonus is significantly improved."
      SkillAugmentIDs(55)=MedicineCrafting
      SkillAugmentAssumed(55)=0
      SkillAugmentLevel(55)=2
