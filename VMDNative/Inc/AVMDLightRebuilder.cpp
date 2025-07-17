@@ -43,4 +43,4 @@ void AVMDLightRebuilder :: execRebuildLighting(FFrame& Stack, RESULT_DECL)
 	unguardexec;
 };
 
-IMPLEMENT_FUNCTION(AVMDLightRebuilder,2199,execRebuildLighting);
+IMPLEMENT_FUNCTION(AVMDLightRebuilder,-1,execRebuildLighting);

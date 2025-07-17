@@ -35,6 +35,7 @@ void AVMDPathRebuilder::execScoutSetup(FFrame &Stack, RESULT_DECL)
 	
     ULevel *CurrentLevel = GetLevel();
     
+	Scout->bHidden = 1; //We can be seen on some maps. Oops.
 	Scout->bDetectable = 0; //4/29/25: Stop triggering triggers.
 	Scout->bCanTeleport = 0; //4/29/25: Stop triggering teleporters.
     Scout->SetCollision(true, true, true);
@@ -55,6 +56,67 @@ void AVMDPathRebuilder::execRedefinePaths(FFrame &Stack, RESULT_DECL)
     PathBuilder.definePaths(CurrentLevel);
 }
 
-IMPLEMENT_FUNCTION(AVMDPathRebuilder,2204,execAllowScoutToSpawn);
-IMPLEMENT_FUNCTION(AVMDPathRebuilder,2205,execScoutSetup);
-IMPLEMENT_FUNCTION(AVMDPathRebuilder,2206,execRedefinePaths);
+//HACKY DEBUGGING!
+void AVMDPathRebuilder::execBeginShakedown(FFrame& Stack, RESULT_DECL)
+{
+    P_GET_OBJECT(UObject, TargetObj);
+    P_FINISH;
+
+    INT PropertiesSize = TargetObj->GetClass()->GetPropertiesSize();
+    void* LastState = appMalloc(PropertiesSize, TEXT(""));
+
+    appMemcpy(LastState, TargetObj, PropertiesSize);
+
+    *(INT*)Result = (INT)LastState;
+}
+
+void AVMDPathRebuilder::execEndShakedown(FFrame& Stack, RESULT_DECL)
+{
+    P_GET_OBJECT(UObject, TargetObj);
+    P_GET_INT(LastState);
+    P_FINISH;
+
+    TFieldIterator<UProperty> FieldIt(TargetObj->GetClass());
+
+    while(FieldIt)
+    {
+        for(int ArrayIdx = 0; ArrayIdx < FieldIt->ArrayDim; ++ArrayIdx)
+        {
+            if(FieldIt->Matches(TargetObj, (BYTE*)LastState, ArrayIdx))
+            {
+                continue;
+            }
+
+            //TCHAR OldValue[1024];
+            //TCHAR NewValue[1024];
+			
+			
+			
+            //BYTE* Defaults = &TargetObj->GetClass()->Defaults(0);
+
+            //FieldIt->ExportText(ArrayIdx, OldValue, (BYTE*)LastState, NULL, 1);
+            //FieldIt->ExportText(ArrayIdx, NewValue, (BYTE*)*FieldIt, NULL, 1);
+
+            if(FieldIt->ArrayDim > 1)
+            {
+				//debugf(TEXT("%s[%i] changed from '%s' to '%s'"), FieldIt->GetName(), ArrayIdx, OldValue, NewValue);
+ 				debugf(TEXT("%s[%i] changed"), FieldIt->GetName(), ArrayIdx);
+            }
+            else
+            {
+                //debugf(TEXT("%s changed from '%s' to '%s'"), FieldIt->GetName(), OldValue, NewValue);
+				debugf(TEXT("%s changed"), FieldIt->GetName());
+            }
+        }
+
+        ++FieldIt;
+    }
+
+    appFree((BYTE*)LastState);
+}
+
+IMPLEMENT_FUNCTION(AVMDPathRebuilder,-1,execAllowScoutToSpawn);
+IMPLEMENT_FUNCTION(AVMDPathRebuilder,-1,execScoutSetup);
+IMPLEMENT_FUNCTION(AVMDPathRebuilder,-1,execRedefinePaths);
+IMPLEMENT_FUNCTION(AVMDPathRebuilder,-1,execBeginShakedown);
+IMPLEMENT_FUNCTION(AVMDPathRebuilder,-1,execEndShakedown);

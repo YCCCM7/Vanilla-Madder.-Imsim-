@@ -1,7 +1,15 @@
 class VMDPathRebuilder extends Actor native;
 
-native(2204) final function AllowScoutToSpawn();
-native(2205) final function ScoutSetup(Pawn Scout);
-native(2206) final function RedefinePaths();
+native final function AllowScoutToSpawn();
+native final function ScoutSetup(Pawn Scout);
+native final function RedefinePaths();
 
-function FuckPreBeginPlay();
+//Hacky debugging.
+native final static function int BeginShakedown(Object TestObject);
+native final static function int EndShakedown(Object TestObject, int LastState);
+
+function FuckPreBeginPlay()
+{
+	bHidden = true;
+	DrawType = DT_None;
+}

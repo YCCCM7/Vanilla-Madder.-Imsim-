@@ -18,4 +18,4 @@ void AVMDUnlitFixer::execPatchUnlitSurfaces(FFrame &Stack, void *Result)
     }
 }
 
-IMPLEMENT_FUNCTION(AVMDUnlitFixer,2207,execPatchUnlitSurfaces);
+IMPLEMENT_FUNCTION(AVMDUnlitFixer,-1,execPatchUnlitSurfaces);

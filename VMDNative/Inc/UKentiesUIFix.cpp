@@ -122,5 +122,5 @@ void UKentiesUIFix::execApplyScaling( FFrame& Stack, RESULT_DECL )
 	unguardexec;
 }
 
-IMPLEMENT_FUNCTION(UKentiesUIFix,2202,execAssertHook);
-IMPLEMENT_FUNCTION(UKentiesUIFix,2203,execApplyScaling);
+IMPLEMENT_FUNCTION(UKentiesUIFix,-1,execAssertHook);
+IMPLEMENT_FUNCTION(UKentiesUIFix,-1,execApplyScaling);

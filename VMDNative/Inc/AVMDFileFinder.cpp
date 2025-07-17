@@ -27,6 +27,118 @@ void AVMDFileFinder :: execFindFileAt(FFrame& Stack, RESULT_DECL)
 	unguardexec;
 };
 
+//Iterator for flipping through functions in sequence.
+void AVMDFileFinder :: execFindNextFileAt(FFrame& Stack, RESULT_DECL)
+{
+	guard(AVMDFileFinder::execFindNextFileAt);
+	
+	P_GET_STR(InPath);
+	P_GET_STR_REF(OutPath);
+	P_FINISH;
+	
+	WIN32_FIND_DATAW wfdFindData;
+	HANDLE hFindFile = FindFirstFileW(*InPath, &wfdFindData);
+	BOOL bFoundAFile = hFindFile != INVALID_HANDLE_VALUE;
+	
+	//Uggo 1: If we found these invalid fake files, skip past them. They suck.
+	if (bFoundAFile && (FString(wfdFindData.cFileName) == FString(L".") || FString(wfdFindData.cFileName) == FString(L"..")))
+	{
+
+		do
+		{
+			FindNextFileW(hFindFile, &wfdFindData);
+		}
+		while (FString(wfdFindData.cFileName) == FString(L".") || FString(wfdFindData.cFileName) == FString(L".."));
+	}
+	
+	PRE_ITERATOR;
+	
+	//If File A stopped being found, we're done.
+	if(!bFoundAFile)
+	{
+	    *OutPath = FString(L"");
+		Stack.Code = &Stack.Node->Script(wEndOffset + 1);
+		
+	    break;
+	}
+	
+	//Hack for identifying folders easier.
+	if (wfdFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	{
+		*OutPath = FString(wfdFindData.cFileName) + FString(L".FOLDER");
+	}
+	else
+	{
+		*OutPath = FString(wfdFindData.cFileName);
+	}
+	bFoundAFile = FindNextFileW(hFindFile, &wfdFindData);
+	
+	POST_ITERATOR;
+	
+	unguardexec;
+};
+
+void AVMDFileFinder :: execCopyFileFrom(FFrame& Stack, RESULT_DECL)
+{
+	guard(AVMDFileFinder::execFindNextFileAt);
+	
+	P_GET_STR(CopyFrom);
+	P_GET_STR(CopyTo);
+	P_FINISH;
+	
+	WIN32_FIND_DATAW wfdFindData;
+	HANDLE hFindFile = FindFirstFileW(*CopyFrom, &wfdFindData);
+	BOOL bFoundAFile = hFindFile != INVALID_HANDLE_VALUE;
+	BOOL bCopyWon = 0;
+
+	if (bFoundAFile)
+	{
+		bCopyWon = CopyFileW(*CopyFrom, *CopyTo, false);
+	}
+	
+	*(BOOL*)Result = bCopyWon;
+	
+	unguardexec;
+}
+
+void AVMDFileFinder :: execCreateFolderAt(FFrame& Stack, RESULT_DECL)
+{
+	guard(AVMDFileFinder::execFindNextFileAt);
+	
+	P_GET_STR(GenerateAt);
+	P_FINISH;
+	
+	BOOL bCreateWon = CreateDirectoryW(*GenerateAt, NULL);
+	
+	*(BOOL*)Result = bCreateWon;
+	
+	unguardexec;
+}
+
+void AVMDFileFinder :: execGetFileLocation(FFrame& Stack, RESULT_DECL)
+{
+	guard(AVMDFileFinder::execGetFileLocation);
+	
+	P_GET_STR(CheckFile);
+	P_FINISH;
+	
+	TCHAR Buffer[4096] = TEXT("");
+	TCHAR** LPPPart = {0};
+	
+	BOOL bFileFound = (GetFullPathNameW(*CheckFile, 4096, Buffer, LPPPart) > 0);
+	
+	if (bFileFound)
+	{
+		*(FString*)Result = FString(Buffer);
+	}
+	else
+	{
+		*(FString*)Result = FString(L"");
+	}
+
+	unguardexec;
+}
+
 void AVMDFileFinder :: execGetLatestSaveDir(FFrame& Stack, RESULT_DECL)
 {
 	guard(AVMDFileFinder::execFindFileAt);
@@ -221,7 +333,11 @@ void AVMDFileFinder :: execGetLatestSaveDir(FFrame& Stack, RESULT_DECL)
 	unguardexec;
 }*/
 
-//IMPLEMENT_FUNCTION(AVMDFileFinder,2209,execFindMapFiles);
-//IMPLEMENT_FUNCTION(AVMDFileFinder,2209,execGenerateModDirectories);
-IMPLEMENT_FUNCTION(AVMDFileFinder,2209,execFindFileAt);
-IMPLEMENT_FUNCTION(AVMDFileFinder,2198,execGetLatestSaveDir);
+//IMPLEMENT_FUNCTION(AVMDFileFinder,-1,execFindMapFiles);
+//IMPLEMENT_FUNCTION(AVMDFileFinder,-1,execGenerateModDirectories);
+IMPLEMENT_FUNCTION(AVMDFileFinder,-1,execFindFileAt);
+IMPLEMENT_FUNCTION(AVMDFileFinder,-1,execFindNextFileAt);
+IMPLEMENT_FUNCTION(AVMDFileFinder,-1,execGetLatestSaveDir);
+IMPLEMENT_FUNCTION(AVMDFileFinder,-1,execCopyFileFrom);
+IMPLEMENT_FUNCTION(AVMDFileFinder,-1,execCreateFolderAt);
+IMPLEMENT_FUNCTION(AVMDFileFinder,-1,execGetFileLocation);

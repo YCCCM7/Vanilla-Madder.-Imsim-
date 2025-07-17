@@ -1,9 +1,9 @@
 class KentiesUIFix extends Object
 	native abstract;
 
-native(2202) static final function AssertHook();
+native static final function AssertHook();
 
-native(2203) final function ApplyScaling();
+native final function ApplyScaling();
 
 defaultproperties
 {

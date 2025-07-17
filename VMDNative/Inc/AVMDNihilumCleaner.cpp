@@ -24,4 +24,4 @@ void AVMDNihilumCleaner::execSilenceNihilum(FFrame &Stack, RESULT_DECL)
 	}
 }
 
-IMPLEMENT_FUNCTION(AVMDNihilumCleaner,2208,execSilenceNihilum);
+IMPLEMENT_FUNCTION(AVMDNihilumCleaner,-1,execSilenceNihilum);

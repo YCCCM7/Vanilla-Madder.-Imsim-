@@ -31,4 +31,4 @@ void AVMDHDSpacefix :: execGetFreeHDSpace(FFrame& Stack, RESULT_DECL)
 	unguardexec;
 };
 
-IMPLEMENT_FUNCTION(AVMDHDSpacefix,2200,execGetFreeHDSpace);
+IMPLEMENT_FUNCTION(AVMDHDSpacefix,-1,execGetFreeHDSpace);

@@ -32,6 +32,8 @@ public:
 class VMDNATIVE_API AVMDPathRebuilder : public AActor
 {
 public:
+    DECLARE_FUNCTION(execEndShakedown);
+    DECLARE_FUNCTION(execBeginShakedown);
     DECLARE_FUNCTION(execRedefinePaths);
     DECLARE_FUNCTION(execScoutSetup);
     DECLARE_FUNCTION(execAllowScoutToSpawn);
@@ -72,6 +74,10 @@ public:
 class VMDNATIVE_API AVMDGenericNativeFunctions : public AActor
 {
 public:
+    DECLARE_FUNCTION(execGNativeSwap0);
+    DECLARE_FUNCTION(execSwapGNative);
+    DECLARE_FUNCTION(execHexDumpScript);
+    DECLARE_FUNCTION(execTargetScriptsAreEqual);
     DECLARE_FUNCTION(execSwapTargetScripts);
     DECLARE_FUNCTION(execSetArrayPropertyText);
     DECLARE_FUNCTION(execGetArrayPropertyText);
@@ -83,7 +89,11 @@ public:
 class VMDNATIVE_API AVMDFileFinder : public AActor
 {
 public:
+    DECLARE_FUNCTION(execGetFileLocation);
+    DECLARE_FUNCTION(execCreateFolderAt);
+    DECLARE_FUNCTION(execCopyFileFrom);
     DECLARE_FUNCTION(execGetLatestSaveDir);
+    DECLARE_FUNCTION(execFindNextFileAt);
     DECLARE_FUNCTION(execFindFileAt);
     DECLARE_CLASS(AVMDFileFinder,AActor,0)
     NO_DEFAULT_CONSTRUCTOR(AVMDFileFinder)
@@ -101,20 +111,30 @@ public:
 
 #endif
 
-AUTOGENERATE_FUNCTION(UKentiesUIFix,2203,execApplyScaling);
-AUTOGENERATE_FUNCTION(UKentiesUIFix,2202,execAssertHook);
-AUTOGENERATE_FUNCTION(AVMDUnlitFixer,2207,execPatchUnlitSurfaces);
-AUTOGENERATE_FUNCTION(AVMDPathRebuilder,2206,execRedefinePaths);
-AUTOGENERATE_FUNCTION(AVMDPathRebuilder,2205,execScoutSetup);
-AUTOGENERATE_FUNCTION(AVMDPathRebuilder,2204,execAllowScoutToSpawn);
-AUTOGENERATE_FUNCTION(AVMDNihilumCleaner,2208,execSilenceNihilum);
-AUTOGENERATE_FUNCTION(AVMDLightRebuilder,2199,execRebuildLighting);
-AUTOGENERATE_FUNCTION(AVMDHDSpacefix,2200,execGetFreeHDSpace);
-AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,2195,execSwapTargetScripts);
-AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,2196,execSetArrayPropertyText);
-AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,2197,execGetArrayPropertyText);
-AUTOGENERATE_FUNCTION(AVMDFileFinder,2198,execGetLatestSaveDir);
-AUTOGENERATE_FUNCTION(AVMDFileFinder,2209,execFindFileAt);
+AUTOGENERATE_FUNCTION(UKentiesUIFix,-1,execApplyScaling);
+AUTOGENERATE_FUNCTION(UKentiesUIFix,-1,execAssertHook);
+AUTOGENERATE_FUNCTION(AVMDUnlitFixer,-1,execPatchUnlitSurfaces);
+AUTOGENERATE_FUNCTION(AVMDPathRebuilder,-1,execEndShakedown);
+AUTOGENERATE_FUNCTION(AVMDPathRebuilder,-1,execBeginShakedown);
+AUTOGENERATE_FUNCTION(AVMDPathRebuilder,-1,execRedefinePaths);
+AUTOGENERATE_FUNCTION(AVMDPathRebuilder,-1,execScoutSetup);
+AUTOGENERATE_FUNCTION(AVMDPathRebuilder,-1,execAllowScoutToSpawn);
+AUTOGENERATE_FUNCTION(AVMDNihilumCleaner,-1,execSilenceNihilum);
+AUTOGENERATE_FUNCTION(AVMDLightRebuilder,-1,execRebuildLighting);
+AUTOGENERATE_FUNCTION(AVMDHDSpacefix,-1,execGetFreeHDSpace);
+AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,-1,execGNativeSwap0);
+AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,-1,execSwapGNative);
+AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,-1,execHexDumpScript);
+AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,-1,execTargetScriptsAreEqual);
+AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,-1,execSwapTargetScripts);
+AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,-1,execSetArrayPropertyText);
+AUTOGENERATE_FUNCTION(AVMDGenericNativeFunctions,-1,execGetArrayPropertyText);
+AUTOGENERATE_FUNCTION(AVMDFileFinder,-1,execGetFileLocation);
+AUTOGENERATE_FUNCTION(AVMDFileFinder,-1,execCreateFolderAt);
+AUTOGENERATE_FUNCTION(AVMDFileFinder,-1,execCopyFileFrom);
+AUTOGENERATE_FUNCTION(AVMDFileFinder,-1,execGetLatestSaveDir);
+AUTOGENERATE_FUNCTION(AVMDFileFinder,-1,execFindNextFileAt);
+AUTOGENERATE_FUNCTION(AVMDFileFinder,-1,execFindFileAt);
 
 #ifndef NAMES_ONLY
 #undef AUTOGENERATE_NAME
