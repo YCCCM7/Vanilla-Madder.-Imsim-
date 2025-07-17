@@ -292,46 +292,6 @@ function Timer()
 	}
 	else if (localURL == "08_NYC_SMUG")
 	{
-		//MADDERS, 4/28/25: we'll be bundling LDDP confix going forward from now on. This is redundant.
-		/*if (flags.GetBool('FordSchickRescued'))
-		{
-			if ((!flags.GetBool('M08MeetFordSchick_Played')) && (!flags.GetBool('FemJCM08MeetFordSchick_Played')))
-			{
-				AugCanCount = 0;
-				if (Player != None)
-				{
-					for(TItem = Player.Inventory; TItem != None; TItem = TItem.Inventory)
-					{
-						if (AugmentationUpgradeCannister(TItem) != None)
-						{
-							AugCanCount++;
-						}
-					}
-				}
-			}
-			else
-			{
-				if (!Flags.GetBool('VMDFixedSchickAug'))
-				{
-					if (Player != None)
-					{
-						for(TItem = Player.Inventory; TItem != None; TItem = TItem.Inventory)
-						{
-							if (AugmentationUpgradeCannister(TItem) != None)
-							{
-								ACCount++;
-							}
-						}
-						
-						if (ACCount <= AugCanCount)
-						{
-							TCan = Spawn(class'AugmentationUpgradeCannister',,, Vect(-462, 1387, 247));
-						}
-					}
-					Flags.SetBool('VMDFixedSchickAug', true,, 09);
-				}
-			}
-		}*/
 	}
 }
 
