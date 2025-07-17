@@ -56,9 +56,9 @@ function float VMDConfigureWepDamageMult(DeusExWeapon DXW)
  	TSkill = DXW.GoverningSkill;
  	if (TSkill == None) return 1.0;
  	
- 	if ((!DXW.bHandToHand) && (TSkill != class'SkillWeaponLowTech') && (TSkill != class'SkillDemolition'))
+ 	if (!DXW.bHandToHand && (!DXW.bInstantHit || DXW.bPenetrating))
  	{
-  		return 1.0-LevelValues[CurrentLevel];
+  		return 1.0-(LevelValues[CurrentLevel]*2.0);
  	}
  	
  	return 1.0;
@@ -89,11 +89,11 @@ function string VMDGetAdvancedDescription()
 		
 		if (float(int(abs(LevelValues[i] * 50))) ~= abs(LevelValues[i] * 50))
 		{
-			Ret = Ret$"|n|n"$SprintF(AdvancedDescLevels[i], int(Abs(LevelValues[i]*50)), int((abs(LevelValues[i]) * 100) + 0.5));
+			Ret = Ret$"|n|n"$SprintF(AdvancedDescLevels[i], int(Abs(LevelValues[i]*50)), int((abs(LevelValues[i]) * 200) + 0.5));
 		}
 		else
 		{
-			Ret = Ret$"|n|n"$SprintF(AdvancedDescLevels[i], Left(TBarf, InPos), int((abs(LevelValues[i]) * 100) + 0.5));
+			Ret = Ret$"|n|n"$SprintF(AdvancedDescLevels[i], Left(TBarf, InPos), int((abs(LevelValues[i]) * 200) + 0.5));
 		}
 	}
 	
