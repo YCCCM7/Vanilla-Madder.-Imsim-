@@ -5,6 +5,7 @@ class VMDMenuSelectAdditionalCampaign expands VMDMenuSelectCustomCampaign;
 
 function ProcessAction(String actionKey)
 {
+	local int i;
 	local VMDBufferPlayer VMP;
 	
 	VMP = VMDBufferPlayer(GetPlayerPawn());
@@ -15,20 +16,46 @@ function ProcessAction(String actionKey)
 	VMP.CampaignNewGameMap = StoredStartMap;
 	VMP.VMDResetPlayerNewGamePlus();
 
-	if (StoredCampaign ~= "VANILLA")
+	switch(StoredCampaign)
 	{
-		if (bool(DynamicLoadObject("FemJC.FJCJump", class'Sound', True)))
-		{
-			VMP.bDisableFemaleVoice = False;
-		}
-		else
-		{
-			VMP.bDisableFemaleVoice = True;
-		}
-	}
-	else
-	{
-		VMP.bDisableFemaleVoice = True;
+		case "VANILLA":
+			for (i=0; i<ArrayCount(VMP.MapStyle); i++)
+			{
+				VMP.MapStyle[i] = 0;
+			}
+			
+			if (bool(DynamicLoadObject("FemJC.FJCJump", class'Sound', True)))
+			{
+				VMP.bDisableFemaleVoice = False;
+			}
+			else
+			{
+				VMP.bDisableFemaleVoice = True;
+			}
+		break;
+		case "REVISION":
+			for (i=0; i<ArrayCount(VMP.MapStyle); i++)
+			{
+				VMP.MapStyle[i] = 1;
+			}
+			
+			if (bool(DynamicLoadObject("FemJC.FJCJump", class'Sound', True)))
+			{
+				VMP.bDisableFemaleVoice = False;
+			}
+			else
+			{
+				VMP.bDisableFemaleVoice = True;
+			}
+		break;
+		default:
+			for (i=0; i<ArrayCount(VMP.MapStyle); i++)
+			{
+				VMP.MapStyle[i] = 0;
+			}
+			
+			VMP.bDisableFemaleVoice = True;	
+		break;
 	}
 	
 	switch(CAPS(ActionKey))
