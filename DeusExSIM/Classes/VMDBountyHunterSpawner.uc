@@ -11,7 +11,18 @@ var VMDBufferPlayer VMP;
 
 function VMDUpdateRevisionMapStatus()
 {
-	bRevisionMapSet = false;
+	switch(class'VMDStaticFunctions'.static.GetIntendedMapStyle(Self))
+	{
+		case 0:
+			bRevisionMapSet = false;
+		break;
+		case 1:
+			bRevisionMapSet = true;
+		break;
+		case 2:
+			bRevisionMapSet = false;
+		break;
+	}
 }
 
 function Tick(float DT)
@@ -28,6 +39,7 @@ function Tick(float DT)
  		{
  	 		TweakTimer = -30;
 			
+			VMDUpdateRevisionMapStatus();
 			//MADDERS, 2/25/25: If we failed to spawn any hunters due to excluding factors, just mark this map to not spawn any going forward.
 			//The reason we do this is so that loading your game won't invoke more spawns.
 			if (!SpawnHunters())
@@ -290,6 +302,11 @@ function bool SpawnHunters()
 						}
 					}
 				}
+				
+				if (bDebug)
+				{
+					BroadcastMessage("SPAWNED"@SpawnedHunters@"HUNTERS!");
+				}
 			}
 		}
 	}
@@ -310,13 +327,40 @@ function bool IsValidHidePoint(HidePoint TPoint, string MapName)
 	switch(MapName)
 	{
 		case "06_HongKong_Storage":
-			if (TSeed == 13)
+			return false;
+		break;
+		case "09_NYC_ShipBelow":
+			if (bRevisionMapSet)
 			{
-				return false;
+				if (TSeed == 1)
+				{
+					return false;
+				}
 			}
 			else
 			{
-				return false;
+				if (TSeed == 1)
+				{
+					return false;
+				}
+			}
+		break;
+		case "10_Paris_Catacombs_Tunnels":
+			if (bRevisionMapSet)
+			{
+				if (TSeed == 1)
+				{
+					return false;
+				}
+			}
+		break;
+		case "10_Paris_Metro":
+			if (bRevisionMapSet)
+			{
+				if (TSeed == 13)
+				{
+					return false;
+				}
 			}
 		break;
 		case "14_Vandenberg_Sub":
@@ -352,38 +396,7 @@ function bool IsClearOfPlayer(Actor A, optional int TDist)
 
 function string VMDGetMapName()
 {
- 	local string S, S2;
- 	
- 	S = GetURLMap();
- 	S2 = Chr(92); //What the fuck. Can't type this anywhere!
-	
-	//MADDERS, 3/23/21: Uuuuh... Oceanlab machine :B:ROKE.
-	//No idea how or why this happens, and only post-DXT merge. Fuck it. Chop it down.
-	if (Right(S, 1) ~= " ") S = Left(S, Len(S)-1);
-	
- 	//HACK TO FIX TRAVEL BUGS!
- 	if (InStr(S, S2) > -1)
- 	{
-  		do
-  		{
-   			S = Right(S, Len(S) - InStr(S, S2) - 1);
-  		}
-  		until (InStr(S, S2) <= -1);
-
-		if (InStr(S, ".") > -1)
-		{
-  			S = Left(S, Len(S) - 4);
-		}
- 	}
- 	else
-	{
-		if (InStr(S, ".") > -1)
-		{
-			S = Left(S, Len(S)-3);
-		}
- 	}
-	
- 	return CAPS(S);
+ 	return class'VMDStaticFunctions'.Static.VMDGetMapName(Self);
 }
 
 function int VMDGetMissionNumber()
