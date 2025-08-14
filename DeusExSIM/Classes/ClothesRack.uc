@@ -12,6 +12,7 @@ enum ESkinColor
 };
 
 var() ESkinColor SkinColor;
+var localized string MsgNoRoom;
 
 function BeginPlay()
 {
@@ -28,17 +29,29 @@ function BeginPlay()
 
 function Frob(Actor Frobber, Inventory FrobWith)
 {
-	local Vector TNorm, TVect;
+	local Vector TNorm, TVect, SafeVect, FloorVect;
 	
 	if (VMDBufferPlayer(Frobber) != None)
 	{
 		//MADDERS, 5/28/25: Ugly hack fix for being too close to racks.
 		TNorm = Normal(Frobber.Location - Location);
-		TVect = TNorm * 80;
+		TVect = Location + (TNorm * 80);
 		TVect.Z = Frobber.Location.Z;
 		
-		Frobber.SetLocation(TVect);
-		VMDBufferPlayer(Frobber).ModifyPlayerAppearance();
+		SafeVect = TVect + (TNorm * 80);
+		SafeVect.Z = TVect.Z;
+		FloorVect = SafeVect;
+		FloorVect.Z -= ((Frobber.CollisionHeight * 2) + 2);
+		
+		if ((FastTrace(SafeVect, Frobber.Location)) && (!FastTrace(SafeVect, FloorVect)))
+		{
+			Frobber.SetLocation(TVect);
+			VMDBufferPlayer(Frobber).ModifyPlayerAppearance();
+		}
+		else
+		{
+			Pawn(Frobber).ClientMessage(MsgNoRoom);
+		}
 	}
 	
 	Super.Frob(Frobber, FrobWith);
@@ -46,6 +59,7 @@ function Frob(Actor Frobber, Inventory FrobWith)
 
 defaultproperties
 {
+     MsgNoRoom="There's not enough room to use that."
      bHighlight=True
      bFlammable=True
      FragType=Class'DeusEx.PaperFragment'
