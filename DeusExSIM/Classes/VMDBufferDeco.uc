@@ -32,6 +32,96 @@ var() bool bMemorable;
 var() bool bSuperOwned, bDisablePassiveConvos; //MADDERS, 12/23/23: Alert people nearby we're basically stealing.
 var() travel int StoredSeed;
 
+//MADDERS, 7/19/25: Revision Compat stuff.
+var bool bInWorld;
+var bool bWorldCollideActors, bWorldBlockActors, bWorldBlockPlayers;
+var Vector WorldPosition;
+
+function bool Facelift(bool bOn)
+{
+}
+
+// ----------------------------------------------------------------------
+// KillShadow()
+// ----------------------------------------------------------------------
+
+function KillShadow()
+{
+	/*if (Shadow != None)
+	{
+		Shadow.Destroy();
+		Shadow = None;
+	}*/
+}
+
+// ----------------------------------------------------------------------
+// CreateShadow()
+// ----------------------------------------------------------------------
+
+function CreateShadow()
+{
+	/*if (bInWorld) //bHasShadow && 
+		if (Shadow == None)
+			Shadow = Spawn(class'Shadow', Self,, Location-vect(0,0,1)*CollisionHeight, rot(16384,0,0));*/
+}
+
+// ----------------------------------------------------------------------
+// EnterWorld()
+// ----------------------------------------------------------------------
+
+function EnterWorld()
+{
+	PutInWorld(true);
+}
+
+
+// ----------------------------------------------------------------------
+// LeaveWorld()
+// ----------------------------------------------------------------------
+
+function LeaveWorld()
+{
+	PutInWorld(false);
+}
+
+
+// ----------------------------------------------------------------------
+// PutInWorld()
+// ----------------------------------------------------------------------
+
+function PutInWorld(bool bEnter)
+{
+	if (bInWorld && !bEnter)
+	{
+		bInWorld            = false;
+		//GotoState('Idle');
+		bHidden             = true;
+		bDetectable         = false;
+		WorldPosition       = Location;
+		bWorldCollideActors = bCollideActors;
+		bWorldBlockActors   = bBlockActors;
+		bWorldBlockPlayers  = bBlockPlayers;
+		SetCollision(false, false, false);
+		bCollideWorld       = false;
+		SetPhysics(PHYS_None);
+		KillShadow();
+		SetLocation(Location+vect(0,0,20000));  // move it out of the way
+	}
+	else if (!bInWorld && bEnter)
+	{
+		bInWorld    = true;
+		bHidden     = Default.bHidden;
+		bDetectable = Default.bDetectable;
+		SetLocation(WorldPosition);
+		SetCollision(bWorldCollideActors, bWorldBlockActors, bWorldBlockPlayers);
+		bCollideWorld = Default.bCollideWorld;
+		//SetMovementPhysics();
+		SetPhysics(Default.Physics);
+		CreateShadow();
+		//FollowOrders();
+	}
+}
+
 function string VMDGetItemName()
 {
 	return ItemName;
@@ -916,4 +1006,5 @@ defaultproperties
      StoredSeed=-1
      bAlwaysFlammable=false
      bEverNotFrobbed=true
+     bInWorld=True
 }
