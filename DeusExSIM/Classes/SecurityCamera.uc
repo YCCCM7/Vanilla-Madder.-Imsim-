@@ -174,6 +174,9 @@ function TriggerEvent(bool bTrigger)
 		SoundRadius = 64;
 		LightHue = 0;
 		MultiSkins[2] = Texture'RedLightTex';
+		
+		//MADDERS, 7/24/25: End stasis in radius for alarms. Special treatment.
+		class'VMDStaticFunctions'.Static.EndStasisInAOE(Self, Location, 50*(SoundRadius+1));
 		AIStartEvent('Alarm', EAITYPE_Audio, SoundVolume/255.0, 50*(SoundRadius+1));
 		
 		//MADDERS, 8/7/23: Add player stress.
@@ -228,6 +231,12 @@ function CheckPlayerVisibility(DeusExPlayer player)
             				if (player.AugmentationSystem.GetAugLevelValue(class'AugRadarTrans') != -1.0)
                					return;
 	  			}
+				
+				//MADDERS, 8/5/25: Somehow failed making this function earlier. Wow.
+				if (Player.UsingChargedPickup(class'AdaptiveArmor'))
+				{
+					return;
+				}
          		}
 			
 			// figure out if we can see the player
@@ -366,6 +375,8 @@ function Tick(float deltaTime)
 	local float ang, GSpeed;
 	local Rotator rot;
    	local DeusExPlayer curplayer;
+	local DeusExRootWindow DXRW;
+	local VMDBufferPlayer VMP;
 	
    	Super.Tick(deltaTime);
 	
@@ -477,6 +488,13 @@ function Tick(float deltaTime)
 				LightHue = 0;
 				MultiSkins[2] = Texture'RedLightTex';
 				PlaySound(Sound'Beep6',,,, 1280, GSpeed);
+				
+				VMP = VMDBufferPlayer(GetPlayerPawn());
+				if (VMP != None) DXRW = DeusExRootWindow(VMP.RootWindow);
+				if ((DXRW != None) && (VMP.HasSkillAugment('LockpickStealthBar')) && (DXRW.HUD != None) && (DXRW.HUD.LightGem != None))
+				{
+					DeusExRootWindow(VMP.RootWindow).HUD.LightGem.QueueNewColor(0, 1);
+				}
 			}
 			else
 			{
@@ -537,7 +555,7 @@ auto state Active
 		}
 		
 		// Transcended - Added
-		if (DamageType == 'EMP')
+		if (DamageType == 'EMP' || DamageType == 'Shocked')
 		{
         		if (bScramblerAugment)
 			{
