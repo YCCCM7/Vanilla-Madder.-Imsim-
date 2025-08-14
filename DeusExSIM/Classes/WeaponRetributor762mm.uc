@@ -65,6 +65,7 @@ function VMDPlayRicochetSound(Vector HitLocation)
 
 defaultproperties
 {
+     bStationaryFiringOnly=True
      OverrideNumProj=2
      PlayerViewOffset=(Y=-24.000000,Z=-12.000000)
      InvSlotsX=999

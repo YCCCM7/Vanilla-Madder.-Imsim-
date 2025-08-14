@@ -21,6 +21,11 @@ simulated function PreBeginPlay()
 
 defaultproperties
 {
+     DrawAnimFrames=9
+     DrawAnimRate=11.000000
+     HolsterAnimFrames=7
+     HolsterAnimRate=13.000000
+     
      //HandSkinIndex=0
      bCanHaveModEvolution=False
      

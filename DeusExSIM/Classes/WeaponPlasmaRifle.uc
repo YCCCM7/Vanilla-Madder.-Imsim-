@@ -152,6 +152,11 @@ function VMDDropEmptyMagazine(int THand)
 
 defaultproperties
 {
+     DrawAnimFrames=8
+     DrawAnimRate=8.000000
+     HolsterAnimFrames=8
+     HolsterAnimRate=10.000000
+     
      OverrideNumProj=3
      bSemiautoTrigger=True
      //HandSkinIndex=-1

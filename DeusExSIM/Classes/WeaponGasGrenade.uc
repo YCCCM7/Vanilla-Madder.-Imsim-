@@ -74,6 +74,11 @@ simulated function bool TestMPBeltSpot(int BeltSpot)
 
 defaultproperties
 {
+     DrawAnimFrames=12
+     DrawAnimRate=10.000000
+     HolsterAnimFrames=9
+     HolsterAnimRate=10.000000
+     
      bSemiautoTrigger=True
      //HandSkinIndex=1
      bVolatile=True

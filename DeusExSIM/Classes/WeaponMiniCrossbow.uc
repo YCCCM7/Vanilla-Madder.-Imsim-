@@ -114,6 +114,11 @@ function VMDAlertPostAmmoLoad( bool bInstant )
 
 defaultproperties
 {
+     DrawAnimFrames=12
+     DrawAnimRate=10.000000
+     HolsterAnimFrames=6
+     HolsterAnimRate=15.000000
+     
      MoverDamageMult=1.000000
      PumpPurpose=1
      PumpStart=0.250000
@@ -192,7 +197,7 @@ defaultproperties
      HitDamage=15
      maxRange=1600
      AccurateRange=800
-     BaseAccuracy=0.500000 //MADDERS, 8/5/24: Used to be 0.8, but then nerf to 2x spread width.
+     BaseAccuracy=0.700000 //MADDERS, 8/5/24: Used to be 0.8, but then nerf to 2x spread width.
      bCanHaveScope=True
      ScopeFOV=15
      bCanHaveLaser=True

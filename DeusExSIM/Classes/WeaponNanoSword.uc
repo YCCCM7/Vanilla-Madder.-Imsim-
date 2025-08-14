@@ -106,6 +106,11 @@ auto state Pickup
 
 defaultproperties
 {
+     DrawAnimFrames=12
+     DrawAnimRate=10.000000
+     HolsterAnimFrames=7
+     HolsterAnimRate=12.000000
+     
      //HandSkinIndex=0
      bSemiautoTrigger=True
      //MADDERS: Don't reskin our blade. Yuck.

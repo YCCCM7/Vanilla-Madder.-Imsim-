@@ -95,6 +95,11 @@ function float VMDGetCorrectHitDamage( float In )
 
 defaultproperties
 {
+     DrawAnimFrames=10
+     DrawAnimRate=10.000000
+     HolsterAnimFrames=10
+     HolsterAnimRate=10.000000
+     
      bSemiautoTrigger=True
      //OverrideAnimRate=3.000000
      //bCanHaveModReloadCount=True

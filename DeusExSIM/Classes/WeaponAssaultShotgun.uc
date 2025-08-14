@@ -242,6 +242,11 @@ function VMDDropEmptyMagazine(int THand)
 
 defaultproperties
 {
+     DrawAnimFrames=8
+     DrawAnimRate=11.000000
+     HolsterAnimFrames=6
+     HolsterAnimRate=10.000000
+     
      BulletHoleSize=0.075000
      NumFiringModes=0
      FiringModes(0)="Semi Auto"

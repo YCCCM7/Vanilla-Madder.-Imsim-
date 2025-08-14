@@ -76,6 +76,11 @@ function float VMDGetCorrectHitDamage( float In )
 
 defaultproperties
 {
+     DrawAnimFrames=12
+     DrawAnimRate=12.000000
+     HolsterAnimFrames=6
+     HolsterAnimRate=8.000000
+     
      BulletHoleSize=0.075000
      PumpPurpose=2
      bPumpAction=True

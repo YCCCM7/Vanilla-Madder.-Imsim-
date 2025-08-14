@@ -51,6 +51,11 @@ function Projectile ProjectileFire(class<projectile> ProjClass, float ProjSpeed,
 
 defaultproperties
 {
+     DrawAnimFrames=8
+     DrawAnimRate=7.000000
+     HolsterAnimFrames=8
+     HolsterAnimRate=7.000000
+     
      //HandSkinIndex=3
      bSemiautoTrigger=True
      bCanHaveModEvolution=False

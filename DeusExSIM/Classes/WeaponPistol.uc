@@ -100,6 +100,11 @@ function VMDDropEmptyMagazine(int THand)
 
 defaultproperties
 {
+     DrawAnimFrames=15
+     DrawAnimRate=24.000000
+     HolsterAnimFrames=3
+     HolsterAnimRate=24.000000
+     
      AmmoNames(0)=Class'DeusEx.Ammo10mm'
      AmmoNames(1)=Class'DeusEx.Ammo10mmGasCap'
      AmmoNames(2)=Class'DeusEx.Ammo10mmHEAT'

@@ -3,18 +3,30 @@
 //=============================================================================
 class WeaponProd extends DeusExWeapon;
 
+#exec OBJ LOAD FILE=VMDEffects
+
+var Ammo LastAttackAmmo;
+
 //MADDERS: Use render of overlays to show JC hands. Easy, :) Ded 4/1/07
 simulated event RenderOverlays( Canvas Can )
 {
-	if (Region.Zone.bWaterZone)
+	if (Region.Zone.bWaterZone || ClipCount >= ReloadCount || IsInState('Reloading'))
 	{
 	 	Multiskins[1] = Texture'BlackMaskTex';
 	 	Multiskins[2] = Texture'BlackMaskTex';
 	}
 	else
 	{
-	 	Multiskins[1] = Texture'Effects.Electricity.WEPN_EMPG_SFX';
-	 	Multiskins[2] = Texture'Effects.Electricity.WEPN_Prod_FX';
+		if (AmmoOverchargedBattery(AmmoType) != None)
+		{
+		 	Multiskins[1] = Texture'VMDEffects.Overcharge_EMPG_SFX';
+		 	Multiskins[2] = Texture'VMDEffects.OverchargeProd_FX';
+		}
+		else
+		{
+		 	Multiskins[1] = Texture'Effects.Electricity.WEPN_EMPG_SFX';
+		 	Multiskins[2] = Texture'Effects.Electricity.WEPN_Prod_FX';
+		}
 	}	
   	Super.RenderOverlays(Can);
 }
@@ -71,15 +83,64 @@ function VMDDropEmptyMagazine(int THand)
 		Mag.Velocity = (FRand()*20+90) * -0.1 * Y + (10-FRand()*20) * X;
 		Mag.Velocity.Z = 0;
 		Mag.InitDropBy(Pawn(Owner));
+		
+		if (AmmoOverchargedBattery(LastAttackAmmo) != None)
+		{
+			Mag.Multiskins[0] = Texture'VMDProdMagTex2';
+		}
 	}
 }
 
+//MADDERS, 7/23/25: Nifty hack using our own mod support functions. Use this to make sure we drop the right battery types when reloading.
+function bool VMDTraceFireHook(float Accuracy)
+{
+	LastAttackAmmo = AmmoType;
+	
+	return true;
+}
+
+//Update penetration and ricochet damage.
+function VMDAlertPostAmmoLoad( bool bInstant )
+{
+	if (AmmoOverchargedBattery(AmmoType) != None)
+	{
+     		FirePitchMin = 1.200000;
+     		FirePitchMax = 1.400000;
+		
+		if (ReloadCount != 2)
+		{
+			ReloadCount = 2;
+			ClipCount = ReloadCount;
+		}
+		AmmoDamageMultiplier = 3.0;
+	}
+	else
+	{
+     		FirePitchMin = 0.900000;
+     		FirePitchMax = 1.100000;
+		
+		if (ReloadCount != 4)
+		{
+			ReloadCount = 4;
+			ClipCount = ReloadCount;
+		}
+		AmmoDamageMultiplier = 1.0;
+	}
+}
+
+
 defaultproperties
 {
+     DrawAnimFrames=15
+     DrawAnimRate=15.000000
+     HolsterAnimFrames=8
+     HolsterAnimRate=20.000000
+     
      //HandSkinIndex=3
      bCanHaveModEvolution=False
      bSemiautoTrigger=True
      ClipsLabel="BATS"
+     MoverDamageMult=0.000000
      
      SelectTilt(0)=(X=20.000000,Y=40.000000)
      SelectTilt(1)=(X=0.000000,Y=0.000000)
@@ -138,6 +199,8 @@ defaultproperties
      mpMaxRange=80
      mpReloadCount=4
      AmmoName=Class'DeusEx.AmmoBattery'
+     AmmoNames(0)=Class'DeusEx.AmmoBattery'
+     AmmoNames(1)=Class'DeusEx.AmmoOverchargedBattery'
      ReloadCount=4
      PickupAmmoCount=4
      bInstantHit=True

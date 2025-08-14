@@ -10,6 +10,11 @@ function name WeaponDamageType()
 
 defaultproperties
 {
+     DrawAnimFrames=14
+     DrawAnimRate=15.000000
+     HolsterAnimFrames=12
+     HolsterAnimRate=9.000000
+     
      //HandSkinIndex=1
      bSemiautoTrigger=True
      bCanHaveModEvolution=False

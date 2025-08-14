@@ -130,6 +130,11 @@ function VMDDropEmptyMagazine(int THand)
 
 defaultproperties
 {
+     DrawAnimFrames=8
+     DrawAnimRate=18.000000
+     HolsterAnimFrames=5
+     HolsterAnimRate=10.000000
+     
      BulletHoleSize=0.125000
      SemiautoFireSound=Sound'AssaultGunSemi'
      SilencedFireSound=Sound'AssaultGunFireSilenced'

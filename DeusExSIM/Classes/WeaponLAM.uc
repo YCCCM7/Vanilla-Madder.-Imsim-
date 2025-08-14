@@ -76,6 +76,11 @@ simulated function bool TestMPBeltSpot(int BeltSpot)
 
 defaultproperties
 {
+     DrawAnimFrames=12
+     DrawAnimRate=10.000000
+     HolsterAnimFrames=5
+     HolsterAnimRate=6.000000
+     
      MuzzleFlashIndex=5 //HACK for not reskinning our hand
      HandSkinIndex(0)=0
      HandSkinIndex(1)=2

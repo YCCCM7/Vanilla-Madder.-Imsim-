@@ -5,6 +5,7 @@ class WeaponRetributorStickyRocket extends DeusExWeapon;
 
 defaultproperties
 {
+     bStationaryFiringOnly=True
      PlayerViewOffset=(Y=-24.000000,Z=-12.000000)
      InvSlotsX=999
      

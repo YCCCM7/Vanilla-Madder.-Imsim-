@@ -124,6 +124,11 @@ function VMDDropEmptyMagazine(int THand)
 
 defaultproperties
 {
+     DrawAnimFrames=8
+     DrawAnimRate=12.000000
+     HolsterAnimFrames=6
+     HolsterAnimRate=12.000000
+     
      EvolvedName="Fire Hose"
      EvolvedBelt="HOLY SMOKES"
      

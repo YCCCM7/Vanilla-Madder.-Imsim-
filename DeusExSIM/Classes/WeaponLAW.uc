@@ -60,6 +60,11 @@ function VMDDestroyOnFinishHook()
 
 defaultproperties
 {
+     DrawAnimFrames=10
+     DrawAnimRate=7.000000
+     HolsterAnimFrames=10
+     HolsterAnimRate=8.000000
+     
      //HandSkinIndex=0
      bVolatile=True
      bCanHaveModEvolution=False
