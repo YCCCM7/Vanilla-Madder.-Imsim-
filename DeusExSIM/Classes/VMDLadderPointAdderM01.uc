@@ -25,11 +25,14 @@ function AddLadderPoints()
 		break;
 		//01_NYC_UNATCOHQ: First easter egg, and return encroach type on Manderley's door.
 		case "01_NYC_UNATCOHQ":
-			Pat = Spawn(class'PatrolPointMobile',,'ChetBathroomRoute01', Vect(253,275,7), Rot(0, 16080, 0));
-			Pat.NextPatrol = 'ChetBathroomRoute02';
-			Pat = Spawn(class'PatrolPointMobile',,'ChetBathroomRoute02', Vect(212,195,7), Rot(0, -608, 0));
-			Pat.NextPatrol = 'ChetBathroomRoute01';
-			bRebuildRequired = true;
+			if (!bRevisionMapSet)
+			{
+				Pat = Spawn(class'PatrolPointMobile',,'ChetBathroomRoute01', Vect(253,275,7), Rot(0, 16080, 0));
+				Pat.NextPatrol = 'ChetBathroomRoute02';
+				Pat = Spawn(class'PatrolPointMobile',,'ChetBathroomRoute02', Vect(212,195,7), Rot(0, -608, 0));
+				Pat.NextPatrol = 'ChetBathroomRoute01';
+				bRebuildRequired = true;
+			}
 		break;
 	}
 }
