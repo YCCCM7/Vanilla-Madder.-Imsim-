@@ -174,7 +174,7 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 	return MechanicalItemsSkillReq[TArray];
 }
 
-/*static*/ function int GetMechanicalItemComplexity(class<Inventory> CheckClass, int SkillLevel)
+/*static*/ function int GetMechanicalItemComplexity(class<Inventory> CheckClass, int SkillLevel, bool bHasTalent)
 {
 	local int TArray, NeededSkill, Ret;
 	
@@ -184,6 +184,11 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 	
 	NeededSkill = MechanicalItemsSkillReq[TArray];
 	Ret = MechanicalItemsComplexity[TArray];
+	
+	if ((Ret > 1) && (bHasTalent))
+	{
+		Ret -= 1;
+	}
 	
 	if ((Ret == 1) && (NeededSkill == 1) && (SkillLevel > 1))
 	{
@@ -300,7 +305,7 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 	return MedicalItemsSkillReq[TArray];
 }
 
-/*static*/ function int GetMedicalItemComplexity(class<Inventory> CheckClass, int SkillLevel)
+/*static*/ function int GetMedicalItemComplexity(class<Inventory> CheckClass, int SkillLevel, bool bHasTalent)
 {
 	local int TArray, NeededSkill, Ret;
 	
@@ -310,6 +315,11 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 	
 	NeededSkill = MedicalItemsSkillReq[TArray];
 	Ret = MedicalItemsComplexity[TArray];
+	
+	if ((Ret > 1) && (bHasTalent))
+	{
+		Ret -= 1;
+	}
 	
 	if ((Ret == 1) && (NeededSkill == 1) && (SkillLevel > 1))
 	{
@@ -510,13 +520,14 @@ defaultproperties
       MechanicalItemsGlossary(14)=class'Ammo762mm'
       MechanicalItemsGlossary(15)=class'AmmoShell'
       MechanicalItemsGlossary(16)=class'AmmoRocket'
-      MechanicalItemsGlossary(17)=class'Ammo10mmHEAT'
-      MechanicalItemsGlossary(18)=class'Ammo3006HEAT'
-      MechanicalItemsGlossary(19)=class'AmmoDragonsBreath'
-      MechanicalItemsGlossary(20)=class'AmmoTaserSlug'
-      MechanicalItemsGlossary(21)=class'AmmoSabot'
-      MechanicalItemsGlossary(22)=class'AmmoRocketWP'
-      MechanicalItemsGlossary(23)=class'AmmoRocketEMP'
+      MechanicalItemsGlossary(17)=class'AmmoOverchargedBattery'
+      MechanicalItemsGlossary(18)=class'Ammo10mmHEAT'
+      MechanicalItemsGlossary(19)=class'Ammo3006HEAT'
+      MechanicalItemsGlossary(20)=class'AmmoDragonsBreath'
+      MechanicalItemsGlossary(21)=class'AmmoTaserSlug'
+      MechanicalItemsGlossary(22)=class'AmmoSabot'
+      MechanicalItemsGlossary(23)=class'AmmoRocketWP'
+      MechanicalItemsGlossary(24)=class'AmmoRocketEMP'
       
       MechanicalItems(0)=class'VMDToolbox'
       MechanicalItemsPrice(0)=50
@@ -609,7 +620,7 @@ defaultproperties
       MechanicalItems(10)=class'AmmoBattery'
       MechanicalItemsPrice(10)=200
       MechanicalItemsQuanMade(10)=8
-      MechanicalItemsSkillReq(10)=2
+      MechanicalItemsSkillReq(10)=1
       MechanicalItemsComplexity(10)=1
       MechanicalBreakdowns(8)=class'AmmoBattery'
       MechanicalBreakdownsPrice(8)=200
@@ -681,98 +692,111 @@ defaultproperties
       MechanicalBreakdownsPrice(14)=250
       MechanicalBreakdownsQuanNeeded(14)=4
       
-      MechanicalItems(17)=class'Ammo10mmHEAT'
-      MechanicalItemsPrice(17)=200
-      MechanicalItemsQuanMade(17)=12
-      MechanicalItemsSkillReq(17)=3
+      MechanicalItems(17)=class'AmmoOverchargedBattery'
+      MechanicalItemsPrice(17)=400
+      MechanicalItemsQuanMade(17)=2
+      MechanicalItemsSkillReq(17)=2
       MechanicalItemsComplexity(17)=2
-      MechanicalItemsItemReqA(17)=class'Ammo10mm'
-      MechanicalItemsQuanReqA(17)=6
-      MechanicalItemsItemReqB(17)=class'AmmoSabot'
-      MechanicalItemsQuanReqB(17)=6
-      MechanicalItemsItemReqC(17)=class'WeaponLAM'
-      MechanicalItemsQuanReqC(17)=1
-      MechanicalBreakdowns(15)=class'Ammo10mmHEAT'
-      MechanicalBreakdownsPrice(15)=350
-      MechanicalBreakdownsQuanNeeded(15)=6
-      
-      MechanicalItems(18)=class'Ammo3006HEAT'
+      MechanicalItemsItemReqA(17)=class'AmmoBattery'
+      MechanicalItemsQuanReqA(17)=8
+      MechanicalItemsItemReqB(17)=class'BioelectricCell'
+      MechanicalItemsQuanReqB(17)=1
+      MechanicalBreakdowns(15)=class'AmmoOverchargedBattery'
+      MechanicalBreakdownsPrice(15)=450
+      MechanicalBreakdownsQuanNeeded(15)=2
+
+      MechanicalItems(18)=class'Ammo10mmHEAT'
       MechanicalItemsPrice(18)=200
-      MechanicalItemsQuanMade(18)=6
+      MechanicalItemsQuanMade(18)=12
       MechanicalItemsSkillReq(18)=3
       MechanicalItemsComplexity(18)=2
-      MechanicalItemsItemReqA(18)=class'Ammo3006'
+      MechanicalItemsItemReqA(18)=class'Ammo10mm'
       MechanicalItemsQuanReqA(18)=6
       MechanicalItemsItemReqB(18)=class'AmmoSabot'
       MechanicalItemsQuanReqB(18)=6
       MechanicalItemsItemReqC(18)=class'WeaponLAM'
       MechanicalItemsQuanReqC(18)=1
-      MechanicalBreakdowns(16)=class'Ammo3006HEAT'
+      MechanicalBreakdowns(16)=class'Ammo10mmHEAT'
       MechanicalBreakdownsPrice(16)=350
       MechanicalBreakdownsQuanNeeded(16)=6
       
-      MechanicalItems(19)=class'AmmoSabot'
+      MechanicalItems(19)=class'Ammo3006HEAT'
       MechanicalItemsPrice(19)=200
-      MechanicalItemsQuanMade(19)=8
-      MechanicalItemsSkillReq(19)=2
+      MechanicalItemsQuanMade(19)=6
+      MechanicalItemsSkillReq(19)=3
       MechanicalItemsComplexity(19)=2
-      MechanicalItemsItemReqA(19)=class'AmmoShell'
-      MechanicalItemsQuanReqA(19)=8
-      MechanicalBreakdowns(17)=class'AmmoSabot'
-      MechanicalBreakdownsPrice(17)=250
-      MechanicalBreakdownsQuanNeeded(17)=8
+      MechanicalItemsItemReqA(19)=class'Ammo3006'
+      MechanicalItemsQuanReqA(19)=6
+      MechanicalItemsItemReqB(19)=class'AmmoSabot'
+      MechanicalItemsQuanReqB(19)=6
+      MechanicalItemsItemReqC(19)=class'WeaponLAM'
+      MechanicalItemsQuanReqC(19)=1
+      MechanicalBreakdowns(17)=class'Ammo3006HEAT'
+      MechanicalBreakdownsPrice(17)=350
+      MechanicalBreakdownsQuanNeeded(17)=6
       
-      MechanicalItems(20)=class'AmmoDragonsBreath'
-      MechanicalItemsPrice(20)=300
+      MechanicalItems(20)=class'AmmoSabot'
+      MechanicalItemsPrice(20)=200
       MechanicalItemsQuanMade(20)=8
-      MechanicalItemsSkillReq(20)=3
+      MechanicalItemsSkillReq(20)=2
       MechanicalItemsComplexity(20)=2
       MechanicalItemsItemReqA(20)=class'AmmoShell'
       MechanicalItemsQuanReqA(20)=8
-      MechanicalItemsItemReqB(20)=class'AmmoNapalm'
-      MechanicalItemsQuanReqB(20)=50
-      MechanicalBreakdowns(18)=class'AmmoDragonsBreath'
-      MechanicalBreakdownsPrice(18)=500
+      MechanicalBreakdowns(18)=class'AmmoSabot'
+      MechanicalBreakdownsPrice(18)=250
       MechanicalBreakdownsQuanNeeded(18)=8
       
-      MechanicalItems(21)=class'AmmoTaserSlug'
-      MechanicalItemsPrice(21)=200
+      MechanicalItems(21)=class'AmmoDragonsBreath'
+      MechanicalItemsPrice(21)=300
       MechanicalItemsQuanMade(21)=8
       MechanicalItemsSkillReq(21)=3
       MechanicalItemsComplexity(21)=2
-      MechanicalItemsItemReqA(21)=class'AmmoSabot'
-      MechanicalItemsQuanReqA(21)=4
-      MechanicalItemsItemReqB(21)=class'AmmoBattery'
-      MechanicalItemsQuanReqB(21)=8
-      MechanicalBreakdowns(19)=class'AmmoTaserSlug'
-      MechanicalBreakdownsPrice(19)=350
+      MechanicalItemsItemReqA(21)=class'AmmoShell'
+      MechanicalItemsQuanReqA(21)=8
+      MechanicalItemsItemReqB(21)=class'AmmoNapalm'
+      MechanicalItemsQuanReqB(21)=50
+      MechanicalBreakdowns(19)=class'AmmoDragonsBreath'
+      MechanicalBreakdownsPrice(19)=500
       MechanicalBreakdownsQuanNeeded(19)=8
       
-      MechanicalItems(22)=class'AmmoRocketWP'
+      MechanicalItems(22)=class'AmmoTaserSlug'
       MechanicalItemsPrice(22)=200
-      MechanicalItemsQuanMade(22)=4
+      MechanicalItemsQuanMade(22)=8
       MechanicalItemsSkillReq(22)=3
       MechanicalItemsComplexity(22)=2
-      MechanicalItemsItemReqA(22)=class'AmmoRocket'
+      MechanicalItemsItemReqA(22)=class'AmmoSabot'
       MechanicalItemsQuanReqA(22)=4
-      MechanicalItemsItemReqB(22)=class'AmmoNapalm'
-      MechanicalItemsQuanReqB(22)=100
-      MechanicalBreakdowns(20)=class'AmmoRocketWP'
+      MechanicalItemsItemReqB(22)=class'AmmoBattery'
+      MechanicalItemsQuanReqB(22)=8
+      MechanicalBreakdowns(20)=class'AmmoTaserSlug'
       MechanicalBreakdownsPrice(20)=350
-      MechanicalBreakdownsQuanNeeded(20)=4
+      MechanicalBreakdownsQuanNeeded(20)=8
       
-      MechanicalItems(23)=class'AmmoRocketEMP'
+      MechanicalItems(23)=class'AmmoRocketWP'
       MechanicalItemsPrice(23)=200
       MechanicalItemsQuanMade(23)=4
       MechanicalItemsSkillReq(23)=3
       MechanicalItemsComplexity(23)=2
       MechanicalItemsItemReqA(23)=class'AmmoRocket'
       MechanicalItemsQuanReqA(23)=4
-      MechanicalItemsItemReqB(23)=class'WeaponEMPGrenade'
-      MechanicalItemsQuanReqB(23)=1
-      MechanicalBreakdowns(21)=class'AmmoRocketEMP'
-      MechanicalBreakdownsPrice(21)=300
+      MechanicalItemsItemReqB(23)=class'AmmoNapalm'
+      MechanicalItemsQuanReqB(23)=100
+      MechanicalBreakdowns(21)=class'AmmoRocketWP'
+      MechanicalBreakdownsPrice(21)=350
       MechanicalBreakdownsQuanNeeded(21)=4
+      
+      MechanicalItems(24)=class'AmmoRocketEMP'
+      MechanicalItemsPrice(24)=200
+      MechanicalItemsQuanMade(24)=4
+      MechanicalItemsSkillReq(24)=3
+      MechanicalItemsComplexity(24)=2
+      MechanicalItemsItemReqA(24)=class'AmmoRocket'
+      MechanicalItemsQuanReqA(24)=4
+      MechanicalItemsItemReqB(24)=class'WeaponEMPGrenade'
+      MechanicalItemsQuanReqB(24)=1
+      MechanicalBreakdowns(22)=class'AmmoRocketEMP'
+      MechanicalBreakdownsPrice(22)=300
+      MechanicalBreakdownsQuanNeeded(22)=4
       
       MedicalItemsGlossary(0)=class'VMDChemistrySet'
       MedicalItemsGlossary(1)=class'VMDMedigel'
