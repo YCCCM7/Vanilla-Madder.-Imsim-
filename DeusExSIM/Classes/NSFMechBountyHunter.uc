@@ -25,7 +25,7 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 	
 	//GOOFY: Run this up front to know our face texture.
 	//25% chance for a vision aug.
-	if ((bHasCells) || (FRand() < 0.25))
+	if (bHasCells || FRand() < 0.25)
 	{
 		DefaultAugs[1] = class'AugMechTarget';
 		if (FRand() > 0.7)
@@ -842,8 +842,11 @@ function class<DeusExPickup> ObtainUtilityItem(int MissionNumber, out int ItemCo
 		case 4:
 		case 5:
 		case 6:
-			ItemCount = 1;
-			Ret = class'FireExtinguisher';
+			if (FRand() < 0.4)
+			{
+				ItemCount = 1;
+				Ret = class'FireExtinguisher';
+			}
 		break;
 		case 7:
 		case 8:
