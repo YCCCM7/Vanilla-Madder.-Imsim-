@@ -28,7 +28,7 @@ function FirstFrame()
 	//MADDERS, 4/27/25: If we pissed off Jordan in M02 or M04, make her remember and take it personally.
 	if (localURL == "08_NYC_BAR")
 	{
-		// unhide Ford if you've rescued him
+		//MADDERS, 8/9/25: Start beef between us and Jordan, if we crossed her.
 		if (flags.GetBool('VMDPlayerCrossedJordanShea'))
 		{
 			foreach AllActors(class'JordanShea', Jordan)
