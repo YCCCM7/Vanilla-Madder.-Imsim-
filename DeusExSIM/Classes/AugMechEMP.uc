@@ -14,8 +14,8 @@ function float VMDConfigureDamageMult(name DT, int HitDamage, Vector HitLocation
  	switch(DT)
 	{
 		case 'EMP':
-		case 'Shocked':
 		case 'NanoVirus':
+		case 'Shocked':
 			return LevelValues[CurrentLevel];
 		break;
 	}
