@@ -19,6 +19,7 @@ var vector actorLocation;		// last known location of actor that triggered alarm
 var bool bAlreadyTriggered;
 
 var bool bLastSplashWasDrone; //MADDERS, 12/28/23: We're putting a stop to megahertz + spydrone combo. RIP.
+var float SameActorHitTime;
 
 singular function Touch(Actor Other)
 {
@@ -33,6 +34,9 @@ function BeginAlarm()
 	SoundVolume = 128;
 	SoundRadius = 64;
 	lastAlarmTime = Level.TimeSeconds;
+	
+	//MADDERS, 7/24/25: End stasis in radius for alarms. Special treatment.
+	class'VMDStaticFunctions'.Static.EndStasisInAOE(Self, Location, 50*(SoundRadius+1));
 	AIStartEvent('Alarm', EAITYPE_Audio, SoundVolume/255.0, 50*(SoundRadius+1));
 	
 	//MADDERS, 8/7/23: Add player stress.
@@ -104,9 +108,18 @@ function Tick(float deltaTime)
 		emitter.SetLocation(Location);
 		emitter.SetRotation(Rotation);
 
+		if (LastHitActor == Emitter.HitActor)
+		{
+			SameActorHitTime += DeltaTime;
+		}
+		else
+		{
+			SameActorHitTime = 0.0;
+		}
+		
 		if ((!bNoAlarm) && (bIsOn))
 		{
-			if ((emitter.HitActor != None) && (LastHitActor != emitter.HitActor))
+			if ((emitter.HitActor != None) && (LastHitActor != emitter.HitActor) && (VMDMEGH(emitter.HitActor) == None || SameActorHitTime > 5))
 			{
 				// TT_PlayerProximity actually works with decorations, too
 				if (IsRelevant(emitter.HitActor) || ((TriggerType == TT_PlayerProximity) && (emitter.HitActor.IsA('Decoration'))))
@@ -268,7 +281,7 @@ function TakeDamage(int Damage, Pawn EventInstigator, vector HitLocation, vector
 		bScramblerAugment = VMP.HasSkillAugment('TagTeamScrambler');
 	}
 	
-	if (DamageType == 'EMP')
+	if (DamageType == 'EMP' || DamageType == 'Shocked')
 	{
         	if (bScramblerAugment)
 		{
