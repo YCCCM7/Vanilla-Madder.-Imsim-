@@ -808,8 +808,11 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 				sparkGen.spawnSound = Sound'Spark2';
 			}
 		}
-
-		return;
+		
+		if (DamageType == 'EMP')
+		{
+			return;
+		}
 	}
 	else if (damageType == 'NanoVirus')
 	{
@@ -862,6 +865,59 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 		FDamage = 0;
 	else if (Inventory != None) //then check if carrying armor
 		FDamage = Inventory.ReduceDamage(int(FDamage + BonusFDamage), DamageType, HitLocation);
+	
+	// enough EMP damage shuts down the robot
+	if (damageType == 'Shocked')
+	{
+		oldEMPHitPoints = EMPHitPoints;
+		EMPHitPoints   -= FDamage;
+
+		// make smoke!
+		if (EMPHitPoints <= 0)
+		{
+			EMPHitPoints = 0;
+			if (oldEMPHitPoints > 0)
+			{
+				VMDEMPHook();
+				PlaySound(sound'EMPZap', SLOT_None,,, (CollisionRadius+CollisionHeight)*8, 2.0 * GSpeed);
+				InitGenerator();
+				if (sparkGen != None)
+				{
+					sparkGen.LifeSpan = 6;
+					sparkGen.particleTexture = Texture'Effects.Smoke.SmokePuff1';
+					sparkGen.particleDrawScale = 0.3;
+					sparkGen.bRandomEject = False;
+					sparkGen.ejectSpeed = 10.0;
+					sparkGen.bGravity = False;
+					sparkGen.bParticlesUnlit = True;
+					sparkGen.frequency = 0.3;
+					sparkGen.riseRate = 3;
+					sparkGen.spawnSound = Sound'Spark2';
+				}
+			}
+			AmbientSound = None;
+			if (GetStateName() != 'Disabled')
+				GotoState('Disabled');
+		}
+
+		// make sparks!
+		else if (sparkGen == None)
+		{
+			InitGenerator();
+			if (sparkGen != None)
+			{
+				sparkGen.particleTexture = Texture'Effects.Fire.SparkFX1';
+				sparkGen.particleDrawScale = 0.2;
+				sparkGen.bRandomEject = True;
+				sparkGen.ejectSpeed = 100.0;
+				sparkGen.bGravity = True;
+				sparkGen.bParticlesUnlit = True;
+				sparkGen.frequency = 0.2;
+				sparkGen.riseRate = 10;
+				sparkGen.spawnSound = Sound'Spark2';
+			}
+		}
+	}
 	
 	//MADDERS: Handle damage per location now.
 	Offset = (HitLocation - Location) << Rotation;
