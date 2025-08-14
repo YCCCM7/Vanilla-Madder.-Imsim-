@@ -31,13 +31,25 @@ var class<VMDStaticFunctions> SF;
 
 function VMDUpdateRevisionMapStatus()
 {
-	bRevisionMapSet = false;
+	switch(class'VMDStaticFunctions'.static.GetIntendedMapStyle(Self))
+	{
+		case 0:
+			bRevisionMapSet = false;
+		break;
+		case 1:
+			bRevisionMapSet = true;
+		break;
+		case 2:
+			bRevisionMapSet = false;
+		break;
+	}
 }
 
 function PostBeginPlay()
 {
 	Super.PostBeginPlay();
 	
+	VMDUpdateRevisionMapStatus();
 	AddLadderPoints();
 	PostAddLadderPoints();
 }
@@ -91,6 +103,7 @@ function PostAddLadderPoints()
 
 function InitiateRebuild()
 {
+	local int i;
 	local Mover TMover;
 	local NavigationPoint TPoint;
 	local VMDConsole VC;
@@ -105,6 +118,17 @@ function InitiateRebuild()
 		TMover.SetLocation(TMover.Location + Vect(0,0,10000));
 	}
 	
+	forEach AllActors(class'NavigationPoint', TPoint)
+	{
+		TPoint.RouteCache = None;
+		for(i=0; i<ArrayCount(TPoint.VisNoReachPaths); i++)
+		{
+			TPoint.upstreamPaths[i] = 0;
+			TPoint.Paths[i] = 0;
+			TPoint.PrunedPaths[i] = 0;
+			TPoint.VisNoReachPaths[i] = None;
+		}
+	}
 	forEach AllActors(class'NavigationPoint', TPoint)
 	{
 		TScout = Spawn(class'Scout',,, TPoint.Location);
@@ -293,38 +317,7 @@ function Actor FindActorBySeed(class<Actor> TarClass, int TarSeed)
 
 function string VMDGetMapName()
 {
- 	local string S, S2;
- 	
- 	S = GetURLMap();
- 	S2 = Chr(92); //What the fuck. Can't type this anywhere!
-	
-	//MADDERS, 3/23/21: Uuuuh... Oceanlab machine :B:ROKE.
-	//No idea how or why this happens, and only post-DXT merge. Fuck it. Chop it down.
-	if (Right(S, 1) ~= " ") S = Left(S, Len(S)-1);
-	
- 	//HACK TO FIX TRAVEL BUGS!
- 	if (InStr(S, S2) > -1)
- 	{
-  		do
-  		{
-   			S = Right(S, Len(S) - InStr(S, S2) - 1);
-  		}
-  		until (InStr(S, S2) <= -1);
-
-		if (InStr(S, ".") > -1)
-		{
-  			S = Left(S, Len(S) - 4);
-		}
- 	}
- 	else
-	{
-		if (InStr(S, ".") > -1)
-		{
-			S = Left(S, Len(S)-3);
-		}
- 	}
-	
- 	return CAPS(S);
+ 	return class'VMDStaticFunctions'.Static.VMDGetMapName(Self);
 }
 
 defaultproperties
