@@ -2882,7 +2882,7 @@ function UpdateMechanicalCraftingDisplay()
 				
 				if (bHasCraft || bHasBreakdown)
 				{
-					TComplexity = CF.GetMechanicalItemComplexity(TItem, SkillLevel);
+					TComplexity = CF.GetMechanicalItemComplexity(TItem, SkillLevel, VMP.HasSkillAugment('ElectronicsCrafting'));
 					TSkillNeeded = CF.GetMechanicalItemSkillReq(TItem);
 					bHasSkill = (TSkillNeeded <= SkillLevel);
 					
@@ -3131,7 +3131,7 @@ function DoMechanicalCrafting(VMDCraftingPersonaActionButtonWindowMechanical Cur
 				{
 					SkillLevel = VMP.SkillSystem.GetSkillLevel(class'SkillTech');
 				}
-				ComplexityNeeded = CF.GetMechanicalItemComplexity(CurCraft.CraftClass, SkillLevel);
+				ComplexityNeeded = CF.GetMechanicalItemComplexity(CurCraft.CraftClass, SkillLevel, VMP.HasSkillAugment('ElectronicsCrafting'));
 				VMP.VMDCraftingStartCrafting(CurCraft.CraftClass, false, (ComplexityNeeded > 0));
 				AddTimer(0.1, True,, 'DoPop');
 				return;
@@ -3209,7 +3209,6 @@ function DoMechanicalBreakdown(VMDCraftingPersonaActionButtonWindowMechanicalBre
 		}
 		else
 		{
-			//ComplexityNeeded = CF.GetMechanicalItemComplexity(FindClass);
 			ComplexityNeeded = 0;
 			VMP.VMDCraftingStartBreakdown(FindClass, QuanNeeded, CurBreakdown.ScrapGain, false, (ComplexityNeeded > 0));
 			AddTimer(0.1, True,, 'DoPop');
@@ -3289,7 +3288,7 @@ function UpdateMedicalCraftingDisplay()
 				
 				if (bHasCraft || bHasBreakdown)
 				{
-					TComplexity = CF.GetMedicalItemComplexity(TItem, SkillLevel);
+					TComplexity = CF.GetMedicalItemComplexity(TItem, SkillLevel, VMP.HasSkillAugment('MedicineCrafting'));
 					TSkillNeeded = CF.GetMedicalItemSkillReq(TItem);
 					bHasSkill = (TSkillNeeded <= SkillLevel);
 					
@@ -3525,7 +3524,7 @@ function DoMedicalCrafting(VMDCraftingPersonaActionButtonWindowMedical CurCraft)
 				{
 					SkillLevel = VMP.SkillSystem.GetSkillLevel(class'SkillMedicine');
 				}
-				ComplexityNeeded = CF.GetMedicalItemComplexity(CurCraft.CraftClass, SkillLevel);
+				ComplexityNeeded = CF.GetMedicalItemComplexity(CurCraft.CraftClass, SkillLevel, VMP.HasSkillAugment('MedicineCrafting'));
 				VMP.VMDCraftingStartCrafting(CurCraft.CraftClass, true, (ComplexityNeeded > 0));
 				AddTimer(0.1, True,, 'DoPop');
 				return;
@@ -3599,7 +3598,6 @@ function DoMedicalBreakdown(VMDCraftingPersonaActionButtonWindowMedicalBreakdown
 		}
 		else
 		{
-			//ComplexityNeeded = VMP.CraftingManager.StatRef.GetMedicalItemComplexity(FindClass);
 			ComplexityNeeded = 0;
 			VMP.VMDCraftingStartBreakdown(FindClass, QuanNeeded, CurBreakdown.ChemicalsGain, true, (ComplexityNeeded > 0));
 			AddTimer(0.1, True,, 'DoPop');
