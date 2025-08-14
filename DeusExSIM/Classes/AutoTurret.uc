@@ -530,7 +530,7 @@ auto state Active
 			bScramblerAugment = VMP.HasSkillAugment('TagTeamScrambler');
 		}
 		
-		if (DamageType == 'EMP')
+		if (DamageType == 'EMP' || DamageType == 'Shocked')
 		{
         		if (bScramblerAugment)
 			{
