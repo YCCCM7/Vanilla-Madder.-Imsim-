@@ -30,6 +30,9 @@ function UpdateAIEvents()
 	
 	if (bActive)
 	{
+		//MADDERS, 7/24/25: End stasis in radius for alarms. Special treatment.
+		class'VMDStaticFunctions'.Static.EndStasisInAOE(Self, Location, 50*(SoundRadius+1));
+		
 		// Make noise and light
 		AIStartEvent('Alarm', EAITYPE_Audio, SoundVolume/255.0, 50*(SoundRadius+1));
 		
@@ -240,7 +243,7 @@ auto state Active
 			bScramblerAugment = VMP.HasSkillAugment('TagTeamScrambler');
 		}
 		
-		if (DamageType == 'EMP')
+		if (DamageType == 'EMP' || DamageType == 'Shocked')
 		{
         		if (bScramblerAugment)
 			{
