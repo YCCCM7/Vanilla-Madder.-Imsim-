@@ -445,22 +445,22 @@ function bool PlayerCanSeeActor(Actor testActor, bool bCreating)
 	bCanSee = false;
 	if (bCreating)
 	{
-	    //DEUS_EX AMSD In multiplayer, we really want, "Can any player see this actor?"
+	    	//DEUS_EX AMSD In multiplayer, we really want, "Can any player see this actor?"
 		//So iterate over the actors.
-        //In single player, iter is slow, so just call GetPlayerPawn.
-        if (Level.NetMode != NM_Standalone)
-        {
-            foreach AllActors(class'DeusExPlayer',P)
-            {
-                if (P.AICanSee(testActor, 1.0, false, false, true, true) > 0.0)
-                    bCanSee = true;
-            }
-        }
-        else
-        {
-            if (GetPlayerPawn().AICanSee(testActor, 1.0, false, false, true, true) > 0.0)
-                bCanSee = true;
-        }
+        	//In single player, iter is slow, so just call GetPlayerPawn.
+        	if (Level.NetMode != NM_Standalone)
+        	{
+            	foreach AllActors(class'DeusExPlayer',P)
+            	{
+                	if (P.AICanSee(testActor, 1.0, false, false, true, true) > 0.0)
+                    		bCanSee = true;
+            	}
+        	}
+        	else
+        	{
+            		if (GetPlayerPawn().AICanSee(testActor, 1.0, false, false, true, true) > 0.0)
+               			bCanSee = true;
+        	}
 	}
 	else
 	{
@@ -727,7 +727,13 @@ function GeneratePawn(optional bool bBurst)
 
 				// This is a good spot...
 				if (!bCanSee && !bActorUnnecessary)
-					bSpawn = true;
+				{
+					//MADDERS, 8/5/25: Stop spawning fish in air, thank you.
+					if ((!IsA('FishGenerator') && !IsA('Fish2Generator')) || Scout.FootRegion.Zone.bWaterZone)
+					{
+						bSpawn = true;
+					}
+				}
 			}
 		}
 
@@ -755,6 +761,7 @@ function GeneratePawn(optional bool bBurst)
 				entrySound = Scout.FootRegion.Zone.EntrySound;
 				Scout.FootRegion.Zone.EntryActor = None;
 				Scout.FootRegion.Zone.EntrySound = None;
+				
 				spawnee = Spawn(PawnClasses[classNum].PawnClass, self, , destination, randRot);
 				Scout.FootRegion.Zone.EntryActor = entryActor;
 				Scout.FootRegion.Zone.EntrySound = entrySound;
