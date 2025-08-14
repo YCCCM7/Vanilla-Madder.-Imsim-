@@ -5,6 +5,7 @@ class Pillow extends VMDBufferDeco;
 
 defaultproperties
 {
+     bCanBeBase=True
      bFlammable=True
      FragType=Class'DeusEx.PaperFragment'
      ItemName="Pillow"
