@@ -15,9 +15,7 @@ var MissionScriptIntegerMemory BatteryMem;
 
 function FirstFrame()
 {
-	local int TerrieCount;
 	local AnnaNavarre Anna;
-	local MissionScriptIntegerMemory TMem;
 	local ScriptedPawn pawn;
 	local Terrorist T;
 	
@@ -34,17 +32,6 @@ function FirstFrame()
 				Anna.AddToInitialInventory(class'BioelectricCell', 5);
 				flags.SetBool('VMD_AnnaBatteryGoodies', True,, 3);
 			}
-		}
-		
-		foreach AllActors(class'Terrorist', T, 'ClintonTerrorist')
-		{
-			TerrieCount++;
-		}
-		
-		TMem = GetBatteryMem();
-		if (TMem != None)
-		{
-			TMem.TrackedValue = TerrieCount;
 		}
 	}
 	else if (localURL == "02_NYC_STREET")
@@ -166,7 +153,7 @@ function PreTravel()
 
 function Timer()
 {
-	local int count;
+	local int count, TerrieCount;
 	local Actor A;
 	local BlackHelicopter chopper;
 	local BarrelAmbrosia barrel;
@@ -192,7 +179,19 @@ function Timer()
 	
 	if (localURL == "02_NYC_BATTERYPARK")
 	{
-		TMem = GetBatteryMem();
+		if (Level.TimeSeconds > 2)
+		{
+			foreach AllActors(class'Terrorist', T, 'ClintonTerrorist')
+			{
+				TerrieCount++;
+			}
+			
+			TMem = GetBatteryMem();
+			if (TMem != None)
+			{
+				TMem.TrackedValue = TerrieCount;
+			}
+		}
 		
 		// after terrorists are dead, set guards to wandering
 		if ((!flags.GetBool('BatteryParkSlaughter')) && (!flags.GetBool('CastleClintonCleared')))
@@ -233,6 +232,7 @@ function Timer()
 				count++;
 			}
 			
+			TMem = GetBatteryMem();
 			//Bjorn: There are five terrorists in the Castle.
 			// if there are three or less, then the player killed at least two.  For shame.
 			//MADDERS, 4/21/25: TWeak for rando, so we have an accurate terrie count. Also works with infamy, if I'm not mistaken.
