@@ -311,10 +311,27 @@ static function int GetMapSuffixMod(Actor A)
 
 static function string VMDGetMapName(Actor A)
 {
- 	local string S, S2;
+ 	local string S, S2, S3;
  	
  	S = A.GetURLMap();
- 	S2 = Chr(92); //What the fuck. Can't type this anywhere!
+ 	S2 = "\\";
+	
+	if (class'VMDStaticFunctions'.Static.GetConflictingMapURLStyle(A) == 1)
+	{
+		S3 = "..\\VMDRevision\\Maps\\";
+		if (Left(S, Len(S3)) == S3)
+		{
+			S = Right(S, Len(S) - Len(S3));
+		}
+	}
+	else
+	{
+		S3 = "\\VMDRevision\\";
+		if (Mid(S, 2, Len(S3)) == S3)
+		{
+			S = Right(S, Len(S) - Len(S3) - 2);
+		}
+	}
 	
  	//HACK TO FIX TRAVEL BUGS!
  	if (InStr(S, S2) > -1)
@@ -363,6 +380,22 @@ static function int VMDStringDigits(String S)
 //222222222222222222222222222222
 //OTHER STUFF
 //222222222222222222222222222222
+
+//Funny enough, I was exploring using this for some tech a while back, but Sarge beat me to it for use with gunshots.
+//I only really have interest in alarms to pull enemies from outside standard encounter range. Gunshots will pull from within standard encounter range.
+static function EndStasisInAOE(Actor A, Vector StartLoc, float AwakeRadius)
+{
+	local Pawn TPawn;
+	
+	for(TPawn = A.Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+	{
+		if (VSize(TPawn.Location - StartLoc) < AwakeRadius)
+		{
+			TPawn.bStasis = false;
+			TPawn.LastRenderTime = A.Level.TimeSeconds;
+		}
+	}
+}
 
 //MADDERS, 8/26/23: Yoink texture group. Thank you.
 static final function name RetrieveTextureGroup(Texture InTex, PlayerPawnExt TPlayer)
@@ -428,6 +461,8 @@ static function StartCampaign(DeusExPlayer Player, string StoredCampaign)
 		switch(Caps(StoredCampaign))
 		{
 			case "VANILLA":
+			case "REVISION":
+			case "CUSTOM REVISION":
 				VMP.ShowIntro(True);
 			break;
 			case "IWR":
@@ -550,7 +585,7 @@ static function AddReceivedItem(DeusExPlayer TPlay, Inventory AddType, int Count
 	
 	if (TPlay == None || AddType == None || Count <= 0) return;
 	
-	if ((TPlay.ConPlay != None) && (TPlay.ConPlay.ConWinThird != None) && (DeusExWeapon(AddType) == None || !DeusExWeapon(AddType).VMDHasJankyAmmo()))
+	if (TPlay.ConPlay != None && TPlay.ConPlay.ConWinThird != None && NanoKey(AddType) == None && (DeusExWeapon(AddType) == None || !DeusExWeapon(AddType).VMDHasJankyAmmo()))
 	{
 		TPlay.ConPlay.ConWinThird.ShowReceivedItem(AddType, Count);
 	}
@@ -880,6 +915,10 @@ static function bool VMDIsWeaponSensitiveMap(Actor A, optional bool bMorallyGrey
 		case "06_HONGKONG_VERSALIFE":
 		case "06_HONGKONG_MJ12LAB":
 		case "06_HONGKONG_TONGBASE":
+		//Revision specific M06.
+		case "06_HONGKONG_WANCHAI_COMPOUND":
+		//Revision specific M10.
+		case "10_PARIS_CATACOMBS_METRO":
 		case "10_PARIS_CLUB":
 		case "11_PARIS_UNDERGROUND":
 		case "12_VANDENBERG_COMPUTER":
@@ -919,6 +958,8 @@ static function bool VMDIsWeaponSensitiveMap(Actor A, optional bool bMorallyGrey
 		case "04_NYC_HOTEL":
 		case "04_NYC_UNDERGROUND":
 		case "04_NYC_SMUG":
+		//04 Street here because of Revision's 04 street being inconsistent vs Vanilla's. Consistent bounty hunter spawn maps, please.
+		case "04_NYC_STREET":
 		//08 Hotel is allowed because the rentons are gone.
 		case "08_NYC_UNDERGROUND":
 		case "08_NYC_SMUG":
@@ -974,6 +1015,285 @@ static function bool VMDIsWeaponSensitiveMap(Actor A, optional bool bMorallyGrey
 	}
 }
 
+static function string MutateDestinationByStyle(Actor A, string StartURL)
+{
+	local int i, RelIndex, InPos, CurStyle, NewStyle;
+	local string Ret, Trim, Fat, CurMapName, TPath, MissionClone;
+	local VMDBufferPlayer VMP;
+	
+	Ret = StartURL;
+	VMP = VMDBufferPlayer(A.GetPlayerPawn());
+	
+	if (VMP == None)
+	{
+		return Ret;
+	}
+	
+	switch(Left(Ret, 1))
+	{
+		case "0":
+		case "1":
+		case "2":
+		case "3":
+		case "4":
+		case "5":
+		case "6":
+		case "7":
+		case "8":
+		case "9":
+			//Do nothing, we're here to make numbers feel valid.
+		break;
+		default:
+			return Ret; //Non-numerical, we'll be loading some crazy shit, abort instead.
+		break;
+	}
+	
+	MissionClone = Left(Ret, 2);
+	CurMapName = VMDGetMapName(A);
+	InPos = InStr(Ret, "#");
+	if (InPos > -1)
+	{
+		Trim = Left(Ret, InPos);
+	}
+	else
+	{
+		Trim = Ret;
+	}
+	
+	Fat = Right(StartURL, Len(StartURL) - Len(Trim));
+	if (Right(Trim, 3) ~= ".dx")
+	{
+		Trim = Left(Trim, Len(Trim) - 3);
+	}
+	
+	for(i=0; i<ArrayCount(VMP.RecordedMaps); i++)
+	{
+		if (VMP.RecordedMaps[i] ~= Trim)
+		{
+			VMP.Log("PRERECORDED MAP FOUND! RETURNING"@StartURL);
+			return StartURL;
+		}
+	}
+	
+	VMP.VMDRecordMap(Trim);
+	
+	CurStyle = GetIntendedMapStyle(A);
+	NewStyle = GetIntendedMapStyleFromName(A, Trim);
+	
+	//MADDERS, 7/20/25: This... Isn't necessary?
+	//But any time we flip-flop styles on a map that doesn't exist in all sets (And uses a custom destination as a result), force redirection in this block.
+	/*if (NewStyle != CurStyle)
+	{
+		switch(Ret)
+		{
+			case "":
+				if (NewStyle == 1)
+				{
+					return "#";
+				}
+				else
+				{
+					return "#";
+				}
+			break;
+		}
+	}*/
+	
+	switch(NewStyle)
+	{
+		case 0:
+			Ret = StartURL;
+		break;
+		case 1:
+			if (class'VMDStaticFunctions'.Static.GetConflictingMapURLStyle(A) == 1)
+			{
+				Ret = "..\\VMDRevision\\Maps\\"$Trim$".dx"$Fat;
+			}
+			else
+			{
+				Ret = MissionClone$"\\VMDRevision\\"$Trim$".dx"$Fat;
+			}
+			Log("MODIFYING URL! RETURNING "$Ret);
+		break;
+		case 2:
+			Ret = StartURL;
+		break;
+	}
+	
+	return Ret;
+}
+
+static function int GetConflictingMapURLStyle(Actor A)
+{
+	// 0 = System path shitty method. Vanilla stable.
+	// 1 = Alien directory method, much cleaner.
+	return 0;
+}
+
+static function int GetIntendedMapStyle(Actor A)
+{
+	local string TName;
+	
+	TName = VMDGetMapName(A);
+	
+	return GetIntendedMapStyleFromName(A, TName);
+}
+
+static function int GetIntendedMapStyleFromName(Actor A, string TName)
+{
+	local int RelIndex;
+	local VMDBufferPlayer VMP;
+	
+	VMP = VMDBufferPlayer(A.GetPlayerPawn());
+	
+	if (VMP == None) return 0;
+	
+	switch(TName)
+	{
+		case "DX":
+		case "DXONLY":
+		case "ENTRY":
+		case "00_PLAYERHUB":
+		case "00_CHARACTERSETUP":
+		case "00_TRAINING":
+		case "00_TRAININGCOMBAT":
+		case "00_TRAININGFINAL":
+			return 0;
+		break;
+		case "00_INTRO":
+			RelIndex = 0;
+		break;
+		case "01_NYC_UNATCOISLAND":
+		case "03_NYC_UNATCOISLAND":
+		case "04_NYC_UNATCOISLAND":
+		case "05_NYC_UNATCOISLAND":
+			RelIndex = 1;
+		break;
+		case "01_NYC_UNATCOHQ":
+		case "03_NYC_UNATCOHQ":
+		case "04_NYC_UNATCOHQ":
+		case "05_NYC_UNATCOHQ":
+			RelIndex = 2;
+		break;
+		case "02_NYC_BATTERYPARK":
+		case "03_NYC_BATTERYPARK":
+		case "04_NYC_BATTERYPARK":
+			RelIndex = 3;
+		break;
+		case "02_NYC_BAR":
+		case "02_NYC_FREECLINIC":
+		case "02_NYC_HOTEL":
+		case "02_NYC_SMUG":
+		case "02_NYC_STREET":
+		case "02_NYC_UNDERGROUND":
+		case "02_NYC_WAREHOUSE":
+		case "04_NYC_BAR":
+		case "04_NYC_HOTEL":
+		case "04_NYC_NSFHQ":
+		case "04_NYC_SMUG":
+		case "04_NYC_STREET":
+		case "04_NYC_UNDERGROUND":
+		case "08_NYC_BAR":
+		case "08_NYC_FREECLINIC":
+		case "08_NYC_HOTEL":
+		case "08_NYC_SMUG":
+		case "08_NYC_STREET":
+		case "08_NYC_UNDERGROUND":
+			RelIndex = 4;
+		break;
+		case "03_NYC_BROOKLYNBRIDGESTATION":
+		case "03_NYC_MOLEPEOPLE":
+			RelIndex = 5;
+		break;
+		case "03_NYC_747":
+		case "03_NYC_AIRFIELD":
+		case "03_NYC_AIRFIELDHELIBASE":
+		case "03_NYC_HANGAR":
+			RelIndex = 6;
+		break;
+		case "05_NYC_UNATCOMJ12LAB":
+			RelIndex = 7;
+		break;
+		case "06_HONGKONG_HELIBASE":
+		case "06_HONGKONG_TONGBASE":
+		case "06_HONGKONG_WANCHAI_CANAL":
+		case "06_HONGKONG_WANCHAI_GARAGE":
+		case "06_HONGKONG_WANCHAI_MARKET":
+		case "06_HONGKONG_WANCHAI_STREET":
+		case "06_HONGKONG_WANCHAI_UNDERWORLD":
+		//Unique Map for Revision
+		case "06_HONGKONG_WANCHAI_COMPOUND":
+			RelIndex = 8;
+		break;
+		case "06_HONGKONG_VERSALIFE":
+		case "06_HONGKONG_MJ12LAB":
+		case "06_HONGKONG_STORAGE":
+			RelIndex = 9;
+		break;
+		case "09_NYC_DOCKYARD":
+		case "09_NYC_SHIP":
+		case "09_NYC_SHIPEBELOW":
+		case "09_NYC_SHIPFAN":
+			RelIndex = 10;
+		break;
+		case "09_NYC_GRAVEYARD":
+			RelIndex = 11;
+		break;
+		case "10_PARIS_CATACOMBS":
+		case "10_PARIS_CATACOMBS_METRO":
+		case "10_PARIS_CLUB":
+		case "10_PARIS_METRO":
+			RelIndex = 12;
+		break;
+		case "10_PARIS_CATACOMBS_TUNNELS":
+			RelIndex = 13;
+		break;
+		case "10_PARIS_CHATEAU":
+			RelIndex = 14;
+		break;
+		case "11_PARIS_CATHEDRAL":
+		case "11_PARIS_UNDERGROUND":
+			RelIndex = 15;
+		break;
+		case "11_PARIS_EVERETT":
+			RelIndex = 16;
+		break;
+		case "12_VANDENBERG_CMD":
+		case "12_VANDENBERG_COMPUTER":
+		case "12_VANDENBERG_TUNNELS":
+			RelIndex = 17;
+		break;
+		case "12_VANDENBERG_GAS":
+			RelIndex = 18;
+		break;
+		case "14_OCEANLAB_LAB":
+		case "14_OCEANLAB_UC":
+		case "14_VANDENBERG_SUB":
+			RelIndex = 19;
+		break;
+		case "14_OCEANLAB_SILO":
+			RelIndex = 20;
+		break;
+		case "15_AREA51_BUNKER":
+		case "15_AREA51_ENTRANCE":
+		case "15_AREA51_FINAL":
+		case "15_AREA51_PAGE":
+			RelIndex = 21;
+		break;
+		case "99_ENDGAME1":
+		case "99_ENDGAME2":
+		case "99_ENDGAME3":
+		case "99_ENDGAME4":
+			RelIndex = 22;
+		break;
+		case "NEWGAMEPLUSLIAISON":
+			return 1;
+		break;
+	}
+	
+	return VMP.MapStyle[RelIndex];
+}
+
 static function bool VMDIsBountyHunterExceptionMap(Actor A, optional bool bMorallyGrey)
 {
 	local string TName;
@@ -989,1325 +1309,6 @@ static function bool VMDIsBountyHunterExceptionMap(Actor A, optional bool bMoral
 			return false;
 		break;
 	}
-}
-
-//444444444444444444444444444444
-//SKILL AUGMENT TREE SETUP
-//444444444444444444444444444444
-
-//-----------------------------
-//1. Pistols
-//-----------------------------
-static function CreatePistolsTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[5];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'PistolFocus';
-	TSkillAugments[1] = 'PistolModding';
-	TSkillAugments[2] = 'PistolReload';
-	TSkillAugments[3] = 'PistolAltAmmos';
-	TSkillAugments[4] = 'PistolScope';
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 0);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 0);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	
-	TreeArrayCount = 2;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 0, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 0, false);
-		}
-		TreeCount++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//2. Rifles
-//-----------------------------
-static function CreateRiflesTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[5];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'RifleFocus';
-	TSkillAugments[1] = 'RifleModding';
-	TSkillAugments[2] = 'RifleOperation';
-	TSkillAugments[3] = 'RifleAltAmmos';
-	TSkillAugments[4] = 'RifleReload';
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 0);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 0);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	
-	TreeArrayCount = 2;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 0, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 0, false);
-		}
-		TreeCount++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+2;
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+2;
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//1/2. Firing Systems
-//-----------------------------
-static function CreateFiringSystemsTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[4];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Cassandra" || RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'TagTeamClosedWaterproof';
-	TSkillAugments[1] = 'TagTeamOpenDecayRate';
-	TSkillAugments[2] = 'TagTeamClosedHeadshot';
-	TSkillAugments[3] = 'TagTeamOpenChamber';
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 0);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), "FillerTextSystems");
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 0);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), "FillerTextSystems");
-		}
-		Count++;
-	}
-	
-	TreeArrayCount = 3;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 0, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 0, false);
-		}
-		TreeCount++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+2] = -2; //Horizontal
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+2] = -2; //Horizontal
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//3. Heavy
-//-----------------------------
-static function CreateHeavyTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[6];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'HeavyFocus';
-	TSkillAugments[1] = 'HeavySpeed';
-	TSkillAugments[2] = 'HeavyDropAndRoll';
-	TSkillAugments[3] = 'HeavySwapSpeed';
-	TSkillAugments[4] = 'HeavyProjectileSpeed';
-	TSkillAugments[5] = 'HeavyPlasma';
-	
-	TreeArrayCount = 2;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 1, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 1, false);
-		}
-		TreeCount++;
-	}
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 1);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 1);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+1;
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+4;
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+1;
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+4;
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//4. Demolition
-//-----------------------------
-static function CreateDemolitionTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[7];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Cassandra" || RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'DemolitionMines';
-	TSkillAugments[1] = 'DemolitionEMP';
-	TSkillAugments[2] = 'DemolitionTearGas';
-	TSkillAugments[3] = 'DemolitionLooting';
-	TSkillAugments[4] = 'DemolitionMineHandling';
-	TSkillAugments[5] = 'DemolitionScrambler';
-	TSkillAugments[6] = 'DemolitionGrenadeMaxAmmo';
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 1);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 1);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	
-	TreeArrayCount = 2;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 1, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 1, false);
-		}
-		TreeCount++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+6;
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+2] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+6;
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+2] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//5. Low Tech
-//-----------------------------
-static function CreateLowTechTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[5];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'MeleeProjectileLooting';
-	TSkillAugments[1] = 'MeleeBatonHeadshots';
-	TSkillAugments[2] = 'MeleeSwingSpeed';
-	//TSkillAugments[3] = 'MeleeDoorScouting';
-	TSkillAugments[3] = 'MeleeStunDuration';
-	TSkillAugments[4] = 'MeleeAssassin';
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 2);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 2);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	
-	TreeArrayCount = 2;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 2, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 2, false);
-		}
-		TreeCount++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+1;
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+1;
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//6. Lockpicking
-//-----------------------------
-static function CreateLockpickingTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[5];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Cassandra" || RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'LockpickScoutNoise';
-	TSkillAugments[1] = 'LockpickPickpocket';
-	TSkillAugments[2] = 'LockpickScent';
-	TSkillAugments[3] = 'LockpickCapacity';
-	TSkillAugments[4] = 'LockpickStartStealth'; //Swapping 3 and 4 for ordering sake.
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 2);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 2);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	
-	TreeArrayCount = 1;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 2, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 2, false);
-		}
-		TreeCount++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//5/6. Burglar
-//-----------------------------
-static function CreateBurglarTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string  CurLoadID;
-	local name CurSkillAugment, TSkillAugments[2];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Cassandra" || RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'TagTeamDoorCrackingWood';
-	TSkillAugments[1] = 'TagTeamDoorCrackingMetal';
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 2);
-			
-			if (i == 0) PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-			else PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), "FillerTextBurglar");
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 2);
-			
-			if (i == 0) MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-			else MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), "FillerTextBurglar");
-		}
-		Count++;
-	}
-	
-	TreeArrayCount = 2;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 2, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 2, false);
-		}
-		TreeCount++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//7. Tech, AKA Electronics
-//-----------------------------
-static function CreateTechTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[6];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Cassandra" || RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'ElectronicsFailNoise';
-	TSkillAugments[1] = 'ElectronicsSpeed';
-	TSkillAugments[2] = 'ElectronicsKeypads';
-	TSkillAugments[3] = 'ElectronicsAlarms';
-	TSkillAugments[4] = 'ElectronicsCapacity';
-	TSkillAugments[5] = 'ElectronicsTurrets';
-	
-	TreeArrayCount = 2;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 3, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 3, false);
-		}
-		TreeCount++;
-	}
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 3);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 3);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+3;
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+3;
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+3;
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+3;
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//8. Computer(s)
-//-----------------------------
-static function CreateComputerTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[5];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'ComputerScaling';
-	TSkillAugments[1] = 'ComputerTurrets';
-	TSkillAugments[2] = 'ComputerSpecialOptions';
-	TSkillAugments[3] = 'ComputerATMQuality';
-	TSkillAugments[4] = 'ComputerLockout';
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 3);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 3);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	
-	TreeArrayCount = 2;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 3, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 3, false);
-		}
-		TreeCount++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+1;
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+1;
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//7/8. Hacking
-//-----------------------------
-static function CreateHackingTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-}
-
-//-----------------------------
-//9. Fitness (AKA Swimming)
-//-----------------------------
-static function CreateFitnessTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[5];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Cassandra" || RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'SwimmingBreathRegen';
-	TSkillAugments[1] = 'SwimmingFallRoll';
-	TSkillAugments[2] = 'SwimmingRoll';
-	TSkillAugments[3] = 'SwimmingDrowningRate';
-	TSkillAugments[4] = 'SwimmingFitness';
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 4);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 4);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	
-	TreeArrayCount = 2;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 4, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 4, false);
-		}
-		TreeCount++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//10. Tactical Gear (AKA Enviro)
-//-----------------------------
-static function CreateTacticalGearTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[5];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Cassandra") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'EnviroDeactivate';
-	TSkillAugments[1] = 'EnviroCopies';
-	TSkillAugments[2] = 'EnviroCopyStacks';
-	TSkillAugments[3] = 'EnviroSmallWeapons';
-	TSkillAugments[4] = 'EnviroDurability';
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 4);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 4);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	
-	TreeArrayCount = 3;
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 4, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 4, false);
-		}
-		TreeCount++;
-	}
-	
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments);
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+2] = Count-ArrayCount(TSkillAugments);
-		PerWin.TreeOwners[TreeCount-TreeArrayCount+3] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments);
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+1] = Count-ArrayCount(TSkillAugments);
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+2] = Count-ArrayCount(TSkillAugments);
-		MenWin.TreeOwners[TreeCount-TreeArrayCount+3] = Count-ArrayCount(TSkillAugments)+1;
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-//-----------------------------
-//9/10. Swimmming (Gear)
-//-----------------------------
-static function CreateSwimmingTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-}
-
-//-----------------------------
-//11. Medicine
-//-----------------------------
-static function CreateMedicineTree(Window InWin, int Count, int TreeCount, out int OutCount, out int OutTreeCount, string RelString)
-{
-	local string CurLoadID;
-	local name CurSkillAugment, TSkillAugments[5];
-	local int i, SkillAugmentPos, TreeArrayCount;
-	
-	local VMDPersonaScreenSkillAugments PerWin;
-	local VMDMenuSelectSkillAugments MenWin;
-	local bool bPer;
-	local VMDBufferPlayer VMP;
-	local VMDSkillAugmentManager VMSA;
-	local VMDSkillAugmentGem TGem;
-	local class<VMDSkillAugmentGem> UseClass;
-	
-	UseClass = class'VMDSkillAugmentGem';
-	if (RelString ~= "Burden") UseClass = class'VMDSkillAugmentGemInvisible';
-	
-	PerWin = VMDPersonaScreenSkillAugments(InWin);
-	MenWin = VMDMenuSelectSkillAugments(InWin);
-	
-	if ((PerWin == None) && (MenWin == None)) return;
-	
-	if (PerWin != None)
-	{
-		VMP = PerWin.VMP;
-		bPer = true;
-	}
-	else
-	{
-		VMP = MenWin.VMP;
-	}
-	if (VMP == None) return;
-	
-	VMSA = VMP.SkillAugmentManager;
-	if (VMSA == None) return;
-	
-	TSkillAugments[0] = 'MedicineStress';
-	TSkillAugments[1] = 'MedicineWraparound';
-	TSkillAugments[2] = 'MedicineMedbotRecharge';
-	TSkillAugments[3] = 'MedicineCapacity';
-	TSkillAugments[4] = 'MedicineRevive';
-	
-	for (i=0; i<ArrayCount(TSkillAugments); i++)
-	{
-		CurSkillAugment = TSkillAugments[i];
-		SkillAugmentPos = VMP.SkillAugmentArrayOf(CurSkillAugment);
-		if (bPer)
-		{
-			PerWin.SetGemList(Count, VMDSkillAugmentGem(PerWin.NewChild(UseClass)));
-			PerWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 5);
-			PerWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		else
-		{
-			MenWin.SetGemList(Count, VMDSkillAugmentGem(MenWin.NewChild(UseClass)));
-			MenWin.SetSkillData(Count, CurSkillAugment, VMSA.SkillAugmentNames[SkillAugmentPos], VMSA.SkillAugmentDescs[SkillAugmentPos], VMSA.SkillAugmentLevelRequired[SkillAugmentPos], VMSA.SecondarySkillAugmentLevelRequired[SkillAugmentPos], 5);
-			MenWin.SetSkillData2(Count, VMP.GetSkillAugmentSkillRequired(SkillAugmentPos), VMP.GetSecondarySkillAugmentSkillRequired(SkillAugmentPos), string(VMP.GetSkillAugmentSkillRequired(SkillAugmentPos)));
-		}
-		Count++;
-	}
-	TreeArrayCount = 1;
-	
-	for (i=0; i<TreeArrayCount; i++)
-	{
-		CurLoadID = Default.TreeLoadIDs[TreeCount];
-		if (bPer)
-		{
-			PerWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(PerWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			PerWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 5, false);
-		}
-		else
-		{
-			MenWin.TreeBits[TreeCount] = VMDSkillAugmentTreeBranch(MenWin.NewChild(class'VMDSkillAugmentTreeBranch'));
-			MenWin.TreeBits[TreeCount].SetTreeData(CurLoadID, 5, false);
-		}
-		TreeCount++;
-	}
-
-	//Manually set tree branch owners.
-	if (bPer)
-	{
-		PerWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+4;
-	}
-	else
-	{
-		MenWin.TreeOwners[TreeCount-TreeArrayCount] = Count-ArrayCount(TSkillAugments)+4;
-	}
-	
-	OutCount = Count;
-	OutTreeCount = TreeCount;
-}
-
-static function int GetGemPosX(int i)
-{
-	return Default.GemPosX[i];
-}
-static function int GetGemPosY(int i)
-{
-	return Default.GemPosY[i];
-}
-static function int GetTreePosX(int i)
-{
-	return Default.TreePosX[i];
-}
-static function int GetTreePosY(int i)
-{
-	return Default.TreePosY[i];
-}
-
-static function string GetTreeLabel(int i)
-{
-	return Default.TreeLabels[i];
-}
-static function string GetTreeGapLabel(int i)
-{
-	return Default.TreeGapLabels[i];
-}
-static function class<Skill> GetTreeSkill(int i)
-{
-	return Default.TreeSkills[i];
 }
 
 defaultproperties
@@ -2359,319 +1360,4 @@ defaultproperties
     SeedGlossary(4)="Hacking 1"
     SeedGlossary(5)="Hacking 2"
     SeedGlossary(6)="Ammo Looting"
-    
-    //---------------------
-    //TREE STUFF!
-    //=====================
-     //Page 1.
-     TreeLabels(0)="Pistols"
-     TreeSkills(0)=class'SkillWeaponPistol'
-     TreeGapLabels(0)="Ballistic Specialist"
-     TreeLabels(1)="Rifles"
-     TreeSkills(1)=class'SkillWeaponRifle'
-     
-     //Page 2.
-     TreeLabels(2)="Heavy"
-     TreeSkills(2)=class'SkillWeaponHeavy'
-     TreeGapLabels(1)=""
-     TreeLabels(3)="Demolition"
-     TreeSkills(3)=class'SkillDemolition'
-     
-     //Page 3.
-     TreeLabels(4)="Low Tech"
-     TreeSkills(4)=class'SkillWeaponLowTech'
-     TreeGapLabels(2)="Burglary"
-     TreeLabels(5)="Infiltration"
-     TreeSkills(5)=class'SkillLockpicking'
-     
-     //Page 4.
-     TreeLabels(6)="Electronics"
-     TreeSkills(6)=class'SkillTech'
-     TreeGapLabels(3)="" //Hacking
-     TreeLabels(7)="Computers"
-     TreeSkills(7)=class'SkillComputer'
-     
-     //Page 5.
-     TreeLabels(8)="Fitness"
-     TreeSkills(8)=class'SkillSwimming'
-     TreeGapLabels(4)="" //Swimming Gear
-     TreeLabels(9)="Tactical Gear"
-     TreeSkills(9)=class'SkillEnviro'
-     
-     //Page 6.
-     TreeLabels(10)="Medicine"
-     TreeSkills(10)=class'SkillMedicine'
-     TreeGapLabels(5)=""
-     
-     //---------------
-     //GEM POSITIONS
-     //---------------
-     //1. Pistols
-     GemPosX(0)=42
-     GemPosY(0)=128
-     GemPosX(1)=106
-     GemPosY(1)=128
-     GemPosX(2)=170
-     GemPosY(2)=128
-     GemPosX(3)=42
-     GemPosY(3)=192
-     GemPosX(4)=106
-     GemPosY(4)=192
-     
-     TreeLoadIDs(0)="SkillAugmentTreeBranchVertical"
-     TreePosX(0)=42
-     TreePosY(0)=160
-     TreeLoadIDs(1)="SkillAugmentTreeBranchVertical"
-     TreePosX(1)=106
-     TreePosY(1)=160
-     
-     //---------------
-     //2. Rifles
-     GemPosX(5)=406
-     GemPosY(5)=128
-     GemPosX(6)=470
-     GemPosY(6)=128
-     GemPosX(7)=534
-     GemPosY(7)=128
-     GemPosX(8)=406
-     GemPosY(8)=192
-     GemPosX(9)=534
-     GemPosY(9)=192
-     
-     TreeLoadIDs(2)="SkillAugmentTreeBranchVertical"
-     TreePosX(2)=406
-     TreePosY(2)=160
-     TreeLoadIDs(3)="SkillAugmentTreeBranchVertical"
-     TreePosX(3)=534
-     TreePosY(3)=160
-     
-     //---------------
-     //1/2. Firing Systems
-     GemPosX(10)=254
-     GemPosY(10)=160
-     GemPosX(11)=320
-     GemPosY(11)=160
-     GemPosX(12)=254
-     GemPosY(12)=224
-     GemPosX(13)=320
-     GemPosY(13)=224
-     
-     TreeLoadIDs(4)="SkillAugmentTreeBranchVertical"
-     TreePosX(4)=254
-     TreePosY(4)=192
-     TreeLoadIDs(5)="SkillAugmentTreeBranchVertical"
-     TreePosX(5)=320
-     TreePosY(5)=192
-     TreeLoadIDs(6)="SkillAugmentTreeBranchHorizontalHighlight" //Wicked hack. Disappears when one is bought.
-     TreePosX(6)=287
-     TreePosY(6)=160
-     
-     //---------------
-     //3. Heavy
-     GemPosX(14)=42 //Heavy Focus
-     GemPosY(14)=128
-     GemPosX(15)=90 //Heavy Posture
-     GemPosY(15)=128
-     GemPosX(16)=138 //Stop, Drop...
-     GemPosY(16)=128
-     GemPosX(17)=90 //Heavy Swap Speed
-     GemPosY(17)=192
-     GemPosX(18)=186 //Heavy Projectile Speed
-     GemPosY(18)=128
-     GemPosX(19)=186 //Danger close
-     GemPosY(19)=192
-     
-     TreeLoadIDs(7)="SkillAugmentTreeBranchVertical"
-     TreePosX(7)=90
-     TreePosY(7)=160
-     TreeLoadIDs(8)="SkillAugmentTreeBranchVertical"
-     TreePosX(8)=186
-     TreePosY(8)=160
-     
-     //---------------
-     //4. Demolition
-     //NOTE: Sorting is jumbled, for ease of access.
-     GemPosX(20)=390 //I'm actually for placing mines
-     GemPosY(20)=128
-     GemPosX(21)=438 //EMP is the same
-     GemPosY(21)=128
-     GemPosX(22)=486 //And I'm actually for tear gas
-     GemPosY(22)=128
-     GemPosX(23)=534 //And I'm actually for looting
-     GemPosY(23)=192
-     GemPosX(24)=342 //I'm actually for frequencies
-     GemPosY(24)=128
-     GemPosX(25)=438 //Scrambler is 1.5x spaced, vertically.
-     GemPosY(25)=192
-     GemPosX(26)=534 //Grenade max ammo.
-     GemPosY(26)=128
-     
-     TreeLoadIDs(9)="SkillAugmentTreeBranchVertical"
-     TreePosX(9)=534
-     TreePosY(9)=160
-     TreeLoadIDs(10)="SkillAugmentTreeBranchVertical"
-     TreePosX(10)=438
-     TreePosY(10)=160
-     
-     //---------------
-     //5. Low Tech
-     GemPosX(27)=42 //Retreive projectiles
-     GemPosY(27)=128
-     GemPosX(28)=90 //Baton noise
-     GemPosY(28)=128
-     GemPosX(29)=170 //Swing Speed. Switcheroo.
-     GemPosY(29)=192
-     //GemPosX(30)=186 //Door scouting. Switcheroo.
-     //GemPosY(30)=128
-     GemPosX(30)=58 //Stun duration
-     GemPosY(30)=192
-     GemPosX(31)=122 //Kill noise. Yay.
-     GemPosY(31)=192
-     
-     TreeLoadIDs(11)="SkillAugmentTreeBranchVertical"
-     TreePosX(11)=90
-     TreePosY(11)=160
-     TreeLoadIDs(12)="SkillAugmentTreeBranchHorizontalTUp"
-     TreePosX(12)=90
-     TreePosY(12)=192
-     
-     //---------------
-     //6. Lockpicking
-     GemPosX(32)=438
-     GemPosY(32)=128
-     GemPosX(33)=486
-     GemPosY(33)=128
-     GemPosX(34)=534
-     GemPosY(34)=128
-     GemPosX(35)=390 //Actually lockpick capacity
-     GemPosY(35)=192
-     GemPosX(36)=438 //And I'm actually starting picking stealth
-     GemPosY(36)=192
-     
-     TreeLoadIDs(13)="SkillAugmentTreeBranchVertical"
-     TreePosX(13)=438
-     TreePosY(13)=160
-     
-     //---------------
-     //5/6. Burglar
-     GemPosX(37)=220
-     GemPosY(37)=128
-     GemPosX(38)=282
-     GemPosY(38)=156
-     //GemPosX(37)=248
-     //GemPosY(37)=220
-     
-     TreeLoadIDs(14)="SkillAugmentTreeBranchHorizontalBranchDown"
-     TreePosX(14)=251
-     TreePosY(14)=142
-     TreeLoadIDs(15)="BLACKMASKTEX"
-     TreePosX(15)=232
-     TreePosY(15)=188
-     
-     //---------------
-     //7. Tech, AKA Electronics
-     GemPosX(39)=42
-     GemPosY(39)=128
-     GemPosX(40)=90
-     GemPosY(40)=128
-     GemPosX(41)=138 //Keypad hack strength
-     GemPosY(41)=176
-     GemPosX(42)=186 
-     GemPosY(42)=128
-     GemPosX(43)=234 
-     GemPosY(43)=176
-     GemPosX(44)=186 //Turret hacking
-     GemPosY(44)=176
-     
-     TreeLoadIDs(16)="SkillAugmentTreeBranchVerticalMini"
-     TreePosX(16)=186
-     TreePosY(16)=160
-     TreeLoadIDs(17)="BLACKMASKTEX"
-     TreePosX(17)=186
-     TreePosY(17)=192
-     
-     //---------------
-     //8. Computer(s)
-     GemPosX(45)=486 //Scaling
-     GemPosY(45)=128
-     GemPosX(46)=438 //Turrets
-     GemPosY(46)=176
-     GemPosX(47)=534 //Special options
-     GemPosY(47)=128
-     GemPosX(48)=390 //ATM quality
-     GemPosY(48)=176
-     GemPosX(49)=486 //Lockout
-     GemPosY(49)=224
-     
-     TreeLoadIDs(18)="SkillAugmentTreeBranchVertical"
-     TreePosX(18)=486
-     TreePosY(18)=160
-     TreeLoadIDs(19)="SkillAugmentTreeBranchVertical"
-     TreePosX(19)=486
-     TreePosY(19)=192
-     
-     //---------------
-     //9. Fitness AKA Swimming
-     GemPosX(50)=42 //Breath regen
-     GemPosY(50)=128
-     GemPosX(51)=100 //Fall roll
-     GemPosY(51)=128
-     GemPosX(52)=100 //Tac Roll
-     GemPosY(52)=192
-     GemPosX(53)=42 //Drowning
-     GemPosY(53)=192
-     GemPosX(54)=158 //Fitness
-     GemPosY(54)=192
-     
-     TreeLoadIDs(20)="SkillAugmentTreeBranchVertical" //Breath offshoot
-     TreePosX(20)=42
-     TreePosY(20)=160
-     TreeLoadIDs(21)="SkillAugmentTreeBranchVertical" //Fall Roll offshoots
-     TreePosX(21)=100
-     TreePosY(21)=160
-     
-     //---------------
-     //10. Tactical Gear AKA Enviro
-     GemPosX(55)=438 //Deactivate
-     GemPosY(55)=128
-     GemPosX(56)=486 //Multiple copies
-     GemPosY(56)=128
-     GemPosX(57)=486 //Stacked pickups (level 2)
-     GemPosY(57)=192
-     GemPosX(58)=534 //Hide small weapons
-     GemPosY(58)=192
-     GemPosX(59)=438 //Pickup durability (level 2)
-     GemPosY(59)=192
-     
-     TreeLoadIDs(22)="SkillAugmentTreeBranchVertical" //Deactivate offshoots
-     TreePosX(22)=438
-     TreePosY(22)=160
-     TreeLoadIDs(23)="BLACKMASKTEX" //Wander in to setting up the swimming gear tree. //SkillAugmentTreeBranchVerticalBranchLeft
-     TreePosX(23)=414
-     TreePosY(23)=160
-     TreeLoadIDs(24)="SkillAugmentTreeBranchVertical" //Multiple copies offshoot
-     TreePosX(24)=486
-     TreePosY(24)=160
-     
-     //---------------
-     //9/10. Swimming (Gear)
-     //GemPosX(58)=400
-     //GemPosY(58)=192
-     
-     //---------------
-     //11. Medicine
-     GemPosX(60)=42 //Stress releief
-     GemPosY(60)=128
-     GemPosX(61)=90 //Medkit wraparound
-     GemPosY(61)=128
-     GemPosX(62)=138 //Can recharge medbots (Tier 2)
-     GemPosY(62)=192
-     GemPosX(63)=176 //More medkit capacity (Tier 2)
-     GemPosY(63)=192
-     GemPosX(64)=176 //Medkits for death negation (Tier 3)
-     GemPosY(64)=256
-     
-     TreeLoadIDs(25)="SkillAugmentTreeBranchVertical" //Medkit copies offshoot
-     TreePosX(25)=176
-     TreePosY(25)=224
 }
