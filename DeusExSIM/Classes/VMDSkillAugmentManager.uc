@@ -780,7 +780,7 @@ defaultproperties
      //MELEE
      //1.) Retrieve projectiles from corpses (trained)
      SkillAugmentNames(23)="Dislodge"
-     SkillAugmentDescs(23)="~Darts and throwing knives can be retrieved from enemy corpses successfully.|n*Each projectile type has a unique chance to succeed.|n~Throwing speed for grenades and throwing knives is increased by 5%/15%/30%/50%, depending on skill level."
+     SkillAugmentDescs(23)="~Darts and throwing knives can be retrieved from enemy corpses successfully.|n*Each projectile type has a unique chance to succeed.|n~Throwing speed for grenades and throwing knives is increased by 10%/30%/60%/100%, depending on skill level."
      SkillAugmentIDs(23)=MeleeProjectileLooting
      SkillAugmentAssumed(23)=1 //Keeping this for sim purposes
      SkillAugmentLevel(23)=1
@@ -939,7 +939,7 @@ defaultproperties
      SkillAugmentSkillRequired(39)=class'SkillTech'
      //8.) Doubled crafting efficiency.
      SkillAugmentNames(40)="Elbow Grease"
-     SkillAugmentDescs(40)="~Relative to skill level, your mechanical crafting efficiency bonus is significantly improved.|n*This bonus also benefits your MEGH and SIDD repair costs."
+     SkillAugmentDescs(40)="~Your mechanical crafting workspace requirements are decreased by 1 level.|n~Relative to skill level, your mechanical crafting efficiency bonus is significantly improved.|n*This bonus also benefits your MEGH and SIDD repair costs."
      SkillAugmentIDs(40)=ElectronicsCrafting
      SkillAugmentAssumed(40)=0
      SkillAugmentLevel(40)=2
@@ -1080,7 +1080,7 @@ defaultproperties
      SkillAugmentSkillRequired(54)=class'SkillMedicine'
      //5.) More efficiency for medicinal crafting. This is, controversially, not cross class.
      SkillAugmentNames(55)="PHD in Chemistry"
-     SkillAugmentDescs(55)="~Relative to skill level, your chemical crafting efficiency bonus is significantly improved."
+     SkillAugmentDescs(55)="~Your medical crafting workspace requirements are decreased by 1 level.|n~Relative to skill level, your chemical crafting efficiency bonus is significantly improved."
      SkillAugmentIDs(55)=MedicineCrafting
      SkillAugmentAssumed(55)=0
      SkillAugmentLevel(55)=2
