@@ -769,7 +769,7 @@ function AttemptReload()
 		}
 	}
 	
-	if (TType == None || DXA == None)
+	if (TType == None || DXA == None || TAmmo == None)
 	{
 		return;
 	}
@@ -907,6 +907,14 @@ function AttemptRepair()
 		
 		VMP.CurScrap -= LastScrapCost;
 		Megh.Health = Megh.VMDGetMaxHealth();
+		if (Megh.Health >= Megh.Default.Health / 3)
+		{
+			if (Megh.SmokeGen != None)
+			{
+				Megh.SmokeGen.DelayedDestroy();
+				Megh.SmokeGen = None;
+			}
+		}
 		UpdateInfo();
 	}
 }
@@ -943,7 +951,7 @@ function AttemptRecharge()
 		TCell.UseOnce();
 		
 		TEMPMax = Megh.VMDGetMaxEMPHitPoints();
-		Megh.EMPHitPoints = Min(TEMPMax, Megh.EMPHitPoints + int(float(TEMPMax)*0.25));
+		Megh.EMPHitPoints = Min(TEMPMax, Megh.EMPHitPoints + int(float(TEMPMax)*0.5));
 		if (Megh.EMPHitPoints >= TEMPMax)
 		{
 			if (Megh.SparkGen != None)
@@ -971,7 +979,7 @@ defaultproperties
      StrHealthTitle="%d%% hull value left"
      StrHealthDesc="%d scrap to repair"
      StrEMPHealthTitle="%d%% EMP damage"
-     StrEMPHealthDesc="25% reduction per cell"
+     StrEMPHealthDesc="50% reduction per cell"
      StrScrap="Scrap: %d"
      StrCells="Cells: %d"
      StrMagCount="Ammo: %d/%d"
