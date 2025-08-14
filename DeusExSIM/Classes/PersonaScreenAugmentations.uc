@@ -606,9 +606,11 @@ event bool VirtualKeyPressed(EInputKey key, bool bRepeat)
 			break;
 		
 		case IK_1:
+		case IK_MINUS:
 			VMDAttemptRebindAug(11);
 		break;
 		case IK_2:
+		case IK_EQUALS:
 			VMDAttemptRebindAug(12);
 		break;
 		case IK_3:
