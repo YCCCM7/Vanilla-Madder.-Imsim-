@@ -80,26 +80,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 				
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (Bartender(SP) != None)
-					{
-						SP.bFearHacking = true;
-						SP.bHateHacking = true;
-					}
-					else if (Hooker2(SP) != None)
-					{
-						switch(SF.Static.StripBaseActorSeed(SP))
-						{
-							case 2:
-								SP.bFearHacking = true;
-								SP.bHateHacking = true;
-							break;
-						}
-					}
-				}
-				
 				//MADDERS, 11/1/21: LDDP branching functionality.
 				if ((Flags != None) && (Flags.GetBool('LDDPJCIsFemale')))
 				{
@@ -131,6 +111,26 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							SP.BarkBindName = "Man";
 							SP.ConBindEvents();
 						}
+					}
+				}
+			}
+			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (Bartender(SP) != None)
+				{
+					SP.bFearHacking = true;
+					SP.bHateHacking = true;
+				}
+				else if (Hooker2(SP) != None)
+				{
+					switch(SF.Static.StripBaseActorSeed(SP))
+					{
+						case 2:
+							SP.bFearHacking = true;
+							SP.bHateHacking = true;
+						break;
 					}
 				}
 			}
@@ -232,24 +232,26 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		break;
 		//10_PARIS_CHATEAU: Fifth easter egg.
 		case "10_PARIS_CHATEAU":
-			if (!bRevisionMapSet)
+			forEach AllActors(class'DeusExMover', DXM)
 			{
-				forEach AllActors(class'DeusExMover', DXM)
+				if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
 				{
-					if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
+					switch(SF.Static.StripBaseActorSeed(DXM))
 					{
-						switch(SF.Static.StripBaseActorSeed(DXM))
-						{
-							case 16:
-								//MADDERS, 6/9/22: This is door is way too fucky.
-								//Don't make us crush shit, and don't get diddled by nicolette. Jesus.
-								DXM.SetPropertyText("MoverEncroachType", "3");
-								DXM.bIsDoor = false;
-							break;
-						}
+						case 16:
+							//MADDERS, 6/9/22: This is door is way too fucky.
+							//Don't make us crush shit, and don't get diddled by nicolette. Jesus.
+							DXM.SetPropertyText("MoverEncroachType", "ME_IgnoreWhenEncroach");
+							DXM.bIsDoor = false;
+						break;
 					}
 				}
-				CreateHallucination(vect(-1250, 262, -12), 4, false);
+			}
+			
+			CreateHallucination(vect(-1250, 262, -12), 4, false);
+			
+			if (!bRevisionMapSet)
+			{
 			}
 		break;
 	}

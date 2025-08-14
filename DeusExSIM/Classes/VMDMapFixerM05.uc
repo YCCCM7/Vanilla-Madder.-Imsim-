@@ -14,21 +14,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		case "05_NYC_UNATCOMJ12LAB":
 			if (!bRevisionMapSet)
 			{
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (PaulDenton(SP) != None)
-					{
-						DumbAllReactions(SP);
-						SP.ChangeAlly('MJ12', 1.0, true, false);
-						SP.Alliance = 'MJ12';
-					}
-					else if (Terrorist(SP) != None)
-					{
-						SP.bReactLoudNoise = False;
-					}
-				}
-				
 				//Busted pivots ahoy.
 				forEach AllActors(class'DeusExMover', DXM)
 				{
@@ -139,6 +124,21 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					break;
 				}
 			}
+			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (PaulDenton(SP) != None)
+				{
+					DumbAllReactions(SP);
+					SP.ChangeAlly('MJ12', 1.0, true, false);
+					SP.Alliance = 'MJ12';
+				}
+				else if (Terrorist(SP) != None)
+				{
+					SP.bReactLoudNoise = False;
+				}
+			}
 		break;
 		
 		//05_NYC_UNATCOHQ: Bad pivot on cabinets, and encroach type on manderley's door.
@@ -194,36 +194,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					TCamp.bLastOpened = true;
 				}
 				
-				//03/28/23: Make alex stop freaking out about combat in UNATCO HQ. Saves a lot of hassle.
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (AlexJacobson(SP) != None)
-					{
-						//MADDERS: Eliminate reactions here.
-						DumbAllReactions(SP);
-						SP.Alliance = 'GoodGuyUNATCO';
-						SP.ChangeAlly('GoodGuyUNATCO', 1.0, true);
-						SP.ChangeAlly('UNATCO', 1.0, true);
-					}
-					else if (JaimeReyes(SP) != None)
-					{
-						SP.Alliance = 'GoodGuyUNATCO';
-						SP.ChangeAlly('GoodGuyUNATCO', 1.0, true);
-						SP.ChangeAlly('UNATCO', 1.0, true);
-					}
-					else if (SamCarter(SP) != None)
-					{
-						SP.Alliance = 'GoodGuyUNATCO';
-						SP.ChangeAlly('GoodGuyUNATCO', 1.0, true);
-						SP.ChangeAlly('UNATCO', 1.0, true);
-					}
-					else if ((SP != None) && (SP.Alliance == 'UNATCO'))
-					{
-						SP.ChangeAlly('GoodGuyUNATCO', 1.0, true);
-					}
-				}
-				
 				//MADDERS, 11/1/21: LDDP branching functionality.
 				if ((Flags != None) && (Flags.GetBool('LDDPJCIsFemale')))
 				{
@@ -257,6 +227,36 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							VendingMachine(ED).bOrangeGag = true;
 						break;
 					}
+				}
+			}
+			
+			//03/28/23: Make alex stop freaking out about combat in UNATCO HQ. Saves a lot of hassle.
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (AlexJacobson(SP) != None)
+				{
+					//MADDERS: Eliminate reactions here.
+					DumbAllReactions(SP);
+					SP.Alliance = 'GoodGuyUNATCO';
+					SP.ChangeAlly('GoodGuyUNATCO', 1.0, true);
+					SP.ChangeAlly('UNATCO', 1.0, true);
+				}
+				else if (JaimeReyes(SP) != None)
+				{
+					SP.Alliance = 'GoodGuyUNATCO';
+					SP.ChangeAlly('GoodGuyUNATCO', 1.0, true);
+					SP.ChangeAlly('UNATCO', 1.0, true);
+				}
+				else if (SamCarter(SP) != None)
+				{
+					SP.Alliance = 'GoodGuyUNATCO';
+					SP.ChangeAlly('GoodGuyUNATCO', 1.0, true);
+					SP.ChangeAlly('UNATCO', 1.0, true);
+				}
+				else if ((SP != None) && (SP.Alliance == 'UNATCO'))
+				{
+					SP.ChangeAlly('GoodGuyUNATCO', 1.0, true);
 				}
 			}
 		break;

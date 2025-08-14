@@ -42,15 +42,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						}
 					}
 				}
-				//4/13/23: Fix for civvies freaking the fuck out.
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (HumanCivilian(SP) != None)
-					{
-						HumanCivilian(SP).bHateShot = False;
-					}
-				}
 				//MADDERS, 11/1/21: LDDP branching functionality.
 				if ((Flags != None) && (Flags.GetBool('LDDPJCIsFemale')))
 				{
@@ -74,9 +65,42 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 			}
+			//MADDERS, 8/7/25: No idea WTF is going on with these lasers, but make them player trigger only, like in vanilla.
+			else
+			{
+				forEach AllActors(class'Actor', A)
+				{
+					if (BeamTrigger(A) != None)
+					{
+						BeamTrigger(A).TriggerType = TT_PlayerProximity;
+					}
+				}
+			}
+			
+			//4/13/23: Fix for civvies freaking the fuck out.
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (HumanCivilian(SP) != None)
+				{
+					HumanCivilian(SP).bHateShot = False;
+				}
+			}
 		break;
 		//02_NYC_BAR: LDDP stuff.
 		case "02_NYC_BAR":
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (JordanShea(SP) != None)
+				{
+					SP.bFearHacking = true;
+					SP.bHateHacking = true;
+					FoundFlag = true;
+					break;
+				}
+			}
+			
 			if (!bRevisionMapSet)
 			{
 				//MADDERS, 11/1/21: LDDP branching functionality.
@@ -98,18 +122,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							SP.bFearProjectiles = True;
 							SP.ConBindEvents();
 						}
-					}
-				}
-				
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (JordanShea(SP) != None)
-					{
-						SP.bFearHacking = true;
-						SP.bHateHacking = true;
-						FoundFlag = true;
-						break;
 					}
 				}
 				
@@ -136,6 +148,13 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							}
 						}
 					}
+				}
+			}
+			else
+			{
+				if (FoundFlag)
+				{
+					//No stealable items in Revision?
 				}
 			}
 		break;
@@ -195,17 +214,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 				
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if ((Doctor(SP) != None) || (Nurse(SP) != None))
-					{
-						SP.bFearHacking = true;
-						SP.bHateHacking = true;
-						FoundFlag = true;
-					}
-				}
-				
 				if (FoundFlag)
 				{
 					forEach AllActors(class'Inventory', TInv)
@@ -216,6 +224,17 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							Medkit(TInv).bSuperOwned = true;
 						}
 					}
+				}
+			}
+			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if ((Doctor(SP) != None) || (Nurse(SP) != None))
+				{
+					SP.bFearHacking = true;
+					SP.bHateHacking = true;
+					FoundFlag = true;
 				}
 			}
 		break;
@@ -287,6 +306,31 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							}
 						DXM.bMadderPatched = true;
 					}
+				}
+			}
+			else
+			{
+				//MADDERS, 11/18/24: Alternatively, Paul gives us some taser slugs for being a thoroughly cool dude.
+				if ((Flags.GetBool('AmbrosiaTagged')) && (!Flags.GetBool('BatteryParkSlaughter')) && (!Flags.GetBool('SubHostageMale_Dead')) && (!Flags.GetBool('SubHostageFemale_Dead')))
+				{
+					//MADDERS, 8/7/25: Offset for Revision map.
+					HackVect = Vect(544, -736, 0);
+					
+					A = Spawn(Class'Datacube',,, Vect(14,-2972,114) + HackVect);
+					if (A != None)
+					{
+						Datacube(A).TextPackage = "VMDText";
+						if (VMP == None || !VMP.bAssignedFemale)
+						{
+							Datacube(A).TextTag = '03_PaulThanks';
+						}
+						else
+						{
+							Datacube(A).TextTag = '03_PaulThanksFemale';
+						}
+					}
+					A = Spawn(class'AmmoTaserSlug',,, Vect(-13,-2973,123) + HackVect, Rot(0,32768,0));
+					A = Spawn(class'AmmoTaserSlug',,, Vect(15,-2947,123) + HackVect, Rot(0,-16384,0));
 				}
 			}
 		break;
@@ -391,6 +435,46 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							SP.ConBindEvents();
 						}
 					}
+				}
+			}
+			else
+			{
+				//MADDERS, 9/21/22: Aggravated by MEGH's inclusion, Paul is a dick and can very rarely end up shooting civilians.
+				//Make him too docile to start unloading on civvies. Christ.
+				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+				{
+					SP = ScriptedPawn(TPawn);
+					if (PaulDenton(SP) != None)
+					{
+						SP.bHateHacking = false;
+						SP.bHateWeapon = false;
+						SP.bHateShot = false;
+						SP.bHateInjury = false;
+						SP.bHateIndirectInjury = false;
+						SP.bHateCarcass = false;
+						SP.bHateDistress = false;
+					}
+					
+					//MADDERS, 8/7/25: Redundant for Revision? We'll see.
+					/*else if (UNATCOTroop(SP) != None)
+					{
+						SP.ChangeAlly('Thugs', -1.0, true);
+					}
+					else if (RiotCop(SP) != None)
+					{
+						SP.ChangeAlly('Thugs', -1.0, true);
+						SP.ChangeAlly('NSF', -1.0, true);
+					}
+					//MADDERS, 4/28/25: Stop deleting all the terrorists when one dies. They all share the same bind name for fuck's sake.
+					else if ((Terrorist(SP) != None) && (SP.BindName == SP.Default.BindName) && (SP.bImportant))
+					{
+						SP.bImportant = false;
+					}
+					else if (ThugMale(SP) != None || SandraRenton(SP) != None)
+					{
+						SP.bUseHome = true;
+						SP.HomeLoc = SP.Location;
+					}*/
 				}
 			}
 		break;

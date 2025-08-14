@@ -111,21 +111,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							break;
 						}
 					}
-					else if (LowerClassFemale(SP) != None)
-					{
-						switch(SF.Static.StripBaseActorSeed(SP))
-						{
-							case 0:
-								SP.bFearHacking = true;
-								SP.bHateHacking = true;
-							break;
-						}
-					}
-					else if (Bartender(SP) != None)
-					{
-						SP.bFearHacking = true;
-						SP.bHateHacking = true;
-					}
 				}
 				
 				forEach AllActors(class'Inventory', TInv)
@@ -256,6 +241,26 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 			}
+			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (LowerClassFemale(SP) != None)
+				{
+					switch(SF.Static.StripBaseActorSeed(SP))
+					{
+						case 0:
+							SP.bFearHacking = true;
+							SP.bHateHacking = true;
+						break;
+					}
+				}
+				else if (Bartender(SP) != None)
+				{
+					SP.bFearHacking = true;
+					SP.bHateHacking = true;
+				}
+			}
 		break;
 		//06_HONGKONG_WANCHAI_MARKET: Ya' know. The easter egg. And another one.
 		//Also: One mover has a bad fragment class.
@@ -326,6 +331,12 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				}
 			}
 		break;
+		case "06_HONGKONG_WANCHAI_COMPOUND":
+			if (bRevisionMapSet)
+			{
+				CreateHallucination(vect(3620, 2060, 5), 2, true);
+			}
+		break;
 		//06_HONGKONG_WANCHAI_STREET: Aw, screw it. Secondary easter egg for this unused vent,
 		//which is arguably an easter egg on its own, given the skull's strange, comedic value.
 		case "06_HONGKONG_WANCHAI_STREET":
@@ -358,16 +369,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					TCamp.bLastOpened = true;
 				}
 				
-				//9/11/21: Avert this disaster of junkie engaging every MJ12 troop for no reason.
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (MaggieChow(SP) != None || JunkieFemale(SP) != None)
-					{
-						SP.bReactLoudNoise = false;
-					}
-				}
-				
 				A = FindActorBySeed(class'Button1', 0);
 				if (A != None)
 				{
@@ -391,6 +392,16 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				if (A != None)
 				{
 					Dispatcher(A).OutEvents[0] = 'eledoor03';
+				}
+			}
+			
+			//9/11/21: Avert this disaster of junkie engaging every MJ12 troop for no reason.
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (MaggieChow(SP) != None || JunkieFemale(SP) != None)
+				{
+					SP.bReactLoudNoise = false;
 				}
 			}
 		break;
@@ -469,12 +480,7 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
 				{
 					SP = ScriptedPawn(TPawn);
-					if (Bartender(SP) != None)
-					{
-						SP.bFearHacking = true;
-						SP.bHateHacking = true;
-					}
-					else if (SarahMead(SP) != None)
+					if (SarahMead(SP) != None)
 					{
 						switch(SF.Static.StripBaseActorSeed(SP))
 						{
@@ -531,6 +537,16 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							}
 						}
 					}
+				}
+			}
+			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (Bartender(SP) != None)
+				{
+					SP.bFearHacking = true;
+					SP.bHateHacking = true;
 				}
 			}
 		break;

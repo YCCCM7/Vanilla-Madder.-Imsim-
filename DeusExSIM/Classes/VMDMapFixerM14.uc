@@ -134,43 +134,49 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						DXM.bMadderPatched = true;
 					}
 				}
-				//Another softlock in such a tiny map? Good grief. Fix scientists breaking trigger positions from things being blown up upstairs.
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			}
+			
+			//Fix gary losing his shit on the roof.
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (GarySavage(SP) != None)
 				{
-					SP = ScriptedPawn(TPawn);
-					if (GarySavage(SP) != None)
-					{
-						//MADDERS: Eliminate reactions here.
-						DumbAllReactions(SP);
-					}
+					//MADDERS: Eliminate reactions here.
+					DumbAllReactions(SP);
 				}
 			}
 		break;
 		//14_OCEANLAB_LAB: Turrets, plus Simons forgiving the player if they shoot him during the fight, then run.
 		//5/24/23: Bad fragments on some lockers, as well.
 		case "14_OCEANLAB_LAB":
+			//MADDERS, 1/31/21: We're inverted default turret state, since most mods can't keep it in their pants.
+			//This is one of very few places where turrets are on by default.
+			forEach AllActors(class'AutoTurret', ATur)
+			{
+				if (ATur != None)
+				{
+					ATur.bDisabled = false;
+					ATur.bPreAlarmActiveState = true;
+					ATur.bActive = true;
+				}
+			}
+			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (WaltonSimons(SP) != None)
+				{
+					SP.EnemyTimeout = 3600;
+				}
+			}
+			
 			if (!bRevisionMapSet)
 			{
-				//MADDERS, 1/31/21: We're inverted default turret state, since most mods can't keep it in their pants.
-				//This is one of very few places where turrets are on by default.
-				forEach AllActors(class'AutoTurret', ATur)
-				{
-					if (ATur != None)
-					{
-						ATur.bDisabled = false;
-						ATur.bPreAlarmActiveState = true;
-						ATur.bActive = true;
-					}
-				}
 				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
 				{
 					SP = ScriptedPawn(TPawn);
-					if (WaltonSimons(SP) != None)
-					{
-						SP.EnemyTimeout = 3600;
-					}
-					//MADDERS, 8/18/23: EMP this little guy, to keep paths consistent. He should've drowned anyways.
-					else if ((MedicalBot(SP) != None) && (SP.Region.Zone.bWaterZone))
+					if ((MedicalBot(SP) != None) && (SP.Region.Zone.bWaterZone))
 					{
 						SP.TakeDamage(250, SP, SP.Location, vect(0,0,0), 'EMP');
 					}
@@ -204,20 +210,35 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		break;
 		//14_OCEANLAB_UC: Seventh and final easter egg.
 		case "14_OCEANLAB_UC":
-			if (!bRevisionMapSet)
+			//MADDERS, 1/31/21: We're inverted default turret state, since most mods can't keep it in their pants.
+			//This is one of very few places where turrets are on by default.
+			forEach AllActors(class'AutoTurret', ATur)
 			{
-				//MADDERS, 1/31/21: We're inverted default turret state, since most mods can't keep it in their pants.
-				//This is one of very few places where turrets are on by default.
-				forEach AllActors(class'AutoTurret', ATur)
+				switch(SF.Static.StripBaseActorSeed(ATur))
 				{
-					if (ATur != None)
-					{
+					case 2:
+						if (!bRevisionMapSet)
+						{
+							ATur.bDisabled = false;
+							ATur.bPreAlarmActiveState = true;
+							ATur.bActive = true;
+						}
+					break;
+					default:
 						ATur.bDisabled = false;
 						ATur.bPreAlarmActiveState = true;
 						ATur.bActive = true;
-					}
+					break;
 				}
+			}
+			
+			if (!bRevisionMapSet)
+			{
 				CreateHallucination(vect(1878, 6436, -3083), 6, false);
+			}
+			else
+			{
+				CreateHallucination(vect(272, 4512, -2950), 6, false);
 			}
 		break;
 	}

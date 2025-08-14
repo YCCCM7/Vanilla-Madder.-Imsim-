@@ -34,31 +34,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					TCamp.bLastOpened = true;
 				}
 				
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (Mechanic(SP) != None)
-					{
-						switch(SF.Static.StripBaseActorSeed(SP))
-						{
-							case 1:
-							case 2:
-								DumbAllReactions(SP);
-							break;
-						}
-					}
-					else if (ScientistMale(SP) != None)
-					{
-						switch(SF.Static.StripBaseActorSeed(SP))
-						{
-							case 0:
-							case 1:
-								DumbAllReactions(SP);
-							break;
-						}
-					}
-				}
-				
 				forEach AllActors(class'DeusExMover', DXM)
 				{
 					if ((DXM.Class == Class'DeusExMover') && (!DXM.bMadderPatched))
@@ -73,6 +48,31 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							break;
 						}
 						DXM.bMadderPatched = true;
+					}
+				}
+			}
+			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (Mechanic(SP) != None)
+				{
+					switch(SF.Static.StripBaseActorSeed(SP))
+					{
+						case 1:
+						case 2:
+							DumbAllReactions(SP);
+						break;
+					}
+				}
+				else if (ScientistMale(SP) != None)
+				{
+					switch(SF.Static.StripBaseActorSeed(SP))
+					{
+						case 0:
+						case 1:
+							DumbAllReactions(SP);
+						break;
 					}
 				}
 			}
@@ -160,15 +160,16 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						}
 					}
 				}
-				//Another softlock in such a tiny map? Good grief. Fix scientists breaking trigger positions from things being blown up upstairs.
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			}
+			
+			//Another softlock in such a tiny map? Good grief. Fix scientists breaking trigger positions from things being blown up upstairs.
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (SP != None)
 				{
-					SP = ScriptedPawn(TPawn);
-					if (SP != None)
-					{
-						//MADDERS: Eliminate reactions here.
-						DumbAllReactions(SP);
-					}
+					//MADDERS: Eliminate reactions here.
+					DumbAllReactions(SP);
 				}
 			}
 		break;
@@ -182,6 +183,7 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					SP.bReactLoudNoise = false;
 				}
 			}
+			
 			if (!bRevisionMapSet)
 			{
 				forEach AllActors(class'DeusExMover', DXM)
@@ -198,6 +200,7 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						DXM.bMadderPatched = true;
 					}
 				}
+				
 				Key = Spawn(class'Nanokey',,,vect(-2906,1142,-938));
 				if (Key != None)
 				{
@@ -206,6 +209,10 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				}
 				
 				CreateHallucination(vect(633, 741, -970), 5, false);
+			}
+			else
+			{
+				CreateHallucination(vect(873, 1298, -966), 5, false);
 			}
 		break;
 	}

@@ -10,6 +10,13 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 	
 	switch(MapName)
 	{
+		//03_NYC_747: Revision special. Assigned invalid index due to NV using non-vanilla indices.
+		case "03_NYC_747":
+			if (bRevisionMapSet)
+			{
+				class'VMDTerrainReskinner'.Static.SetSurfaceTexture(XLevel, "", Texture(DynamicLoadObject("CoreTexMisc.Glass.WhiteNoise_A01", class'Texture', False)));
+			}
+		break;
 		//03_NYC_AIRFIELD: Doors that don't open properly if you block them, and can soft lock you. Sigh.
 		//Also, 2nd easter egg.
 		case "03_NYC_AIRFIELD":
@@ -38,6 +45,10 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					AddBSPPlug(PlugVect, 13, 64);
 				}
 				
+				CreateHallucination(vect(-262, -1176, 324), 1, false);
+			}
+			else
+			{
 				CreateHallucination(vect(-262, -1176, 324), 1, false);
 			}
 		break;
@@ -242,14 +253,14 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		case "03_NYC_HANGAR":
 			if (!bRevisionMapSet)
 			{
-				//4/13/23: Fix for civvies freaking the fuck out.
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			}
+			//4/13/23: Fix for civvies freaking the fuck out.
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (HumanCivilian(SP) != None)
 				{
-					SP = ScriptedPawn(TPawn);
-					if (HumanCivilian(SP) != None)
-					{
-						HumanCivilian(SP).bHateShot = False;
-					}
+					HumanCivilian(SP).bHateShot = False;
 				}
 			}
 		break;
@@ -264,15 +275,15 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				A.SetLocation(vect(-2788,-896.75,133));
 				A.Event = 'SecretDoor';
 				A.SetCollisionSize(A.Default.CollisionRadius, A.Default.CollisionHeight);
-				
-				//4/13/23: Fix for terrie commander listening to narcs too often.
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			}
+			
+			//4/13/23: Fix for terrie commander listening to narcs too often.
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if ((Terrorist(SP) != None) && (Terrorist(SP).BindName ~= "TerroristLeader"))
 				{
-					SP = ScriptedPawn(TPawn);
-					if ((Terrorist(SP) != None) && (Terrorist(SP).BindName ~= "TerroristLeader"))
-					{
-						Terrorist(SP).bHateDistress = False;
-					}
+					Terrorist(SP).bHateDistress = False;
 				}
 			}
 		break;
@@ -290,7 +301,11 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						Datacube(A).TextTag = '03_AnnaThanks';
 					}
 					A = Spawn(class'Ammo10mmHEAT',,, Vect(-227,1292,244));
+					A.SetPhysics(PHYS_None);
+					A.SetRotation(Rot(0,0,0));
 					A = Spawn(class'Ammo10mmHEAT',,, Vect(-227,1302,244));
+					A.SetPhysics(PHYS_None);
+					A.SetRotation(Rot(0,0,0));
 				}
 				
 				//MADDERS, 11/1/21: LDDP branching functionality.
@@ -328,6 +343,27 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					TCamp.bLastOpened = true;
 				}
 			}
+			else
+			{
+				//MADDERS, 11/18/24: Anna gives us some seriously sweet ammo for being a terrie shredder.
+				if ((Flags.GetBool('AmbrosiaTagged')) && (Flags.GetBool('BatteryParkSlaughter')) && (!Flags.GetBool('M02MechSlur')) && (Flags.GetBool('SubTerroristsDead')) && (!Flags.GetBool('SubHostageMale_Dead')) && (!Flags.GetBool('SubHostageFemale_Dead')))
+				{
+					//MADDERS, 8/6/25: Tweak for Revision map placement.
+					HackVect = Vect(0, 34, 2);
+					A = Spawn(Class'Datacube',,, Vect(-261,1297,288) + HackVect, Rot(0,8192,0));
+					if (A != None)
+					{
+						Datacube(A).TextPackage = "VMDText";
+						Datacube(A).TextTag = '03_AnnaThanks';
+					}
+					A = Spawn(class'Ammo10mmHEAT',,, Vect(-227,1292,244) + HackVect);
+					A.SetPhysics(PHYS_None);
+					A.SetRotation(Rot(0,0,0));
+					A = Spawn(class'Ammo10mmHEAT',,, Vect(-227,1302,244) + HackVect);
+					A.SetPhysics(PHYS_None);
+					A.SetRotation(Rot(0,0,0));
+				}
+			}
 			
 			forEach AllActors(class'ElectronicDevices', ED)
 			{
@@ -336,8 +372,18 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					switch(SF.Static.StripBaseActorSeed(ED))
 					{
 						case 0:
-							VendingMachine(ED).AdvancedUses[0]++;
-							VendingMachine(ED).bOrangeGag = true;
+							if (!bRevisionMapSet)
+							{
+								VendingMachine(ED).AdvancedUses[0]++;
+								VendingMachine(ED).bOrangeGag = true;
+							}
+						break;
+						case 1:
+							if (bRevisionMapSet)
+							{
+								VendingMachine(ED).AdvancedUses[0]++;
+								VendingMachine(ED).bOrangeGag = true;
+							}
 						break;
 					}
 				}

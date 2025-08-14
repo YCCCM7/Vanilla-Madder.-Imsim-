@@ -18,6 +18,8 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				if (UNATCOTroop(SP) != None)
 				{
 					SP.ChangeAlly('Gunther', 1.0, true);
+					SP.ChangeAlly('UNATCO', 1.0, true);
+					SP.ChangeAlly('Paul', 1.0, true);
 				}
 				else if (SecurityBot2(SP) != None)
 				{
@@ -28,16 +30,19 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						break;
 					}
 					SP.ChangeAlly('Gunther', 1.0, true);
+					SP.ChangeAlly('Paul', 1.0, true);
 				}
 				else if (PaulDenton(SP) != None)
 				{
 					SP.ChangeAlly('Gunther', 1.0, true);
+					SP.ChangeAlly('UNATCO', 1.0, true);
 				}
 				else if (GuntherHermann(SP) != None)
 				{
 					SP.Alliance = 'Gunther';
 					SP.ChangeAlly('Gunther', 1.0, true);
 					SP.ChangeAlly('UNATCO', 1.0, true);
+					SP.ChangeAlly('Paul', 1.0, true);
 					GuntherHermann(SP).bAugsGuardDown = true;
 				}
 			}
@@ -108,6 +113,15 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		case "01_NYC_UNATCOHQ":
 			if (!bRevisionMapSet)
 			{
+				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+				{
+					SP = ScriptedPawn(TPawn);
+					if (JosephManderley(SP) != None || PaulDenton(SP) != None)
+					{
+						DumbAllReactions(SP);
+					}
+				}
+				
 				//MADDERS, 11/17/24: Gunther gives us back our loaned weapon, with interest. Yay.
 				if ((VMP != None) && (VMP.LastGenerousWeaponClass != "NULL"))
 				{
@@ -166,16 +180,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						}
 					}
 					VMP.VMDClearGenerousWeaponData();
-				}
-				
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (SP != None)
-					{
-						SP.bFearHacking = false;
-						SP.bHateHacking = false;
-					}
 				}
 				
 				TCamp = Spawn(class'VMDCabinetCampActor',,, Vect(392,1097,303));
@@ -244,6 +248,83 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				}
 				
 				CreateHallucination(vect(-258, 1265, 290), 0, false);
+			}
+			else
+			{
+				//MADDERS, 8/6/25: Tweak for Revision map placement.
+				HackVect = Vect(32, 20, 0);
+				
+				//MADDERS, 11/17/24: Gunther gives us back our loaned weapon, with interest. Yay.
+				if ((VMP != None) && (VMP.LastGenerousWeaponClass != "NULL"))
+				{
+					LDXW = class<DeusExWeapon>(DynamicLoadObject(VMP.LastGenerousWeaponClass, class'Class', true));
+					if (LDXW != None)
+					{
+						A = Spawn(class'CrateUnbreakableSmall',,, vect(-397,1385,256) + HackVect, Rot(0, 8192, 0));
+						A = Spawn(class'Datacube',,, vect(-397,1348,242) + HackVect);
+						if (A != None)
+						{
+							Datacube(A).TextPackage = "VMDText";
+							Datacube(A).TextTag = '01_GuntherThanks';
+						}
+						
+						DXW = Spawn(LDXW,,, vect(-397,1385,276) + HackVect);
+						if (DXW != None)
+						{
+							A = Spawn(class'WeaponModAccuracy',,, Vect(-397,1385,296) + HackVect);
+							
+							DXW.PickupAmmoCount = 0;
+							
+							if (VMP.LastGenerousWeaponModSilencer > 0) DXW.bHasSilencer = true;
+							if (VMP.LastGenerousWeaponModScope > 0) DXW.bHasScope = true;
+							if (VMP.LastGenerousWeaponModLaser > 0) DXW.bHasLaser = true;
+							
+							DXW.ModBaseAccuracy = VMP.LastGenerousWeaponModAccuracy;
+							if (DXW.BaseAccuracy == 0.0)
+							{
+								DXW.BaseAccuracy -= DXW.ModBaseAccuracy;
+							}
+							else
+							{
+								DXW.BaseAccuracy -= (DXW.Default.BaseAccuracy * DXW.ModBaseAccuracy);
+							}
+							
+							DXW.ModReloadCount = VMP.LastGenerousWeaponModReloadCount;
+							Diff = Float(DXW.Default.ReloadCount) * DXW.ModReloadCount;
+							DXW.ReloadCount += Max(Diff, DXW.ModReloadCount / 0.1);
+							
+							DXW.ModAccurateRange = VMP.LastGenerousWeaponModAccurateRange;
+							DXW.RelativeRange += (DXW.Default.RelativeRange * DXW.ModAccurateRange);
+							DXW.AccurateRange += (DXW.Default.AccurateRange * DXW.ModAccurateRange);
+							
+							DXW.ModReloadTime = VMP.LastGenerousWeaponModReloadTime;
+							DXW.ReloadTime += (DXW.Default.ReloadTime * DXW.ModReloadTime);
+							if (DXW.ReloadTime < 0.0) DXW.ReloadTime = 0.0;
+							
+							DXW.ModRecoilStrength = VMP.LastGenerousWeaponModRecoilStrength;
+							DXW.RecoilStrength += (DXW.Default.RecoilStrength * DXW.ModRecoilStrength);
+							
+							if (VMP.LastGenerousWeaponModEvolution > 0)
+							{
+								DXW.bHasEvolution = true;
+								DXW.VMDUpdateEvolution();
+							}
+						}
+					}
+					VMP.VMDClearGenerousWeaponData();
+				}
+				
+				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+				{
+					SP = ScriptedPawn(TPawn);
+					if (SP != None)
+					{
+						SP.bFearHacking = false;
+						SP.bHateHacking = false;
+					}
+				}
+				
+				CreateHallucination(vect(-258, 1265, 290) + HackVect, 0, false);
 			}
 		break;
 		//JH1_RITTERPARK: Alex freaks out.

@@ -34,15 +34,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					AddBSPPlug(PlugVect, 8, 16);
 				}
 				
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (GuntherHermann(SP) != None)
-					{
-						SP.bReactLoudNoise = false;
-					}
-				}
-				
 				TCamp = Spawn(class'VMDCabinetCampActor',,, Vect(3536,-2560,-107));
 				if (TCamp != None)
 				{
@@ -54,6 +45,16 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					TCamp.CabinetDoors[1] = DeusExMover(FindActorBySeed(class'DeusExMover', 1));
 					TCamp.CabinetDoorClosedFrames[1] = 0;
 					TCamp.bLastOpened = true;
+				}
+			}
+			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (GuntherHermann(SP) != None)
+				{
+					SP.EnemyTimeout = 3600;
+					SP.bReactLoudNoise = false;
 				}
 			}
 		break;

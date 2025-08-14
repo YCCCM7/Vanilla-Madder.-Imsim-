@@ -48,19 +48,19 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 			}
 		break;
 		case "15_AREA51_FINAL":
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if ((Mechanic(SP) != None) && (SF.Static.StripBaseActorSeed(SP) == 0))
+				{
+					SP.bReactLoudNoise = false;
+					SP.bReactProjectiles = false;
+					SP.bHateShot = false;
+				}
+			}
+			
 			if (!bRevisionMapSet)
 			{
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if ((Mechanic(SP) != None) && (SF.Static.StripBaseActorSeed(SP) == 0))
-					{
-						SP.bReactLoudNoise = false;
-						SP.bReactProjectiles = false;
-						SP.bHateShot = false;
-					}
-				}
-				
 				//MADDERS, 4/3/24: Helios NG plus.
 				NGPortal = Spawn(class'VMDNGPlusPortal',,, Vect(-4001, 892, -1359), Rot(0, -16384, 0));
 				if (NGPortal != None)
@@ -69,7 +69,23 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				}
 				
 				//MADDERS, 4/3/24: A51 nuke NG plus.
-				NGPortal = Spawn(class'VMDNGPlusPortal',,, Vect(-3279, -4972, -1596), Rot(0, -16384, 0));
+				NGPortal = Spawn(class'VMDNGPlusPortal',,, Vect(-3279, -4972, -1596) + Vect(0, 0, 16), Rot(0, -16384, 0));
+				if (NGPortal != None)
+				{
+					NGPortal.FlagRequired = 'ReactorButton1';
+				}
+			}
+			else
+			{
+				//MADDERS, 4/3/24: Helios NG plus.
+				NGPortal = Spawn(class'VMDNGPlusPortal',,, Vect(-3960, 966, -1347), Rot(0, -16384, 0));
+				if (NGPortal != None)
+				{
+					NGPortal.FlagRequired = 'HeliosFree';
+				}
+				
+				//MADDERS, 4/3/24: A51 nuke NG plus.
+				NGPortal = Spawn(class'VMDNGPlusPortal',,, Vect(-3262, -5825, -1584) + Vect(0, 0, 32), Rot(0, -16384, 0));
 				if (NGPortal != None)
 				{
 					NGPortal.FlagRequired = 'ReactorButton1';
@@ -78,22 +94,39 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		break;
 		//15_Area51_Page: Turret rework, bby.
 		case "15_AREA51_PAGE":
+			forEach AllActors(class'AutoTurret', ATur)
+			{
+				ATur.bDisabled = false;
+				ATur.bPreAlarmActiveState = true;
+				ATur.bActive = true;
+				
+				//MADDERS, 1/31/21: We're inverted default turret state, since most mods can't keep it in their pants.
+				//This is one of very few places where turrets are on by default.
+				switch(SF.Static.StripBaseActorSeed(ATur))
+				{
+					case 1:
+						if (AutoTurretSmall(ATur) != None)
+						{
+							ATur.MoverTag = 'turretman1';
+							ATur.BeginPlay();
+						}
+					break;
+				}
+			}
+			
 			if (!bRevisionMapSet)
 			{
-				forEach AllActors(class'AutoTurret', ATur)
-				{
-					//MADDERS, 1/31/21: We're inverted default turret state, since most mods can't keep it in their pants.
-					//This is one of very few places where turrets are on by default.
-					if (ATur != None)
-					{
-						ATur.bDisabled = false;
-						ATur.bPreAlarmActiveState = true;
-						ATur.bActive = true;
-					}
-				}
-				
 				//MADDERS, 4/3/24: Bob page kill NG plus.
 				NGPortal = Spawn(class'VMDNGPlusPortal',,, Vect(6268, -6537, -5140), Rot(0, 16384, 0));
+				if (NGPortal != None)
+				{
+					NGPortal.FlagRequired = 'DL_Blue4_Played';
+				}
+			}
+			else
+			{
+				//MADDERS, 4/3/24: Bob page kill NG plus.
+				NGPortal = Spawn(class'VMDNGPlusPortal',,, Vect(99, 3069, 212) + Vect(0, 0, 16), Rot(0, 16384, 0));
 				if (NGPortal != None)
 				{
 					NGPortal.FlagRequired = 'DL_Blue4_Played';

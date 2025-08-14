@@ -30,29 +30,30 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						}
 					}
 				}
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			}
+			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (StantonDowd(SP) != None)
 				{
-					SP = ScriptedPawn(TPawn);
-					if (StantonDowd(SP) != None)
-					{
-						//MADDERS: Eliminate reactions here.
-						DumbAllReactions(SP);
-					}
-					
-					//MADDERS, 1/28/21: Friendly fire is off the charts.
-					//MADDERS, 8/8/23: Just found out the real bug. Fuck me lmao.
-					//You're not my buddy, guy.
-					//You're not my guy, buddy.
-					else if (UNATCOTroop(SP) != None)
-					{
-						SP.ChangeAlly('RiotCop', 1.0, true, false);
-						SP.ChangeAlly('Robot', 1.0, true, false);
-					}
-					else if (RiotCop(SP) != None)
-					{
-						SP.ChangeAlly('Robot', 1.0, true, false);
-						SP.ChangeAlly('UNATCO', 1.0, true, false);
-					}
+					//MADDERS: Eliminate reactions here.
+					DumbAllReactions(SP);
+				}
+				
+				//MADDERS, 1/28/21: Friendly fire is off the charts.
+				//MADDERS, 8/8/23: Just found out the real bug. Fuck me lmao.
+				//You're not my buddy, guy.
+				//You're not my guy, buddy.
+				else if (UNATCOTroop(SP) != None)
+				{
+					SP.ChangeAlly('RiotCop', 1.0, true, false);
+					SP.ChangeAlly('Robot', 1.0, true, false);
+				}
+				else if (RiotCop(SP) != None)
+				{
+					SP.ChangeAlly('Robot', 1.0, true, false);
+					SP.ChangeAlly('UNATCO', 1.0, true, false);
 				}
 			}
 		break;
@@ -174,6 +175,58 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 			}
+			else
+			{
+				//MADDERS, 11/18/24: Mr Renton returns our lent gat in M08 silently.
+				if ((VMP != None) && (VMP.LastGenerousWeaponClass != "NULL") && (!Flags.GetBool('GilbertRenton_Dead')))
+				{
+					LDXW = class<DeusExWeapon>(DynamicLoadObject(VMP.LastGenerousWeaponClass, class'Class', true));
+					if (LDXW != None)
+					{
+						DXW = Spawn(LDXW,,, Vect(-171,-3863,117), Rot(0, 16384, 0));
+						if (DXW != None)
+						{
+							DXW.PickupAmmoCount = 0;
+							
+							if (VMP.LastGenerousWeaponModSilencer > 0) DXW.bHasSilencer = true;
+							if (VMP.LastGenerousWeaponModScope > 0) DXW.bHasScope = true;
+							if (VMP.LastGenerousWeaponModLaser > 0) DXW.bHasLaser = true;
+							
+							DXW.ModBaseAccuracy = VMP.LastGenerousWeaponModAccuracy;
+							if (DXW.BaseAccuracy == 0.0)
+							{
+								DXW.BaseAccuracy -= DXW.ModBaseAccuracy;
+							}
+							else
+							{
+								DXW.BaseAccuracy -= (DXW.Default.BaseAccuracy * DXW.ModBaseAccuracy);
+							}
+							
+							DXW.ModReloadCount = VMP.LastGenerousWeaponModReloadCount;
+							Diff = Float(DXW.Default.ReloadCount) * DXW.ModReloadCount;
+							DXW.ReloadCount += Max(Diff, DXW.ModReloadCount / 0.1);
+							
+							DXW.ModAccurateRange = VMP.LastGenerousWeaponModAccurateRange;
+							DXW.RelativeRange += (DXW.Default.RelativeRange * DXW.ModAccurateRange);
+							DXW.AccurateRange += (DXW.Default.AccurateRange * DXW.ModAccurateRange);
+							
+							DXW.ModReloadTime = VMP.LastGenerousWeaponModReloadTime;
+							DXW.ReloadTime += (DXW.Default.ReloadTime * DXW.ModReloadTime);
+							if (DXW.ReloadTime < 0.0) DXW.ReloadTime = 0.0;
+							
+							DXW.ModRecoilStrength = VMP.LastGenerousWeaponModRecoilStrength;
+							DXW.RecoilStrength += (DXW.Default.RecoilStrength * DXW.ModRecoilStrength);
+							
+							if (VMP.LastGenerousWeaponModEvolution > 0)
+							{
+								DXW.bHasEvolution = true;
+								DXW.VMDUpdateEvolution();
+							}
+						}
+					}
+					VMP.VMDClearGenerousWeaponData();
+				}	
+			}
 		break;
 		//08_NYC_FREECLINIC: Microscope inside floor.
 		case "08_NYC_FREECLINIC":
@@ -202,9 +255,25 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 			{
 				CreateHallucination(vect(-1103, -92, -828), 3, false);
 			}
+			else
+			{
+				CreateHallucination(vect(-1062, -94, -827), 3, false);
+			}
 		break;
 		//08_NYC_BAR: LDDP stuff.
 		case "08_NYC_BAR":
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (JordanShea(SP) != None)
+				{
+					SP.bFearHacking = true;
+					SP.bHateHacking = true;
+					FoundFlag = true;
+					break;
+				}
+			}
+			
 			if (!bRevisionMapSet)
 			{
 				//MADDERS, 11/1/21: LDDP branching functionality.
@@ -225,18 +294,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 							SP.bFearProjectiles = True;
 							SP.ConBindEvents();
 						}
-					}
-				}
-				
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (JordanShea(SP) != None)
-					{
-						SP.bFearHacking = true;
-						SP.bHateHacking = true;
-						FoundFlag = true;
-						break;
 					}
 				}
 				
@@ -265,11 +322,21 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 			}
+			else
+			{
+				if (FoundFlag)
+				{
+					//No stealable items in Revision map set?
+				}
+			}
 		break;
 		//08_NYC_SMUG: LDDP convo base fix for the augumentation upgrade, courtesy of the boys at DX Rando
 		case "08_NYC_SMUG":
-		        FixConversationGiveItem(GetConversation('M08MeetFordSchick'), "AugmentationUpgrade", None, class'AugmentationUpgradeCannister');
-      			FixConversationGiveItem(GetConversation('FemJCM08MeetFordSchick'), "AugmentationUpgrade", None, class'AugmentationUpgradeCannister');
+			if (!bRevisionMapSet)
+			{
+			        FixConversationGiveItem(GetConversation('M08MeetFordSchick'), "AugmentationUpgrade", None, class'AugmentationUpgradeCannister');
+      				FixConversationGiveItem(GetConversation('FemJCM08MeetFordSchick'), "AugmentationUpgrade", None, class'AugmentationUpgradeCannister');
+			}
 		break;
 	}
 }

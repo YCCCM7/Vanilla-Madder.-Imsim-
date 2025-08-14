@@ -26,37 +26,37 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						DXC = Spawn(DXCLoad,,'LDDPHotelAddictCarcass',vect(1850,-1208,82));
 					}
 				}
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			}
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (SandraRenton(SP) != None)
 				{
-					SP = ScriptedPawn(TPawn);
-					if (SandraRenton(SP) != None)
-					{
-						//MADDERS: Eliminate fears here.
-						SP.bFearHacking = False;
-						SP.bFearWeapon = False;
-						SP.bFearShot = False;
-						SP.bFearCarcass = False;
-						SP.bFearDistress = False;
-						SP.bFearAlarm = False;
-						SP.bFearProjectiles = False;
-					}
-					else if (GilbertRenton(SP) != None)
-					{
-						//MADDERS: Eliminate fears here.
-						SP.bFearHacking = False;
-						SP.bFearWeapon = False;
-						SP.bFearShot = False;
-						SP.bFearInjury = False;
-						SP.bFearIndirectInjury = False;
-						SP.bFearCarcass = False;
-						SP.bFearDistress = False;
-						SP.bFearAlarm = False;
-						SP.bFearProjectiles = False;
-					}
-					else if (PaulDenton(SP) != None)
-					{
-						//SP.bReactFutz = false;
-					}
+					//MADDERS: Eliminate fears here.
+					SP.bFearHacking = False;
+					SP.bFearWeapon = False;
+					SP.bFearShot = False;
+					SP.bFearCarcass = False;
+					SP.bFearDistress = False;
+					SP.bFearAlarm = False;
+					SP.bFearProjectiles = False;
+				}
+				else if (GilbertRenton(SP) != None)
+				{
+					//MADDERS: Eliminate fears here.
+					SP.bFearHacking = False;
+					SP.bFearWeapon = False;
+					SP.bFearShot = False;
+					SP.bFearInjury = False;
+					SP.bFearIndirectInjury = False;
+					SP.bFearCarcass = False;
+					SP.bFearDistress = False;
+					SP.bFearAlarm = False;
+					SP.bFearProjectiles = False;
+				}
+				else if (PaulDenton(SP) != None)
+				{
+					//SP.bReactFutz = false;
 				}
 			}
 		break;
@@ -245,8 +245,18 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					switch(SF.Static.StripBaseActorSeed(ED))
 					{
 						case 0:
-							VendingMachine(ED).AdvancedUses[0]++;
-							VendingMachine(ED).bOrangeGag = true;
+							if (!bRevisionMapSet)
+							{
+								VendingMachine(ED).AdvancedUses[0]++;
+								VendingMachine(ED).bOrangeGag = true;
+							}
+						break;
+						case 1:
+							if (bRevisionMapSet)
+							{
+								VendingMachine(ED).AdvancedUses[0]++;
+								VendingMachine(ED).bOrangeGag = true;
+							}
 						break;
 					}
 				}
@@ -254,6 +264,18 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		break;
 		//04_NYC_BAR: LDDP stuff.
 		case "04_NYC_BAR":
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (JordanShea(SP) != None)
+				{
+					SP.bFearHacking = true;
+					SP.bHateHacking = true;
+					FoundFlag = true;
+					break;
+				}
+			}
+			
 			if (!bRevisionMapSet)
 			{
 				//MADDERS, 11/1/21: LDDP branching functionality.
@@ -310,18 +332,6 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 				
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
-				{
-					SP = ScriptedPawn(TPawn);
-					if (JordanShea(SP) != None)
-					{
-						SP.bFearHacking = true;
-						SP.bHateHacking = true;
-						FoundFlag = true;
-						break;
-					}
-				}
-				
 				if (FoundFlag)
 				{
 					forEach AllActors(class'Inventory', TInv)
@@ -347,6 +357,13 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 			}
+			else
+			{
+				if (FoundFlag)
+				{
+					//No stealable items in Revision map set?
+				}
+			}
 		break;
 		//04_NYC_BATTERYPARK: Broken trigger collision. Also, bad alliances.
 		case "04_NYC_BATTERYPARK":
@@ -363,14 +380,18 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 						break;
 					}
 				}
-				
-				for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			}
+			
+			for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+			{
+				SP = ScriptedPawn(TPawn);
+				if (Robot(SP) != None)
 				{
-					SP = ScriptedPawn(TPawn);
-					if (Robot(SP) != None)
-					{
-						SP.ChangeAlly('Gunther', 1.0, true, false);
-					}
+					SP.ChangeAlly('Gunther', 1.0, true, false);
+				}
+				else if (AnnaNavarre(SP) != None)
+				{
+					SP.EnemyTimeout = 3600;
 				}
 			}
 		break;
