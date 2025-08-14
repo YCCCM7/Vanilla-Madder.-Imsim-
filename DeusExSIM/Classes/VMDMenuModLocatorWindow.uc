@@ -146,9 +146,13 @@ function PopulateFileList()
 	SelectedTile = None;
 	WinTile.DestroyAllChildren();
 	
-	Log("CUR DIRECTORY?"@CurDirectory);
 	forEach class'VMDFileFinder'.Static.FindNextFileAt(CurDirectory$"*", GetName)
 	{
+		if (GetName == "")
+		{
+			break;
+		}
+		
 		bSkip = false;
 		
 		TClip = GetName;
@@ -531,10 +535,48 @@ function SelectKeyFolder()
 				bWon[4] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Textures\\", "..\\VMDMods\\Textures\\", "*.utx"));
 			break;
 			case "Revision":
+				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDRevision");
 				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
-				bWon[0] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Maps\\", "..\\VMDMods\\Maps\\", "*.dx"));
+				if (class'VMDStaticFunctions'.Static.GetConflictingMapURLStyle(GetPlayerPawn()) == 1)
+				{
+					class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDRevision\\Maps");
+					bWon[0] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Maps\\", "..\\VMDRevision\\Maps\\", "*.dx"));
+				}
+				else
+				{
+					class'VMDFileFinder'.Static.CreateFolderAt("00");
+					class'VMDFileFinder'.Static.CreateFolderAt("00\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("01");
+					class'VMDFileFinder'.Static.CreateFolderAt("01\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("02");
+					class'VMDFileFinder'.Static.CreateFolderAt("02\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("03");
+					class'VMDFileFinder'.Static.CreateFolderAt("03\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("04");
+					class'VMDFileFinder'.Static.CreateFolderAt("04\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("05");
+					class'VMDFileFinder'.Static.CreateFolderAt("05\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("06");
+					class'VMDFileFinder'.Static.CreateFolderAt("06\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("08");
+					class'VMDFileFinder'.Static.CreateFolderAt("08\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("09");
+					class'VMDFileFinder'.Static.CreateFolderAt("09\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("10");
+					class'VMDFileFinder'.Static.CreateFolderAt("10\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("11");
+					class'VMDFileFinder'.Static.CreateFolderAt("11\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("12");
+					class'VMDFileFinder'.Static.CreateFolderAt("12\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("14");
+					class'VMDFileFinder'.Static.CreateFolderAt("14\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("15");
+					class'VMDFileFinder'.Static.CreateFolderAt("15\\VMDRevision");
+					class'VMDFileFinder'.Static.CreateFolderAt("99");
+					class'VMDFileFinder'.Static.CreateFolderAt("99\\VMDRevision");
+					bWon[0] = int(InstallAllRevisionMapFilesFrom(CurDirectory$SelectedTile.FileName$"\\Maps\\"));
+				}
 				
 				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Music");
 				bWon[1] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Music\\", "..\\VMDMods\\Music\\", "*.ogg"));
@@ -600,17 +642,106 @@ function bool InstallAllFilesFrom(string StartLoc, string EndLoc, string FileExt
 	
 	forEach class'VMDFileFinder'.Static.FindNextFileAt(StartLoc$FileExtension, GetName)
 	{
-		switch(GetName)
+		//MADDERS, 7/18/25: Revision shit that we don't want. Unnecessary.
+		if (Left(GetName, 4) ~= "DXMP")
 		{
-			case "DX.dx":
-			case "DXOnly.dx":
-			case "InfoPotraits.utx":
-				//Do nothing. We're bad to copy.
-				bWon = true;
-			break;
-			default:
-				bWon = class'VMDFileFinder'.Static.CopyFileFrom(StartLoc$GetName, EndLoc$GetName);
-			break;
+			bWon = true;
+		}
+		else if (Left(GetName, 11) ~= "97_Survival")
+		{
+			bWon = true;
+		}
+		else if (Left(GetName, 5) ~= "Arena")
+		{
+			bWon = true;
+		}
+		else if (Left(GetName, 9) ~= "Benchmark")
+		{
+			bWon = true;
+		}
+		else if (Left(GetName, 9) ~= "Challenge")
+		{
+			bWon = true;
+		}
+		else
+		{
+			switch(GetName)
+			{
+				case "DX.dx":
+				case "DXOnly.dx":
+				case "Entry.dx":
+				case "InfoPortraits.utx":
+				case "NewGamePlusLiaison.dx":
+					//Do nothing. We're bad to copy.
+					bWon = true;
+				break;
+				default:
+					bWon = class'VMDFileFinder'.Static.CopyFileFrom(StartLoc$GetName, EndLoc$GetName);
+				break;
+			}
+		}
+		
+		if (!bWon)
+		{
+			return false;
+		}
+	}
+	
+	//MADDERS, 5/15/25: Make sure we report failure upon not finding ANY files.
+	if (!bWon)
+	{
+		return false;
+	}
+	
+	return true;
+}
+
+function bool InstallAllRevisionMapFilesFrom(string StartLoc)
+{
+	local bool bWon;
+	local string GetName, MissionClone;
+	
+	forEach class'VMDFileFinder'.Static.FindNextFileAt(StartLoc$"*.dx", GetName)
+	{
+		//MADDERS, 7/18/25: Revision shit that we don't want. Unnecessary.
+		if (Left(GetName, 4) ~= "DXMP")
+		{
+			bWon = true;
+		}
+		else if (Left(GetName, 11) ~= "97_Survival")
+		{
+			bWon = true;
+		}
+		else if (Left(GetName, 5) ~= "Arena")
+		{
+			bWon = true;
+		}
+		else if (Left(GetName, 9) ~= "Benchmark")
+		{
+			bWon = true;
+		}
+		else if (Left(GetName, 9) ~= "Challenge")
+		{
+			bWon = true;
+		}
+		else
+		{
+			switch(GetName)
+			{
+				case "DX.dx":
+				case "DXOgg.u":
+				case "DXOnly.dx":
+				case "Entry.dx":
+				case "InfoPortraits.utx":
+				case "NewGamePlusLiaison.dx":
+					//Do nothing. We're bad to copy.
+					bWon = true;
+				break;
+				default:
+					MissionClone = Left(GetName, 2);
+					bWon = class'VMDFileFinder'.Static.CopyFileFrom(StartLoc$GetName, MissionClone$"\\VMDRevision\\"$GetName);
+				break;
+			}
 		}
 		
 		if (!bWon)
