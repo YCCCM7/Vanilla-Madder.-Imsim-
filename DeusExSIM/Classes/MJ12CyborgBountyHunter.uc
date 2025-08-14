@@ -258,8 +258,6 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 	
 	VMDInitializeSubsystems();
 	
-	//BARF! TESTING!
-	AssignedID = 2;
 	//Bark bind name work.
 	HunterBarkBindName = "MJ12CyborgBountyHunter"$string(AssignedID+1);
 	
@@ -482,21 +480,6 @@ function bool AICanShoot(pawn target, bool bLeadTarget, bool bCheckReadiness, op
 	else
 	{
 		return false;
-	}
-}
-
-state Attacking
-{
-	function EDestinationType PickDestinationEnum()
-	{
-		if ((Enemy != None) && (FastTrace(Enemy.Location, Location)) && (WeaponRetributor762mm(Weapon) != None || WeaponRetributorStickyRocket(Weapon) != None))
-		{
-			return DEST_SameLocation;
-		}
-		else
-		{
-			return Super.PickDestinationEnum();
-		}
 	}
 }
 
