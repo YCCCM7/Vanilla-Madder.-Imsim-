@@ -1160,4 +1160,19 @@ defaultproperties
      strSetting(76)="Realtime UI"
      varSetting(76)="bRealtimeUI"
      strDescription(76)="If enabled, menus won't pause the game (except for certain crafting windows, the main menu, and the controller-friendly aug menu)"
+
+     OverrideSettingCaps(77)=1
+     strSetting(77)=" "
+     varSetting(77)="BARF"
+     OverrideLabelValues(77)=" "
+     strDescription(77)=""
+     OverrideSettingCaps(78)=1
+     strSetting(78)="++++Revision Settings++++++++++++"
+     varSetting(78)="BARF"
+     OverrideLabelValues(78)="----"
+     strDescription(78)=""
+     
+     strSetting(79)="Use Revision Soundtrack"
+     varSetting(79)="bUseRevisionSoundtrack"
+     strDescription(79)="If enabled, Revision maps will use the newer Revision soundtrack."
 }
