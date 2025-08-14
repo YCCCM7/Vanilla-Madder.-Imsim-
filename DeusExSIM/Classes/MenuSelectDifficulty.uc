@@ -143,10 +143,10 @@ event bool BoxOptionSelected(Window msgBoxWindow, int buttonNumber)
 
 function InvokeNewGameScreen(float difficulty)
 {
-	local VMDMenuSelectCampaign newGame;
+	//local VMDMenuSelectCampaign newGame;
 	local VMDBufferPlayer VMP;
 	
-	newGame = VMDMenuSelectCampaign(root.InvokeMenuScreen(Class'VMDMenuSelectCampaign'));
+	//newGame = VMDMenuSelectCampaign(root.InvokeMenuScreen(Class'VMDMenuSelectCampaign'));
 	
 	//MADDERS: Call relevant reset data.
 	if (VMDBufferPlayer(Player) != None)
@@ -157,10 +157,10 @@ function InvokeNewGameScreen(float difficulty)
 	//MADDERS: We only call this from the main menu, NOT in game.
 	//By this logic, setting it all on the fly is fine.
 	Player.CombatDifficulty = Difficulty;
-	if (newGame != None)
-	{
-		newGame.SetDifficulty(difficulty);
-	}
+	//if (newGame != None)
+	//{
+	//	newGame.SetDifficulty(difficulty);
+	//}
 }
 
 function GiveStartTip()
