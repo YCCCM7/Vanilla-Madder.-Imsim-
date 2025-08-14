@@ -2113,7 +2113,7 @@ function RandomizeAppearance()
 		CurGenderIndex = 0;
 	}
 	CurMaleMeshIndex = Rand(MaxMaleMeshIndex+1);
-	CurFemaleMeshIndex = Rand(CurFemaleMeshIndex+1);
+	CurFemaleMeshIndex = Rand(MaxFemaleMeshIndex+1);
 	
 	TRand = Rand(MaxMaleSkinIndex+1-DDSFat);
 	CurMaleSkinIndex = TRand;
@@ -2124,6 +2124,29 @@ function RandomizeAppearance()
 	CurTrenchChestIndex = Rand(MaxTrenchChestIndex+1-DDSFat);
 	CurTrenchCoatIndex = Rand(MaxTrenchCoatIndex+1-DDSFat);
 	CurTrenchPantsIndex = Rand(MaxTrenchPantsIndex+1-DDSFat);
+	
+	CurJumpsuitShirtIndex = Rand(MaxJumpsuitShirtIndex+1);
+	CurJumpsuitPantsIndex = Rand(MaxTrenchPantsIndex+1-DDSFat);
+	CurJumpsuitHelmetIndex = Rand(MaxJumpsuitHelmetIndex+1);
+	CurJumpsuitVisorIndex = Rand(MaxJumpsuitVisorIndex+1);
+	
+	CurSuitLensesIndex = Rand(MaxTrenchLensesIndex+1-DDSFat);
+	CurSuitFramesIndex = Rand(MaxTrenchFramesIndex+1-DDSFat);
+	CurSuitShirtIndex = Rand(MaxSuitShirtIndex+1);
+	CurSuitPantsIndex = Rand(MaxTrenchPantsIndex+1-DDSFat);
+	
+	CurDressShirtLensesIndex = Rand(MaxTrenchLensesIndex+1-DDSFat);
+	CurDressShirtFramesIndex = Rand(MaxTrenchFramesIndex+1-DDSFat);
+	CurDressShirtShirtIndex = Rand(MaxDressShirtShirtIndex+1);
+	curDressShirtPantsIndex = Rand(MaxTrenchPantsIndex+1-DDSFat);
+	
+	CurSuitSkirtLensesIndex = Rand(MaxTrenchLensesIndex+1-DDSFat);
+	CurSuitSkirtFramesIndex = Rand(MaxTrenchFramesIndex+1-DDSFat);
+	CurSuitSkirtShirtIndex = Rand(MaxSuitSkirtShirtIndex+1);
+	CurSuitSkirtHairIndex = Rand(MaxSuitSkirtHairIndex+1);
+	
+	CurDressShirtIndex = Rand(MaxDressShirtIndex+1);
+	CurDressHairIndex = Rand(MaxDressHairIndex+1);
 	
 	CurHandednessIndex = Rand(2);
 	
