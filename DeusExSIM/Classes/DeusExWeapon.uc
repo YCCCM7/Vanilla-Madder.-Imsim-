@@ -208,11 +208,16 @@ var float	TimeLockSet;
 //+++++++++++++++++++++++++++++++++
 //MADDERS CONTENT ADDITIONS.
 //+++++++++++++++++++++++++++++++++
+var bool bGenerousWeapon;
 var travel bool bHasEvolution;
 var travel bool bSemiautoTrigger, bBurstFire, bPocketReload, bSingleLoaded, bPumpAction; //Fire modes!
 var travel byte CurFiringMode, NumFiringModes, OverrideNumProj;
 var travel float OverrideAnimRate, NPCOverrideAnimRate, OverrideReloadAnimRate, MeleeAnimRates[3],
 			FalloffStartRange, RelativeRange, LastDamageMult, MoverDamageMult;
+
+var int DrawAnimFrames, HolsterAnimFrames;
+var float DrawAnimRate, HolsterAnimRate;
+
 var int SecondaryScopeFOV, ZoomInCount; //MADDERS, 11/29/21: Use this for second zoom functionality.
 
 //MADDERS, 7/2/22: Hacky bullshit for the assault 17 in nihilum.
@@ -227,7 +232,7 @@ var bool bCanRotateInInventory;
 var Texture RotatedIcon;
 
 var localized string ClipsLabel;
-var bool bVolatile, bForceHeavyWeapon, bNameCaseSensitive; //9/24/21: For modded weapons to be heavy regardless of raw mass.
+var bool bVolatile, bForceHeavyWeapon, bNameCaseSensitive, bStationaryFiringOnly; //9/24/21: For modded weapons to be heavy regardless of raw mass.
 var byte PumpPurpose; //0 = Shoot and Reload, 1 = Shoot, 2 = Reload
 var float PumpStart, LastFireTime, FirePitchMin, FirePitchMax; //Start frame for pumping
 var string FiringModes[4];
@@ -375,6 +380,116 @@ var(TiltSequences) int ReloadBeginTiltIndices, ReloadEndTiltIndices,
            MeleeSwing1TiltIndices, MeleeSwing2TiltIndices, MeleeSwing3TiltIndices,
 	    SelectTiltIndices, SelectEmptyTiltIndices, DownTiltIndices, DownEmptyTiltIndices,
              SightInTiltIndices, SightOutTiltIndices, ShootTiltIndices;
+
+function bool Facelift(bool bOn)
+{
+}
+
+function float VMDGetWeaponDrawTime()
+{
+	local float Ret;
+	
+	Ret = float(DrawAnimFrames) / DrawAnimRate / VMDGetDrawRate();
+	
+	return Ret;
+}
+
+function float VMDGetWeaponHolsterTime()
+{
+	local float Ret;
+	
+	Ret = float(HolsterAnimFrames) / HolsterAnimRate / VMDGetHolsterRate();
+	
+	return Ret;
+}
+
+function float VMDGetDrawRate()
+{
+	local float Rate;
+	local VMDBufferPlayer VMP;
+	
+	VMP = VMDBufferPlayer(Owner);
+	
+	//MADDERS: Draw speed is affected by both skill augments (heavy weapons) and being underwater.
+	Rate = 1.0;
+	if ((VMDIsWaterZone()) && (!VMDNegateWaterSlow()))
+	{
+		Rate *= 0.65;
+	}
+	if ((GoverningSkill == Class'SkillWeaponHeavy' || bForceHeavyWeapon) && (VMDHasSkillAugment('HeavySwapSpeed')))
+	{
+		Rate *= 1.5;
+	}
+	if ((Concealability >= CONC_Visual) && (VMDHasSkillAugment('TagTeamSmallWeapons')))
+	{
+		Rate *= 1.5;
+	}
+	//MADDERS, 12/1/24: Increase weapon swap speed for untouchable, too.
+	if ((VMDHasSkillAugment('TagTeamDodgeRoll')) && (VMP != None) && (VMP.DodgeRollCooldownTimer >= VMP.DodgeRollCooldown - 2.5))
+	{
+		Rate *= 2.0;
+	}
+	
+	//MADDERS, boost sword draw speed to make it stop sucking.
+	if (WeaponSword(Self) != None)
+	{
+		Rate *= 1.2;
+	}
+	
+	//MADDERS, 8/6/25: Buffing this for both player and enemy.
+	if (GoverningSkill == Class'SkillDemolition')
+	{
+		Rate *= 1.2;
+	}
+	
+	Rate *= FactorWM2DrawSpeedMultiplier();
+	
+	return Rate;
+}
+
+function float VMDGetHolsterRate()
+{
+	local float Rate;
+	local VMDBufferPlayer VMP;
+	
+	VMP = VMDBufferPlayer(Owner);
+	
+	//MADDERS: Draw speed is affected by both skill augments (heavy weapons) and being underwater.
+	Rate = 1.0;
+	if ((VMDIsWaterZone()) && (!VMDNegateWaterSlow()))
+	{
+		Rate *= 0.65;
+	}
+	if ((GoverningSkill == Class'SkillWeaponHeavy') && (VMDHasSkillAugment('HeavySwapSpeed')))
+	{
+		Rate *= 1.5;
+	}
+	if ((Concealability >= CONC_Visual) && (VMDHasSkillAugment('TagTeamSmallWeapons')))
+	{
+		Rate *= 1.5;
+	}
+	//MADDERS, 12/1/24: Increase weapon swap speed for untouchable, too.
+	if ((VMDHasSkillAugment('TagTeamDodgeRoll')) && (VMP != None) && (VMP.DodgeRollCooldownTimer >= VMP.DodgeRollCooldown - 2.5))
+	{
+		Rate *= 2.0;
+	}
+	
+	//MADDERS, boost sword draw speed to make it stop sucking.
+	if (WeaponSword(Self) != None)
+	{
+		Rate *= 1.2;
+	}
+	
+	//MADDERS, 8/6/25: Buffing this for both player and enemy.
+	if (GoverningSkill == Class'SkillDemolition')
+	{
+		Rate *= 1.2;
+	}
+	
+	Rate *= FactorWM2HolsterSpeedMultiplier();
+	
+	return Rate;
+}
 
 //MADDERS, 5/10/25: More about not interfering with weapon modding 2.
 //This function super duper sucks. It can't pull precise information from ammos and rando scaling our damage...
@@ -746,7 +861,7 @@ function GP2AimTick(float DT)
 			//The distance out from the circle is shoved around by distance velocity.
 			//Distance velocity is random, but only updated so often as to not be too jittery.
 			//Trust me, this effect gets uncanny fast, so use a cooldown.
-			SwayProgress = (SwayProgress + GP2GetSwayRateMult() * (1.0 + (VMDGetWoundAccuracyPenalty() * 6.0)) / PlayerFocusMod * FactorWM2SwayMultiplier() * DT) % 1.0;
+			SwayProgress = (SwayProgress + GP2GetSwayRateMult() * (1.0 + (VMDGetWoundAccuracyPenalty() * 2.0)) / PlayerFocusMod * FactorWM2SwayMultiplier() * DT) % 1.0;
 			if (SwayDistanceTimer > 0)
 			{
 				SwayDistanceTimer -= DT;
@@ -762,13 +877,13 @@ function GP2AimTick(float DT)
 				if ((NewDir != Sign(DistanceVelocity)) == (Abs(SwayDistance) < 0.35) || (NewDir == Sign(DistanceVelocity)) == (Abs(SwayDistance) > 0.7))
 				{
 					TMath = FClamp(Abs(DistanceVelocity), 0.25, 0.75);
-					DistanceVelocity += SwayDistanceRate / PlayerFocusMod * DT / (SwayExcitement * SwayExcitementScalar) * (TMath * ((1.0 + TMath) * 0.5)) * NewDir;
+					DistanceVelocity += SwayDistanceRate / PlayerFocusMod * DT / (SwayExcitement * SwayExcitementScalar) * (1.0 + (VMDGetWoundAccuracyPenalty() * 2.0)) * (TMath * ((1.0 + TMath) * 0.5)) * NewDir;
 				}
 				//Weight this movement to be increased slightly
 				else
 				{
 					TMath = FClamp(Abs(DistanceVelocity), 0.25, 1.0);
-					DistanceVelocity += SwayDistanceRate / PlayerFocusMod * DT / (SwayExcitement * SwayExcitementScalar) * Sqrt(TMath) * NewDir;
+					DistanceVelocity += SwayDistanceRate / PlayerFocusMod * DT / (SwayExcitement * SwayExcitementScalar) * (1.0 + (VMDGetWoundAccuracyPenalty() * 2.0)) * Sqrt(TMath) * NewDir;
 				}
 				
 				//And don't let us get too much momentum. Shit goes crazy.
@@ -3259,6 +3374,11 @@ function float VMDGetScaledDamage( float In, optional Float CustomMult )
 		CustomMult = VMDGetWeaponSkill("DAMAGE");
 	}
 	
+	if (AmmoDamageMultiplier > 0)
+	{
+		CustomMult *= AmmoDamageMultiplier;
+	}
+	
 	Ret = TDam * CustomMult;
 	
 	return Ret;
@@ -3363,7 +3483,7 @@ function float VMDGetCorrectAnimRate( float In, bool bNPC )
 	
 	if (bHandToHand)
 	{
-		if (VMDHasSkillAugment('MeleeSwingSpeed'))
+		if ((VMDHasSkillAugment('MeleeSwingSpeed')) && (bInstantHit))
 		{
 			if (VMDIsWeaponName("NanoSword"))
 			{
@@ -6837,6 +6957,12 @@ simulated function Tick(float deltaTime)
 				//G-Flex: randomize this a bit to make change of shake direction less predictable
 				//G-Flex: now is between 0.20 and 0.40 seconds, randomly
 				ShakeTimer -= 0.20 + (Rand(21) / 100.00);
+				
+				if (ShouldUseGP2())
+				{
+					ShakeYaw *= GP2GetSwayRateMult() * (1.0 + (VMDGetWoundAccuracyPenalty() * 2.0))  * FactorWM2SwayMultiplier();
+					ShakePitch *= GP2GetSwayRateMult() * (1.0 + (VMDGetWoundAccuracyPenalty() * 2.0))  * FactorWM2SwayMultiplier();
+				}
 			}
 		}
 		ShakeTimer += deltaTime;
@@ -7184,6 +7310,12 @@ simulated function HandToHandAttack()
 		return;
 	}
 	
+	//MADDERS, 7/27/25: Don't let dead or stunned dudes kill us with melee. It's bad gameplay.
+	if (ScriptedPawn(Owner) != None && (Owner.IsInState('Dying') || Owner.IsInState('RubbingEyes') || Owner.IsInState('Stunned')))
+	{
+		return;
+	}
+	
 	// The controlling animator should be the one to do the tracefire and projfire
 	if ((Level.NetMode != NM_Standalone) && (ScriptedPawn(Owner) == None))
 	{
@@ -7260,6 +7392,12 @@ simulated function OwnerHandToHandAttack()
 			ServerHandleNotify(bInstantHit, ProjectileClass, ProjectileSpeed, bWarnTarget);
 		else if (!bOwnerIsPlayerPawn)
 			return;
+	}
+	
+	//MADDERS, 7/27/25: Don't let dead or stunned dudes kill us with melee. It's bad gameplay.
+	if (ScriptedPawn(Owner) != None && (Owner.IsInState('Dying') || Owner.IsInState('RubbingEyes') || Owner.IsInState('Stunned')))
+	{
+		return;
 	}
 	
 	if (ScriptedPawn(Owner) != None)
@@ -7802,10 +7940,10 @@ simulated function PlaySelectiveFiring()
 		{
 			switch(SkillLevel)
 			{
-				case 0: TRate *= 1.05; break;
-				case 1: TRate *= 1.15; break;
-				case 2: TRate *= 1.30; break;
-				case 3: TRate *= 1.50; break;
+				case 0: TRate *= 1.10; break;
+				case 1: TRate *= 1.30; break;
+				case 2: TRate *= 1.60; break;
+				case 3: TRate *= 2.00; break;
 			}
 		}
 	}
@@ -9307,6 +9445,12 @@ simulated function ProcessTraceHit(Actor Other, Vector HitLocation, Vector HitNo
 		
 		if (Other != None)
 		{
+			//Justice: Allows you to trigger buttons by shooting them Duke3D style
+			if ((Other.IsA('Button1') || Other.IsA('Switch1') || Other.IsA('Switch2') || Other.IsA('LightSwitch')) && (damageType == 'Shot'))
+			{
+				Other.Frob(Pawn(Owner), None);
+			}
+			
 			dxPlayer = DeusExPlayer(Owner);
 			if (Other.bOwned)
 			{
@@ -9660,7 +9804,7 @@ simulated function bool UpdateInfo(Object winObject)
 {
 	local PersonaInventoryInfoWindow winInfo;
 	local string str;
-	local int i, TReloadCount;
+	local int i, TReloadCount, TCount;
 	local float mod, ARM, dmg;
 	local bool bHasAmmo;
 	local bool bAmmoAvailable;
@@ -9673,6 +9817,7 @@ simulated function bool UpdateInfo(Object winObject)
 	local Ammo TAmmo;
 	local bool FlagHasAmmo;
 	local int TEff, TMetric;
+	local float CustomMult;
 
 	P = Pawn(Owner);
 	if (P == None)
@@ -9818,7 +9963,12 @@ simulated function bool UpdateInfo(Object winObject)
 	TNumProj = VMDGetCorrectNumProj(TNumProj);
 	
 	//str = String(dmg*2);
-	str = VMDFormatFloatString(dmg*2, 0.1, "Damage Mod");
+	CustomMult = 1.0;
+	if (AmmoDamageMultiplier > 0)
+	{
+		CustomMult *= AmmoDamageMultiplier;
+	}
+	str = VMDFormatFloatString(dmg*2*CustomMult, 0.1, "Damage Mod");
 	mod = VMDGetWeaponSkill("DAMAGE"); //1.0 - GetWeaponSkill();
 	if (mod != 1.0)
 	{
@@ -9861,7 +10011,12 @@ simulated function bool UpdateInfo(Object winObject)
 		}
 		else
 		{
-			str = Default.ReloadCount @ msgInfoRounds;
+			TCount = Default.ReloadCount;
+			if (AmmoOverchargedBattery(AmmoType) != None)
+			{
+				TCount -= 2;
+			}
+			str = TCount @ msgInfoRounds;
 		}
 	}
 	
@@ -10956,7 +11111,7 @@ Begin:
 				
 				//Set our mag size to not exceed what ammo we have on hand.
 				//Load those exra rounds by hand, dammit!
-				ClipCount = Max(0, ReloadCount - AmmoType.AmmoAmount) - int(VMDHasOpenSystemMagBoost());
+				ClipCount = Max(0 - int(VMDHasOpenSystemMagBoost()), ReloadCount - AmmoType.AmmoAmount);
 				
 				VMDReloadCompleteHook();
 			}
@@ -11565,33 +11720,7 @@ function PlaySelect()
 	
 	VMP = VMDBufferPlayer(Owner);
 	
-	//MADDERS: Draw speed is affected by both skill augments (heavy weapons) and being underwater.
-	Rate = 1.0;
-	if ((VMDIsWaterZone()) && (!VMDNegateWaterSlow()))
-	{
-		Rate *= 0.65;
-	}
-	if ((GoverningSkill == Class'SkillWeaponHeavy' || bForceHeavyWeapon) && (VMDHasSkillAugment('HeavySwapSpeed')))
-	{
-		Rate *= 1.5;
-	}
-	if ((Concealability >= CONC_Visual) && (VMDHasSkillAugment('TagTeamSmallWeapons')))
-	{
-		Rate *= 1.5;
-	}
-	//MADDERS, 12/1/24: Increase weapon swap speed for untouchable, too.
-	if ((VMDHasSkillAugment('TagTeamDodgeRoll')) && (VMP != None) && (VMP.DodgeRollCooldownTimer >= VMP.DodgeRollCooldown - 2.5))
-	{
-		Rate *= 2.0;
-	}
-	
-	//MADDERS, boost sword draw speed to make it stop sucking.
-	if (WeaponSword(Self) != None)
-	{
-		Rate *= 1.2;
-	}
-	
-	Rate *= FactorWM2DrawSpeedMultiplier();
+	Rate = VMDGetDrawRate();
 	
 	PlayAnim('Select',1.0*Rate,0.0);
 	
@@ -11607,33 +11736,7 @@ simulated function TweenDown()
 	
 	VMP = VMDBufferPlayer(Owner);
 	
-	//MADDERS: Draw speed is affected by both skill augments (heavy weapons) and being underwater.
-	Rate = 1.0;
-	if ((VMDIsWaterZone()) && (!VMDNegateWaterSlow()))
-	{
-		Rate *= 0.65;
-	}
-	if ((GoverningSkill == Class'SkillWeaponHeavy') && (VMDHasSkillAugment('HeavySwapSpeed')))
-	{
-		Rate *= 1.5;
-	}
-	if ((Concealability >= CONC_Visual) && (VMDHasSkillAugment('TagTeamSmallWeapons')))
-	{
-		Rate *= 1.5;
-	}
-	//MADDERS, 12/1/24: Increase weapon swap speed for untouchable, too.
-	if ((VMDHasSkillAugment('TagTeamDodgeRoll')) && (VMP != None) && (VMP.DodgeRollCooldownTimer >= VMP.DodgeRollCooldown - 2.5))
-	{
-		Rate *= 2.0;
-	}
-	
-	//MADDERS, boost sword draw speed to make it stop sucking.
-	if (WeaponSword(Self) != None)
-	{
-		Rate *= 1.2;
-	}
-	
-	Rate *= FactorWM2HolsterSpeedMultiplier();
+	Rate = VMDGetHolsterRate();
 	
 	if ( (AnimSequence != '') && (GetAnimGroup(AnimSequence) == 'Select') )
 		TweenAnim( AnimSequence, AnimFrame * 0.4 );
@@ -11856,4 +11959,7 @@ defaultproperties
      SwayDistanceCooldown=0.025000
      SwayDistanceRate=0.200000
      SwayExcitementScalar=0.500000
+     
+     DrawAnimRate=1.000000
+     HolsterAnimRate=1.000000
 }
