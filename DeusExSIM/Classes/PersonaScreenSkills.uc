@@ -222,7 +222,7 @@ function bool ButtonActivated( Window buttonPressed )
 					{
 						PersonaScreenBaseWindow(GetParent()).SaveSettings();
 					}
-					Root.InvokeUIScreen(class'VMDPersonaScreenSkillAugments');
+					//Root.InvokeUIScreen(class'VMDPersonaScreenSkillAugments');
 				}
 			break;
 			
