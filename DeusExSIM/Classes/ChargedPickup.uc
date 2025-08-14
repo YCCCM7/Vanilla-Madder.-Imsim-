@@ -178,7 +178,8 @@ simulated function int CalcChargeDrain(DeusExPlayer Player)
 	
 	if (!bLatentChargeCost)
 	{
-		LatentChargeSteps++;
+		//MADDERS, 8/6/25: Community voted, 70% want no latent charge cost, like in alpha.
+		/*LatentChargeSteps++;
 		
 		//3.34 charge per second, or AKA 1000 charge lasts 5 minutes
 		//Used to be 2.5 per second, then 5.0. We're getting there.
@@ -188,9 +189,9 @@ simulated function int CalcChargeDrain(DeusExPlayer Player)
 			Drain = 1;
 		}
 		else
-		{
+		{*/
 			Drain = 0;
-		}
+		//}
 	}
 	
 	return Int(drain);
