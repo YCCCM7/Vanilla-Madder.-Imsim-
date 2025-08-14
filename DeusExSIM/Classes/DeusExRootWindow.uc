@@ -95,6 +95,7 @@ event InitWindow()
 	for (i=0; i<ArrayCount(VMDLayers); i++)
 	{
 		VMDLayers[i] = VMDHUDDisplayLayer(NewChild(class'VMDHUDDisplayLayer'));
+		VMDLayers[i].InternalIndex = i;
 		VMDLayers[i].SetWindowAlignments(HALIGN_Full, VALIGN_Full, 0, 0);
 	   	VMDLayers[i].SetBackgroundSmoothing(True);
 	  	VMDLayers[i].SetBackgroundStretching(True);
@@ -469,10 +470,12 @@ function UpdateHud()
 
 function RefreshDisplay(float DeltaTime)
 {
-    if (GetTopWindow() != None)
-        GetTopWindow().RefreshWindow(DeltaTime);
-    if (hud != None)
-        hud.belt.RefreshHUDDisplay(DeltaTime);
+    	if (GetTopWindow() != None)
+	{
+        	GetTopWindow().RefreshWindow(DeltaTime);
+   	}
+ 	if (hud != None)
+        	hud.belt.RefreshHUDDisplay(DeltaTime);
 }
 
 // ----------------------------------------------------------------------
@@ -532,7 +535,7 @@ function AddInventory(inventory item)
 	
 	if ((item != None) && !item.IsA('DataVaultImage'))
 	{
-		if (VMP == None || VMP.GetItemRefusalSetting(Item) < 1)
+		if (VMP == None || VMP.VMDShouldPutItemOnBelt(Item))
 		{
 			if (hud != None)
 			{
