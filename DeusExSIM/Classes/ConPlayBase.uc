@@ -674,6 +674,7 @@ function EEventAction SetupEventTransferObject( ConEventTransferObject event, ou
 	if ((DeusExWeapon(InvItemFrom) != None) && (ScriptedPawn(Event.ToActor) != None) && (VMDBufferPlayer(Event.FromActor) != None))
 	{
 		DXW = DeusExWeapon(InvItemFrom);
+		DXW.bGenerousWeapon = true;
 		VMP = VMDBufferPlayer(Event.FromActor);
 		VMP.LastGenerousWeaponClass = string(DXW.Class);
 		
