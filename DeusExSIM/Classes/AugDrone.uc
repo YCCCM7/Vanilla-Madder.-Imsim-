@@ -24,8 +24,8 @@ function UpdateDroneTo(int NewLevel)
 		
 		if (Player.ADrone != None)
 		{
-			Player.ADrone.Speed = 3 * Player.SpyDroneLevelValue;
-			Player.ADrone.MaxSpeed = 3 * Player.SpyDroneLevelValue;
+			Player.ADrone.Speed = 6 * Player.SpyDroneLevelValue;
+			Player.ADrone.MaxSpeed = 6 * Player.SpyDroneLevelValue;
 			Player.ADrone.Damage = 5 * Player.SpyDroneLevelValue;
 			Player.ADrone.blastRadius = 8 * Player.SpyDroneLevelValue;
 		}
