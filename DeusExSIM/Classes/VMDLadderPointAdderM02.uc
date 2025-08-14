@@ -9,6 +9,8 @@ function AddLadderPoints()
 	
 	switch(MN)
 	{
+		case "02_NYC_BATTERYPARK":
+		break;
 		case "02_NYC_WAREHOUSE":
 			if (!bRevisionMapSet)
 			{
