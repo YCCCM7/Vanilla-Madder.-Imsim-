@@ -8,6 +8,7 @@ class VMDBufferPlayer extends DeusExPlayer
 //MADDERS ADDITIONS!
 var travel bool bInverseAim, bLastWasLoad, bWeaponHideException;
 var float VMDLastTickChunk; //Other stuff
+var transient float VMDTransientLevelTime;
 
 //#####################
 //STAT VARS!
@@ -158,6 +159,12 @@ var travel string SelectedCampaign, CampaignNewGameMap, InvokedBindName, Assigne
 var (MADDERSNGPLUS) travel bool bNGPlusKeepInventory, bNGPlusKeepInfamy, bNGPlusKeepSkills, bNGPlusKeepAugs, bNGPlusKeepMoney, bNGPlusTravel;
 var (MADDERSNGPLUS) travel int NGPlusLaps; //Usable by mods? Or maybe me? We'll see.
 
+var (REVISION) travel string RecordedMaps[64]; //Missionscript clears these. Prepare for the worst.
+var (REVISION) travel int MapStyle[23];
+var (REVISION) globalconfig int FavoriteMapStyle[23];
+var string MapStylePlaces[23];
+var localized string MapStylePlaceNames[23];
+
 var localized string SaveGameGenders[2], StrDifficultyNames[8], StrCustomDifficulty, SaveGameNGPlus;
 
 //---------------------
@@ -219,6 +226,7 @@ var() globalconfig bool bDisplayUncraftableItems; //6/21/25: For optimizing craf
 var() bool BarfStartupFullscreen, BarfUseDirectInput; //6/24/24: Purely temporary variables. Used in options menu as a metric.
 var() globalconfig int CustomUIScale;
 var() globalconfig float TacticalRollTime;
+var() globalconfig bool bUseRevisionSoundtrack; //7/20/25: Soundtrack options were luckily preserved, and people are opinionated on this.
 
 var() globalconfig bool bAimFocuserVisible, bDroneAllianceVisible, bHUDVisible, bFrobDisplayBordersVisible, bLogVisible, bSmellIndicatorVisible, bLightGemVisible, bSkillNotifierVisible;
 var bool VSyncBarf;
@@ -1068,6 +1076,156 @@ singular function DripWater(float deltaTime)
 // Deus Ex: Transcended end [HACKZ]
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+simulated function bool VMDMoveDrone( float DeltaTime, Vector loc )
+{
+	local int i;
+	local Vector TExtent, StartPos, EndPos, TVel, HL, HN, MoveMults[7], AntiMults[7];
+	local Actor HitAct;
+	
+	TExtent = vect(1,1,0)*ADrone.Default.CollisionRadius;
+	TExtent.Z = ADrone.Default.CollisionHeight;
+	
+	MoveMults[0] = Vect(1, 1, 1);
+	MoveMults[1] = Vect(1, 1, 0);
+	MoveMults[2] = Vect(1, 0, 1);
+	MoveMults[3] = Vect(0, 1, 1);
+	MoveMults[4] = Vect(1, 0, 0);
+	MoveMults[5] = Vect(0, 1, 0);
+	MoveMults[6] = Vect(0, 0, 1);
+	AntiMults[0] = Vect(1.0, 1.0, 1.0);
+	AntiMults[1] = Vect(1.0, 1.0, 0.8);
+	AntiMults[2] = Vect(1.0, 0.8, 1.0);
+	AntiMults[3] = Vect(0.8, 1.0, 1.0);
+	AntiMults[4] = Vect(1.0, 0.8, 0.8);
+	AntiMults[5] = Vect(0.8, 1.0, 0.8);
+	AntiMults[6] = Vect(0.8, 0.8, 1.0);
+	for (i=0; i<ArrayCount(MoveMults); i++)
+	{
+		StartPos = ADrone.Location;
+		EndPos = ADrone.Location + (Loc * MoveMults[i] * ADrone.MaxSpeed * DeltaTime);
+		
+		HitAct = ADrone.Trace(HL, HN, EndPos, StartPos, true, TExtent);
+		if ((HitAct != None) && (Pawn(HitAct) == None))
+		{
+			continue;
+		}
+		
+		// if the wanted velocity is zero, apply drag so we slow down gradually
+		if (VSize(loc) == 0)
+   		{
+      			aDrone.Velocity *= 0.9;
+   		}
+		if (i > 0)
+		{
+      			aDrone.Velocity = (ADrone.Velocity * AntiMults[i]) + (deltaTime * aDrone.MaxSpeed * loc * MoveMults[i]);
+			return true;
+		}
+		else
+		{
+      			aDrone.Velocity += deltaTime * aDrone.MaxSpeed * loc;
+		}
+		
+		if (i == 0)
+		{
+			// add slight bobbing
+   			// DEUS_EX AMSD Only do the bobbing in singleplayer, we want stationary drones stationary.
+   			if (Level.Netmode == NM_Standalone)
+			{
+      				aDrone.Velocity += deltaTime * Sin(Level.TimeSeconds * 2.0) * vect(0,0,1);
+			}
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+function bool VMDShouldPutItemOnBelt(Inventory TestItem)
+{
+	if (TestItem == None) return true;
+	
+	if (GetItemRefusalSetting(TestItem) < 1) return true;
+	
+	if (VMDTransientLevelTime > 0.1) return false;
+	
+	return true;
+}
+
+exec function GetMyPackage()
+{
+	local string TStr;
+	local int InPos;
+	
+	TStr = string(Class);
+	InPos = InStr(TStr, ".");
+	if (InPos > -1)
+	{
+		TStr = Left(TStr, InPos);
+	}
+	
+	ClientMessage(TStr);
+}
+
+exec function LogBrushSurfaces()
+{
+	class'VMDTerrainReskinner'.Static.LogSurfaceTextures(XLevel);
+}
+
+exec function TestGetURLMap()
+{
+	ClientMessage(GetURLMap());
+}
+
+function VMDRecordMap(string NewMap)
+{
+	local int i;
+	
+	for(i=0; i<ArrayCount(RecordedMaps); i++)
+	{
+		if (RecordedMaps[i] ~= NewMap)
+		{
+			return;
+		}
+	}
+	
+	for(i=0; i<ArrayCount(RecordedMaps); i++)
+	{
+		if (RecordedMaps[i] ~= "")
+		{
+			RecordedMaps[i] = NewMap;
+			break;
+		}
+	}
+}
+
+function VMDUnrecordMap(int TarIndex)
+{
+	local int i;
+	
+	for(i=TarIndex; i<ArrayCount(RecordedMaps)-1; i++)
+	{
+		RecordedMaps[i] = RecordedMaps[i+1];
+	}
+	RecordedMaps[ArrayCount(RecordedMaps)-1] = "";
+}
+
+function VMDClearRecordedMapsBefore(int TarMission)
+{
+	local int i, TMission;
+	
+	for(i=0; i<ArrayCount(RecordedMaps); i++)
+	{
+		if (RecordedMaps[i] != "")
+		{
+			TMission = int(Left(RecordedMaps[i], 2));
+			if (TMission < TarMission)
+			{
+				VMDUnrecordMap(i);
+				i -= 1;
+			}
+		}
+	}
+}
 
 function bool VMDCanStartFirstPersonConversation()
 {
@@ -1578,13 +1736,29 @@ function int VMDShouldDrawKeyring(DeusExMover DXM)
 
 function int VMDShouldDrawMultitool(HackableDevices HD)
 {
-	local int ToolsNeeded, NumTools;
+	local int ToolsNeeded, NumTools, i;
 	local float TStrength, ToolValue;
+	local name TName;
+	local string TStr;
 	local Multitool TTool;
 	
 	if (HD == None || Keypad(HD) != None || !HD.bHackable || !bElectronicsDrawMultitool)
 	{
 		return 0;
+	}
+	
+	//MADDERS, 7/21/25: Tacticool new native tech can't find this property. What the fuck?
+	if ((HD.IsA('HandScanner')) && (FlagBase != None))
+	{
+		for (i=0; i<9; i++)
+		{
+			TStr = HD.GetPropertyText("clearanceflag");
+			TName = FlagBase.StringToName(TStr);
+			if ((TName != '') && (FlagBase.GetBool(TName)))
+			{
+				return 0;
+			}
+		}
 	}
 	
 	TStrength = HD.HackStrength;
@@ -4189,8 +4363,8 @@ function bool VMDDoAdvancedLimbDamage()
 function VMDDisarmPlayer()
 {
 	local float GSpeed;
-	local int THand;
-	local DeusExWeapon DXW;
+	local int THand, RemoveAmount;
+	local DeusExWeapon DXW, SpawnWep;
 	
 	GSpeed = 1.0;
 	if ((Level != None) && (Level.Game != None))
@@ -4201,20 +4375,41 @@ function VMDDisarmPlayer()
 	DXW = DeusExWeapon(InHand);
 	if (DXW != None)
 	{
-		if (DXW.bZoomed)
+		if (DXW.VMDIsWeaponName("Shuriken"))
 		{
-			DXW.ScopeOff();
+			if (DXW.AmmoType != None)
+			{
+				RemoveAmount = Min(DXW.AmmoType.AmmoAmount, Rand(3) + 1);
+				
+				SpawnWep = Spawn(DXW.Class,,, Location);
+				if (SpawnWep != None)
+				{
+					SpawnWep.PickupAmmoCount = RemoveAmount;
+					DXW.AmmoType.AmmoAmount -= RemoveAmount;
+					if (DXW.AmmoType.AmmoAmount <= 0)
+					{
+						DXW.Destroy();
+					}
+				}
+			}
 		}
-		if (DXW.bHasLaser)
+		else
 		{
-			DXW.LaserOff();
+			if (DXW.bZoomed)
+			{
+				DXW.ScopeOff();
+			}
+			if (DXW.bHasLaser)
+			{
+				DXW.LaserOff();
+			}
+			
+			InHand.DropFrom(Location);
+	            	PutInHand(None);
+	           	SetInHandPending(None);
+			
+			PlaySound(sound'ArmorRicochet', SLOT_None,,,, 1.37 * GSpeed);
 		}
-		
-		InHand.DropFrom(Location);
-            	PutInHand(None);
-           	SetInHandPending(None);
-		
-		PlaySound(sound'ArmorRicochet', SLOT_None,,,, 1.37 * GSpeed);
 	}
 }
 
@@ -4950,34 +5145,7 @@ function VMDSignalInterpolationClick()
 
 function string VMDGetMapName()
 {
- 	local string S, S2;
- 	
- 	S = GetURLMap();
- 	S2 = Chr(92); //What the fuck? Can't type this anywhere!
-	
- 	//HACK TO FIX TRAVEL BUGS!
- 	if (InStr(S, S2) > -1)
- 	{
-  		do
-  		{
-   			S = Right(S, Len(S) - InStr(S, S2) - 1);
- 		}
-  		until (InStr(S, S2) <= -1);
-		
-		if (InStr(S, ".") > -1)
-		{
-  			S = Left(S, Len(S) - 4);
-		}
- 	}
- 	else
-	{
-		if (InStr(S, ".") > -1)
-		{
-			S = Left(S, Len(S)-3);
-		}
- 	}
-	
- 	return CAPS(S);
+ 	return class'VMDStaticFunctions'.Static.VMDGetMapName(Self);
 }
 
 // ----------------------------------------------------------------------
@@ -5060,6 +5228,8 @@ function ShowCustomIntro(string CNGM)
 			CampaignNewGameMap = "69_TCP_Brum_Streets";
 		break;
 		case "VANILLA":
+		case "REVISION":
+		case "CUSTOM REVISION":
 		default:
 			CampaignNewGameMap = "01_NYC_UNATCOIsland";
 		break;
@@ -5536,6 +5706,8 @@ exec function PutInHand(optional Inventory inv)
 
 function VMDResetNewGameVars(int Phase)
 {
+	local int i;
+	
 	//MADDERS: Abuse switch case's jank factor when forgetting breaks, and speeddial this shit.
 	switch(Phase)
 	{
@@ -5551,6 +5723,11 @@ function VMDResetNewGameVars(int Phase)
 			SelectedCampaign = "Vanilla";
 			InvokedBindName = "";
 			CampaignNewGameMap = "01_NYC_UNATCOIsland";
+			for(i=0; i<ArrayCount(MapStyle); i++)
+			{
+				MapStyle[i] = 0;
+			}
+			VMDClearRecordedMapsBefore(100);
 		//----------------
 		case 2: //Appearance, name, and gender
 			PlayerSkin = 0;
@@ -5747,6 +5924,8 @@ function VMDResetPlayerHook(bool bTraining)
 			switch(CAPS(SelectedCampaign))
 			{
 				case "VANILLA":
+				case "REVISION":
+				case "CUSTOM REVISION":
 					LoadVanillaKit();
 				break;
 				case "CARONE":
@@ -6274,6 +6453,8 @@ function bool VMDHasStartKitObjection()
 	{
 		//MADDERS: Start with soyfood and soda, so we'll just always customize the kit.
 		case "VANILLA":
+		case "REVISION":
+		case "CUSTOM REVISION":
 		//break;
 		default:
 			return true;
@@ -9879,6 +10060,8 @@ function VMDPreTravelHook()
 		}
 	}
 	
+	//MADDERS, 8/10/25: This dumb shit needs to be handled on a faster scale to stop redundant travels.
+	FlagBase.SetBool('VMDPlayerTraveling', True, True, 0);
 	FlagBase.SetBool('LayDDentonDetected', True, True, 0);
 	FlagBase.SetBool('LDDPJCIsFemale', True, True, 0);
 	FlagBase.SetBool('PlayerIsFemale', True, True, 0);
@@ -10040,17 +10223,33 @@ function HackAddPawn()
 {
 }
 
+exec function TestInstallHook()
+{
+	class'GetNextMissionNumberFixer'.Static.InstallHook();
+}
+
 function VMDApplyScriptSwaps(string CampaignName)
 {
+	local class<DeusExGameInfo> LoadInfo;
 	local NavigationPoint TNav;
 	local ScriptedPawn SP;
+	
+	//MADDERS, 7/20/25: Simulate game info function here with this devious cast. Fuck package order, I'M the boss.
+	LoadInfo = class<DeusExGameInfo>(DynamicLoadObject("Revision.RevGameInfo", class'Class', true));
+	if (LoadInfo != None)
+	{
+		LoadInfo.Static.SetupMusic(Self);
+	}
+	class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("DXOgg.DXOggMusicManager.PreBeginPlay", "DXOgg.DXOggMusicManager.Pause");
+	class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("DXOgg.DXOggMusicManager.PostBeginPlay", "DXOgg.DXOggMusicManager.Unpause");
+	
+	//class'GetNextMissionNumberFixer'.Static.InstallHook();
 	
 	switch(CampaignName)
 	{
 		case "":
 			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("HotelCarone.HCPaulDenton.ShieldDamage", "DeusEx.PaulDenton.ShieldDamage"))
 			{
-				Log(class'VMDGenericNativeFunctions'.Static.TargetScriptsAreEqual("HotelCarone.HCPaulDenton.ShieldDamage", "DeusEx.PaulDenton.ShieldDamage"));
 				Log("VMD: Applied precautionary damage fix to HC Paul Denton!");
 			}
 			if (class'VMDGenericNativeFunctions'.Static.SwapTargetScripts("HotelCarone.Langly.ShieldDamage", "DeusEx.WaltonSimons.ShieldDamage"))
@@ -10117,15 +10316,56 @@ function VMDTravelPostAcceptHook()
 {
 	local int i;
 	local float HUP;
+	local DeusExDecoration DXD;
 	local DeusExLevelInfo Info;
 	local DodgeRollCooldownAura DRCA;
 	local FireAura FA;
+	local Pawn TPawn;
 	local PoisonEffectAura PEA;
 	local VMDBufferPawn VMBP;
 	local VMDHousingScriptedTextureManager VHSTM;
 	local VMDMEGHIntentionActor IA;
 	
 	VMDApplyScriptSwaps(SelectedCampaign);
+	
+	if (DeusExRootWindow(RootWindow) != None)
+	{
+		DeusExRootWindow(RootWindow).UnPauseGame();
+	}
+	
+	//MADDERS, 8/10/25: Undo this bad boy fast, so we can accurately let us touch things soon after travel completes.
+	FlagBase.DeleteFlag('VMDPlayerTraveling', FLAG_Bool);
+	
+	Info = GetLevelInfo();
+	
+	if ((class'VMDStaticFunctions'.Static.GetIntendedMapStyle(Self) == 1) && (bAssignedFemale) && (Info != None) && (!FlagBase.GetBool(RootWindow.StringToName(Info.MapName $ '_ConvoPackageChanged'))))
+	{
+		if (Info.ConversationPackage == "DeusExConversations")
+			Info.ConversationPackage = "FRevisionConversations";
+		else
+			Info.ConversationPackage = "F" $ Info.ConversationPackage;
+		
+		foreach AllActors(class'DeusExDecoration', DXD)
+		{
+			DXD.ConBindEvents();
+		}
+		for (TPawn=Level.PawnList; TPawn!=None; TPawn=TPawn.NextPawn)
+		{
+			if (TPawn.BindName == "ClubMercedes")
+				TPawn.BindName = "LDDPClubMercedes";
+			else if (TPawn.BindName == "Mamasan")
+				TPawn.BindName = "LDDPMamasan";
+			else if (TPawn.BindName == "Camille")
+				TPawn.BindName = "LDDPCamille";
+			
+			if (ScriptedPawn(TPawn) != None)
+				ScriptedPawn(TPawn).ConBindEvents();
+			else if (DeusExPlayer(TPawn) != None)
+				DeusExPlayer(TPawn).ConBindEvents();
+		}
+		
+		FlagBase.SetBool(RootWindow.StringToName(Info.MapName $ '_ConvoPackageChanged'), True, True, 0);
+	}
 	
 	//MADDERS, 5/29/23: I, uh... Think this should work? Hmm...
 	Handedness = PreferredHandedness;
@@ -10217,8 +10457,6 @@ function VMDTravelPostAcceptHook()
 		DodgeRollCooldownTimer = 0;
 	}
 	
-	Info = GetLevelInfo();
-	
 	//MADDERS: Sound stuff can get buggy if we don't restore this as it was. Icky, I know.
 	if ((Level != None) && (Level.Game != None))
 	{
@@ -10282,6 +10520,10 @@ function VMDTravelPostAcceptHook()
 	
 	if (FlagBase != None)
 	{
+		if (NGPlusLaps > 0)
+		{
+			FlagBase.SetBool('bNewGamePlusStarted', True, True, 99);
+		}
 		if (bAssignedFemale)
 		{
 			//Hickity hack, what's in the sack?
@@ -10638,7 +10880,7 @@ function VMDCheckMayhemActor()
 {
 	local VMDMayhemActor VMA;
 	
-	if (!class'VMDStaticFunctions'.Static.VMDUseDifficultyModifier(Self, "Mayhem")) return;
+	//if (!class'VMDStaticFunctions'.Static.VMDUseDifficultyModifier(Self, "Mayhem")) return;
 	
 	forEach AllActors(class'VMDMayhemActor', VMA) break;
 	if (VMA != None) return;
@@ -10837,6 +11079,8 @@ function VMDRunTickHook( float DT )
 	local ShowerFaucet Fauc;
 	local VMDBountyHunter THunt, THunt2;
 	local VMDLadderPoint TLadder;
+	
+	VMDTransientLevelTime += DT;
 	
 	if (bUpdateTravelTalents)
 	{
@@ -11373,6 +11617,8 @@ function VMDRunTickHookLight(float DT)
 	local DodgeRollCooldownAura DRCA;
 	local RollCooldownAura RCA;
 	local Window TWindow;
+	
+	VMDTransientLevelTime += DT;
 	
 	if (bUpdateTravelTalents)
 	{
@@ -13022,6 +13268,53 @@ defaultproperties
      StrDifficultyNames(7)="Condemned"
      StrCustomDifficulty="Custom"
      SaveGameNGPlus=" [NewGame+] "
+     
+     MapStylePlaces(0)="Intro"
+     MapStylePlaces(1)="Liberty Island"
+     MapStylePlaces(2)="UNATCO"
+     MapStylePlaces(3)="Battery Park"
+     MapStylePlaces(4)="New York City"
+     MapStylePlaces(5)="Mole People"
+     MapStylePlaces(6)="Airfield"
+     MapStylePlaces(7)="UNATCO Sublevel"
+     MapStylePlaces(8)="Hong Kong"
+     MapStylePlaces(9)="Versalife"
+     MapStylePlaces(10)="Shipyard"
+     MapStylePlaces(11)="Graveyard"
+     MapStylePlaces(12)="Paris"
+     MapStylePlaces(13)="Catacombs"
+     MapStylePlaces(14)="Chateau"
+     MapStylePlaces(15)="Cathedral"
+     MapStylePlaces(16)="Everett"
+     MapStylePlaces(17)="Vandenberg"
+     MapStylePlaces(18)="Gas Station"
+     MapStylePlaces(19)="Oceanlab"
+     MapStylePlaces(20)="Missile Silo"
+     MapStylePlaces(21)="Endgame"
+     MapStylePlaces(22)="Outro"
+     MapStylePlaceNames(0)="Intro"
+     MapStylePlaceNames(1)="Liberty Island"
+     MapStylePlaceNames(2)="UNATCO"
+     MapStylePlaceNames(3)="Battery Park"
+     MapStylePlaceNames(4)="New York City"
+     MapStylePlaceNames(5)="Mole People"
+     MapStylePlaceNames(6)="Airfield"
+     MapStylePlaceNames(7)="UNATCO Sublevel"
+     MapStylePlaceNames(8)="Hong Kong"
+     MapStylePlaceNames(9)="Versalife"
+     MapStylePlaceNames(10)="Shipyard"
+     MapStylePlaceNames(11)="Graveyard"
+     MapStylePlaceNames(12)="Paris"
+     MapStylePlaceNames(13)="Catacombs"
+     MapStylePlaceNames(14)="Chateau"
+     MapStylePlaceNames(15)="Cathedral"
+     MapStylePlaceNames(16)="Everett"
+     MapStylePlaceNames(17)="Vandenberg"
+     MapStylePlaceNames(18)="Gas Station"
+     MapStylePlaceNames(19)="Oceanlab"
+     MapStylePlaceNames(20)="Missile Silo"
+     MapStylePlaceNames(21)="Endgame"
+     MapStylePlaceNames(22)="Outro"
      
      OwedMayhemFactor=-1
      MayhemFactor=-1
