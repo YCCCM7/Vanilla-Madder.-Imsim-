@@ -54,6 +54,7 @@ function FirstFrame()
 				{
 					WaltonSimons(Pawn).AddToInitialInventory(class'BioelectricCell', 15);
 					WaltonSimons(Pawn).AddToInitialInventory(class'Medkit', 10);
+					WaltonSimons(Pawn).AddToInitialInventory(class'HazmatSuit', 2);
 					flags.SetBool('VMD_WaltonBunkerGoodies', True,, 16);
 					if (WaltonSimons(Pawn).AugmentationSystem == None)
 					{
@@ -403,7 +404,6 @@ function Timer()
 		// spawn any monsters which have been missing for 20 seconds
 		for (i=0; i<ArrayCount(spawnData); i++)
 		{
-			//if ((spawnData[i].count == 0) && (Level.TimeSeconds - spawnData[i].lastKilledTime > 20))
 			TMem = GetUCMem(i);
 			if ((TMem != None) && (TMem.TrackedTime >= 0))
 			{
@@ -522,13 +522,17 @@ function Timer()
 		
 		if (flags.GetBool('MS_PageExploding'))
 		{
-			if (Level.TimeSeconds - pageTimer >= 3.0)
-				PageExplosionEffects();
-			
 			TMem = GetPageMem();
 			if (TMem != None)
 			{
 				TMem.TrackedTime += CheckTime;
+			}
+			
+			//if (Level.TimeSeconds - pageTimer >= 3.0)
+			//	PageExplosionEffects();
+			if ((TMem != None) && (TMem.TrackedTime >= 3.0))
+			{
+				PageExplosionEffects();
 			}
 			
 			//if ((Level.TimeSeconds - pageTimer >= 6.0) && !flags.GetBool('MS_PageDestroyed'))
