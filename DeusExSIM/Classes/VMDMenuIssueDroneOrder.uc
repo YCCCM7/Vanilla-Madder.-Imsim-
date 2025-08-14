@@ -683,10 +683,13 @@ function ExecuteDroneOrder(string TarOrderType)
 				{
 					if ((SP != None) && (SP.Alliance == ScriptedPawn(OrderActor).Alliance))
 					{
-						SP.ChangeAlly(TMegh.Alliance, 1, true);
-						if (SP.Enemy == TMegh)
+						if (TMegh.Alliance != 'Player')
 						{
-							SP.SetEnemy(None);
+							SP.ChangeAlly(TMegh.Alliance, 1, true);
+							if (SP.Enemy == TMegh)
+							{
+								SP.SetEnemy(None);
+							}
 						}
 					}
 				}
@@ -712,10 +715,13 @@ function ExecuteDroneOrder(string TarOrderType)
 				{
 					if ((SP != None) && (SP.Alliance == ScriptedPawn(OrderActor).Alliance))
 					{
-						SP.ChangeAlly(TMegh.Alliance, 1, true);
-						if (SP.Enemy == TMegh)
+						if (TMegh.Alliance != 'Player')
 						{
-							SP.SetEnemy(None);
+							SP.ChangeAlly(TMegh.Alliance, 1, true);
+							if (SP.Enemy == TMegh)
+							{
+								SP.SetEnemy(None);
+							}
 						}
 					}
 				}
@@ -783,10 +789,13 @@ function ExecuteDroneOrder(string TarOrderType)
 					{
 						if ((SP != None) && (SP.Alliance == ScriptedPawn(OrderActor).Alliance))
 						{
-							SP.ChangeAlly(TMegh.Alliance, 1, true);
-							if (SP.Enemy == TMegh)
+							if (TMegh.Alliance != 'Player')
 							{
-								SP.SetEnemy(None);
+								SP.ChangeAlly(TMegh.Alliance, 1, true);
+								if (SP.Enemy == TMegh)
+								{
+									SP.SetEnemy(None);
+								}
 							}
 						}
 					}
@@ -806,10 +815,13 @@ function ExecuteDroneOrder(string TarOrderType)
 							{
 								if ((SP != None) && (SP.Alliance == ScriptedPawn(OrderActor).Alliance))
 								{
-									SP.ChangeAlly(TSidd.Alliance, 1, true);
-									if (SP.Enemy == TSidd)
+									if (TSidd.Alliance != 'Player')
 									{
-										SP.SetEnemy(None);
+										SP.ChangeAlly(TSidd.Alliance, 1, true);
+										if (SP.Enemy == TSidd)
+										{
+											SP.SetEnemy(None);
+										}
 									}
 								}
 							}
@@ -835,10 +847,13 @@ function ExecuteDroneOrder(string TarOrderType)
 					{
 						if ((SP != None) && (SP.Alliance == DeusExCarcass(OrderActor).Alliance))
 						{
-							SP.ChangeAlly(TMegh.Alliance, 1, true);
-							if (SP.Enemy == TMegh)
+							if (TMegh.Alliance != 'Player')
 							{
-								SP.SetEnemy(None);
+								SP.ChangeAlly(TMegh.Alliance, 1, true);
+								if (SP.Enemy == TMegh)
+								{
+									SP.SetEnemy(None);
+								}
 							}
 						}
 					}
@@ -858,10 +873,13 @@ function ExecuteDroneOrder(string TarOrderType)
 							{
 								if ((SP != None) && (SP.Alliance == DeusExCarcass(OrderActor).Alliance))
 								{
-									SP.ChangeAlly(TSidd.Alliance, 1, true);
-									if (SP.Enemy == TSidd)
+									if (TSidd.Alliance != 'Player')
 									{
-										SP.SetEnemy(None);
+										SP.ChangeAlly(TSidd.Alliance, 1, true);
+										if (SP.Enemy == TSidd)
+										{
+											SP.SetEnemy(None);
+										}
 									}
 								}
 							}
