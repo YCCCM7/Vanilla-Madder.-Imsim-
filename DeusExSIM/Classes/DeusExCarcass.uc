@@ -83,6 +83,10 @@ var float BaseMass;
 //We do not clone this to POV, because picking us up and dropping us implies we're no longer an exception.
 var bool bBlockAnimalFoodRoutines;
 
+function bool Facelift(bool bOn)
+{
+}
+
 //MADDERS: Allow us to return the firing sytem type. Currently only used for open chamber augment.
 function int VMDOwnerFiringSystem(Ammo A)
 {
