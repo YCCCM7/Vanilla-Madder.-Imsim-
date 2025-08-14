@@ -127,7 +127,7 @@ function RefreshItemInfo()
 		
 		SkillLevel = VMP.SkillSystem.GetSkillLevel(class'SkillTech');
 		SkillRequired = CF.GetMechanicalItemSkillReq(CurItem);
-		ComplexityNeeded = CF.GetMechanicalItemComplexity(CurItem, SkillLevel);
+		ComplexityNeeded = CF.GetMechanicalItemComplexity(CurItem, SkillLevel, VMP.HasSkillAugment('ElectronicsCrafting'));
 		
 		TStr = "";
 		if (SkillRequired > SkillLevel)

@@ -317,7 +317,7 @@ function UpdateInfo()
 			if (bHasCraft)
 			{
 				SkillNeeded = CF.GetMedicalItemSkillReq(TarItem);
-				ComplexityNeeded = CF.GetMedicalItemComplexity(TarItem, SkillLevel);
+				ComplexityNeeded = CF.GetMedicalItemComplexity(TarItem, SkillLevel, bHasTalent);
 				
 				ItemReqA = CF.GetMedicalItemItemReq(TarItem, 0);
 				ItemReqB = CF.GetMedicalItemItemReq(TarItem, 1);
@@ -711,7 +711,7 @@ function UpdateCanCraft()
 		SkillLevel = VMP.SkillSystem.GetSkillLevel(class'SkillMedicine');
 		
 		SkillNeeded = CF.GetMedicalItemSkillReq(TItem);
-		ComplexityNeeded = CF.GetMedicalItemComplexity(TItem, SkillLevel);
+		ComplexityNeeded = CF.GetMedicalItemComplexity(TItem, SkillLevel, bHasTalent);
 		
 		CraftCostTweak = CF.GetCraftSkillMult(SkillLevel, bHasTalent);
 		
@@ -785,7 +785,7 @@ function CraftCurrentItem()
 		SkillLevel = VMP.SkillSystem.GetSkillLevel(class'SkillMedicine');
 		
 		SkillNeeded = CF.GetMedicalItemSkillReq(TarItem);
-		ComplexityNeeded = CF.GetMedicalItemComplexity(TarItem, SkillLevel);
+		ComplexityNeeded = CF.GetMedicalItemComplexity(TarItem, SkillLevel, bHasTalent);
 		
 		ItemReqA = CF.GetMedicalItemItemReq(TarItem, 0);
 		ItemReqB = CF.GetMedicalItemItemReq(TarItem, 1);

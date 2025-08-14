@@ -319,7 +319,7 @@ function UpdateInfo()
 			if (bHasCraft)
 			{
 				SkillNeeded = CF.GetMechanicalItemSkillReq(TarItem);
-				ComplexityNeeded = CF.GetMechanicalItemComplexity(TarItem, SkillLevel);
+				ComplexityNeeded = CF.GetMechanicalItemComplexity(TarItem, SkillLevel, bHasTalent);
 				
 				ItemReqA = CF.GetMechanicalItemItemReq(TarItem, 0);
 				ItemReqB = CF.GetMechanicalItemItemReq(TarItem, 1);
@@ -719,7 +719,7 @@ function UpdateCanCraft()
 		SkillLevel = VMP.SkillSystem.GetSkillLevel(class'SkillTech');
 		
 		SkillNeeded = CF.GetMechanicalItemSkillReq(TItem);
-		ComplexityNeeded = CF.GetMechanicalItemComplexity(TItem, SkillLevel);
+		ComplexityNeeded = CF.GetMechanicalItemComplexity(TItem, SkillLevel, bHasTalent);
 		
 		CraftCostTweak = CF.GetCraftSkillMult(SkillLevel, bHasTalent);
 		
@@ -803,7 +803,7 @@ function CraftCurrentItem()
 		SkillLevel = VMP.SkillSystem.GetSkillLevel(class'SkillTech');
 		
 		SkillNeeded = CF.GetMechanicalItemSkillReq(TarItem);
-		ComplexityNeeded = CF.GetMechanicalItemComplexity(TarItem, SkillLevel);
+		ComplexityNeeded = CF.GetMechanicalItemComplexity(TarItem, SkillLevel, bHasTalent);
 		
 		ItemReqA = CF.GetMechanicalItemItemReq(TarItem, 0);
 		ItemReqB = CF.GetMechanicalItemItemReq(TarItem, 1);

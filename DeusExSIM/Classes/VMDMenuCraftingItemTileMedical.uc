@@ -127,7 +127,7 @@ function RefreshItemInfo()
 		
 		SkillLevel = VMP.SkillSystem.GetSkillLevel(class'SkillMedicine');
 		SkillRequired = CF.GetMedicalItemSkillReq(CurItem);
-		ComplexityNeeded = CF.GetMedicalItemComplexity(CurItem, SkillLevel);
+		ComplexityNeeded = CF.GetMedicalItemComplexity(CurItem, SkillLevel, VMP.HasSkillAugment('MedicineCrafting'));
 		
 		TStr = "";
 		if (SkillRequired > SkillLevel)
