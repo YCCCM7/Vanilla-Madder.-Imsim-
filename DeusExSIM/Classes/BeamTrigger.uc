@@ -14,6 +14,7 @@ var int minDamageThreshold;
 var bool bAlreadyTriggered;
 
 var bool bLastSplashWasDrone; //MADDERS, 12/28/23: We're putting a stop to megahertz + spydrone combo. RIP.
+var float SameActorHitTime;
 
 singular function Touch(Actor Other)
 {
@@ -51,8 +52,17 @@ function Tick(float deltaTime)
 
 		emitter.SetLocation(Location);
 		emitter.SetRotation(Rotation);
-
-		if ((emitter.HitActor != None) && (LastHitActor != emitter.HitActor))
+	
+		if (LastHitActor == Emitter.HitActor)
+		{
+			SameActorHitTime += DeltaTime;
+		}
+		else
+		{
+			SameActorHitTime = 0.0;
+		}
+		
+		if ((emitter.HitActor != None) && (LastHitActor != emitter.HitActor) && (VMDMEGH(emitter.HitActor) == None || SameActorHitTime > 5))
 		{
 			if (IsRelevant(emitter.HitActor))
 			{
@@ -174,7 +184,7 @@ function TakeDamage(int Damage, Pawn EventInstigator, vector HitLocation, vector
 		bScramblerAugment = VMP.HasSkillAugment('TagTeamScrambler');
 	}
 
-	if (DamageType == 'EMP')
+	if (DamageType == 'EMP' || DamageType == 'Shocked')
 	{
         	if (bScramblerAugment)
 		{
