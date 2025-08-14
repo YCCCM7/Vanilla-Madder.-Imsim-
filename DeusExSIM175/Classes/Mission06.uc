@@ -200,9 +200,15 @@ function FirstFrame()
 			foreach AllActors(class'ScriptedPawn', pawn)
 			{
 				if (pawn.IsA('GordonQuick'))
+				{
 					TeleportPawn(pawn, 'QuickInTemple', 'Standing');
+					class'VMDMapFixer'.Static.DumbAllReactions(Pawn);
+				}
 				else if (pawn.IsA('MaxChen'))
+				{
 					TeleportPawn(pawn, 'ChenInTemple', 'Standing');
+					class'VMDMapFixer'.Static.DumbAllReactions(Pawn);
+				}
 				else if (pawn.Tag == 'MarketMonk01')
 					pawn.EnterWorld();
 				else if (pawn.Tag == 'MarketKid')

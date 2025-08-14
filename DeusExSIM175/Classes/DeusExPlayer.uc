@@ -12493,21 +12493,26 @@ function float CalculatePlayerVisibility(ScriptedPawn P)
 {
 	local float vis;
 	local AdaptiveArmor armor;
-
+	
 	vis = 1.0;
-	if ((P != None) && (AugmentationSystem != None))
+	if ((AugmentationSystem != None) && (P != None))
 	{
+		//MADDERS, 8/5/25: Hack for security cameras. We're assuming they're the only party concerned.
 		if (P.IsA('Robot'))
 		{
 			// if the aug is on, give the player full invisibility
 			if (AugmentationSystem.GetAugLevelValue(class'AugRadarTrans') != -1.0)
+			{
 				vis = 0.0;
+			}
 		}
 		else
 		{
 			// if the aug is on, give the player full invisibility
 			if (AugmentationSystem.GetAugLevelValue(class'AugCloak') != -1.0)
+			{
 				vis = 0.0;
+			}
 		}
 		
 		// go through the actor list looking for owned AdaptiveArmor
@@ -12519,8 +12524,10 @@ function float CalculatePlayerVisibility(ScriptedPawn P)
 	}
 	
 	//== If you're on fire, sorry buddy, they can see you
-	if(bOnFire && vis <= 0.5)
+	if((bOnFire) && (vis <= 0.5))
+	{
 		vis += 0.5;
+	}
 	
 	return vis;
 }

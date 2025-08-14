@@ -187,7 +187,7 @@ function SetMoverFragmentType(DeusExMover DXM, string MaterialClass)
 	}
 }
 
-function DumbAllReactions(ScriptedPawn SP)
+static function DumbAllReactions(ScriptedPawn SP)
 {
 	if (SP == None) return;
 	
@@ -493,6 +493,8 @@ function CommitMapFixing()
 						else if (UNATCOTroop(SP) != None)
 						{
 							SP.ChangeAlly('Gunther', 1.0, true);
+							SP.ChangeAlly('UNATCO', 1.0, true);
+							SP.ChangeAlly('Paul', 1.0, true);
 							
 							FilTex[0] = None;
 							switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
@@ -529,16 +531,19 @@ function CommitMapFixing()
 								break;
 							}
 							SP.ChangeAlly('Gunther', 1.0, true);
+							SP.ChangeAlly('Paul', 1.0, true);
 						}
 						else if (PaulDenton(SP) != None)
 						{
 							SP.ChangeAlly('Gunther', 1.0, true);
+							SP.ChangeAlly('UNATCO', 1.0, true);
 						}
 						else if (GuntherHermann(SP) != None)
 						{
 							SP.Alliance = 'Gunther';
 							SP.ChangeAlly('Gunther', 1.0, true);
 							SP.ChangeAlly('UNATCO', 1.0, true);
+							SP.ChangeAlly('Paul', 1.0, true);
 						}
 					}
 					
@@ -1684,6 +1689,10 @@ function CommitMapFixing()
 							if (Robot(SP) != None)
 							{
 								SP.ChangeAlly('Gunther', 1.0, true, false);
+							}
+							else if (AnnaNavarre(SP) != None)
+							{
+								SP.EnemyTimeout = 3600;
 							}
 						}
 					}
@@ -2879,7 +2888,7 @@ function CommitMapFixing()
 									case 16:
 										//MADDERS, 6/9/22: This is door is way too fucky.
 										//Don't make us crush shit, and don't get diddled by nicolette. Jesus.
-										DXM.SetPropertyText("MoverEncroachType", "3");
+										DXM.SetPropertyText("MoverEncroachType", ""ME_IgnoreWhenEncroach"");
 										DXM.bIsDoor = false;
 									break;
 								}
@@ -2910,6 +2919,7 @@ function CommitMapFixing()
 							if (GuntherHermann(SP) != None)
 							{
 								SP.bReactLoudNoise = false;
+								SP.EnemyTimeout = 3600;
 							}
 						}
 					}

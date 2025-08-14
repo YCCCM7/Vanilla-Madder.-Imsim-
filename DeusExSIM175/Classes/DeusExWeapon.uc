@@ -9140,7 +9140,7 @@ Begin:
 				
 				//Set our mag size to not exceed what ammo we have on hand.
 				//Load those exra rounds by hand, dammit!
-				ClipCount = Max(0, ReloadCount - AmmoType.AmmoAmount) - int(VMDHasOpenSystemMagBoost());
+				ClipCount = Max(0 - int(VMDHasOpenSystemMagBoost()), ReloadCount - AmmoType.AmmoAmount);
 				
 				VMDReloadCompleteHook();
 			}

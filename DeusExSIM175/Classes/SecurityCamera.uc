@@ -220,7 +220,13 @@ function CheckPlayerVisibility(DeusExPlayer player)
             				if (player.AugmentationSystem.GetAugLevelValue(class'AugRadarTrans') != -1.0)
                					return;
 	  			}
-         		}
+				
+				//MADDERS, 8/5/25: Somehow failed making this function earlier. Wow.
+				if (Player.UsingChargedPickup(class'AdaptiveArmor'))
+				{
+					return;
+				}
+			}
 			
 			// figure out if we can see the player
 			rot = Rotator(player.Location - Location);
