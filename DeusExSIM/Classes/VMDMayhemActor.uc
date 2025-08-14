@@ -11,7 +11,90 @@ var VMDBufferPlayer VMP;
 
 function VMDUpdateRevisionMapStatus()
 {
-	bRevisionMapSet = false;
+	switch(class'VMDStaticFunctions'.static.GetIntendedMapStyle(Self))
+	{
+		case 0:
+			bRevisionMapSet = false;
+		break;
+		case 1:
+			bRevisionMapSet = true;
+		break;
+		case 2:
+			bRevisionMapSet = false;
+		break;
+	}
+}
+
+function VMDUpdateRevisionLootPawns()
+{
+	local bool bFemale;
+	local float TProb;
+	local string TStr, TPackage, TClass;
+	local DeusExDecoration TDeco;
+	local Inventory TInv;
+	local ScriptedPawn SP;
+	
+	if (!bRevisionMapSet) return;
+	
+	forEach AllActors(class'DeusExDecoration', TDeco)
+	{
+		TProb = (float(TDeco.bDifficulty0) + float(TDeco.bDifficulty1) + float(TDeco.bDifficulty2) + float(TDeco.bDifficulty3)) * 0.25;
+		if (Containers(TDeco) != None) TProb = Sqrt(TProb);
+		
+		if (FakeFRand() > TProb)
+		{
+			TDeco.Contents = None;
+			TDeco.Content2 = None;
+			TDeco.Content3 = None;
+			TDeco.Destroy();
+		}
+		else
+		{
+			if (Containers(TDeco) != None)
+			{
+				Containers(TDeco).VMDLootSwapContents();
+			}
+		}
+	}
+	
+	forEach AllActors(class'Inventory', TInv)
+	{
+		if (TInv.Owner != None) continue;
+		
+		TProb = (float(TInv.bDifficulty0) + float(TInv.bDifficulty1) + float(TInv.bDifficulty2) + float(TInv.bDifficulty3)) * 0.25;
+		
+		if (FakeFRand() > TProb)
+		{
+			TInv.Destroy();
+		}
+	}
+	
+	if (VMDBufferPlayer(Owner) != None)
+	{
+		bFemale = VMDBufferPlayer(Owner).bAssignedFemale;
+	}
+	
+	forEach AllActors(class'ScriptedPawn', SP)
+	{
+		TProb = (float(SP.bDifficulty0) + float(SP.bDifficulty1) + float(SP.bDifficulty2) + float(SP.bDifficulty3)) * 0.25;
+		
+		if (FakeFRand() > TProb)
+		{
+			SP.Destroy();
+		}
+		else if (!bFemale)
+		{
+			TStr = String(SP.Class);
+			TPackage = Left(TStr, InStr(TStr, "."));
+			TClass = Right(TStr, Len(TStr) - InStr(Tstr, ".") - Len("."));
+			TClass = Left(TClass, 4);
+			
+			if (TStr ~= "FemJC" || TClass ~= "LDDP")
+			{
+				SP.Destroy();
+			}
+		}
+	}
 }
 
 function Tick(float DT)
@@ -27,6 +110,14 @@ function Tick(float DT)
 		else if (TweakTimer > -10)
  		{
  	 		TweakTimer = -30;
+			VMDUpdateRevisionMapStatus();
+			
+			//MADDERS, 8/6/25: We're hijacking this bad boy to instead create probabilities using our mayhem seed.
+			InitRandData(VMDBufferPlayer(Owner));
+			VMDUpdateRevisionLootPawns();
+			
+			if (!class'VMDStaticFunctions'.Static.VMDUseDifficultyModifier(Self, "Mayhem")) return;
+			
 			CommitMayhemBuffing();
 	 	}
 	}
@@ -107,8 +198,6 @@ function CommitMayhemBuffing()
 	
 	if (VMP == None || !VMP.bMayhemSystemEnabled) return;
 	
-	InitRandData(VMP);
-	
 	StartMayhem = VMP.MayhemFactor;
 	TMayhem = StartMayhem;
 	
@@ -185,70 +274,98 @@ function bool CanReinforcePawn(VMDBufferPawn SP)
 		return false;
 	}
 	
-	//MADDERS, 9/17/22: Reinforce UNATCO troops anyways on 04_NSFHQ.
-	if ((VMDGetMapName() == "04_NYC_NSFHQ") && (SP.IsA('UNATCOTroop')))
+	switch(VMDGetMapName())
 	{
-		//MADDERS, 11/4/22: Except this guy. Blocks the doors.
-		if (class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP) == 2)
-		{
-			return false;
-		}
-		return true;
-	}
-	
-	//MADDERS, 2/27/25: These guys can spawn janky NPC placements, so don't reinforce.
-	if ((VMDGetMapName() == "UNDERGROUND_LAB2") && (SP.IsA('MJ12Troop')))
-	{
-		switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
-		{
-			case 3:
-			case 4:
-				return false;
-			break;
-		}
-		return true;
-	}
-	
-	//MADDERS, 11/4/22: Don't reinforce the ones that are a MAJOR dick move for completion of the level.
-	//Rest is fair game.
-	if ((VMDGetMapName() == "05_NYC_UNATCOMJ12LAB") && (SP.IsA('MJ12Troop')))
-	{
-		switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
-		{
-			case 7:
-			case 11: //Bottom armory guy added 12/7/23. *I* have a hard time playing through it, especially with new AI.
-				 //Top + Bottom both being multiple in some seeds can make success come down to RNG (where they get placed, how many you get).
-				 //This is bullshit and I can't ask other people to put up with this.
-			case 12:
-				return false;
-			break;
-			default:
-			break;
-		}
-	}
-	
-	//MADDERS, 8/7/2023: Reinforce versalife now, too.
-	//Rest is fair game.
-	if ((VMDGetMapName() == "06_HONGKONG_VERSALIFE") && (SP.IsA('Cop')))
-	{
-		return true;
-		/*switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
-		{
-			default:
-			break;
-		}*/
-	}
-	
-	//MADDERS, 8/7/2023: Reinforce mj12 lab with it.
-	//Rest is fair game.
-	if ((VMDGetMapName() == "06_HONGKONG_MJ12LAB") && (SP.IsA('MJ12Troop') || SP.IsA('MJ12Commando') || SP.IsA('MIB') || SP.IsA('WIB')))
-	{
-		return true;
-		/*switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
-		{
-			default:
-			break;
-		}*/
+		//MADDERS, 2/27/25: These guys can spawn janky NPC placements, so don't reinforce.
+		case "UNDERGROUND_LAB2":
+			if (SP.IsA('MJ12Troop'))
+			{
+				switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
+				{
+					case 3:
+					case 4:
+						return false;
+					break;
+				}
+				return true;
+			}
+		break;
+		//MADDERS, 9/17/22: Reinforce UNATCO troops anyways on 04_NSFHQ.
+		case "04_NYC_NSFHQ":
+			if (SP.IsA('UNATCOTroop'))
+			{
+				if (bRevisionMapSet)
+				{
+					//MADDERS, 8/9/25: Wowee, turns out this guy is the same in Revision maps. Start of a trend?
+					if (class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP) == 2)
+					{
+						return false;
+					}
+				}
+				else
+				{
+					//MADDERS, 11/4/22: Except this guy. Blocks the doors.
+					if (class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP) == 2)
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+		break;
+		//MADDERS, 11/4/22: Don't reinforce the ones that are a MAJOR dick move for completion of the level.
+		//Rest is fair game.
+		case "05_NYC_UNATCOMJ12LAB":
+			if (SP.IsA('MJ12Troop'))
+			{
+				if (bRevisionMapSet)
+				{
+					switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
+					{
+						case 7: //Secretary hit-on guy.
+						case 11: //Bottom armory guy added 12/7/23. *I* have a hard time playing through it, especially with new AI.
+							 //Top + Bottom both being multiple in some seeds can make success come down to RNG (where they get placed, how many you get).
+							 //This is bullshit and I can't ask other people to put up with this.
+						case 12: //Outside cell guy.
+						case 13: //Upper walkway guy, because Revision has more dudes.
+						case 9: //Revision unique dudes. They're a dick.
+						case 22:
+							return false;
+						break;
+					}
+				}
+				else
+				{
+					switch(class'VMDStaticFunctions'.Static.StripBaseActorSeed(SP))
+					{
+						case 7: //Secretary hit-on guy.
+						case 11: //Bottom armory guy added 12/7/23. *I* have a hard time playing through it, especially with new AI.
+							 //Top + Bottom both being multiple in some seeds can make success come down to RNG (where they get placed, how many you get).
+							 //This is bullshit and I can't ask other people to put up with this.
+						case 12: //Outside cell guy.
+						case 13: //Upper walkway guy, to be consistent with Revision.
+							return false;
+						break;
+					}
+				}
+			}
+		break;
+		//MADDERS, 8/7/2023: Reinforce versalife now, too.
+		//Rest is fair game.
+		case "06_HONGKONG_VERSALIFE":
+			if (SP.IsA('Cop'))
+			{
+				return true;
+			}
+		break;
+		//MADDERS, 8/7/2023: Reinforce mj12 lab with it.
+		//Rest is fair game.
+		case "06_HONGKONG_MJ12LAB":
+			if (SP.IsA('MJ12Troop') || SP.IsA('MJ12Commando') || SP.IsA('MIB') || SP.IsA('WIB'))
+			{
+				return true;
+			}
+		break;
 	}
 	
 	//MADDERS, 9/17/22: Moved here so we can use the UNATCO cheat.
@@ -647,8 +764,11 @@ function int UpgradePawnAmmo(ScriptedPawn TPawn, int StartMayhem, int TMayhem)
 					{
 						if (TMission < 7)
 						{
-							ForceLoadAmmo(TPawn, class'Ammo3006Tranq', TPawn.InitialInventory[i].Count);
-							BuffCount++;
+							if (FakeRand(5) < 2)
+							{
+								ForceLoadAmmo(TPawn, class'Ammo3006Tranq', TPawn.InitialInventory[i].Count);
+								BuffCount++;
+							}
 						}
 						else
 						{
@@ -863,7 +983,10 @@ function class<Weapon> ObtainHighLevelWeapon(VMDBufferPawn TP, out class<Ammo> O
 					OutAmmo = class'Ammo3006';
 				break;
 				case 1:
-					OutAmmo = class'Ammo3006Tranq';
+					if (FakeRand(5) < 2)
+					{
+						OutAmmo = class'Ammo3006Tranq';
+					}
 				break;
 				case 2:
 					OutAmmo = class'Ammo3006HEAT';
@@ -1000,7 +1123,7 @@ function class<Inventory> ObtainMediumLevelPickup(VMDBufferPawn TP)
 	switch(R)
 	{
 		case 0:
-			if (!TP.IsA('HumanCivilian') && !TP.IsA('Cop'))
+			if ((!TP.IsA('HumanCivilian')) && (!TP.IsA('Cop')) && (FakeFRand() < 0.4))
 			{
 				Ret = class'FireExtinguisher';
 			}
@@ -1901,38 +2024,7 @@ function ThrownProjectile MayhemPlaceGrenade(class<ThrownProjectile> PlaceClass,
 
 function string VMDGetMapName()
 {
- 	local string S, S2;
- 	
- 	S = GetURLMap();
- 	S2 = Chr(92); //What the fuck. Can't type this anywhere!
-	
-	//MADDERS, 3/23/21: Uuuuh... Oceanlab machine :B:ROKE.
-	//No idea how or why this happens, and only post-DXT merge. Fuck it. Chop it down.
-	if (Right(S, 1) ~= " ") S = Left(S, Len(S)-1);
-	
- 	//HACK TO FIX TRAVEL BUGS!
- 	if (InStr(S, S2) > -1)
- 	{
-  		do
-  		{
-   			S = Right(S, Len(S) - InStr(S, S2) - 1);
-  		}
-  		until (InStr(S, S2) <= -1);
-
-		if (InStr(S, ".") > -1)
-		{
-  			S = Left(S, Len(S) - 4);
-		}
- 	}
- 	else
-	{
-		if (InStr(S, ".") > -1)
-		{
-			S = Left(S, Len(S)-3);
-		}
- 	}
-	
- 	return CAPS(S);
+ 	return class'VMDStaticFunctions'.Static.VMDGetMapName(Self);
 }
 
 function int VMDGetMissionNumber()
