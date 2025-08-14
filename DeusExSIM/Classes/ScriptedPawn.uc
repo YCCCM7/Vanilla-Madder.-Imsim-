@@ -3064,7 +3064,13 @@ function DropWeapon()
 	local VMDBufferPawn VMP;
 	local VMDMedigel TGel;
 	local Weapon oldWeapon;
-
+	
+	//MADDERS, 8/5/25: Emergency backup check from hell.
+	if ((VMDBufferPawn(Self) != None) && (!VMDBufferPawn(Self).VMDCanDropWeapon()))
+	{
+		return;
+	}
+	
 	if (Weapon != None)
 	{
 		dxWeapon = DeusExWeapon(Weapon);
@@ -3575,7 +3581,7 @@ function bool FilterDamageType(Pawn instigatedBy, Vector hitLocation, Vector off
 		}
 	}
 	
-	if (damageType == 'EMP')
+	if (damageType == 'EMP' || damageType == 'Shocked')
 	{
 		if (VMDBufferPawn(Self) == None || VMDBufferPawn(Self).CurCloakAug == None)
 		{
@@ -3586,7 +3592,11 @@ function bool FilterDamageType(Pawn instigatedBy, Vector hitLocation, Vector off
 			}
 			EnableCloak(bCloakOn);
 		}
-		return false;
+		
+		if (damageType == 'EMP')
+		{
+			return false;
+		}
 	}
 	
 	if (VMBP != None)
@@ -3979,11 +3989,11 @@ function EHitLocation HandleDamage(int actualDamage, Vector hitLocation, Vector 
 				if ((VMBP != None) && (VMBP.VMDCanDropWeapon()))
 				{
 					DisarmOdds = FDamage / float(VMBP.StartingHealthValues[3]);
-					if ((VMDBufferPlayer(VMBP.LastInstigator) != None) && (DeusExWeapon(VMDBufferPlayer(VMBP.LastInstigator).InHand) != None) && (DeusExWeapon(VMDBufferPlayer(VMBP.LastInstigator).InHand).VMDIsMeleeWeapon()))
+					if ((!VMBP.bStrafing) && (VMDBufferPlayer(VMBP.LastInstigator) != None) && (DeusExWeapon(VMDBufferPlayer(VMBP.LastInstigator).InHand) != None) && (DeusExWeapon(VMDBufferPlayer(VMBP.LastInstigator).InHand).VMDIsMeleeWeapon()))
 					{
 						DisarmOdds *= 2.0;
 					}
-					else if ((VMDBufferPawn(VMBP.LastInstigator) != None) && (DeusExWeapon(VMDBufferPawn(VMBP.LastInstigator).Weapon) != None) && (DeusExWeapon(VMDBufferPawn(VMBP.LastInstigator).Weapon).VMDIsMeleeWeapon()))
+					else if ((!VMBP.bStrafing) && (VMDBufferPawn(VMBP.LastInstigator) != None) && (DeusExWeapon(VMDBufferPawn(VMBP.LastInstigator).Weapon) != None) && (DeusExWeapon(VMDBufferPawn(VMBP.LastInstigator).Weapon).VMDIsMeleeWeapon()))
 					{
 						DisarmOdds *= 2.0;
 					}
@@ -4075,6 +4085,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	local int LegSum, TPos, TRand;
 	local float LegMod, PoisonMod, FDamage, BonusFDamage;
 	local Vector TLoc, HitLocs[5], HitNorm, StartTraces[6], EndTraces[6];
+	local Rotator TRot;
 	local Actor HitActor, TComp;
 	local VMDBufferPawn VMBP;
 	local VMDPoisonScout TScout;
@@ -4093,7 +4104,14 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	// transform the worldspace hitlocation into objectspace
 	// in objectspace, remember X is front to back
 	// Y is side to side, and Z is top to bottom
-	offset = (hitLocation - Location) << Rotation;
+	//------------------------------------------
+	//MADDERS, 8/14/25: Offset for illogical rotations (model implied).
+	TRot = Rotation;
+	if ((VMBP != None) && (VMBP.bStrafing))
+	{
+		TRot.Yaw -= 16384;
+	}
+	offset = (hitLocation - Location) << TRot;
 	
 	//MADDERS: Don't show pain in reaction to poison DOT.
 	//IE if we're running for the alarm, don't give us extra time.
@@ -4136,6 +4154,24 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 			VMBP.VMDSignalDamageTaken(Damage, DamageType, HitLocation, false);
 		}
 		return;
+	}
+	else if (DamageType == 'Shocked')
+	{
+		if (VMBP != None)
+		{
+			if (VMBP.AugmentationSystem != None)
+			{
+				//MADDERS, 12/27/23: Hack for potential EMP shield. NPCs always have augs at max level, so 0 is the sign.
+				if (VMBP.AugmentationSystem.VMDConfigureDamageMult(DamageType, Damage, HitLocation) <= 0)
+				{
+					VMBP.Energy = Clamp(VMBP.Energy + (Damage*0.5), 0, VMBP.EnergyMax);
+				}
+				else
+				{
+					VMBP.Energy = Clamp(VMBP.Energy - Damage, 0, VMBP.EnergyMax);
+				}
+			}
+		}
 	}
 	
 	// Impart momentum
@@ -4234,7 +4270,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 		if (VMBP != None)
 		{
 			ShieldMult2 = VMBP.VMDConfigurePickupDamageMult(DamageType, int(FDamage + BonusFDamage), HitLocation);
-			VMBP.VMDSignalDamageTaken(Damage * ShieldMult, DamageType, HitLocation, false);
+			VMBP.VMDSignalDamageTaken(FDamage * ShieldMult, DamageType, HitLocation, false);
 			
 			//MADDERS: Draw a unique pickup shield effect for our reduction type!
 			if (ShieldMult2 < 1.0)
@@ -4256,7 +4292,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 			if (VMBP.AugmentationSystem != None)
 			{
 				AugLevel = (VMBP.AugmentationSystem.VMDConfigureDamageMult(DamageType, int(FDamage + BonusFDamage), HitLocation));
-				VMBP.AugmentationSystem.VMDSignalDamageTaken(Damage * ShieldMult, DamageType, HitLocation, false);
+				VMBP.AugmentationSystem.VMDSignalDamageTaken(FDamage * ShieldMult, DamageType, HitLocation, false);
 			}
 			
 			if (AugLevel >= 0.0)
@@ -5874,9 +5910,40 @@ function PlayRunningAndFiring()
 		}
 		else
 		{
+			//MADDERS, 8/2/25: This animation is trash. Use this like we would in MP.
 			if (W.bHandToHand)
 			{
-				if (HasAnim('Run')) LoopAnimPivot('Run',runAnimMult,0.1);
+				if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bStrafing))
+				{
+					if (HasTwoHandedWeapon())
+					{
+						if (HasAnim('Strafe2H')) LoopAnimPivot('Strafe2H',runAnimMult,0.1);
+						else if (HasAnim('Strafe')) LoopAnimPivot('Strafe',runAnimMult,0.1);
+						else if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H',runAnimMult,0.1);
+						else if (HasAnim('RunShoot')) LoopAnimPivot('RunShoot',runAnimMult,0.1);
+					}
+					else
+					{
+						if (HasAnim('Strafe')) LoopAnimPivot('Strafe',runAnimMult,0.1);
+						else if (HasAnim('Strafe2H')) LoopAnimPivot('Strafe2H',runAnimMult,0.1);
+						else if (HasAnim('RunShoot')) LoopAnimPivot('RunShoot',runAnimMult,0.1);
+						else if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H',runAnimMult,0.1);
+					}
+				}
+				else
+				{
+					if (HasTwoHandedWeapon())
+					{
+						if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H',runAnimMult,0.1);
+						else if (HasAnim('RunShoot')) LoopAnimPivot('RunShoot',runAnimMult,0.1);
+					}
+					else
+					{
+						if (HasAnim('RunShoot')) LoopAnimPivot('RunShoot',runAnimMult,0.1);
+						else if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H',runAnimMult,0.1);
+					}
+				}
+				//if (HasAnim('Run')) LoopAnimPivot('Run',runAnimMult,0.1);
 			}
 			else
 			{
@@ -6001,15 +6068,35 @@ function TweenToShoot(float tweentime)
 	{
 		if (!IsWeaponReloading())
 		{
-			if (HasTwoHandedWeapon())
+			if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bStrafing))
 			{
-				if (HasAnim('Shoot2H')) TweenAnimPivot('Shoot2H', tweentime);
-				else if (HasAnim('Shoot')) TweenAnimPivot('Shoot', tweentime);
+				if (HasTwoHandedWeapon())
+				{
+					if (HasAnim('Strafe2H')) TweenAnimPivot('Strafe2H', tweentime);
+					else if (HasAnim('Strafe')) TweenAnimPivot('Strafe', tweentime);
+					else if (HasAnim('RunShoot2H')) TweenAnimPivot('RunShoot2H', tweentime);
+					else if (HasAnim('RunShoot')) TweenAnimPivot('RunShoot', tweentime);
+				}
+				else
+				{
+					if (HasAnim('Strafe')) TweenAnimPivot('Strafe', tweentime);
+					else if (HasAnim('Strafe2H')) TweenAnimPivot('Strafe2H', tweentime);
+					else if (HasAnim('RunShoot')) TweenAnimPivot('RunShoot', tweentime);
+					else if (HasAnim('RunShoot2H')) TweenAnimPivot('RunShoot2H', tweentime);
+				}
 			}
 			else
 			{
-				if (HasAnim('Shoot')) TweenAnimPivot('Shoot', tweentime);
-				else if (HasAnim('Shoot2H')) TweenAnimPivot('Shoot2H', tweentime);
+				if (HasTwoHandedWeapon())
+				{
+					if (HasAnim('Shoot2H')) TweenAnimPivot('Shoot2H', tweentime);
+					else if (HasAnim('Shoot')) TweenAnimPivot('Shoot', tweentime);
+				}
+				else
+				{
+					if (HasAnim('Shoot')) TweenAnimPivot('Shoot', tweentime);
+					else if (HasAnim('Shoot2H')) TweenAnimPivot('Shoot2H', tweentime);
+				}
 			}
 		}
 		else
@@ -6044,15 +6131,35 @@ function PlayShoot()
 	}
 	else
 	{
-		if (HasTwoHandedWeapon())
+		if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bStrafing))
 		{
-			if (HasAnim('Shoot2H')) PlayAnimPivot('Shoot2H', , 0);
-			else if (HasAnim('Shoot')) PlayAnimPivot('Shoot', , 0);
+			if (HasTwoHandedWeapon())
+			{
+				if (HasAnim('Strafe2H')) PlayAnimPivot('Strafe2H', , 0);
+				else if (HasAnim('Strafe')) PlayAnimPivot('Strafe', , 0);
+				else if (HasAnim('Shoot2H')) PlayAnimPivot('Shoot2H', , 0);
+				else if (HasAnim('Shoot')) PlayAnimPivot('Shoot', , 0);
+			}
+			else
+			{
+				if (HasAnim('Strafe')) PlayAnimPivot('Strafe', , 0);
+				else if (HasAnim('Strafe2H')) PlayAnimPivot('Strafe2H', , 0);
+				else if (HasAnim('Shoot')) PlayAnimPivot('Shoot', , 0);
+				else if (HasAnim('Shoot2H')) PlayAnimPivot('Shoot2H', , 0);
+			}
 		}
 		else
 		{
-			if (HasAnim('Shoot')) PlayAnimPivot('Shoot', , 0);
-			else if (HasAnim('Shoot2H')) PlayAnimPivot('Shoot2H', , 0);
+			if (HasTwoHandedWeapon())
+			{
+				if (HasAnim('Shoot2H')) PlayAnimPivot('Shoot2H', , 0);
+				else if (HasAnim('Shoot')) PlayAnimPivot('Shoot', , 0);
+			}
+			else
+			{
+				if (HasAnim('Shoot')) PlayAnimPivot('Shoot', , 0);
+				else if (HasAnim('Shoot2H')) PlayAnimPivot('Shoot2H', , 0);
+			}
 		}
 	}
 }
@@ -6106,11 +6213,31 @@ function TweenToAttack(float tweentime)
 	{
 		if (bUseSecondaryAttack)
 		{
-			if (HasAnim('AttackSide')) TweenAnimPivot('AttackSide', tweentime);
+			if (HasAnim('AttackSide'))
+			{
+				if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bStrafing) && (HasAnim('Strafe')))
+				{
+					TweenAnimPivot('Strafe', tweentime);
+				}
+				else
+				{
+					TweenAnimPivot('AttackSide', tweentime);
+				}
+			}
 		}
 		else
 		{
-			if (HasAnim('Attack')) TweenAnimPivot('Attack', tweentime);
+			if (HasAnim('Attack'))
+			{
+				if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bStrafing) && (HasAnim('Strafe')))
+				{
+					TweenAnimPivot('Strafe', tweentime);
+				}
+				else
+				{
+					TweenAnimPivot('Attack', tweentime);
+				}
+			}
 		}
 	}
 }
@@ -6130,11 +6257,25 @@ function PlayAttack()
 	{
 		if (bUseSecondaryAttack)
 		{
-			if (HasAnim('AttackSide')) PlayAnimPivot('AttackSide');
+			if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bStrafing) && (HasAnim('Strafe')))
+			{
+				PlayAnimPivot('Strafe');
+			}
+			else
+			{
+				if (HasAnim('AttackSide')) PlayAnimPivot('AttackSide');
+			}
 		}
 		else
 		{
-			if (HasAnim('Attack')) PlayAnimPivot('Attack');
+			if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bStrafing) && (HasAnim('Strafe')))
+			{
+				PlayAnimPivot('Strafe');
+			}
+			else
+			{	
+				if (HasAnim('Attack')) PlayAnimPivot('Attack');
+			}
 		}
 	}
 }
@@ -6237,15 +6378,31 @@ function TweenToRunning(float tweentime)
 	}
 	else
 	{
-		if (HasTwoHandedWeapon())
+		if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bStrafing))
 		{
-			if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H', runAnimMult, tweentime);
-			else if (HasAnim('Run')) LoopAnimPivot('Run', runAnimMult, tweentime);
+			if (HasTwoHandedWeapon())
+			{
+				if (HasAnim('Strafe2H')) LoopAnimPivot('Strafe2H', runAnimMult, tweentime);
+				else if (HasAnim('Strafe')) LoopAnimPivot('Strafe', runAnimMult, tweentime);
+			}
+			else
+			{
+				if (HasAnim('Strafe')) LoopAnimPivot('Strafe', runAnimMult, tweentime);
+				else if (HasAnim('Strafe2H')) LoopAnimPivot('Strafe2H', runAnimMult, tweentime);
+			}
 		}
 		else
 		{
-			if (HasAnim('Run')) LoopAnimPivot('Run', runAnimMult, tweentime);
-			else if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H', runAnimMult, tweentime);
+			if (HasTwoHandedWeapon())
+			{
+				if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H', runAnimMult, tweentime);
+				else if (HasAnim('Run')) LoopAnimPivot('Run', runAnimMult, tweentime);
+			}
+			else
+			{
+				if (HasAnim('Run')) LoopAnimPivot('Run', runAnimMult, tweentime);
+				else if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H', runAnimMult, tweentime);
+			}
 		}
 	}
 }
@@ -6265,15 +6422,31 @@ function PlayRunning()
 	}
 	else
 	{
-		if (HasTwoHandedWeapon())
+		if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bStrafing))
 		{
-			if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H', runAnimMult);
-			else if (HasAnim('Run')) LoopAnimPivot('Run', runAnimMult);
+			if (HasTwoHandedWeapon())
+			{
+				if (HasAnim('Strafe2H')) LoopAnimPivot('Strafe2H', runAnimMult);
+				else if (HasAnim('Strafe')) LoopAnimPivot('Strafe', runAnimMult);
+			}
+			else
+			{
+				if (HasAnim('Strafe')) LoopAnimPivot('Strafe', runAnimMult);
+				else if (HasAnim('Strafe2H')) LoopAnimPivot('Strafe2H', runAnimMult);
+			}
 		}
 		else
 		{
-			if (HasAnim('Run')) LoopAnimPivot('Run', runAnimMult);
-			else if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H', runAnimMult);
+			if (HasTwoHandedWeapon())
+			{
+				if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H', runAnimMult);
+				else if (HasAnim('Run')) LoopAnimPivot('Run', runAnimMult);
+			}
+			else
+			{
+				if (HasAnim('Run')) LoopAnimPivot('Run', runAnimMult);
+				else if (HasAnim('RunShoot2H')) LoopAnimPivot('RunShoot2H', runAnimMult);
+			}
 		}
 	}
 }
@@ -8853,8 +9026,22 @@ function FindBestEnemy(bool bIgnoreCurrentEnemy)
 
 function bool ShouldStrafe()
 {
+	local DeusExWeapon DXW;
+	
+	//MADDERS, 8/2/25: Don't do this if we're not human. It's jank.
+	if (Animal(Self) != None || Robot(Self) != None)
+	{
+		return false;
+	}
+	
 	// This may be overridden from subclasses
 	//return (AICanSee(enemy, 1.0, false, true, true, true) > 0);
+	DXW = DeusExWeapon(Weapon);
+	if ((DXW != None) && (DXW.bInstantHit) && (DXW.MaxRange < 192) && (VSize(Enemy.Location - Location) < 256) && (AICanSee(enemy, 1.0, false, true, true, true) > 0))
+	{
+		return true;
+	}
+	
 	return (AICanShoot(enemy, false, false, 0.025, true));
 }
 
@@ -9039,6 +9226,9 @@ function EDestinationType ComputeBestFiringPosition(out vector newPosition)
 	local rotator              sprintRot;
 	local vector               sprintVect;
 	local bool                 bUseSprint;
+	
+	//MADDERS shit.
+	local float MeleeHomeDistance;
 
 	destType = DEST_Failure;
 
@@ -9161,9 +9351,27 @@ function EDestinationType ComputeBestFiringPosition(out vector newPosition)
 
 	// Used to determine whether NPCs should sprint/avoid aim
 	moveMult = 1.0;
-	if ((dist <= 180) && enemy.bIsPlayer && (enemy.Weapon != None) && (enemyMaxRange < 180))
-		moveMult = CloseCombatMult;
-
+	MeleeHomeDistance = 180;
+	if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).AugmentationSystem != None))
+	{
+		MeleeHomeDistance *= VMDBufferPawn(Self).AugmentationSystem.VMDConfigureSpeedMult(Physics == PHYS_Swimming);
+	}
+	
+	if ((dist <= MeleeHomeDistance) && enemy.bIsPlayer && (enemy.Weapon != None) && (enemyMaxRange < 180))
+	{
+		//MADDERS, 7/21/25: Control our crazy amount of running around with speed aug melee like so.
+		TryVector = Enemy.Location;
+		if (((FastTrace(Enemy.Location, Location)) && (TryLocation(TryVector, CollisionRadius+16, , projList))))
+		{
+			NewPosition = Enemy.Location;
+			return DEST_NewLocation;
+		}
+		else
+		{
+			moveMult = CloseCombatMult;
+		}
+	}
+	
 	if (bAvoidAim && !enemy.bIgnore && (FRand() <= AvoidAccuracy*moveMult))
 	{
 		if ((awayDist < enemyMaxRange+maxDist+50) && (awayDist < 800) && (Enemy.Weapon != None))
@@ -10105,7 +10313,7 @@ function bool SwitchToBestWeapon()
 		//MADDERS: Don't draw grenades until we have a clean line of fire.
 		bTraceEnemy = FastTrace(Enemy.Location, Location);
 	}
-
+	
 	loopCount = 0;
 	while (inv != None)
 	{
@@ -10436,6 +10644,11 @@ function bool SwitchToBestWeapon()
 	// If we're changing weapons, reset the weapon timers
 	if (Weapon != bestWeapon)
 	{
+		if ((VMBP != None) && (VMBP.bStrafing) && (!BestWeapon.bInstantHit))
+		{
+			VMBP.bStrafing = false;
+		}
+		
 		if (!bEnemySet)
 		{
 			WeaponTimer = 10;  // hack
@@ -10449,6 +10662,16 @@ function bool SwitchToBestWeapon()
 			if (bestWeapon.AITimeLimit > 0)
 			{
 				SpecialTimer = bestWeapon.AITimeLimit;
+			}
+			
+			//MADDERS, 7/24/25: Delay weapons being used by this amount of time when drawn. Symmetrical gameplay, hooray.
+			if ((VMBP != None) && (BestWeapon.VMDGetWeaponDrawTime() > 0))
+			{
+				VMBP.WeaponSwapTimer = BestWeapon.VMDGetWeaponDrawTime();
+				if ((DeusExWeapon(Weapon) != None) && (Weapon.Owner == Self) && (DeusExWeapon(Weapon).VMDGetWeaponHolsterTime() > 0))
+				{
+					VMBP.WeaponSwapTimer += DeusExWeapon(Weapon).VMDGetWeaponHolsterTime();
+				}
 			}
 		}
 		ReloadTimer = 0;
@@ -14928,7 +15151,7 @@ State Attacking
 		if (enemy == None)
 			return (destType);
 		
-		if (bCrouching && (CrouchTimer > 0))
+		if ((bCrouching) && (CrouchTimer > 0))
 			destType = DEST_SameLocation;
 		
 		if (destType == DEST_Failure)
@@ -15005,9 +15228,14 @@ State Attacking
 			return (destType);
 		}
 		
-		if (bCrouching && (CrouchTimer > 0))
+		if ((bCrouching) && (CrouchTimer > 0))
 		{
 			destType = DEST_SameLocation;
+		}
+		
+		if (Enemy != None && FastTrace(Enemy.Location, Location) && DeusExWeapon(Weapon) != None && DeusExWeapon(Weapon).bStationaryFiringOnly && (VMBP == None || !VMBP.VMDCanRunWithAnyWeapon()))
+		{
+			return DEST_SameLocation;
 		}
 		
 		//MADDERS, 8/18/23: If our enemy is playing peakaboo, react in a human-like timescale by popping our peaker in question.
@@ -15116,10 +15344,12 @@ State Attacking
 	{
 		local FireExtinguisher TExting;
 		local DeusExWeapon dxWeapon;
+		local VMDBufferPawn VMBP;
 		
-		if (VMDBufferPawn(Self) != None)
+		VMBP = VMDBufferPawn(Self);
+		if (VMBP != None)
 		{
-			TExting = VMDBufferPawn(Self).ActiveExtinguisher;
+			TExting = VMBP.ActiveExtinguisher;
 			if ((TExting != None) && (TExting.IsInState('Activated')))
 			{
 				return false;
@@ -15130,6 +15360,15 @@ State Attacking
 		if (dxWeapon != None)
 		{
 			if ((dxWeapon.AIFireDelay > 0) && (FireTimer > 0))
+			{
+				return false;
+			}
+			else if ((VMBP != None) && (VMBP.WeaponSwapTimer > 0))
+			{
+				return false;
+			}
+			//MADDERS, 8/2/25: Stupid strafing cheese with instant fire. Add some delay.
+			else if ((VMBP != None) && (VMBP.bStrafing) && (VMBP.VMDClearTargetTime < 0.20))
 			{
 				return false;
 			}
@@ -15477,13 +15716,19 @@ State Attacking
 		EnableCheckDestLoc(false);
 		bCanFire = false;
 		bFacingTarget = false;
-
+		
 		ResetReactions();
 		bCanConverse = True;
 		bAttacking = False;
 		bStasis = True;
 		bReadyToReload = false;
-
+		
+		if (VMDBufferPawn(Self) != None)
+		{
+			VMDBufferPawn(Self).bStrafing = false;
+			VMDBufferPawn(Self).VMDUpdateGroundSpeedBuoyancy();
+		}
+		
 		EndCrouch();
 	}
 	
@@ -15852,6 +16097,12 @@ RunToRange:
 		
 		if ((bCanStrafe) && (ShouldStrafe()) && (VMDBufferPawn(Self) == None || VMDBufferPawn(Self).TargetedLadderPoint == None))
 		{
+			if (VMDBufferPawn(Self) != None)
+			{
+				VMDBufferPawn(Self).bStrafing = true;
+				VMDBufferPawn(Self).VMDUpdateGroundSpeedBuoyancy();
+			}
+			
 			PlayRunningAndFiring();
 			if (destPoint != None)
 			{
@@ -15860,6 +16111,12 @@ RunToRange:
 			else
 			{
 				StrafeFacing(destLoc, enemy);
+			}
+			
+			if (VMDBufferPawn(Self) != None)
+			{
+				VMDBufferPawn(Self).bStrafing = false;
+				VMDBufferPawn(Self).VMDUpdateGroundSpeedBuoyancy();
 			}
 			bFacingTarget = true;
 		}
@@ -17890,7 +18147,7 @@ state Burning
 			}
 			
 			MoveTarget = FindPathToward(Best);
-			if (!FastTrace(Best.Location, MoveTarget.Location + Vect(0,0,1) * BaseEyeHeight) && (Inventory(Best) != None || Decoration(Best) != None))
+			if (MoveTarget != None && !FastTrace(Best.Location, MoveTarget.Location + Vect(0,0,1) * BaseEyeHeight) && (Inventory(Best) != None || Decoration(Best) != None))
 			{
 				if (bestNav != None)
 				{
@@ -17905,7 +18162,7 @@ state Burning
 					}
 				}
 			}
-			else if (MoveTarget != None)
+			else if ((MoveTarget != None) && (Best != None))
 			{
 				DestPoint = Best;
 				DestLoc = Best.Location;
