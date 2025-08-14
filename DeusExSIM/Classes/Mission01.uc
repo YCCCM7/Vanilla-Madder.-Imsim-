@@ -32,7 +32,7 @@ function FirstFrame()
 				cmdr.Destroy();
 		}
 		
-		// make Anna not flee in this mission
+		// make Gunther drained of bio.
 		foreach AllActors(class'GuntherHermann', Gunther)
 		{
 			if (!flags.GetBool('VMD_GuntherLibertyGoodies'))
