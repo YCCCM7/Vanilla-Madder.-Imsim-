@@ -165,14 +165,25 @@ simulated function Frag(class<fragment> FragType, vector Momentum, float DSize, 
 
 function ApplySpecialStats()
 {
+	Super.ApplySpecialStats();
+	
+	//MADDERS, 8/7/25: Don't loot swap automatically in Revision. What if VMD's Revision RNG deletes us?
+	if (class'VMDStaticFunctions'.Static.GetIntendedMapStyle(Self) == 1)
+	{
+		return;
+	}
+	
+	VMDLootSwapContents();
+}
+
+function VMDLootSwapContents()
+{
 	local bool bTripped;
 	local int NumCon, AltSeed[3];
 	local float TDiff;
 	local string TMap;
 	local VMDBufferPlayer VMP;
 	local class<Inventory> TCon;
-	
-	Super.ApplySpecialStats();
 	
 	if (Contents != None)
 	{
