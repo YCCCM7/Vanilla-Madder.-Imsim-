@@ -185,6 +185,8 @@ function BeginAlarm()
 		LastAlarmTime = AlarmTimeout;
 	}
 	
+	//MADDERS, 7/24/25: End stasis in radius for alarms. Special treatment.
+	class'VMDStaticFunctions'.Static.EndStasisInAOE(Self, Location, 50*(SoundRadius+1));
 	AIStartEvent('Alarm', EAITYPE_Audio, SoundVolume/255.0, 50*(SoundRadius+1));
 	
 	//MADDERS, 8/7/23: Add player stress.
