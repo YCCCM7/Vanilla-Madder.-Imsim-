@@ -123,6 +123,7 @@ class VMDSimMagazineImports extends VMDSimImportsParent abstract;
 //ProdMag
 //=============================
 #exec TEXTURE IMPORT NAME="VMDProdMagTex1" FILE="Textures\ProdMagTex1.pcx" GROUP=Skins
+#exec TEXTURE IMPORT NAME="VMDProdMagTex2" FILE="Textures\ProdMagTex2.pcx" GROUP=Skins
 
 #exec MESH IMPORT MESH=VMDProdMag ANIVFILE=MODELS\ProdMag_a.3d DATAFILE=MODELS\ProdMag_d.3d X=0 Y=0 Z=0
 #exec MESH ORIGIN MESH=VMDProdMag X=0 Y=0 Z=0 PITCH=0 ROLL=0 YAW=0

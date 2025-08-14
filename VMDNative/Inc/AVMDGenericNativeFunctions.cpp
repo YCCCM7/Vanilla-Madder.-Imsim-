@@ -12,7 +12,7 @@ void AVMDGenericNativeFunctions::execGetArrayPropertyText(FFrame &Stack, void *R
 	
     if(!RelevantObject)
     {
-		GLog -> Logf(L"WARNING: VMDGenericNativeFunctions.SetArrayPropertyText: Relevant object was none!");
+		GLog -> Logf(L"WARNING: VMDGenericNativeFunctions.GetArrayPropertyText: Relevant object was none!");
 		*(FString*)Result = L"";
 		return;
 	}
@@ -21,28 +21,21 @@ void AVMDGenericNativeFunctions::execGetArrayPropertyText(FFrame &Stack, void *R
 	
 	if(!PropType)
     {
-		GLog -> Logf(L"WARNING: VMDGenericNativeFunctions.SetArrayPropertyText: Prop type was none!");
+		GLog -> Logf(L"WARNING: VMDGenericNativeFunctions.GetArrayPropertyText: Prop type was none!");
 		*(FString*)Result = L"";
 		return;
 	}
-
-	if(!PropType)
-    {
-		GLog -> Logf(L"WARNING: VMDGenericNativeFunctions.SetArrayPropertyText: Prop type was none!");
-		*(FString*)Result = L"";
-		return;
-	}
-
+	
     if(ArrayIndex < 0 || ArrayIndex >= PropType->ArrayDim)
     {
- 		GLog -> Logf(L"WARNING: VMDGenericNativeFunctions.SetArrayPropertyText: Array index was out of bounds!");
+ 		GLog -> Logf(L"WARNING: VMDGenericNativeFunctions.GetArrayPropertyText: Array index was out of bounds!");
 		*(FString*)Result = L"";
 		return;
 	}
 	
     if(!RelevantObject->GetClass()->IsChildOf(PropType->GetOwnerClass()))
     {
- 		GLog -> Logf(L"WARNING: VMDGenericNativeFunctions.SetArrayPropertyText: Relevant Object is not related to Property's owner class!");
+ 		GLog -> Logf(L"WARNING: VMDGenericNativeFunctions.GetArrayPropertyText: Relevant Object is not related to Property's owner class!");
 		*(FString*)Result = L"";
 		return;
 	}

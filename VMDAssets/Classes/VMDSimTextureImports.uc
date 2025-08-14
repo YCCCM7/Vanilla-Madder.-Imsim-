@@ -191,6 +191,10 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 //=============================
 #exec TEXTURE IMPORT NAME="CustomCampaignPictureVanilla01" FILE="Textures\CustomCampaignPictureVanilla01.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="CustomCampaignPictureVanilla02" FILE="Textures\CustomCampaignPictureVanilla02.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="CustomCampaignPictureRevision01" FILE="Textures\CustomCampaignPictureRevision01.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="CustomCampaignPictureRevision02" FILE="Textures\CustomCampaignPictureRevision02.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="CustomCampaignPictureCustomRevision01" FILE="Textures\CustomCampaignPictureCustomRevision01.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="CustomCampaignPictureCustomRevision02" FILE="Textures\CustomCampaignPictureCustomRevision02.pcx" GROUP=UI FLAGS=2
 
 #exec TEXTURE IMPORT NAME="CustomCampaignPictureRedsunDemo01" FILE="Textures\CustomCampaignPictureRedsunDemo01.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="CustomCampaignPictureRedsunDemo02" FILE="Textures\CustomCampaignPictureRedsunDemo02.pcx" GROUP=UI FLAGS=2
@@ -248,6 +252,56 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="CustomCampaignPictureUnknown02" FILE="Textures\CustomCampaignPictureUnknown02.pcx" GROUP=UI FLAGS=2
 
 //=============================
+//Custom Revision Pics
+//=============================
+#exec TEXTURE IMPORT NAME="RegionPicture00Vanilla" FILE="Textures\RegionPicture00Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture00Revision" FILE="Textures\RegionPicture00Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture01Vanilla" FILE="Textures\RegionPicture01Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture01Revision" FILE="Textures\RegionPicture01Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture02Vanilla" FILE="Textures\RegionPicture02Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture02Revision" FILE="Textures\RegionPicture02Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture03Vanilla" FILE="Textures\RegionPicture03Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture03Revision" FILE="Textures\RegionPicture03Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture04Vanilla" FILE="Textures\RegionPicture04Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture04Revision" FILE="Textures\RegionPicture04Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture05Vanilla" FILE="Textures\RegionPicture05Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture05Revision" FILE="Textures\RegionPicture05Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture06Vanilla" FILE="Textures\RegionPicture06Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture06Revision" FILE="Textures\RegionPicture06Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture07Vanilla" FILE="Textures\RegionPicture07Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture07Revision" FILE="Textures\RegionPicture07Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture08Vanilla" FILE="Textures\RegionPicture08Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture08Revision" FILE="Textures\RegionPicture08Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture09Vanilla" FILE="Textures\RegionPicture09Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture09Revision" FILE="Textures\RegionPicture09Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture10Vanilla" FILE="Textures\RegionPicture10Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture10Revision" FILE="Textures\RegionPicture10Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture11Vanilla" FILE="Textures\RegionPicture11Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture11Revision" FILE="Textures\RegionPicture11Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture12Vanilla" FILE="Textures\RegionPicture12Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture12Revision" FILE="Textures\RegionPicture12Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture13Vanilla" FILE="Textures\RegionPicture13Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture13Revision" FILE="Textures\RegionPicture13Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture14Vanilla" FILE="Textures\RegionPicture14Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture14Revision" FILE="Textures\RegionPicture14Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture15Vanilla" FILE="Textures\RegionPicture15Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture15Revision" FILE="Textures\RegionPicture15Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture16Vanilla" FILE="Textures\RegionPicture16Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture16Revision" FILE="Textures\RegionPicture16Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture17Vanilla" FILE="Textures\RegionPicture17Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture17Revision" FILE="Textures\RegionPicture17Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture18Vanilla" FILE="Textures\RegionPicture18Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture18Revision" FILE="Textures\RegionPicture18Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture19Vanilla" FILE="Textures\RegionPicture19Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture19Revision" FILE="Textures\RegionPicture19Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture20Vanilla" FILE="Textures\RegionPicture20Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture20Revision" FILE="Textures\RegionPicture20Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture21Vanilla" FILE="Textures\RegionPicture21Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture21Revision" FILE="Textures\RegionPicture21Revision.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture22Vanilla" FILE="Textures\RegionPicture22Vanilla.pcx" GROUP=UI
+#exec TEXTURE IMPORT NAME="RegionPicture22Revision" FILE="Textures\RegionPicture22Revision.pcx" GROUP=UI
+
+//=============================
 //Specialization Icons
 //=============================
 #exec TEXTURE IMPORT NAME="SpecializationsIconCustom1" FILE="Textures\SpecializationsCustom1.pcx" GROUP=UI FLAGS=2
@@ -299,6 +353,16 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="CustomCampaignBackground_4" FILE="Textures\CustomCampaignBG04.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="CustomCampaignBackground_5" FILE="Textures\CustomCampaignBG05.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="CustomCampaignBackground_6" FILE="Textures\CustomCampaignBG06.pcx" GROUP=UI FLAGS=2
+
+//=============================
+//Custom Revision Screen
+//=============================
+#exec TEXTURE IMPORT NAME="CustomRevisionBackground_1" FILE="Textures\CustomRevisionBG01.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="CustomRevisionBackground_2" FILE="Textures\CustomRevisionBG02.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="CustomRevisionBackground_3" FILE="Textures\CustomRevisionBG03.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="CustomRevisionBackground_4" FILE="Textures\CustomRevisionBG04.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="CustomRevisionBackground_5" FILE="Textures\CustomRevisionBG05.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="CustomRevisionBackground_6" FILE="Textures\CustomRevisionBG06.pcx" GROUP=UI FLAGS=2
 
 //=============================
 //Class Screen
@@ -609,6 +673,13 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="Ammo3006Tranq" FILE="Textures\Ammo3006Tranq.pcx" GROUP=Skins
 
 //=============================
+//Prod ammo
+//=============================
+#exec TEXTURE IMPORT NAME="BeltIconAmmoOverchargedBattery" FILE="Textures\BeltIconAmmoOverchargedBattery.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="LargeIconAmmoOverchargedBattery" FILE="Textures\LargeIconAmmoOverchargedBattery.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="AmmoOverchargedBattery" FILE="Textures\AmmoOverchargedBattery.pcx" GROUP=Skins
+
+//=============================
 //Shotgun rounds
 //=============================
 #exec TEXTURE IMPORT NAME="BeltIconAmmoDragonsBreath" FILE="Textures\BeltIconDragonsBreath.pcx" GROUP=UI FLAGS=2
@@ -735,6 +806,9 @@ class VMDSimTextureImports extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="VMDUNATCOTroopTex2BallisticArmor" FILE="Textures\UNATCOTroopTex2BallisticArmor.pcx" GROUP=Skins
 
 #exec TEXTURE IMPORT NAME="VMDTrenchCoatBallisticArmor" FILE="Textures\TrenchCoatBallisticArmor.pcx" GROUP=Skins
+
+//Revision specific
+#exec TEXTURE IMPORT NAME="VMDNathanMadisonTex1BallisticArmor" FILE="Textures\NathanMadisonTex1BallisticArmor.pcx" GROUP=Skins
 
 //=============================
 //DDS Filler. If not assigned, look like default JC.

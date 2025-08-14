@@ -6,7 +6,7 @@
 --------------------Configuration: VMDNative - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "C:\Users\ycccm\AppData\Local\Temp\RSPAAA6.tmp" with contents
+Creating temporary file "C:\Users\ycccm\AppData\Local\Temp\RSPA4E5.tmp" with contents
 [
 ..\Core\Lib\Core.lib ..\Engine\Lib\Engine.lib ..\Editor\Lib\Editor.lib ..\Extension\Lib\Extension.lib User32.lib Shell32.lib /nologo /dll /incremental:no /pdb:"Lib/VMDNative.pdb" /machine:I386 /out:"..\System\VMDNative.dll" /implib:"Lib/VMDNative.lib" /pdbtype:sept 
 .\Lib\AVMDFileFinder.obj
@@ -15,11 +15,13 @@ Creating temporary file "C:\Users\ycccm\AppData\Local\Temp\RSPAAA6.tmp" with con
 .\Lib\AVMDLightRebuilder.obj
 .\Lib\AVMDNihilumCleaner.obj
 .\Lib\AVMDPathRebuilder.obj
+.\Lib\AVMDTerrainReskinner.obj
 .\Lib\AVMDUnlitFixer.obj
+.\Lib\UGetNextMissionNumberFixer.obj
 .\Lib\UKentiesUIFix.obj
 .\Lib\VMDNative.obj
 ]
-Creating command line "link.exe @C:\Users\ycccm\AppData\Local\Temp\RSPAAA6.tmp"
+Creating command line "link.exe @C:\Users\ycccm\AppData\Local\Temp\RSPA4E5.tmp"
 <h3>Output Window</h3>
 Linking...
    Creating library Lib/VMDNative.lib and object Lib/VMDNative.exp

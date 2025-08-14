@@ -116,7 +116,15 @@ SOURCE=.\Inc\AVMDPathRebuilder.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\Inc\AVMDTerrainReskinner.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\Inc\AVMDUnlitFixer.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Inc\UGetNextMissionNumberFixer.cpp
 # End Source File
 # Begin Source File
 

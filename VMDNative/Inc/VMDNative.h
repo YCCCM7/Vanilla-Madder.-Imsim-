@@ -9,6 +9,8 @@
 
 //Core dependencies? Probably
 #include "windows.h"	//Necessary for detours?
+#include "stdio.h"
+#include "string.h"
 #include "Core.h"
 #include "Engine.h"
 #include "EditorPrivate.h"

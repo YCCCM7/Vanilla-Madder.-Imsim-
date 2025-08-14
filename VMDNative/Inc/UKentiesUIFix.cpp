@@ -44,7 +44,7 @@ void UKentiesUIFix::execAssertHook( FFrame& Stack, RESULT_DECL )
 			GNatives[1050] = reinterpret_cast<Native>(&UKentiesUIFix::execApplyScaling);
 		}
 	}
-
+	
 	unguardexec;
 }
 
