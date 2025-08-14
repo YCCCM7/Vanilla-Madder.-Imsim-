@@ -102,6 +102,7 @@ function PreTravel()
 			player.drugEffectTimer = 0;
 			player.StopPoison();
 			
+			//MADDERS, 8/9/25: Missing prior annotation, but do some KO elimination here.
 			if (Flags.GetBool('AnnaNavarre_Unconscious'))
 			{
 				Flags.SetBool('AnnaNavarre_Unconscious', False,, 6);
@@ -178,6 +179,7 @@ function Timer()
 				PlayerLocation = Player.Location;
 				PlayerRotation = Player.Rotation;
 				
+				//MADDERS, 8/9/25: Missing prior annotation, but do some KO elimination here.
 				if (Flags.GetBool('AnnaNavarre_Unconscious'))
 				{
 					Flags.SetBool('AnnaNavarre_Unconscious', False,, 6);
@@ -202,6 +204,7 @@ function Timer()
 				if (localURL == "04_NYC_HOTEL")
 					CheckPaulWellbeing();
 				
+				//MADDERS, 8/9/25: Missing prior annotation, but do some KO elimination here.
 				if (Flags.GetBool('AnnaNavarre_Unconscious'))
 				{
 					Flags.SetBool('AnnaNavarre_Unconscious', False,, 6);
@@ -334,6 +337,7 @@ function Timer()
 					}
 				}
 				
+				//MADDERS, 8/9/25: Missing previous annotation. Give Paul his raid gear, and make him fight with everything he's got.
 				foreach AllActors(class'PaulDenton', Paul)
 				{
 					if (Paul != None)
