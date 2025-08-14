@@ -832,7 +832,7 @@ simulated function SpawnEffects(Vector HitLocation, Vector HitNormal, Actor Othe
 	}
 	else if ((mov != None) && !mov.bDestroyed && mov.bBreakable)
 	{
-		effectiveDamage = Damage;
+		effectiveDamage = Damage * MoverDamageMult;
 		if ((DamageType == 'TearGas') || (damageType == 'PoisonGas') || (damageType == 'DrugDamage') || (damageType == 'HalonGas')
 		|| (damageType == 'Stunned') || (damageType == 'Radiation') || (DamageType == 'EMP')
 		|| (DamageType == 'NanoVirus') || (DamageType == 'Shocked'))
