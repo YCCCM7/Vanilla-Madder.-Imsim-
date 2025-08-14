@@ -31,6 +31,11 @@ function PostBeginPlay()
 	bumpTimer    = 0;
 	abortTimer   = -1;
 	breatheTimer = 0;
+	
+	/*if (class'VMDStaticFunctions'.Static.VMDGetMapName(Self) ~= "10_PARIS_CLUB")
+	{
+		SetCollision(True, True, True);
+	}*/
 }
 
 function ResetLeaderTimer()
@@ -55,12 +60,16 @@ function bool IsNearHome(vector position)
 		if (genOwner == None)
 		{
 			if (VSize(HomeLoc-((position-Location)+genOwner.FlockCenter)) > HomeExtent)
+			{
 				bNear = false;
+			}
 		}
 		else
 		{
 			if (VSize(HomeLoc-position) > HomeExtent)
+			{
 				bNear = false;
+			}
 		}
 	}
 
@@ -82,16 +91,22 @@ state Wandering
 		if (Physics == PHYS_Swimming)
 		{
 			if (bumpTimer > 0)
+			{
 				return;
+			}
 			bumpTimer = 0.5;
 
 			if (bStayHorizontal)
+			{
 				HitNormal = Normal(HitNormal*vect(1,1,0));
+			}
 			elasticity = 1.0;
 			Velocity = elasticity*((Velocity dot HitNormal) * HitNormal * (-2.0) + Velocity);
 			dir = Rotator(Velocity);
 			if (bStayHorizontal)
+			{
 				dir.Pitch = 0;
+			}
 			SetRotation(dir);
 			DesiredRotation = dir;
 			Acceleration = Vector(dir)*AccelRate;
@@ -105,9 +120,13 @@ state Wandering
 			Velocity += VRand()*5 * vect(1,1,0);
 			tempVect = Velocity * vect(1,1,0);
 			if (VSize(tempVect) > maxHVel)
+			{
 				Velocity = Normal(tempVect)*maxHVel + vect(0,0,1)*Velocity.Z;
+			}
 			if (VSize(Velocity) < minVel)
+			{
 				Velocity = Normal(Velocity)*minVel*(FRand()*0.2+1);
+			}
 			dir = Rotator(VRand());
 			SetRotation(dir);
 			DesiredRotation = dir;
@@ -119,7 +138,8 @@ state Wandering
 	function FootZoneChange(ZoneInfo newZone)
 	{
 		local Rotator newRotation;
-		if (newZone.bWaterZone && !FootRegion.Zone.bWaterZone)
+		
+		if ((newZone.bWaterZone) && (!FootRegion.Zone.bWaterZone))
 		{
 			if (!bStayHorizontal)
 			{
@@ -131,31 +151,43 @@ state Wandering
 				GotoState('Wandering', 'Moving');
 			}
 		}
+		
 		Super.ZoneChange(newZone);
 	}
-
+	
 	function Tick(float deltatime)
 	{
 		Super.Tick(deltatime);
 		leaderTimer  -= deltaTime;
 		forwardTimer -= deltaTime;
 		bumpTimer    -= deltaTime;
+		
 		if (leaderTimer < -2.0)
+		{
 			ResetLeaderTimer();
+		}
 		if (bumpTimer < 0)
+		{
 			bumpTimer = 0;
+		}
 		if (abortTimer >= 0)
+		{
 			abortTimer += deltaTime;
+		}
 		if (abortTimer > 8.0)
 		{
 			abortTimer = -1;
 			GotoState('Wandering', 'Moving');
 		}
+		
 		if (Region.Zone.bWaterZone)
+		{
 			breatheTimer = 0;
+		}
 		else
 		{
 			breatheTimer += deltaTime;
+			
 			if (breatheTimer > 8)
 			{
 				TakeDamage(5, None, Location, vect(0,0,0), 'Drowned');
@@ -163,7 +195,7 @@ state Wandering
 			}
 		}
 	}
-
+	
 	function vector PickDirection(bool bForward)
 	{
 		local Actor         nearbyActor;
@@ -173,12 +205,16 @@ state Wandering
 		local rotator       rot;
 		local float         dist;
 		local vector        centerVector;
-
+		
 		if (bForward || IsNearHome(Location))
+		{
 			cumVector = Velocity;
+		}
 		else
+		{
 			cumVector = (homeLoc - Location)*20;
-		if ((leaderTimer > 0) && !bForward && bFlock)
+		}
+		if ((leaderTimer > 0) && (!bForward) && (bFlock))
 		{
 			genOwner = PawnGenerator(Owner);
 			if (genOwner == None)
@@ -186,9 +222,10 @@ state Wandering
 				foreach RadiusActors(Class, nearbyActor, 300)
 				{
 					nearbyFish = Fishes(nearbyActor);
-					if ((nearbyFish != None) && (nearbyFish != self) && nearbyFish.bFlock &&
-					    (PawnGenerator(nearbyFish.Owner) == None))
+					if ((nearbyFish != None) && (nearbyFish != self) && (nearbyFish.bFlock) && (PawnGenerator(nearbyFish.Owner) == None))
+					{
 						cumVector += nearbyFish.Velocity;
+					}
 				}
 			}
 			else
@@ -197,14 +234,20 @@ state Wandering
 				centerVector = (genOwner.FlockCenter - Location);
 				dist = VSize(centerVector);
 				if ((dist > genOwner.Radius) && (dist < genOwner.Radius*4))
+				{
 					cumVector += centerVector*2;
+				}
 			}
 		}
 		if (cumVector == vect(0,0,0))
+		{
 			cumVector = Vector(Rotation);
+		}
 		rot = Rotator(cumVector);
 		if (bStayHorizontal)
+		{
 			rot.Pitch = 0;
+		}
 		if (!bForward)
 		{
 			if ((leaderTimer > 1.2) && bFlock)
@@ -216,16 +259,18 @@ state Wandering
 			return vector(rot)*200+Location;
 		}
 		else
+		{
 			return vector(rot)*50+Location;
+		}
 	}
-
+	
 	function BeginState()
 	{
 		Super.BeginState();
 		BlockReactions();
 		abortTimer = -1;
 	}
-
+	
 	function EndState()
 	{
 		Super.EndState();
@@ -254,7 +299,9 @@ Moving:
 		ResetForwardTimer();
 	}
 	else
+	{
 		TurnTo(PickDirection(false));
+	}
 	abortTimer = -1;
 	Sleep(0.0);
 	Goto('Moving');
