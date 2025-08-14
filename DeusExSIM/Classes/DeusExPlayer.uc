@@ -4473,8 +4473,8 @@ function CreateDrone()
 	aDrone = Spawn(class'SpyDrone', Self,, loc, ViewRotation);
 	if (aDrone != None)
 	{
-		aDrone.Speed = 3 * spyDroneLevelValue;
-		aDrone.MaxSpeed = 3 * spyDroneLevelValue;
+		aDrone.Speed = 6 * spyDroneLevelValue;
+		aDrone.MaxSpeed = 6 * spyDroneLevelValue;
 		aDrone.Damage = 5 * spyDroneLevelValue;
 		aDrone.blastRadius = 8 * spyDroneLevelValue;
 		// window construction now happens in Tick()
@@ -4558,6 +4558,9 @@ state PlayerWalking
 			GSpeed = Level.Game.GameSpeed;
 		}
 		
+		//MADDERS: Handle fancy shit.
+		VMP = VMDBufferPlayer(Self);
+		
 		// if the spy drone augmentation is active
 		if (bSpyDroneActive)
 		{
@@ -4576,8 +4579,15 @@ state PlayerWalking
 				loc = Normal((aUp * vect(0,0,1) + aForward * vect(1,0,0) + aStrafe * vect(0,1,0)) >> ViewRotation);
 
 				// opportunity for client to translate movement to server
-				MoveDrone( DeltaTime, loc );
-
+				if (VMP != None)
+				{
+					VMP.VMDMoveDrone(DeltaTime, Loc);
+				}
+				else
+				{
+					MoveDrone( DeltaTime, loc );
+				}
+				
 				// freeze the player
 				//Velocity = vect(0,0,0);
 				//G-Flex: stop player from accelerating instead of freezing them completely
@@ -4587,8 +4597,6 @@ state PlayerWalking
 			return;
 		}
 		
-		//MADDERS: Handle fancy shit.
-		VMP = VMDBufferPlayer(Self);
 		if (VMP != None)
 		{
 			//MADDERS: Set this up for later.
@@ -7436,6 +7444,11 @@ function SetInHand(Inventory newInHand)
 {
 	local DeusExRootWindow root;
 
+	if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).TaseDuration > 0))
+	{
+		return;
+	}
+	
 	inHand = newInHand;
 
 	// Notify the hud
@@ -7451,7 +7464,12 @@ function SetInHand(Inventory newInHand)
 function SetInHandPending(Inventory newInHandPending)
 {
 	local DeusExRootWindow root;
-
+	
+	if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).TaseDuration > 0))
+	{
+		return;
+	}
+	
 	if ( newInHandPending == None )
 		ClientInHandPending = None;
 
@@ -10400,7 +10418,7 @@ function bool AddInventory(Inventory Item)
 		{
 			if ((Root != None) && (Root.HUD != None) && (Root.HUD.Belt != None))
 			{
-				if (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).GetItemRefusalSetting(Item) < 1)
+				if (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).VMDShouldPutItemOnBelt(Item))
 				{
 					Root.HUD.Belt.AddObjectToBelt(Item, Item.BeltPos, True);
 				}
@@ -13964,7 +13982,9 @@ function float CalculatePlayerVisibility(ScriptedPawn P)
 			
 			// if the aug is on, give the player full invisibility
 			if (AugmentationSystem.GetAugLevelValue(class'AugRadarTrans') != -1.0)
+			{
 				return Vis - 1.0;
+			}
 		}
 		else
 		{
@@ -13975,7 +13995,9 @@ function float CalculatePlayerVisibility(ScriptedPawn P)
 			
 			// if the aug is on, give the player full invisibility
 			if (AugmentationSystem.GetAugLevelValue(class'AugCloak') != -1.0)
+			{
 				return Vis - 1.0;
+			}
 		}
 		
 		// go through the actor list looking for owned AdaptiveArmor
