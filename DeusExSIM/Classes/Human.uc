@@ -8,10 +8,447 @@ var float mpGroundSpeed;
 var float mpWaterSpeed;
 var float humanAnimRate;
 
+//Added MUS_None.
+enum EmusicModeRev
+{
+	MUS_Ambient,
+	MUS_Dying,
+	MUS_Combat,
+	MUS_Conversation,
+	MUS_Outro,
+	MUS_None
+};
+
+//Music vars
+var EmusicModeRev musicModeRev;
+var travel bool bEntryOggMissingPrinted;
+var bool bLevelInfoMissingPrinted;
+var travel bool bInAlternativeMusicMode;
+
 replication 
 {
 	reliable if (( Role == ROLE_Authority ) && bNetOwner )
 		humanAnimRate;
+}
+
+function ClosedCaptions(string Type, Human Player);
+
+// ----------------------------------------------------------------------
+// UpdateDynamicMusic()
+//
+// Pattern definitions:
+//   0 - Ambient 1
+//   1 - Dying
+//   2 - Ambient 2 (optional)
+//   3 - Combat
+//   4 - Conversation
+//   5 - Outro
+//	 255 - Nothing/Silence.
+//
+//	Bjorn: The initial code was borrowed from Shifter's DeusExPlayer.
+//	But it has been heavily modified by me.
+// ----------------------------------------------------------------------
+function UpdateDynamicMusic(float deltaTime)
+{
+	local bool bCombat;
+	local bool bPlayTrackerAmbient, bPlayTrackerCombat, bPlayTrackerConvo, bPlayTrackerDying, bPlayTrackerOutro;
+	local ScriptedPawn npc;
+	local Pawn CurPawn;
+	local DeusExLevelInfo info;
+	local Music LevelSong;
+	local String SongString;
+	//local DXOggMusicManager entryOggMgr;
+	local Actor EntryOggMgr;
+	
+	//MADERS, 7/20/25: Dual functionality via this means.
+	if (class'VMDStaticFunctions'.Static.GetIntendedMapStyle(Self) != 1)
+	{
+		Super.UpdateDynamicMusic(DeltaTime);
+		return;
+	}
+	
+	//Get the level info so we can determine if we are on any special maps.
+	info = GetLevelInfo();
+
+	//If we don't have a DeusExLevelInfo, there is something really wrong. Since we know nothing about the map we must abort.
+	if (info == None)
+	{
+		if (!bLevelInfoMissingPrinted)
+		{
+			log("RevJCDentonMale.UpdateDynamicMusic: Found no DeusExLevelInfo, aborting!");
+			bLevelInfoMissingPrinted = True;
+		}
+		return;
+	}
+
+	//Get the entryOggMgr in the entry level.
+	//foreach GetEntryLevel().AllActors(class'DXOggMusicManager', entryOggMgr)
+	
+	forEach GetEntryLevel().AllActors(class'Actor', EntryOggMgr)
+	{
+		if (EntryOggMgr.IsA('DXOggMusicManager'))
+		{
+			break;
+		}
+	}
+	
+	if (bUseRevisionSoundtrack)
+	{
+		//If we don't have an ogg manager use vanilla music, otherwise fetch what we should play.
+		if (entryOggMgr != None)
+		{
+			if (entryOggMgr.GetPropertyText("bAmbientExists") ~= "FILE_Missing")
+				bPlayTrackerAmbient = True;
+			else
+				bPlayTrackerAmbient = False;
+
+			if (entryOggMgr.GetPropertyText("bCombatExists") ~= "FILE_Missing")
+				bPlayTrackerCombat = True;
+			else
+				bPlayTrackerCombat = False;
+
+			if (entryOggMgr.GetPropertyText("bConversationExists") ~= "FILE_Missing")
+				bPlayTrackerConvo = True;
+			else
+				bPlayTrackerConvo = False;
+
+			if (entryOggMgr.GetPropertyText("bOutroExists") ~= "FILE_Missing")
+				bPlayTrackerOutro = True;
+			else
+				bPlayTrackerOutro = False;
+
+			if (entryOggMgr.GetPropertyText("bDeathExists") ~= "FILE_Missing")
+				bPlayTrackerDying = True;
+			else
+				bPlayTrackerDying = False;
+
+			//If we are paused but should play the soundtrack it means we are in the process of switching from vanilla to soundtrack.
+			/*if (entryOggMgr.bPaused)
+			{
+				entryOggMgr.UnPause();
+				ClientSetMusic(None, 255, 255, MTRAN_Instant); //Set tracker music to silent.
+				musicModeRev = MUS_None;
+			}*/
+			if (EntryOggMgr.GetPropertyText("bPaused") ~= "True")
+			{
+				EntryOggMgr.PostBeginPlay();
+				ClientSetMusic(None, 255, 255, MTRAN_Instant); //Set tracker music to silent.
+				musicModeRev = MUS_None;
+			}
+		}
+		else
+		{
+			if (!bEntryOggMissingPrinted)
+			{
+				log("RevJCDentonMale.UpdateDynamicMusic: Found no entry DXOggMusicManager (for some reason)! Playing tracker music!");
+				bEntryOggMissingPrinted = True;
+			}
+
+			bPlayTrackerAmbient = true;
+			bPlayTrackerCombat = true;
+			bPlayTrackerConvo = true;
+			bPlayTrackerOutro = true;
+			bPlayTrackerDying = true;
+		}
+	}
+	else //We should play vanilla music since the soundtrack is off.
+	{
+		bPlayTrackerAmbient = true;
+		bPlayTrackerCombat = true;
+		bPlayTrackerConvo = true;
+		bPlayTrackerOutro = true;
+		bPlayTrackerDying = true;
+
+		bInAlternativeMusicMode = false;
+
+		//Pause ogg music.
+		/*if (entryOggMgr != None)
+			entryOggMgr.Pause();*/
+		if (EntryOggMgr != None)
+		{
+			EntryOggMgr.PreBeginPlay();
+		}
+	}
+
+	//== If we have tracker music playing we may as well just stick with that.
+	if (Song != None)
+		LevelSong = Song;
+	else //Otherwise try to get the song of the level.
+		LevelSong = Level.Song;
+
+
+	//log ("musicModeRev: " $ musicModeRev);
+	// log("bPlayTrackerAmbient: " $bPlayTrackerAmbient);
+	// log ("LevelSong=" $ LevelSong);
+
+	//Normal Revision levels does not have a song by default in the map.
+	//If we already have a song (set by this function or in the Training maps for instance), then we don't need to load it.
+	if(LevelSong == None || LevelSong.Class.Name == '')
+	{
+		//Load music from flags.
+		SongString = FlagBase.GetName('MusicPackageTrack') $"."$ FlagBase.GetName('MusicPackageTrack');
+
+		//Null check before loading music.
+		if(SongString != "None.None" && SongString != "")
+		{
+			LevelSong = Music(DynamicLoadObject(SongString, class'Music'));
+
+			//Check if we shall play the ambient.
+			if (bPlayTrackerAmbient)
+			{
+				//Use the level's SongSection property to determine what song section is the default for ambient in this map.
+				ClientSetMusic(LevelSong, Level.SongSection, 255, MTRAN_Instant);
+				musicModeRev = MUS_Ambient;
+				log("RevJCDentonMale.UpdateDynamicMusic: Playing vanilla ambient!", 'DevRevision');
+				ClosedCaptions("MUSICAMB", Self);
+			}
+			else
+			{
+				//Play silence. It's important that we play something, cause otherwise later functions won't work.
+				ClientSetMusic(LevelSong, 255, 255, MTRAN_Instant);
+				musicModeRev = MUS_None;
+			}
+		}
+	}
+
+	//We still don't have a song? Then just fuck it!
+	if(LevelSong == None)
+		return;
+
+	// DEUS_EX AMSD In singleplayer, do the old thing.
+	// In multiplayer, we can come out of dying.
+	if (!PlayerIsClient())
+		if ((musicModeRev == MUS_Dying) || (musicModeRev == MUS_Outro))
+			return;
+	else
+		if (musicModeRev == MUS_Outro)
+			return;
+
+
+	musicCheckTimer += deltaTime;
+	musicChangeTimer += deltaTime;
+
+	if (IsInState('Interpolating'))
+	{
+		//Don't mess with the music on any of the menu maps or in the intro.
+		if ((info.MissionNumber < 0) || (info.MissionNumber == 98))
+		{
+			//If we should play the ambient track, but we have MUS_None that means that something has killed the ogg music and we need to start up vanilla music.
+			if (bPlayTrackerAmbient && musicModeRev == MUS_None)
+			{
+				ClientSetMusic(LevelSong, Level.SongSection, 255, MTRAN_Instant);
+				musicModeRev = MUS_Ambient;
+				log("RevJCDentonMale.UpdateDynamicMusic: Playing vanilla ambient!", 'DevRevision');
+				ClosedCaptions("MUSICAMB", Self);
+			}
+
+			return;
+		}
+
+
+		if (musicModeRev != MUS_Outro)
+		{
+			if (bPlayTrackerOutro)
+			{
+				ClientSetMusic(LevelSong, 5, 255, MTRAN_FastFade);
+				musicModeRev = MUS_Outro;
+				log("RevJCDentonMale.UpdateDynamicMusic: Playing vanilla outro!", 'DevRevision');
+			}
+			else
+			{
+				ClientSetMusic(LevelSong, 255, 255, MTRAN_FastFade);
+				musicModeRev = MUS_None;
+			}
+
+		}
+	}
+	else if (IsInState('Conversation'))
+	{
+		if (musicModeRev != MUS_Conversation)
+		{
+			//Save our place in the ambient track
+			if (musicModeRev == MUS_Ambient)
+				savedSection = SongSection;
+			else
+				savedSection = 255;
+
+
+			if (bPlayTrackerConvo)
+			{
+				ClientSetMusic(LevelSong, 4, 255, MTRAN_FastFade);
+				musicModeRev = MUS_Conversation;
+				log("RevJCDentonMale.UpdateDynamicMusic: Playing vanilla convo!", 'DevRevision');
+			}
+			else
+			{
+				ClientSetMusic(LevelSong, 255, 255, MTRAN_FastFade);
+				musicModeRev = MUS_None;
+			}
+
+		}
+	}
+	else if (IsInState('Dying'))
+	{
+		if (musicModeRev != MUS_Dying)
+		{
+			if (bPlayTrackerDying)
+			{
+				ClientSetMusic(LevelSong, 1, 255, MTRAN_FastFade);
+				musicModeRev = MUS_Dying;
+				log("RevJCDentonMale.UpdateDynamicMusic: Playing vanilla death!", 'DevRevision');
+			}
+			else
+			{
+				ClientSetMusic(LevelSong, 255, 255, MTRAN_FastFade);
+				musicModeRev = MUS_None;
+			}
+		}
+	}
+	else
+	{
+		// only check for combat music every second
+		if (musicCheckTimer >= 1.0)
+		{
+			musicCheckTimer = 0.0;
+			bCombat = False;
+
+			// check a 100 foot radius around me for combat
+			for (CurPawn = Level.PawnList; CurPawn != None; CurPawn = CurPawn.NextPawn)
+			{
+				npc = ScriptedPawn(CurPawn);
+				if ((npc != None) && (VSize(npc.Location - Location) < (1600 + npc.CollisionRadius)))
+				{
+					if ((npc.GetStateName() == 'Attacking') && (npc.Enemy == Self))
+					{
+						bCombat = True;
+						break;
+					}
+				}
+			}
+
+			//If we are in combat.
+			if (bCombat)
+			{
+				//But not we have not set the combat music.
+				if (musicModeRev != MUS_Combat)
+				{
+					// save our place in the ambient track
+					if (musicModeRev == MUS_Ambient)
+						savedSection = SongSection;
+					else
+						savedSection = 255;
+
+					//Should we play combat music?
+					if(bPlayTrackerCombat)
+					{
+						ClientSetMusic(LevelSong, 3, 255, MTRAN_FastFade);
+						// Special case for endgame
+						if (info != None && (Caps(info.mapName) == "15_AREA51_PAGE" || Caps(info.mapName) == "15_AREA51_FINAL") && flagBase != None && flagBase.GetBool('MeetBobPage_Played'))
+							ClientSetMusic(LevelSong, 5, 255, MTRAN_FastFade);
+						musicModeRev = MUS_Combat;
+						log("RevJCDentonMale.UpdateDynamicMusic: Playing vanilla combat!", 'DevRevision');
+						ClosedCaptions("MUSICCOM", Self);
+					}
+					else
+					{
+						ClientSetMusic(LevelSong, 255, 255, MTRAN_FastFade);
+						musicModeRev = MUS_None;
+					}
+				}
+
+				musicChangeTimer = 0.0;
+			}
+			else if (musicModeRev != MUS_Ambient)
+			{
+				// wait until we've been out of combat for 5 seconds before switching music
+				if (musicChangeTimer >= 5.0)
+				{
+					// use the default ambient section for this map
+					if (savedSection == 255)
+						savedSection = Level.SongSection;
+
+					// fade slower for combat transitions
+					if (musicModeRev == MUS_Combat)
+					{
+						if (bPlayTrackerAmbient)
+						{
+							ClientSetMusic(LevelSong, savedSection, 255, MTRAN_SlowFade);
+							musicModeRev = MUS_Ambient;
+							log("RevJCDentonMale.UpdateDynamicMusic: Playing vanilla ambient!", 'DevRevision');
+							ClosedCaptions("MUSICAMB", Self);
+						}
+						else
+						{
+							ClientSetMusic(LevelSong, 255, 255, MTRAN_SlowFade);
+							musicModeRev = MUS_None;
+						}
+					}
+					else
+					{
+						if (bPlayTrackerAmbient)
+						{
+							ClientSetMusic(LevelSong, savedSection, 255, MTRAN_FastFade);
+							musicModeRev = MUS_Ambient;
+							log("RevJCDentonMale.UpdateDynamicMusic: Playing vanilla ambient!", 'DevRevision');
+							ClosedCaptions("MUSICAMB", Self);
+						}
+						else
+						{
+							ClientSetMusic(LevelSong, 255, 255, MTRAN_FastFade);
+							musicModeRev = MUS_None;
+						}
+					}
+
+					savedSection = 255;
+					musicChangeTimer = 0.0;
+				}
+			}
+		}
+	}
+}
+
+// ----------------------------------------------------------------------
+// PauseMus()
+// Pauses music in the entry DXOggMusicManager.
+// ----------------------------------------------------------------------
+exec function PauseMus()
+{
+	//local DXOggMusicManager entryDxOgg;
+	local Actor EntryDxOgg;
+	
+	//Find the music manager in the Entry map.
+	//foreach GetEntryLevel().AllActors(class'DXOggMusicManager', entryDxOgg)
+	forEach GetEntryLevel().AllActors(class'Actor', EntryDxOgg)
+	{
+		if (EntryDxOgg.IsA('DXOggMusicManager'))
+		{
+			//entryDxOgg.Pause();
+			EntryDXOgg.PreBeginPlay();
+			break;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------
+// UnpauseMus()
+// Unpauses paused music in the entry DXOggMusicManager.
+// ----------------------------------------------------------------------
+exec function UnpauseMus()
+{
+	//local DXOggMusicManager entryDxOgg;
+	local Actor EntryDxOgg;
+	
+	//Find the music manager in the Entry map.
+	//foreach GetEntryLevel().AllActors(class'DXOggMusicManager', entryDxOgg)
+	forEach GetEntryLevel().AllActors(class'Actor', EntryDxOgg)
+	{
+		if (EntryDxOgg.IsA('DXOggMusicManager'))
+		{
+			//entryDxOgg.UnPause();
+			EntryDXOgg.PostBeginPlay();
+			break;
+		}
+	}
 }
 
 function Bool IsFiring()
@@ -501,6 +938,8 @@ simulated function PreBeginPlay()
 
 defaultproperties
 {
+     bUseRevisionSoundtrack=True
+     
      mpGroundSpeed=230.000000
      mpWaterSpeed=110.000000
      humanAnimRate=1.000000
