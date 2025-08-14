@@ -57,8 +57,8 @@ defaultproperties
      bIgnoresNanoDefense=True
      ItemName="Throwing Knife"
      ItemArticle="a"
-     speed=750.000000
-     MaxSpeed=750.000000
+     speed=1125.000000
+     MaxSpeed=1125.000000
      Damage=15.000000
      MomentumTransfer=1000
      ImpactSound=Sound'DeusExSounds.Generic.BulletHitFlesh'
