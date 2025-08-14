@@ -91,7 +91,16 @@ event playerpawn Login
 
 event PostLogin(playerpawn NewPlayer)
 {
+	local class<DeusExGameInfo> LoadInfo;
+	
 	Super.PostLogin(NewPlayer);
+	
+	//SetupMusic(DeusExPlayer(NewPlayer));
+	/*LoadInfo = class<DeusExGameInfo>(DynamicLoadObject("Revision.RevGameInfo", class'Class', true));
+	if (LoadInfo != None)
+	{
+		LoadInfo.Static.SetupMusic(DeusExPlayer(NewPlayer));
+	}*/
 	
 	if (DeusExPlayer(NewPlayer) != None)
 	{
@@ -345,6 +354,29 @@ function bool IsCassandraLevel()
 
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
+
+function SendPlayer( PlayerPawn aPlayer, string URL )
+{
+	//MADDERS, 8/8/25: This needs to be a map fix for this map, but Revision's maps aren't ours to ship... Gah.
+	if ((URL ~= "12_VANDENBERG_CMD") && (Level.TimeSeconds < 1.0))
+	{
+		return;
+	}
+	
+	if ((DeusExPlayer(APlayer) != None) && (DeusExPlayer(APlayer).FlagBase != None) && (DeusExPlayer(APlayer).FlagBase.GetBool('VMDPlayerTraveling')))
+	{
+		Log("STILL TRAVELING! CANCELING!");
+		return;
+	}
+	
+	URL = class'VMDStaticFunctions'.Static.MutateDestinationByStyle(Self, URL);
+	
+	Super.SendPlayer(aPlayer, URL);
+}
+
+static function SetupMusic(DeusExPlayer player)
+{
+}
 
 defaultproperties
 {
