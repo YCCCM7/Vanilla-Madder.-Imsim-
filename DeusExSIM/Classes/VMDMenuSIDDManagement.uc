@@ -555,6 +555,14 @@ function AttemptRepair()
 		
 		VMP.CurScrap -= LastScrapCost;
 		SIDD.Health = SIDD.VMDGetMaxHealth();
+		if (SIDD.Health >= SIDD.Default.Health / 3)
+		{
+			if (SIDD.SmokeGen != None)
+			{
+				SIDD.SmokeGen.DelayedDestroy();
+				SIDD.SmokeGen = None;
+			}
+		}
 		UpdateInfo();
 	}
 }
