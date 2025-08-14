@@ -253,7 +253,14 @@ function VMDTransferPOVPropertiesFrom(DeusExDecoration Deco, VMDPOVDeco POV)
 	
 	if ((Deco != None) && (POV != None))
 	{
-		POV.DecoClassString = string(Deco.Class);
+		if (Deco.IsA('PizzaBox'))
+		{
+			POV.DecoClassString = "RevisionDeco.PizzaBoxEmpty";
+		}
+		else
+		{
+			POV.DecoClassString = string(Deco.Class);
+		}
 		
 		//111111111111111111111111111111111111
 		//Actor Variables
@@ -357,7 +364,14 @@ function VMDTransferPOVPropertiesFrom(DeusExDecoration Deco, VMDPOVDeco POV)
 		
 		POV.StoredFlammability = Deco.Flammability;
 		POV.StoredExplosionRadius = Deco.ExplosionRadius;
-		POV.StoredItemName = Deco.ItemName;
+		if (VMDBufferDeco(Deco) != None)
+		{
+			POV.StoredItemName = VMDBufferDeco(Deco).VMDGetItemName();
+		}
+		else
+		{
+			POV.StoredItemName = Deco.ItemName;
+		}
 		
 		//Load these using ID strings.
 		if (Deco.FragType != None) POV.StoredFragType = string(Deco.FragType);
