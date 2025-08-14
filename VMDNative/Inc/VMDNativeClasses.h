@@ -29,6 +29,16 @@ public:
 };
 
 
+class VMDNATIVE_API AVMDTerrainReskinner : public AActor
+{
+public:
+    DECLARE_FUNCTION(execSetSurfaceTexture);
+    DECLARE_FUNCTION(execLogSurfaceTextures);
+    DECLARE_CLASS(AVMDTerrainReskinner,AActor,0)
+    NO_DEFAULT_CONSTRUCTOR(AVMDTerrainReskinner)
+};
+
+
 class VMDNATIVE_API AVMDPathRebuilder : public AActor
 {
 public:
@@ -109,11 +119,23 @@ public:
     NO_DEFAULT_CONSTRUCTOR(UKentiesUIFix)
 };
 
+
+class VMDNATIVE_API UGetNextMissionNumberFixer : public UObject
+{
+public:
+    DECLARE_FUNCTION(execInstallHook);
+    DECLARE_CLASS(UGetNextMissionNumberFixer,UObject,0)
+    NO_DEFAULT_CONSTRUCTOR(UGetNextMissionNumberFixer)
+};
+
 #endif
 
 AUTOGENERATE_FUNCTION(UKentiesUIFix,-1,execApplyScaling);
 AUTOGENERATE_FUNCTION(UKentiesUIFix,-1,execAssertHook);
+AUTOGENERATE_FUNCTION(UGetNextMissionNumberFixer,-1,execInstallHook);
 AUTOGENERATE_FUNCTION(AVMDUnlitFixer,-1,execPatchUnlitSurfaces);
+AUTOGENERATE_FUNCTION(AVMDTerrainReskinner,-1,execSetSurfaceTexture);
+AUTOGENERATE_FUNCTION(AVMDTerrainReskinner,-1,execLogSurfaceTextures);
 AUTOGENERATE_FUNCTION(AVMDPathRebuilder,-1,execEndShakedown);
 AUTOGENERATE_FUNCTION(AVMDPathRebuilder,-1,execBeginShakedown);
 AUTOGENERATE_FUNCTION(AVMDPathRebuilder,-1,execRedefinePaths);
