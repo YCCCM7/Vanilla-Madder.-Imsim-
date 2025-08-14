@@ -111,8 +111,6 @@ state Activated
 			}
 			else
 			{
-				if (VMP != None) VMDRunMedkitShellEffects(VMP);
-				
 				Owner.AISendEvent('LoudNoise', EAITYPE_Audio, 1.0, 256);
 			 	if (VMP != None) 
 				{
@@ -130,6 +128,8 @@ state Activated
 					player.ExtinguishFire();
 					player.drugEffectTimer = 0;
 			 	}
+				
+				if (VMP != None) VMDRunMedkitShellEffects(VMP);
 			}
 		}
 		if (VMBP != None)
