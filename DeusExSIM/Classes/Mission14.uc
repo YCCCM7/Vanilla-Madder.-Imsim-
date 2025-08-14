@@ -117,6 +117,7 @@ function Timer()
 					Walton.EnterWorld();
 					Walton.AddToInitialInventory(class'BioelectricCell', 15);
 					Walton.AddToInitialInventory(class'Medkit', 5);
+					Walton.AddToInitialInventory(class'HazmatSuit', 2);
 					if (Walton.AugmentationSystem != None)
 					{
 						Walton.AugmentationSystem.ActivateAllEco();
