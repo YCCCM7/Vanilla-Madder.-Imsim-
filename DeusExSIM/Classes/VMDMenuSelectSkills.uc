@@ -447,14 +447,14 @@ event StyleChanged()
 
 function InvokeNewGameScreen(string Campaign)
 {
-	local VMDMenuSelectSkillAugments NewGame;
+	/*local VMDMenuSelectSkillAugments NewGame;
 	
 	newGame = VMDMenuSelectSkillAugments(root.InvokeMenuScreen(Class'VMDMenuSelectSkillAugments'));
 	
 	if (newGame != None)
 	{
 		newGame.SetCampaignData(Campaign);
-	}
+	}*/
 }
 
 function SetCampaignData(string NewCampaign)
