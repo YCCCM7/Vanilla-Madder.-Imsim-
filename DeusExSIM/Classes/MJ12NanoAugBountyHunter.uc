@@ -3,6 +3,11 @@
 //=============================================================================
 class MJ12NanoAugBountyHunter extends VMDBountyHunter;
 
+function bool VMDCanRunWithAnyWeapon()
+{
+	return true;
+}
+
 function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int MissionNumber)
 {
 	//Universals.
@@ -286,8 +291,6 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 	
 	VMDInitializeSubsystems();
 	
-	//BARF! TESTING!
-	AssignedID = 2;
 	//Bark bind name work.
 	HunterBarkBindName = "MJ12Revenant"$string(AssignedID+1);
 	
@@ -624,8 +627,11 @@ function class<DeusExPickup> ObtainUtilityItem(int MissionNumber, out int ItemCo
 	{
 		case 0:
 		case 1:
-			ItemCount = 1;
-			Ret = class'FireExtinguisher';
+			if (FRand() < 0.4)
+			{
+				ItemCount = 1;
+				Ret = class'FireExtinguisher';
+			}
 		break;
 		case 2:
 			//MADDERS, 6/24/25: This makes these guys OP. Axe it.
