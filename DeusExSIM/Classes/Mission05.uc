@@ -75,6 +75,13 @@ function FirstFrame()
 				POVCorpse(Player.InHand).Destroy();
 			}
 			
+			//== Y|y: There is an odd glitch with laser sights which can generate a "ghost" laser
+			//==  so we need to force the laser off
+			if (DeusExWeapon(Player.inHand) != None)
+			{
+				DeusExWeapon(Player.inHand).LaserOff();
+			}
+			
 			//MADDERS: Wipe relevant smells, so we don't cause any extra hijinks.
 			VMP = VMDBufferPlayer(Player);
 			if (VMP != None)
