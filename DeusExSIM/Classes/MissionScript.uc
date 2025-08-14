@@ -125,6 +125,12 @@ function FirstFrame()
 		flagName = Player.rootWindow.StringToName("M"$dxInfo.MissionNumber$"MissionStart");
 		if (!flags.GetBool(flagName))
 		{
+			//MADDERS, 7/20/25: Clear out old maps, so if we backtrack, we'll HOPEFULLY still load into the right map style.
+			if (VMDBufferPlayer(Player) != None)
+			{
+				VMDBufferPlayer(Player).VMDClearRecordedMapsBefore(DXInfo.MissionNumber);
+			}
+			
 			// Remove completed Primary goals and all Secondary goals
 			Player.ResetGoals();
 
