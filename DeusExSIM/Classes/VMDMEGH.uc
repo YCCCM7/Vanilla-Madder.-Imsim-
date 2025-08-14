@@ -545,6 +545,10 @@ function ToggleReconMode()
 	if (bReconMode)
 	{
 		CacheAlliances();
+		if (IsInState('Attacking'))
+		{
+			MEGHIssueOrder('MeghFollowing', GetPlayerPawn(), Enemy);
+		}
 	}
 	else
 	{
@@ -1073,6 +1077,7 @@ function bool VMDMeghDropWeapon(optional bool bHigh)
 			if (DXA.PickupViewMesh != LODMesh'TestBox')
 			{
 				bWon = VMDDropItemFrom(DXW, DropVect);
+				DXW.ClipCount = DXW.ReloadCount;
 				DXW.PickupAmmoCount = 0;
 			}
 			else
@@ -1124,6 +1129,7 @@ function bool VMDMeghDropWeapon(optional bool bHigh)
 			}
 			else
 			{
+				DXW.ClipCount = DXW.ReloadCount;
 				DXW.PickupAmmoCount = 0;
 			}
 		}
@@ -3456,9 +3462,15 @@ Begin:
 Follow:
 	if (IsOverlapping(orderActor))
 		Goto('Done');
+	
+	//MADDERS, 8/9/25: Brute force.
+	if ((VSize((OrderActor.Location * Vect(1, 1, 0)) - (Location * Vect(1, 1, 0))) < 24) && (FastTrace(OrderActor.Location, Location)))
+	{
+		GoTo('Done');
+	}
+	
 	MoveTarget = GetNextWaypoint(orderActor);
-	if ((MoveTarget != None) && (!MoveTarget.Region.Zone.bWaterZone) &&
-	    (MoveTarget.Physics != PHYS_Falling))
+	if ((MoveTarget != None) && (!MoveTarget.Region.Zone.bWaterZone) && (MoveTarget.Physics != PHYS_Falling))
 	{
 		if ((MoveTarget == orderActor) && MoveTarget.IsA('Pawn'))
 		{
@@ -3469,8 +3481,24 @@ Follow:
 				MoveTo(useLoc, MaxDesiredSpeed);
 				CheckDestLoc(useLoc);
 			}
+			else if (CanReachOrderActor())
+			{
+				if (ShouldPlayWalk(OrderActor.Location))
+					PlayRunning();
+				MoveToward(OrderActor, MaxDesiredSpeed);
+				CheckDestLoc(OrderActor.Location);
+			}
 			else
+			{
 				Goto('Pause');
+			}
+		}
+		else if (CanReachOrderActor())
+		{
+			if (ShouldPlayWalk(OrderActor.Location))
+				PlayRunning();
+			MoveToward(OrderActor, MaxDesiredSpeed);
+			CheckDestLoc(OrderActor.Location);
 		}
 		else
 		{
@@ -3483,6 +3511,17 @@ Follow:
 			Goto('Done');
 		else
 			Goto('Follow');
+	}
+	//MADDERS, 8/9/25: We do a bunch of these to just force our way to the PC. Works better.
+	else if (CanReachOrderActor())
+	{
+		if (ShouldPlayWalk(OrderActor.Location))
+			PlayRunning();
+		MoveToward(OrderActor, MaxDesiredSpeed);
+		CheckDestLoc(OrderActor.Location);
+		
+		if (IsOverlapping(orderActor))
+			Goto('Done');
 	}
 
 Pause:
@@ -4412,6 +4451,30 @@ function bool IsDoor(Actor Target, bool bWarn)
 		
 		return true;
 	}
+}
+
+function bool CanReachOrderActor()
+{
+	local Actor HitAct;
+	local Vector TraceStart, TraceEnd, TraceNorm, HL, HN, TExtent;
+	
+	if (OrderActor == None) return false;
+	
+	TExtent = Vect(0.2,0.2,0) * CollisionRadius;
+	TExtent.Z = CollisionHeight * 0.2;
+	
+	TraceNorm = Normal(OrderActor.Location - Location);
+	TraceStart = Location;
+	TraceEnd = OrderActor.Location - (TraceNorm * 8);
+	
+	HitAct = Trace(HL, HN, TraceEnd, TraceStart, false, TExtent);
+	
+	if (HitAct == None)
+	{
+		return true;
+	}
+	
+	return false;
 }
 
 function bool FakePickDestination()
