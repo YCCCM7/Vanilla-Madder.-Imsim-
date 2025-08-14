@@ -495,6 +495,8 @@ function StartCampaign()
 	switch(Caps(StoredCampaign))
 	{
 		case "VANILLA":
+		case "REVISION":
+		case "CUSTOM REVISION":
 			Player.ShowIntro(True);
 		break;
 		case "OMEGA":
