@@ -44,7 +44,7 @@ function float VMDConfigureWepDamageMult(DeusExWeapon DXW)
  	
  	if (DXW == None) return 1.0;
  	TSkill = DXW.GoverningSkill;
- 	if (TSkill == None) return 1.0;
+ 	if (TSkill == None || class<SkillDemolition>(TSkill) != None) return 1.0;
  	
 	if (DXW.bHandToHand || (DXW.bInstantHit && !DXW.bPenetrating))
  	{
