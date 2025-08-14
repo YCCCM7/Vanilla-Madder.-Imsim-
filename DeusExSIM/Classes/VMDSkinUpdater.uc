@@ -17,7 +17,18 @@ var bool bRevisionMapSet;
 
 function VMDUpdateRevisionMapStatus()
 {
-	bRevisionMapSet = false;
+	switch(class'VMDStaticFunctions'.static.GetIntendedMapStyle(Self))
+	{
+		case 0:
+			bRevisionMapSet = false;
+		break;
+		case 1:
+			bRevisionMapSet = true;
+		break;
+		case 2:
+			bRevisionMapSet = false;
+		break;
+	}
 }
 
 function Tick(float DT)
@@ -33,6 +44,7 @@ function Tick(float DT)
 		else if (UpdateTimer > -10)
  		{
  	 		UpdateTimer = -30;
+			VMDUpdateRevisionMapStatus();
 			CommitSkinUpdates();
 	 	}
 	}
@@ -5680,38 +5692,7 @@ function CommitSkinUpdates()
 
 function string VMDGetMapName()
 {
- 	local string S, S2;
- 	
- 	S = GetURLMap();
- 	S2 = Chr(92); //What the fuck. Can't type this anywhere!
-	
-	//MADDERS, 3/23/21: Uuuuh... Oceanlab machine :B:ROKE.
-	//No idea how or why this happens, and only post-DXT merge. Fuck it. Chop it down.
-	if (Right(S, 1) ~= " ") S = Left(S, Len(S)-1);
-	
- 	//HACK TO FIX TRAVEL BUGS!
- 	if (InStr(S, S2) > -1)
- 	{
-  		do
-  		{
-   			S = Right(S, Len(S) - InStr(S, S2) - 1);
-  		}
-  		until (InStr(S, S2) <= -1);
-
-		if (InStr(S, ".") > -1)
-		{
-  			S = Left(S, Len(S) - 4);
-		}
- 	}
- 	else
-	{
-		if (InStr(S, ".") > -1)
-		{
-			S = Left(S, Len(S)-3);
-		}
- 	}
-	
- 	return CAPS(S);
+ 	return class'VMDStaticFunctions'.Static.VMDGetMapName(Self);
 }
 
 function Actor FindActorBySeed(class<Actor> TarClass, int TarSeed)
