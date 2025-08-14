@@ -11,7 +11,7 @@ var(MADDERS) Actor LastShittyPathTarget;
 
 var bool bSetupBuffedHealth, bAppliedSpecial, bAppliedSpecial2, bBuffedVision, bBuffedSenses, bBuffedAccuracy; //Already better health scaling than &%)*. God save us all
 var int MedkitHealthLevel; //MADDERS, 12/27/23: In some special cases, we may have a special threshold.
-var float HealthScaleTimer, MedkitUseTimer, FireExtinguisherUseTimer;
+var float HealthScaleTimer, MedkitUseTimer, FireExtinguisherUseTimer, WeaponSwapTimer;
 var(MADDERS) float OverrideHeight; //For locking collision height on reskinned chars.
 var bool bExplosive, bAerosolImmune, bEverNotFrobbed; //Watch me check for this super EZ.
 var float LastHitSeconds; //Set and reset as needed.
@@ -29,7 +29,7 @@ var float TechGogglesCheckTimer, TechGogglesSeekCooldown, TechGogglesRadius;
 var TechGoggles ActiveGoggles;
 
 //Sprint system. Used in niche circumstances.
-var bool bSprinting;
+var bool bSprinting, bStrafing;
 var float SprintStamina, SprintStaminaMax;
 
 //Ladder climbing? Holy fucking shit, m8. Can I even be stopped?
@@ -184,6 +184,15 @@ var() bool bRecognizeMovedObjects; // Notice objects that have been moved into s
 var bool bJustTurned; //MADDERS, 11/29/21: Technically G-Flex, but whatever.
 
 var DeusExPlayer localPlayer;
+
+function bool Facelift(bool bOn)
+{
+}
+
+function bool VMDCanRunWithAnyWeapon()
+{
+	return false;
+}
 
 function NavigationPoint VMDFindShittyPathTo(Vector Destination, Vector Start, float SearchRadius, optional bool bNeedFastTrace)
 {
@@ -1637,27 +1646,36 @@ function VMDGrabWeapon(DeusExWeapon DXW)
 	for(i=2; i>=0; i--)
 	{
 		//MADDERS, 8/6/24: A couple quick hacks so load ammo works...
-		if ((LastSoughtWeapon.AmmoNames[i] != None) && (FindInventoryType(LastSoughtWeapon.AmmoNames[i]) != None))
+		if ((DXW.AmmoNames[i] != None) && (FindInventoryType(DXW.AmmoNames[i]) != None))
 		{
 			bLoadedAmmo = true;
-			LastSoughtWeapon.AmmoName = None;
-			LastSoughtWeapon.AmmoType = None;
-			LastSoughtWeapon.LoadAmmo(i);
+			DXW.AmmoName = None;
+			DXW.AmmoType = None;
+			DXW.LoadAmmo(i);
 			break;
 		}
 	}
 	
 	//MADDERS, 2/22/25: Don't shoot and use ammo we don't own, bonus round. Very important for MEGH.
-	if ((!bLoadedAmmo) && (LastSoughtWeapon.PickupAmmoCount > 0 || (LastSoughtWeapon.AmmoType != None && LastSoughtWeapon.AmmoType.Owner != Self)))
+	if ((!bLoadedAmmo) && (DXW.PickupAmmoCount > 0 || DXW.AmmoType == None || (DXW.AmmoType != None && DXW.AmmoType.Owner != Self)))
 	{
-		LastSoughtWeapon.AmmoType = spawn(LastSoughtWeapon.AmmoName);
-		if (LastSoughtWeapon.AmmoType != None)
+		DXW.AmmoType = Spawn(DXW.Default.AmmoName,,, Location);
+		if (DXW.AmmoType == None)
 		{
-			LastSoughtWeapon.AmmoType.AmmoAmount = LastSoughtWeapon.PickupAmmoCount;
-			LastSoughtWeapon.PickupAmmoCount = 0;
-			LastSoughtWeapon.AmmoType.InitialState = 'Idle2';
-			LastSoughtWeapon.AmmoType.GiveTo(Self);
-			LastSoughtWeapon.AmmoType.SetBase(Self);
+			DXW.AmmoType = Spawn(DXW.Default.AmmoName,,, Location + Vect(0,0,16));
+		}
+		if (DXW.AmmoType == None)
+		{
+			DXW.AmmoType = Spawn(DXW.Default.AmmoName,,, Location - Vect(0,0,16));
+		}
+		
+		if (DXW.AmmoType != None)
+		{
+			DXW.AmmoType.AmmoAmount = DXW.PickupAmmoCount;
+			DXW.PickupAmmoCount = 0;
+			DXW.AmmoType.InitialState = 'Idle2';
+			DXW.AmmoType.GiveTo(Self);
+			DXW.AmmoType.SetBase(Self);
 		}
 	}
 }
@@ -3715,7 +3733,8 @@ function bool ShouldDoSinglePickPocket(DeusExPlayer Frobbie)
 	}
 	
 	//MADDERS, 1/3/21: Don't allow pickpocketing on seats that are too big and clumsy. CouchLeather, I'm looking at you.
-	if ((SeatActor != None) && (SeatActor.CollisionRadius > CollisionRadius * 1.625))
+	//MADDERS, 8/7/25: Allow invisible seats (like benches in Revision) to allow pickpocketing.
+	if ((SeatActor != None) && (SeatActor.CollisionRadius > CollisionRadius * 1.625) && (!SeatActor.bHidden))
 	{
 		return False;
  	}
@@ -3877,7 +3896,8 @@ function DoSinglePickpocketDump(Actor Frobber, Actor HitActor)
    			DXP = DeusExPickup(Inv);
    			if ((DXW != None) && (DXW != CDXW) && (DXW.VMDConfigureInvSlotsX(None) < 90) && (DXW.PickupViewMesh != LodMesh'DeusExItems.InvisibleWeapon'))
    			{
-   				if (DXW != Weapon) //(!DXW.bHandToHand) && 
+				//MADDERS, 8/7/25: Stop us from duplicating Gilbert's gun. Shitty, but alright.
+   				if ((DXW != Weapon) && (!DXW.bGenerousWeapon)) //(!DXW.bHandToHand) && 
     				{
      					List[ListSize] = Inv;
      					ListNext[ListSize] = Next;
@@ -4967,6 +4987,11 @@ function VMDPawnTickHook(float DeltaTime)
 		bDamageGateBullshitFrame = false;
 	}
 	
+	if (WeaponSwapTimer > 0.0)
+	{
+		WeaponSwapTimer -= DeltaTime;
+	}
+	
 	if (TargetedLadderPoint != None || bClimbingLadder)
 	{
 		LadderCheckInTimer -= DeltaTime;
@@ -5272,34 +5297,7 @@ function bool HasSeedInSet(int In)
 
 function string VMDGetMapName()
 {
- 	local string S, S2;
- 	
- 	S = GetURLMap();
- 	S2 = Chr(92); //What the fuck. Can't type this anywhere!
-	
- 	//HACK TO FIX TRAVEL BUGS!
- 	if (InStr(S, S2) != -1)
- 	{
-  		do
-  		{
-   			S = Right(S, Len(S) - InStr(S, S2) - 1);
-  		}
-  		until (InStr(S, S2) == -1);
-		
-		if (InStr(S, ".") != -1)
-		{
-  			S = Left(S, Len(S) - 4);
-		}
- 	}
- 	else
-	{
-		if (InStr(S, ".") != -1)
-		{
-			S = Left(S, Len(S)-3);
-		}
- 	}
-	
- 	return CAPS(S);
+ 	return class'VMDStaticFunctions'.Static.VMDGetMapName(Self);
 }
 
 function TransferArmorHit( DeusExPlayer P)
@@ -5707,6 +5705,8 @@ function DumpItemInventory()
 				 	Item.Destroy();
 				 	if (LastItem != None) LastItem.Inventory = NextItem;
 				 	else Inventory = NextItem;
+					
+					continue;
 				}
 				else
 				{
@@ -6036,7 +6036,18 @@ function VMDUpdateGroundSpeedBuoyancy()
 		if (StartingGroundSpeed > 0) GroundSpeed = StartingGroundSpeed + (FMax(LegMod, PoisonMod) * StartingGroundSpeed * -0.5);
 		if (StartingBuoyancy > 0) Buoyancy = StartingBuoyancy + (FMax(LegMod, PoisonMod*0.5) * StartingBuoyancy * -1.0);
 		
-		if ((bSprinting) && (SprintStamina > 0)) GroundSpeed *= 1.33;
+		if ((bSprinting) && (SprintStamina > 0))
+		{
+			//MADDERS, 8/3/25: 33% * .706. Cancels out the diagonal movement going CRAZY for strafing melee NPCs.
+			if (bStrafing)
+			{
+				GroundSpeed *= 1.23;
+			}
+			else
+			{
+				GroundSpeed *= 1.33;
+			}
+		}
 		
 		//MADDERS, 6/22/24: Enemies don't gain as much from combat stim as we would.
 		//Also, mechs don't get boosted in speed at all.
@@ -6238,6 +6249,10 @@ function GiveBallisticArmorTexture()
 				break;
 				case Texture'UNATCOTroopTex2':
 					Multiskins[TarIndex] = Texture'VMDUNATCOTroopTex2BallisticArmor';
+				break;
+				//Revision specific
+				case Texture'NathanMadisonTex1':
+					Multiskins[TarIndex] = Texture'VMDNathanMadisonTex1BallisticArmor';
 				break;
 				
 				case Texture'VMDNSFBountyHunter2Shirt01':
