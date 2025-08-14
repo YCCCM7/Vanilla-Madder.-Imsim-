@@ -177,16 +177,26 @@ function LoadMap(int rowID)
 	// the player before loading the map
 
 	mapFileName = lstMaps.GetField(rowID, 0);
-
-	mapFileName = mapFileName $ ".dx";
+	
+	//MADDERS, 7/20/25: Mutate destination here.
+	mapFileName = class'VMDStaticFunctions'.Static.MutateDestinationByStyle(localPlayer, mapFileName);
+	
+	if (!(Right(MapFileName, 3) ~= ".dx"))
+	{
+		mapFileName = mapFileName $ ".dx";
+	}
 	bTravel = chkTravel.GetToggle();
 
 	root.ClearWindowStack();
 
 	if (bTravel)
+	{
 		localPlayer.ClientTravel(mapFileName, TRAVEL_Relative, True);
+	}
 	else
+	{
 		localPlayer.ConsoleCommand("Open" @ mapFileName $ "?loadonly");
+	}
 }
 
 // ----------------------------------------------------------------------
