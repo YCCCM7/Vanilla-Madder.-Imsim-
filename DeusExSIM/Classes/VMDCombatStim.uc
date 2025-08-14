@@ -145,7 +145,7 @@ defaultproperties
      largeIcon=Texture'BeltIconCombatStim'
      largeIconWidth=42
      largeIconHeight=42
-     Description="Known through rumors as 'Compound 23', this experimental combat drug is seriously heavy duty.|n|nEFFECTS: For 17 seconds: Gain clarity against visual effects. For 25 seconds: Max out stress level, increase melee speed by 65%, aim focus rate by 65%, and movement speed by 35%. You will crash after the effect ends."
+     Description="Known through rumors as 'Compound 23', this experimental combat drug is seriously heavy duty.|n|nEFFECTS: For 17 seconds: Gain clarity against visual effects. For 25 seconds: Max out stress level, increase melee speed by 65%, aim focus rate by 65%, and movement speed by 35%. Reduce poison damage by 65%. You will crash after the effect ends."
      beltDescription="STIM"
      Mesh=LodMesh'VMDSyringe'
      CollisionRadius=7.500000
