@@ -45,7 +45,7 @@ var bool FoundFlag;
 var float Diff;
 var int GM, i;
 var Rotator TRot;
-var Vector PlugVect;
+var Vector PlugVect, HackVect;
 var Texture FilTex[8];
 
 //Semi-vague classes.
@@ -87,7 +87,52 @@ var DeusExCarcass DXC;
 
 function VMDUpdateRevisionMapStatus()
 {
-	bRevisionMapSet = false;
+	local bool bHasSniper;
+	local int i;
+	local Pawn TPawn;
+	local ScriptedPawn SP;
+	local VMDBufferPlayer VMP;
+	
+	switch(class'VMDStaticFunctions'.static.GetIntendedMapStyle(Self))
+	{
+		case 0:
+			bRevisionMapSet = false;
+		break;
+		case 1:
+			bRevisionMapSet = true;
+		break;
+		case 2:
+			bRevisionMapSet = false;
+		break;
+	}
+	
+	VMP = VMDBufferPlayer(GetPlayerPawn());
+	if ((bRevisionMapSet) && (VMP != None))
+	{
+		for (TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+		{
+			SP = ScriptedPawn(TPawn);
+			if (SP != None)
+			{
+				bHasSniper = false;
+				for(i=0; i<ArrayCount(SP.InitialInventory); i++)
+				{
+					if (ClassIsChildOf(SP.InitialInventory[i].Inventory, class'WeaponRifle'))
+					{
+						bHasSniper = true;
+						break;
+					}
+				}
+				
+				//MADDERS, 7/25/25: Revision snipers are insanely busted, being built to see through sometimes literal perfect darkness.
+				//It was bullshit when GMDX did it, it's bullshit when Revision does it. That's my take. Nerf these little bastards.
+				if (SP.VisibilityThreshold < 0.005 * (int(bHasSniper) + 1))
+				{
+					SP.VisibilityThreshold = FMax(0.01 * VMP.EnemyVisionStrengthMult,  0.0025);
+				}
+			}
+		}
+	}
 }
 
 function Conversation GetConversation(Name conName)
@@ -140,8 +185,9 @@ function Tick(float DT)
 		else if (FixTimer > -10)
  		{
  	 		FixTimer = -30;
+			VMDUpdateRevisionMapStatus();
 			CommitMapFixing(MapName, Flags, VMP, SF);
-
+			
 			if ((TestLoc != vect(0,0,0)) && (VMP != None))
 			{
 				VMP.SetLocation(TestLoc);
@@ -280,7 +326,7 @@ function SetMoverFragmentType(DeusExMover DXM, string MaterialClass)
 	}
 }
 
-function DumbAllReactions(ScriptedPawn SP)
+static function DumbAllReactions(ScriptedPawn SP)
 {
 	if (SP == None) return;
 	
@@ -353,38 +399,7 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 
 function string VMDGetMapName()
 {
- 	local string S, S2;
- 	
- 	S = GetURLMap();
- 	S2 = Chr(92); //What the fuck. Can't type this anywhere!
-	
-	//MADDERS, 3/23/21: Uuuuh... Oceanlab machine :B:ROKE.
-	//No idea how or why this happens, and only post-DXT merge. Fuck it. Chop it down.
-	if (Right(S, 1) ~= " ") S = Left(S, Len(S)-1);
-	
- 	//HACK TO FIX TRAVEL BUGS!
- 	if (InStr(S, S2) > -1)
- 	{
-  		do
-  		{
-   			S = Right(S, Len(S) - InStr(S, S2) - 1);
-  		}
-  		until (InStr(S, S2) <= -1);
-
-		if (InStr(S, ".") > -1)
-		{
-  			S = Left(S, Len(S) - 4);
-		}
- 	}
- 	else
-	{
-		if (InStr(S, ".") > -1)
-		{
-			S = Left(S, Len(S)-3);
-		}
- 	}
-	
- 	return CAPS(S);
+ 	return class'VMDStaticFunctions'.Static.VMDGetMapName(Self);
 }
 
 function Actor FindActorBySeed(class<Actor> TarClass, int TarSeed)
