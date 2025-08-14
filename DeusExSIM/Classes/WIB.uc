@@ -5,6 +5,11 @@ class WIB extends HumanMilitary;
 
 var int EMPTakenTotal;
 
+function bool VMDCanRunWithAnyWeapon()
+{
+	return true;
+}
+
 function CheckHealthScaling()
 {
 	local VMDBufferPlayer VMP;
