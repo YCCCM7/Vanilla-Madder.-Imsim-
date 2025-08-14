@@ -14,7 +14,7 @@ var int OverrideSliderWidth, SliderShiftX;
 var localized string DamageSliderText, TimerSliderText, HPSliderText,
 			PlayerGuideTipHeader, PlayerGuideTipText,
 			PresetNames[8], TipHeaders[8], TipTexts[8],
-			DamageEnumerations[7], TimerEnumerations[7], HPEnumerations[7],
+			DamageEnumerations[8], TimerEnumerations[8], HPEnumerations[8],
 			PresetsLabelText, PresetLabel;
 
 //var MenuUIHelpWindow PresetsLabel;
@@ -153,16 +153,16 @@ function CreateSliderWindow()
 	TAc = DamageSlider.BtnAction;
 	
 	DamageSlider.SetPos(DamageSliderPos.X, DamageSliderPos.Y);
-	DamageSlider.NumTicks = 7;
+	DamageSlider.NumTicks = ArrayCount(DamageEnumerations);
 	DamageSlider.StartValue = 0;
-	DamageSlider.EndValue = 6;
+	DamageSlider.EndValue = DamagEslider.NumTicks-1;
 	DamageSlider.SetValue(2);
 	if (TSli != None)
 	{
 		TSli.SetTicks(DamageSlider.NumTicks, DamageSlider.StartValue, DamageSlider.EndValue);
 	}
 	
-	for (i=0; i<7; i++)
+	for (i=0; i<ArrayCount(DamageEnumerations); i++)
 	{
 		DamageSlider.SetEnumeration(i, DamageEnumerations[i]$"%");
 	}
@@ -178,15 +178,15 @@ function CreateSliderWindow()
 	TAc = TimerSlider.BtnAction;
 	
 	TimerSlider.SetPos(TimerSliderPos.X, TimerSliderPos.Y);
-	TimerSlider.NumTicks = 7;
+	TimerSlider.NumTicks = ArrayCount(TimerEnumerations);
 	TimerSlider.StartValue = 0;
-	TimerSlider.EndValue = 6;
+	TimerSlider.EndValue = TimerSlider.NumTicks-1;
 	TimerSlider.SetValue(2);
 	if (TSli != None)
 	{
 		TSli.SetTicks(TimerSlider.NumTicks, TimerSlider.StartValue, TimerSlider.EndValue);
 	}
-	for (i=0; i<7; i++)
+	for (i=0; i<ArrayCount(TimerEnumerations); i++)
 	{
 		TimerSlider.SetEnumeration(i, TimerEnumerations[i]$"%");
 	}
@@ -196,21 +196,21 @@ function CreateSliderWindow()
 		TAc.SetWidth(OverrideSliderWidth);
 		TAc.SetButtonText(TimerSliderText);
 	}
-
+	
 	HPSlider = VMDMiniMenuUIChoiceSlider(WinClient.NewChild(Class'VMDMiniMenuUIChoiceSlider'));
 	TSli = HPSlider.BtnSlider;
 	TAc = HPSlider.BtnAction;
 	
 	HPSlider.SetPos(HPSliderPos.X, HPSliderPos.Y);
-	HPSlider.NumTicks = 7;
+	HPSlider.NumTicks = ArrayCount(HPEnumerations);
 	HPSlider.StartValue = 0;
-	HPSlider.EndValue = 6;
-	HPSlider.SetValue(1);
+	HPSlider.EndValue = HPSlider.NumTicks-1;
+	HPSlider.SetValue(5);
 	if (TSli != None)
 	{
 		TSli.SetTicks(HPSlider.NumTicks, HPSlider.StartValue, HPSlider.EndValue);
 	}
-	for (i=0; i<7; i++)
+	for (i=0; i<ArrayCount(HPEnumerations); i++)
 	{
 		HPSlider.SetEnumeration(i, HPEnumerations[i]$"%");
 	}
@@ -243,9 +243,9 @@ function LoadPreset(int PresetIndex)
 	VMP = VMDBufferPlayer(Player);
 	
 	//All health and timers match (EDIT: Except condemned), but HP slider is always 1... Except for Condemned.
-	DamageSlider.SetValue(Min(PresetIndex, 5));
-	TimerSlider.SetValue(Min(PresetIndex, 5));
-	HPSlider.SetValue(1);
+	DamageSlider.SetValue(PresetIndex);
+	TimerSlider.SetValue(PresetIndex);
+	HPSlider.SetValue(5);
 	
 	DisableAllModifiers();
 	
@@ -258,6 +258,8 @@ function LoadPreset(int PresetIndex)
 	{
 		//Realistic
 		case 4:
+			DamageSlider.SetValue(5);
+			TimerSlider.SetValue(5);
 			SetRowVariable(VMDGetSettingIndex("Computer Visibility"), 1); //Enable computer visibility. It's at least realistic.
 			SetRowVariable(VMDGetSettingIndex("Notice Bumping"), 1); //Turn on bumping alerting enemies while we're here.
 			SetRowVariable(VMDGetSettingIndex("NPCs Projectile Fear"), 1); //Turn on avoidance of projectiles, too.
@@ -296,8 +298,8 @@ function LoadPreset(int PresetIndex)
 			SetRowVariable(VMDGetSettingIndex("Enemy Reaction Speed Boost"), 1); //Do some mildly enhanced reflexes.
 			SetRowVariable(VMDGetSettingIndex("Enemy Surprise Period Reduction"), 1); //Do some mildly enhanced surprise window.
 			
-			DamageSlider.SetValue(4);
-			TimerSlider.SetValue(4);
+			DamageSlider.SetValue(5);
+			TimerSlider.SetValue(5);
 		break;
 		//Gallows
 		case 6:
@@ -336,6 +338,8 @@ function LoadPreset(int PresetIndex)
 			
 			EnableAllStealthModifiers();
 			EnableAllCombatModifiers();
+			DamageSlider.SetValue(6);
+			TimerSlider.SetValue(6);
 		break;
 		//Condemned
 		case 7:
@@ -381,10 +385,8 @@ function LoadPreset(int PresetIndex)
 			EnableAllCombatModifiers();
 			//MADDERS, 12/4/24: These are going down to gallows levels. Shocking, I know.
 			//Mercs and energy shield damage type scaling is doing its job well, though.
-			DamageSlider.SetValue(5);
-			TimerSlider.SetValue(5);
-			//MADDERS, 12/4/24: To my surprise after further testing, I honestly think this setting is no longer necessary at all.
-			//HPSlider.SetValue(2); //Enemies have 1.25x health. Condemned special, baby.
+			DamageSlider.SetValue(6);
+			TimerSlider.SetValue(6);
 		break;
 	}
 	
@@ -958,7 +960,7 @@ function SaveSettings()
 	{
 		VMP.CombatDifficulty = float(DamageEnumerations[DamageSlider.GetValue()]) / 100.0;
 		VMP.TimerDifficulty = float(DamageEnumerations[TimerSlider.GetValue()]) / 100.0; //Note: This is not a bug. Timer slider's values are not squared in their raw value.
-		VMP.EnemyHPScale = float(HPEnumerations[HPSlider.GetValue()]) / 100.0;
+		VMP.EnemyHPScale = 4.0 / (float(HPEnumerations[HPSlider.GetValue()]) / 100.0);
 		
 		for(i=0; i<ArrayCount(StrSetting); i++)
 		{
@@ -1582,29 +1584,32 @@ defaultproperties
      DamageEnumerations(1)="100"
      DamageEnumerations(2)="150"
      DamageEnumerations(3)="200"
-     DamageEnumerations(4)="400"
-     DamageEnumerations(5)="600"
-     DamageEnumerations(6)="800"
+     DamageEnumerations(4)="300"
+     DamageEnumerations(5)="400"
+     DamageEnumerations(6)="600"
+     DamageEnumerations(7)="800"
      TimerEnumerations(0)="75"
      TimerEnumerations(1)="100"
      TimerEnumerations(2)="122"
      TimerEnumerations(3)="141"
-     TimerEnumerations(4)="200"
-     TimerEnumerations(5)="245"
-     TimerEnumerations(6)="283"
-     HPEnumerations(0)="75"
+     TimerEnumerations(4)="173"
+     TimerEnumerations(5)="200"
+     TimerEnumerations(6)="245"
+     TimerEnumerations(7)="283"
+     HPEnumerations(0)="50"
      HPEnumerations(1)="100"
-     HPEnumerations(2)="125"
-     HPEnumerations(3)="150"
-     HPEnumerations(4)="200"
-     HPEnumerations(5)="300"
-     HPEnumerations(6)="400"
+     HPEnumerations(2)="150"
+     HPEnumerations(3)="200"
+     HPEnumerations(4)="300"
+     HPEnumerations(5)="400"
+     HPEnumerations(6)="600"
+     HPEnumerations(7)="800"
      
      SliderShiftX=24
      OverrideSliderWidth=112
      DamageSliderText="Damage Taken"
      TimerSliderText="Time Pressure"
-     HPSliderText="Enemy Health"
+     HPSliderText="Enemy D. Taken"
      WinScrollPos=(X=222,Y=51)
      WinScrollSize=(X=530,Y=250)
      WinDescriptionSize=(X=469,Y=113)
