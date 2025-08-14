@@ -8,8 +8,9 @@ struct VMDButtonPos {
 	var int Y;
 };
 
-var VMDButtonPos WarningLabelPos, WarningLabelSize;
+var int InternalIndex;
 var MenuUILabelWindow WarningLabel;
+var VMDButtonPos WarningLabelPos, WarningLabelSize;
 
 // ----------------------------------------------------------------------
 // InitWindow()
@@ -50,6 +51,19 @@ function MenuUILabelWindow CreateMenuLabel(int posX, int posY, String strLabel, 
 	newLabel.SetText(strLabel);
 	
 	return newLabel;
+}
+
+function PostDrawWindow(GC gc)
+{
+	local VMDBufferPlayer VMP;
+	
+	Super.PostDrawWindow(gc);
+	
+	VMP = VMDBufferPlayer(GetPlayerPawn());
+	if ((InternalIndex == 0) && (VMP != None) && (VMP.Level != None) && (VMP.Level.Pauser != ""))
+	{
+		VMP.ViewFlash(VMP.VMDLastTickChunk);
+	}
 }
 
 // ----------------------------------------------------------------------
