@@ -43,10 +43,17 @@ void AVMDFileFinder :: execFindNextFileAt(FFrame& Stack, RESULT_DECL)
 	//Uggo 1: If we found these invalid fake files, skip past them. They suck.
 	if (bFoundAFile && (FString(wfdFindData.cFileName) == FString(L".") || FString(wfdFindData.cFileName) == FString(L"..")))
 	{
-
+		INT i = 0;
 		do
 		{
 			FindNextFileW(hFindFile, &wfdFindData);
+			bFoundAFile = hFindFile != INVALID_HANDLE_VALUE;
+			if (i > 2)
+			{
+				bFoundAFile = false;
+				break;
+			}
+			i += 1;
 		}
 		while (FString(wfdFindData.cFileName) == FString(L".") || FString(wfdFindData.cFileName) == FString(L".."));
 	}
