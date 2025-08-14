@@ -93,6 +93,7 @@ event bool ScalePositionChanged(Window scale, int newTickPosition,
 	}
 	if (ParentWindow != None)
 	{
+		ParentWindow.SetPropertyText("LastMiniSliderValue", WinSlider.GetValueString());
 		ParentWindow.SetPropertyText("LastMiniSlider", String(Self));
 		ParentWindow.AddTimer(0.01, false,, 'MiniSliderChanged');
 	}
