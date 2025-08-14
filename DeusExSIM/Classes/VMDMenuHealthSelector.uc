@@ -1157,7 +1157,7 @@ function int HealPart(int PartIndex, optional float pointsToHeal, optional bool 
 		break;
 	}
 	
-	// Remove the item from the player's invenory and this screen
+	// Remove the item from the player's inventory and this screen
 	if (!bLeaveMedKit)
 	{
 		if (VMDBufferPlayer(Player) != None)
