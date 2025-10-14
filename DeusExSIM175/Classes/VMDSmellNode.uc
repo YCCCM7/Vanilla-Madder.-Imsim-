@@ -83,6 +83,11 @@ singular function DripWater(float deltaTime)
 {
 }
 
+//MADDERS, 0/12/25: Don't play landed sounds.
+function Landed(vector HitNormal)
+{
+}
+
 defaultproperties
 {
      bHidden=True

@@ -1,0 +1,29 @@
+
+User avatar
+Skywolf	
+    OldUnreal Member	
+    Posts: 880	
+    Joined: Sun Aug 02, 2009 12:20 pm	
+
+Re: Blender Vertex Mesh export Plugin [V1.2.5].
+
+Post by Skywolf » Sat Aug 17, 2019 7:59 pm
+There really isn't a way to do this in the current exporter. It might be possible to make the exporter merge multiple objects in such a way that it can export your model but that could open a can of worms for something that really is a niche situation.
+
+I did come up with a workaround though. Hacky as it may be:
+
+1. First create an armature, go into edit mode and move the single bone to somewhere above the head (you technically don't have to do this but it makes it easier to work with). And name the bone Helmet
+
+2. Duplicate your character model (optionally delete most geometry you don't care about. Like the legs and arms) Create a new vertex group on the duplicated mesh and name it something like Parent_Verts and select three vertices on the head and assign them to this vertex group.
+
+3. In pose mode of the armature add the Child Of Bone Constraint to the single bone we have. Set the target to the duplicated character model (GM_DressShirt.001 in your case) with the vertex group to the one we just created and click on Set Inverse.
+
+4. Now merge your helmet with your character mesh (the original, non-duplicated one) and go into edit mode. Add another vertex group here and name it Helmet and assign all vertices from the helmet to it (select one vertice on the helmet and press ctrl+l)
+
+5. Finally add an armature modifier to the character mesh and tell it to use the armature we just created.
+
+Select all objects with the character mesh selected last and export.
+
+About what and why (if you care): This method is practically the same as what you did only we use an armature as an inbetween step to allow transformations of parts of the same mesh we use as a source for transformation. However, if we would use the same mesh for transformation and parent for the armature this would create a cycle. (Blender would deform the mesh, then move the bone, then the mesh would be deformed so it would have to move the bone again, which deforms the mesh .etc) To avoid an endless loop does blender simply only update any object once per frame. This causes the helmet to lag behind one frame which we don't want. Hence why we duplicate the character mesh to avoid this (now blender deforms the duplicated mesh, which affects the armature which then deforms the character mesh).
+
+Blender if very capable. You sometimes just have to bend it a bit to get it to do what you want :D.

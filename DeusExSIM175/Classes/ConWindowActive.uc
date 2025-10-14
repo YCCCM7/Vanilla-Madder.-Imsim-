@@ -536,21 +536,21 @@ event bool VirtualKeyPressed(EInputKey key, bool bRepeat)
 			case IK_NUMPAD2:	
 				if (numChoices > 1)
 					KeyboardButtonActivated(1);
-				else
+				else if (NumChoices == 0)
 					conPlay.PlayNextEvent();
 			break;
 			case IK_3:
 			case IK_NUMPAD3:	
 				if (numChoices > 2)
 					KeyboardButtonActivated(2);
-				else
+				else if (NumChoices == 0)
 					conPlay.PlayNextEvent();
 			break;
 			case IK_4:
 			case IK_NUMPAD4:	
 				if (numChoices > 3)
 					KeyboardButtonActivated(3);
-				else
+				else if (NumChoices == 0)
 					conPlay.PlayNextEvent();
 			break;
 			// These further ones shouldn't be needed, but are here just in case there are somehow 10 options.
@@ -558,35 +558,35 @@ event bool VirtualKeyPressed(EInputKey key, bool bRepeat)
 			case IK_NUMPAD5:	
 				if (numChoices > 4)
 					KeyboardButtonActivated(4);
-				else
+				else if (NumChoices == 0)
 					conPlay.PlayNextEvent();
 			break;
 			case IK_6:
 			case IK_NUMPAD6:	
 				if (numChoices > 5)
 					KeyboardButtonActivated(5);
-				else
+				else if (NumChoices == 0)
 					conPlay.PlayNextEvent();
 			break;
 			case IK_7:
 			case IK_NUMPAD7:	
 				if (numChoices > 6)
 					KeyboardButtonActivated(6);
-				else
+				else if (NumChoices == 0)
 					conPlay.PlayNextEvent();
 			break;
 			case IK_8:
 			case IK_NUMPAD8:	
 				if (numChoices > 7)
 					KeyboardButtonActivated(7);
-				else
+				else if (NumChoices == 0)
 					conPlay.PlayNextEvent();
 			break;
 			case IK_9:
 			case IK_NUMPAD9:	
 				if (numChoices > 8)
 					KeyboardButtonActivated(8);
-				else
+				else if (NumChoices == 0)
 					conPlay.PlayNextEvent();
 			break;
 		}

@@ -7,7 +7,7 @@ class VMDSimPlayerHandsHDImports extends VMDSimImportsParent abstract;
 // VMDPlayerHands
 //
 #exec MESH IMPORT MESH=VMDPlayerHands ANIVFILE=Models\VMDPlayerHandsHDAnimated_a.3d DATAFILE=Models\VMDPlayerHandsHDAnimated_d.3d
-#exec MESH ORIGIN MESH=VMDPlayerHands X=0 Y=0 Z=0 YAW=64
+#exec MESH ORIGIN MESH=VMDPlayerHands X=0 Y=0 Z=17920 YAW=64
 #exec MESH LODPARAMS MESH=VMDPlayerHands STRENGTH=0.5
 
 #exec MESH SEQUENCE MESH=VMDPlayerHands SEQ=All					STARTFRAME=0   NUMFRAMES=51
@@ -22,12 +22,13 @@ class VMDSimPlayerHandsHDImports extends VMDSimImportsParent abstract;
 #exec MESH SEQUENCE MESH=VMDPlayerHands SEQ=Tread				STARTFRAME=34 NUMFRAMES=12  RATE=15 
 
 #exec MESHMAP SCALE MESHMAP=VMDPlayerHands X=0.0078125 Y=0.01171875 Z=0.00390625
+//#exec MESHMAP SCALE MESHMAP=VMDPlayerHands X=0.0078125 Y=0.01171875 Z=0.0078125
 
 //
 // VMDPlayerHandsLeft
 //
 #exec MESH IMPORT MESH=VMDPlayerHandsLeft ANIVFILE=Models\VMDPlayerHandsHDAnimated_a.3d DATAFILE=Models\VMDPlayerHandsHDAnimated_d.3d UNMIRROR=1
-#exec MESH ORIGIN MESH=VMDPlayerHandsLeft X=0 Y=0 Z=0 YAW=64
+#exec MESH ORIGIN MESH=VMDPlayerHandsLeft X=0 Y=0 Z=17920 YAW=64
 #exec MESH LODPARAMS MESH=VMDPlayerHandsLeft STRENGTH=0.5
 
 #exec MESH SEQUENCE MESH=VMDPlayerHandsLeft SEQ=All					STARTFRAME=0   NUMFRAMES=366         
@@ -41,6 +42,7 @@ class VMDSimPlayerHandsHDImports extends VMDSimImportsParent abstract;
 #exec MESH SEQUENCE MESH=VMDPlayerHandsLeft SEQ=Tread				STARTFRAME=34 NUMFRAMES=12  RATE=15 
 
 #exec MESHMAP SCALE MESHMAP=VMDPlayerHandsLeft X=0.0078125 Y=0.01171875 Z=0.00390625
+//#exec MESHMAP SCALE MESHMAP=VMDPlayerHandsLeft X=0.0078125 Y=0.01171875 Z=0.0078125
 
 defaultproperties
 {

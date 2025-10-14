@@ -104,6 +104,7 @@ class VMDSkillTalentImportsv2 extends VMDSimImportsParent abstract;
 #exec TEXTURE IMPORT NAME="SkillMapBranchSwimming01A" FILE="Textures\SkillTalentsv2\SkillMapBranchSwimming01A.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="SkillMapBranchSwimming01B" FILE="Textures\SkillTalentsv2\SkillMapBranchSwimming01B.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="SkillMapBranchSwimming01C" FILE="Textures\SkillTalentsv2\SkillMapBranchSwimming01C.pcx" GROUP=UI FLAGS=2
+#exec TEXTURE IMPORT NAME="SkillMapBranchSwimming01D" FILE="Textures\SkillTalentsv2\SkillMapBranchSwimming01D.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="SkillMapBranchSwimming02A" FILE="Textures\SkillTalentsv2\SkillMapBranchSwimming02A.pcx" GROUP=UI FLAGS=2
 #exec TEXTURE IMPORT NAME="SkillMapBranchSwimming02B" FILE="Textures\SkillTalentsv2\SkillMapBranchSwimming02B.pcx" GROUP=UI FLAGS=2
 

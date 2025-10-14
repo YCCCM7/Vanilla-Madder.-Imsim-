@@ -1,0 +1,17 @@
+
+User avatar
+Skywolf	
+    OldUnreal Member	
+    Posts: 880	
+    Joined: Sun Aug 02, 2009 12:20 pm	
+
+Re: Blender Vertex Mesh export Plugin [V1.2.5].
+
+Post by Skywolf » Mon Aug 19, 2019 9:12 pm
+I have no idea why it does that. Seems to me like an odd bug in how the Child Of constraint works. I always assumed it worked like vertex parent but apparently not.
+
+Anyway, since vertex parenting works could you simply add another object (like an empty), vertex parent that to the duplicate mesh and parent the bone to that.
+
+Alternatively, you can replace the armature modifier with a Hook modifier, set the object to whatever object you vertex parented and set the vertex group to the one with the right vertices assigned to it. This way you don't need the armature anymore which saves some time in setting things up. This essentially turns an object into a single bone for deformation.
+
+I honestly never use the Hook modifier. So I didn't think about using it before. But for this use case it seems to be perfect.

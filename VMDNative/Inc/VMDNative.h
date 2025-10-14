@@ -18,6 +18,7 @@
 #include "UnPath.h"
 #include "Extension.h"
 #include "DeusEx.h"
+#include "DeusExGameEngine.h"
 
 //What we ACTUALLY do...
 #include "XRootWindowOverlay.h"

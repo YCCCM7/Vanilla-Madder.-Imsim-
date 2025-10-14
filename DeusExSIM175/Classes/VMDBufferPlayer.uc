@@ -7646,7 +7646,7 @@ function VMDRunTickHook( float DT )
 	  		ShowHUD(False);
 		}
 		
-  		if (IsEMPFlicker(HUDEMPTimer))
+  		if ((IsEMPFlicker(HUDEMPTimer)) && (!bEpilepsyReduction))
   		{
    			if (FRand() < 0.65) ShowHUD(True);
   		}

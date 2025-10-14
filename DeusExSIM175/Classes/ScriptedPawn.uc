@@ -998,6 +998,12 @@ function bool IsSeatValid(Actor checkActor)
 
 function SetDistress(bool bDistress)
 {
+	//MADDERS, 8/18/25: Stop letting people care about us if we're just misc NPCs.
+	if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bInsignificant))
+	{
+		return;
+	}
+	
 	bDistressed = bDistress;
 	if (bDistress && bEmitDistress)
 		AIStartEvent('Distress', EAITYPE_Visual);
@@ -4517,8 +4523,10 @@ function PlayDyingSound()
 	PlaySound(Die, SLOT_Pain,,,, RandomPitch());
 	
 	AISendEvent('LoudNoise', EAITYPE_Audio);
-	if (bEmitDistress)
+	if (bEmitDistress && (VMDBufferPawn(Self) == None || !VMDBufferPawn(Self).bInsignificant))
+	{
 		AISendEvent('Distress', EAITYPE_Audio);
+	}
 }
 
 
@@ -4869,8 +4877,10 @@ function PlayTakeHitSound(int Damage, name damageType, int Mult)
 	}
 	else PlaySound(hitSound, SLOT_Pain, volume,,, RandomPitch());
 	
-	if ((hitSound != None) && (bEmitDistress))
+	if (HitSound != None && bEmitDistress && (VMDBufferPawn(Self) == None || !VMDBufferPawn(Self).bInsignificant))
+	{
 		AISendEvent('Distress', EAITYPE_Audio, volume);
+	}
 }
 
 

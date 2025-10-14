@@ -17,8 +17,15 @@
 				return -1;
 			}
 
+			DDeusExGameEngine* TheGameEngine = NULL;
+			for(TObjectIterator<DDeusExGameEngine> It; It; ++It)
+			{
+				TheGameEngine = *It;
+				break;
+			}
+
 			FString LeftMost = mapName.Left(2);
-			INT Digit = LeftMost.GetCharArray()(1) - L'0';
+			//INT Digit = LeftMost.GetCharArray()(1) - L'0';
 			INT FrontDigit = LeftMost.GetCharArray()(0) - L'0';
 			INT InPos = -1;
 			switch(FrontDigit)
@@ -33,12 +40,21 @@
 				case 7:
 				case 8:
 				case 9:
-					mapName = mapName.Left(2);
+					/*mapName = mapName.Left(2);
 					debugf(TEXT("RETURNING INT VALUE! %s"), mapName);
 					
 					Digit += FrontDigit * 10;
 
-					return Digit;
+					return Digit;*/
+
+					if (TheGameEngine)
+					{
+						return TheGameEngine->GetNextMissionNumber(mapName);
+					}
+					else
+					{
+						return 999;
+					}
 				break;
 				default:
 					InPos = mapName.InStr(TEXT("\\"));

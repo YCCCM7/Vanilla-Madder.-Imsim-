@@ -182,7 +182,7 @@ function EndAlarm()
 	SoundVolume = Default.SoundVolume;
 	SoundRadius = Default.SoundRadius;
 	SoundPitch = Default.SoundPitch;
-	lastAlarmTime = AlarmTimeout; //Level.TimeSeconds
+	lastAlarmTime = 0.0; //Level.TimeSeconds
 	AIEndEvent('Alarm', EAITYPE_Audio);
 
 	// reset our stasis info

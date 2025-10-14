@@ -1245,6 +1245,13 @@ function CommitMapFixing()
 							}
 						}
 						
+						//MADDERS, 10/10/25: Bad damage trigger burns you inside the pipe. Sigh.
+						A = FindActorBySeed(class'DamageTrigger', 1);
+						if (A != None)
+						{
+							A.SetCollisionSize(80, A.CollisionHeight);
+						}
+						
 						//MADDERS, 11/1/21: LDDP branching functionality.
 						if ((Flags != None) && (Flags.GetBool('LDDPJCIsFemale')))
 						{
@@ -1706,6 +1713,10 @@ function CommitMapFixing()
 				case "05_NYC_UNATCOMJ12LAB":
 					if (!bRevisionMapSet)
 					{
+						//MADDERS, 10/3/25: Can't be arsed to fix it via flag triggers, so have this weird tweak instead.
+						A = Spawn(class'DestroyOtherTrigger',, 'BotOrders2', Vect(-4061, 1147, 171));
+						DestroyOtherTrigger(A).DestructionTarget = FindActorBySeed(class'AllianceTrigger', 0);
+						
 						forEach AllActors(class'ScriptedPawn', SP)
 						{
 							if (PaulDenton(SP) != None)
