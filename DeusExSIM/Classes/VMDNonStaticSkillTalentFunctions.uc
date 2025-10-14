@@ -640,10 +640,10 @@ defaultproperties
     MapBranchingTalent(1)=SwimmingBreathRegen
     MapBranchingPos(1)=(X=163,Y=191)
     MapBranchingSize(1)=(X=128,Y=8)
-    MapBranchingTexture(2)=Texture'SkillMapBranchSwimming01C'
+    MapBranchingTexture(2)=Texture'SkillMapBranchSwimming01D'
     MapBranchingTalent(2)=SwimmingFitness
-    MapBranchingPos(2)=(X=284,Y=74)
-    MapBranchingSize(2)=(X=8,Y=128)
+    MapBranchingPos(2)=(X=284,Y=69)
+    MapBranchingSize(2)=(X=8,Y=32)
     MapBranchingTexture(3)=Texture'SkillMapBranchSwimming02A'
     MapBranchingTalent(3)=SwimmingFallRoll
     MapBranchingPos(3)=(X=317,Y=191)
@@ -1243,9 +1243,17 @@ defaultproperties
     MapBranchingTalent(88)=LockpickPoisonIdentity
     MapBranchingPos(88)=(X=290,Y=1025)
     MapBranchingSize(88)=(X=128,Y=128)
-	
-    //ACTUAL LAST TALENT USED IS 76!
-    //ACTUAL LAST BRANCH USED IS 88!
+    
+    SkillTalentIDs(77)=SwimmingCoreWorkout
+    SkillTalentIcons(77)="Swimming"
+    SkillTalentPos(77)=(X=256,Y=82)
+    MapBranchingTexture(89)=Texture'SkillMapBranchSwimming01C'
+    MapBranchingTalent(89)=SwimmingCoreWorkout
+    MapBranchingPos(89)=(X=284,Y=133)
+    MapBranchingSize(89)=(X=8,Y=32)
+    
+    //ACTUAL LAST TALENT USED IS 77!
+    //ACTUAL LAST BRANCH USED IS 89!
     
     SkillCoreDescs(0)="The covert manipulation of computers, ATMS, security consoles. Actions taken during hacking will increase the risk of being detected."
     SkillLevelDescsA(0)="|n~An agent can use terminals normally, but cannot hack without resonating with Software.|n*If they are resonating, they may hack for 33%% less time and 50%% less cash rewards than standard."
