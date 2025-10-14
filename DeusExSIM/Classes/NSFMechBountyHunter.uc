@@ -151,7 +151,7 @@ function InitializeBountyHunter(int HunterIndex, VMDBufferPlayer VMP, int Missio
 			}
 		break;
 		case 1: //Jumpsuit look.
-			Mesh = LODMesh'MP_Jumpsuit';
+			Mesh = LODMesh'VMDMP_Jumpsuit';
 			Multiskins[5] = Texture'GrayMaskTex'; //Frames?
 			Multiskins[7] = Texture'PinkMaskTex'; //???
 			
