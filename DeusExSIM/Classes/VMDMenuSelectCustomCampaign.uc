@@ -201,7 +201,7 @@ function LoadUpCampaigns(MenuUIListWindow CL)
 	//MADDERS, 7/20/25: Sniping another directory like this doesn't work with the old method. Use this more direct load instead.
 	if (class'VMDStaticFunctions'.Static.GetConflictingMapURLStyle(GetPlayerPawn()) == 1)
 	{
-		if (class'VMDFileFinder'.Static.FindFileAt("..\\VMDRevision\\Maps\\01_NYC_UNATCOIsland.dx"))
+		if (class'VMDNative.VMDFileFinder'.Static.FindFileAt("..\\VMDRevision\\Maps\\01_NYC_UNATCOIsland.dx"))
 		{
 			ConfirmedEntries[1] = KnownMissions[1].ListedName;
 			ConfirmedEntries[2] = KnownMissions[2].ListedName;
@@ -209,7 +209,7 @@ function LoadUpCampaigns(MenuUIListWindow CL)
 	}
 	else
 	{
-		if (class'VMDFileFinder'.Static.FindFileAt("01\\VMDRevision\\01_NYC_UNATCOIsland.dx"))
+		if (class'VMDNative.VMDFileFinder'.Static.FindFileAt("01\\VMDRevision\\01_NYC_UNATCOIsland.dx"))
 		{
 			ConfirmedEntries[1] = KnownMissions[1].ListedName;
 			ConfirmedEntries[2] = KnownMissions[2].ListedName;
@@ -220,7 +220,7 @@ function LoadUpCampaigns(MenuUIListWindow CL)
 	{
 		MapFileName = MapDir.GetDirFilename(MapIndex);
 		
-		for(i=2; i<KnownMax; i++)
+		for(i=3; i<KnownMax; i++)
 		{
 			TName = KnownMissions[i].StartingMapName;
 			if (TName ~= "") continue;
@@ -467,7 +467,7 @@ function InvokeNewGameScreen(string Campaign, string StartMap, string BindName, 
 {
 	local int i;
 	local VMDMenuSelectAppearance NewGame;
-	local VMDMenuCustomRevision NewRev;
+	local VMDMenuSelectCustomRevision NewRev;
 	local VMDBufferPlayer VMP;
 	local Music TMusic;
 	
@@ -482,6 +482,7 @@ function InvokeNewGameScreen(string Campaign, string StartMap, string BindName, 
 		VMP.DatalinkID = TDatalinkID;
 		VMP.InvokedBindName = BindName;
 		VMP.SelectedCampaign = Campaign;
+		VMP.CreationCampaign = Campaign;
 		VMP.CampaignNewGameMap = StartMap;
 		
 		if (bool(DynamicLoadObject("FemJC.FJCJump", class'Sound', True)))
@@ -501,7 +502,7 @@ function InvokeNewGameScreen(string Campaign, string StartMap, string BindName, 
 			VMP.ClientSetMusic(VMP.ModSwappedMusic, 4, 255, MTRAN_FastFade);
 		}
 		
-		newRev = VMDMenuCustomRevision(root.InvokeMenuScreen(Class'VMDMenuCustomRevision'));
+		newRev = VMDMenuSelectCustomRevision(root.InvokeMenuScreen(Class'VMDMenuSelectCustomRevision'));
 		newRev.SetCampaignData(StoredDifficulty, Campaign);
 		
 		return;
@@ -521,6 +522,7 @@ function InvokeNewGameScreen(string Campaign, string StartMap, string BindName, 
 		VMP.DatalinkID = TDatalinkID;
 		VMP.InvokedBindName = BindName;
 		VMP.SelectedCampaign = Campaign;
+		VMP.CreationCampaign = Campaign;
 		VMP.CampaignNewGameMap = StartMap;
 		switch(Campaign)
 		{
@@ -631,7 +633,7 @@ function InvokeModLocatorWindow()
 		
 		if (StartingWindow != None)
 		{
-			Player.ConsoleCommand("Open https://www.moddb.com/mods/vanilla-madder/news/supported-vmd-mods-w-links");
+			//Player.ConsoleCommand("Open https://www.moddb.com/mods/vanilla-madder/news/supported-vmd-mods-w-links");
 			
 			StartingWindow.VMP = VMDBufferPlayer(Player);
 			StartingWindow.CampaignWindow = Self;
