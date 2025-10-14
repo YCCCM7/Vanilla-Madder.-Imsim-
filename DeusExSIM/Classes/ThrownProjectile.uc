@@ -320,7 +320,7 @@ simulated function Tick(float deltaTime)
 							{
 								dist = P.Location - Location;
 								// only "heavy" pawns will set this off
-								if ((P != Owner) && (VMDMegh(P) == None) && (VMDSidd(P) == None) && (P.Mass >= 40) && (VSize(dist) < proxRadius) && (FastTrace(P.Location, Location)))
+								if ((P != Owner) && (VMDMegh(P) == None) && (VMDSidd(P) == None) && (P.Mass >= 40) && (VSize(dist) < proxRadius) && (FastTrace(P.Location, Location)) && (P.GetAllianceType('Player') == ALLIANCE_Hostile))
 								{
 									if ((VMDBufferPlayer(Owner) != None) && (VMDBufferPlayer(Owner).HasSkillAugment('DemolitionMineHandling')))
 									{
