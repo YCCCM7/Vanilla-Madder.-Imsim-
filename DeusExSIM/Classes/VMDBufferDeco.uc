@@ -402,6 +402,7 @@ function DXTUpdateSeenExtras()
 
 function BeginPlay()
 {
+	local Actor A;
 	local Mover M;
 
 	Super(Decoration).BeginPlay();
@@ -426,6 +427,7 @@ function BeginPlay()
 			bCollideWorld = False;
 		}
 	}
+	
 	if (fragType == class'GlassFragment')
 		pushSound = sound'PushPlastic';
 	else if (fragType == class'MetalFragment')
