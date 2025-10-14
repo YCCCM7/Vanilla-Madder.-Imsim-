@@ -825,8 +825,10 @@ function UpdatePlayerAppearance()
 		case 'GM_Trench':
 		case 'GM_TrenchLeft':
 		case 'GM_Trench_F':
+		case 'VMDGM_Trench_F':
 		case 'GM_Trench_FLeft':
 		case 'GFM_Trench':
+		case 'VMDGFM_Trench':
 		case 'GFM_TrenchLeft':
 			CoatLabel.SetText(CoatLabelText);
 			LensesLabel.SetText(LensesLabelText);
@@ -1046,6 +1048,7 @@ function UpdatePlayerAppearance()
 		//JUMPSUITS!
 		//----------------------------------
 		case 'MP_Jumpsuit':
+		case 'VMDMP_Jumpsuit':
 		case 'MP_JumpsuitLeft':
 			CoatLabel.SetText(JumpsuitCoatLabel);
 			LensesLabel.SetText(JumpsuitLensesLabel);
@@ -1075,7 +1078,7 @@ function UpdatePlayerAppearance()
 			
 			CoatUse = JumpsuitHelmetTexs[CurJumpsuitHelmetIndex];
 			LensesUse = JumpsuitVisorTexs[CurJumpsuitVisorIndex];
-			if (CurJumpsuitHelmetIndex < 3)
+			if (CurJumpsuitHelmetIndex < 6)
 			{
 				bLensesUnavailable = true;
 				LensesUse = Texture'PinkMaskTex';
@@ -1154,6 +1157,7 @@ function UpdatePlayerAppearance()
 		//SUITS!
 		//----------------------------------
 		case 'GM_Suit':
+		case 'VMDGM_Suit':
 		case 'GM_SuitLeft':
 			CoatLabel.SetText(SuitCoatLabel);
 			LensesLabel.SetText(SuitLensesLabel);
@@ -1250,6 +1254,9 @@ function UpdatePlayerAppearance()
 		case 'GM_DressShirt_S':
 		case 'GM_DressShirt':
 		case 'GM_DressShirt_F':
+		case 'VMDGM_DressShirt_S':
+		case 'VMDGM_DressShirt':
+		case 'VMDGM_DressShirt_F':
 		case 'GM_DressShirt_SLeft':
 		case 'GM_DressShirtLeft':
 		case 'GM_DressShirt_FLeft':
@@ -1346,7 +1353,9 @@ function UpdatePlayerAppearance()
 		//SKIRTS!
 		//----------------------------------
 		case 'GFM_SuitSkirt':
+		case 'VMDGFM_SuitSkirt':
 		case 'GFM_SuitSkirt_F':
+		case 'VMDGFM_SuitSkirt_F':
 		case 'GFM_SuitSkirtLeft':
 		case 'GFM_SuitSkirt_FLeft':
 			CoatLabel.SetText(SuitSkirtCoatLabel);
@@ -2805,12 +2814,12 @@ defaultproperties
      HandednessLabelText="Dominant Hand"
      
      MaleMeshes(0)=LODMesh'GM_Trench'
-     MaleMeshes(1)=LODMesh'GM_Trench_F'
-     MaleMeshes(2)=LODMesh'MP_Jumpsuit'
-     MaleMeshes(3)=LODMesh'GM_Suit'
-     MaleMeshes(4)=LODMesh'GM_DressShirt_S'
-     MaleMeshes(5)=LODMesh'GM_DressShirt'
-     MaleMeshes(6)=LODMesh'GM_DressShirt_F'
+     MaleMeshes(1)=LODMesh'VMDGM_Trench_F'
+     MaleMeshes(2)=LODMesh'VMDMP_Jumpsuit'
+     MaleMeshes(3)=LODMesh'VMDGM_Suit'
+     MaleMeshes(4)=LODMesh'VMDGM_DressShirt_S'
+     MaleMeshes(5)=LODMesh'VMDGM_DressShirt'
+     MaleMeshes(6)=LODMesh'VMDGM_DressShirt_F'
      MaleLeftMeshes(0)=LODMesh'GM_TrenchLeft'
      MaleLeftMeshes(1)=LODMesh'GM_Trench_FLeft'
      MaleLeftMeshes(2)=LODMesh'MP_JumpsuitLeft'
@@ -2820,9 +2829,9 @@ defaultproperties
      MaleLeftMeshes(6)=LODMesh'GM_DressShirt_FLeft'
      
      MaxMaleMeshIndex=6
-     FemaleMeshes(0)=LODMesh'GFM_Trench'
-     FemaleMeshes(1)=LODMesh'GFM_SuitSkirt'
-     FemaleMeshes(2)=LODMesh'GFM_SuitSkirt_F'
+     FemaleMeshes(0)=LODMesh'VMDGFM_Trench'
+     FemaleMeshes(1)=LODMesh'VMDGFM_SuitSkirt'
+     FemaleMeshes(2)=LODMesh'VMDGFM_SuitSkirt_F'
      FemaleMeshes(3)=LODMesh'VMDGFM_Dress'
      FemaleLeftMeshes(0)=LODMesh'GFM_TrenchLeft'
      FemaleLeftMeshes(1)=LODMesh'GFM_SuitSkirtLeft'
@@ -3078,13 +3087,16 @@ defaultproperties
      
      JumpsuitHelmetTexs(0)=Texture'PinkMaskTex'
      JumpsuitHelmetTexs(1)=Texture'DeusExCharacters.Skins.GogglesTex1'
-     JumpsuitHelmetTexs(2)=Texture'DeusExCharacters.Skins.ThugMale3Tex3'
-     JumpsuitHelmetTexs(3)=Texture'DeusExCharacters.Skins.MechanicTex3'
-     //JumpsuitHelmetTexs(4)=Texture'VMDMJ12TroopTex4'
-     JumpsuitHelmetTexs(4)=Texture'DeusExCharacters.Skins.RiotCopTex3'
-     JumpsuitHelmetTexs(5)=Texture'DeusExCharacters.Skins.SoldierTex3'
-     JumpsuitHelmetTexs(6)=Texture'DeusExCharacters.Skins.UNATCOTroopTex3'
-     MaxJumpsuitHelmetIndex=6
+     JumpsuitHelmetTexs(2)=Texture'VMDGogglesTex2'
+     JumpsuitHelmetTexs(3)=Texture'VMDGogglesTex3'
+     JumpsuitHelmetTexs(4)=Texture'VMDGogglesTex4'
+     JumpsuitHelmetTexs(5)=Texture'VMDGogglesTex5'
+     JumpsuitHelmetTexs(6)=Texture'DeusExCharacters.Skins.MechanicTex3'
+     //JumpsuitHelmetTexs(7)=Texture'VMDMJ12TroopTex4'
+     JumpsuitHelmetTexs(7)=Texture'DeusExCharacters.Skins.RiotCopTex3'
+     JumpsuitHelmetTexs(8)=Texture'DeusExCharacters.Skins.SoldierTex3'
+     JumpsuitHelmetTexs(9)=Texture'DeusExCharacters.Skins.UNATCOTroopTex3'
+     MaxJumpsuitHelmetIndex=9
      
      JumpsuitVisorTexs(0)=Texture'PinkMaskTex'
      JumpsuitVisorTexs(1)=Texture'DeusExCharacters.Skins.VisorTex1'
