@@ -38,7 +38,7 @@ function bool VMDHasActivationObjection()
 	
 	DXP = DeusExPlayer(Owner);
 	
-	if ((DXP != None) && (!VMDHasSkillAugment('EnviroDurability')))
+	if ((DXP != None) && (!bIsActive) && (!VMDHasSkillAugment('EnviroDurability')))
 	{
 		for (Inv=DXP.Inventory; Inv != None; Inv = Inv.Inventory)
 		{
