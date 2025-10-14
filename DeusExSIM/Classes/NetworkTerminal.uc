@@ -629,8 +629,18 @@ function HackDetected(optional bool bDamageOnly)
    	// DEUS_EX AMSD In multiplayer, don't damage.  
    	if (Player.Level.NetMode == NM_Standalone)
    	{
-      		player.TakeDamage(200 - 50 * skillLevel, None, vect(0,0,0), vect(0,0,0), 'EMP');	
-      		PlaySound(sound'ProdFire');
+      		//MADDERS, 10/2/25: Deal full bio damage like old when detected.
+		//However, master only takes 50 (still 25 bio back for max EMP shield).
+		//>1000 is a signal amount of damage to cap off how much is gained per hack feedback in 2.0.
+		if (SkillLevel == 3)
+		{
+	      		player.TakeDamage(50, None, vect(0,0,0), vect(0,0,0), 'EMP');	
+		}
+		else
+		{
+	      		player.TakeDamage(2000, None, vect(0,0,0), vect(0,0,0), 'EMP');	
+		}     
+ 		PlaySound(sound'ProdFire');
    	}
    	else
    	{
