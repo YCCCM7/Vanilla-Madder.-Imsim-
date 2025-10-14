@@ -32,6 +32,7 @@ defaultproperties
      MeleeAnimRates(1)=1.000000
      MeleeAnimRates(2)=1.000000
      HitDamage=16
+     DisarmChanceMult=2.000000
      
      bCanRotateInInventory=True
      RotatedIcon=Texture'LargeIconSwordRotated'
