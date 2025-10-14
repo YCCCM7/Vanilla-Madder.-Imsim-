@@ -597,6 +597,10 @@ function bool ReinforcePawn(VMDBufferPawn SP, int TWeight, int TMayhem)
 		{
 			if ((i >= InvStart) && (SP.bItemUnnatural[i] == 0))
 			{
+				if (class<WeaponMod>(SP.InitialInventory[i].Inventory) != None)
+				{
+					continue;
+				}
 				TP.InitialInventory[i] = SP.InitialInventory[i];
 			}
 			TP.InitialAlliances[i] = SP.InitialAlliances[i];
@@ -1173,7 +1177,7 @@ function class<Inventory> ObtainHighLevelPickup(VMDBufferPawn TP)
 			}
 		break;
 		case 6:
-			if ((TMission > 4) && (!TP.IsA('HumanCivilian')))
+			if ((TMission > 4) && (!TP.IsA('HumanCivilian')) && (!TP.IsA('Cop')))
 			{
 				Ret = class'WeaponLAW';
 			}
