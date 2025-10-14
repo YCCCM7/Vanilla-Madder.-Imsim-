@@ -120,7 +120,7 @@ function CreateMenuButtons()
 						else if ((WinButtons[2] != None) && (ButtonIndex == 2))
 						{
 							TarDir = GetConfig("Core.System", "SavePath")$"/Save9999";
-							if (class'VMDFileFinder'.Static.FindFileAt(TarDir))
+							if (class'VMDNative.VMDFileFinder'.Static.FindFileAt(TarDir))
 							{
 								WinButtons[2].SetButtonText(HackMainMenuText[3]);
 								WinButtons[2].SetSensitivity(False);
