@@ -28,12 +28,27 @@ function VMDDropEmptyMagazine(int THand)
 	}
 }
 
+function bool VMDCanBeDualWielded()
+{
+	return true;
+}
+
+function bool VMDCanDualWield()
+{
+	return ShouldUseGP2();
+}
+
 defaultproperties
 {
      DrawAnimFrames=6
      DrawAnimRate=10.000000
      HolsterAnimFrames=5
      HolsterAnimRate=20.000000
+     
+     //MADDERS: Shotgun info.
+     MinSpreadAcc=0.350000
+     BaseAccuracy=0.000000
+     MaximumAccuracy=0.0000000
      
      NumFiringModes=0
      FiringModes(0)="Full Auto"
@@ -42,14 +57,14 @@ defaultproperties
      ModeNames(1)="Double Fire"
      bPocketReload=True //MADDERS: We just throw these away anyways, and the reload anim is busted, even with good attempts them. Fuck it. Just reload like we're in MP.
      bCanHaveModReloadCount=False
-     PickupAmmoCount=2
+     PickupAmmoCount=1
      bBurstFire=True
      bAutomatic=True
      bHandToHand=False
      //HandSkinIndex=0
      OverrideAnimRate=2.650000
      OverrideReloadAnimRate=2.000000
-     OverrideNumProj=1
+     OverrideNumProj=3
      EvolvedName="Cricketer"
      EvolvedBelt="OI MATE"
      //FireCutoffFrame=0.250000
@@ -81,7 +96,7 @@ defaultproperties
      ShootTiltTimer(0)=0.700000
      ShootTiltTimer(1)=0.850000
      
-     LowAmmoWaterMark=2
+     LowAmmoWaterMark=1
      GoverningSkill=Class'DeusEx.SkillWeaponPistol'
      NoiseLevel=0.010000
      Concealability=CONC_All //MADDERS: We're keeping it, because why else would it be the HideAGun?
@@ -90,12 +105,11 @@ defaultproperties
      HitDamage=20
      maxRange=24000
      AccurateRange=14400
-     BaseAccuracy=0.000000
      bHasMuzzleFlash=False
      bEmitWeaponDrawn=False
      bUseAsDrawnWeapon=False
      AmmoName=Class'DeusEx.AmmoPlasma'
-     ReloadCount=2
+     ReloadCount=1
      FireOffset=(X=-20.000000,Y=10.000000,Z=16.000000)
      ProjectileClass=Class'DeusEx.PlasmaBoltMini'
      shakemag=50.000000

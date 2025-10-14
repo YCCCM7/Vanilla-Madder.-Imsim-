@@ -87,6 +87,17 @@ function VMDDropEmptyMagazine(int THand)
 	}
 }
 
+function bool VMDCanBeDualWielded()
+{
+	return true;
+}
+
+//MADDERS, 10/6/25: Our one melee test weapon.
+function bool VMDCanDualWield()
+{
+	return ShouldUseGP2();
+}
+
 defaultproperties
 {
      DrawAnimFrames=6
@@ -105,7 +116,7 @@ defaultproperties
      //HandSkinIndex=1
      //MADDERS: Make this thing a full auto pistol (low ROF) with long ass reloads.
      OverrideAnimRate=1.000000
-     ShotTime=0.150000
+     ShotTime=0.290000
      bSemiautoTrigger=True
      bAutomatic=False
      BaseAccuracy=0.750000
@@ -166,12 +177,9 @@ defaultproperties
      GoverningSkill=Class'DeusEx.SkillWeaponPistol'
      EnviroEffective=ENVEFF_Air
      Concealability=CONC_All //MADDERS: Keeping this as all, as the signature stealth gun
-     //ShotTime=0.150000
-     //reloadTime=1.500000
      HitDamage=10
      maxRange=4800
      AccurateRange=1200
-     //BaseAccuracy=0.800000
      bCanHaveScope=True
      ScopeFOV=20 //MADDERS, 1/9/21: Lowered from 25, because FOV succc.
      bCanHaveLaser=True

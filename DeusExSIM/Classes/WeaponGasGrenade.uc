@@ -72,6 +72,17 @@ simulated function bool TestMPBeltSpot(int BeltSpot)
    	return (BeltSpot == 5);
 }
 
+function bool VMDCanBeDualWielded()
+{
+	return true;
+}
+
+//MADDERS, 10/6/25: Our one melee test weapon.
+function bool VMDCanDualWield()
+{
+	return ShouldUseGP2();
+}
+
 defaultproperties
 {
      DrawAnimFrames=12
