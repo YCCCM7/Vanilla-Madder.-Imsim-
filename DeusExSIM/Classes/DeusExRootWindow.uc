@@ -81,7 +81,7 @@ event InitWindow()
 {
 	local int i;
 	
-	class'KentiesUIFix'.Static.AssertHook();
+	class'VMDNative.KentiesUIFix'.Static.AssertHook();
 	
 	Super.InitWindow();
 	
