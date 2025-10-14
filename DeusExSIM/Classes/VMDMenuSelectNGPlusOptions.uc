@@ -26,13 +26,20 @@ var bool bValueSortOrder;
 
 var Color colDesc;
 
-var localized string	strSetting[64];
+var localized string	strSetting[64], strDescription[64];
 var string		varSetting[64];
-var localized string	strDescription[64];
+var MenuUISliderButtonWindowMini MiniSliders[64], LastMiniSlider;
 
 //Additionally, also on 7/22/21, allow us to support more than simple bools. I hate it, but hey, here we are.
 var localized string OverrideLabelValues[64];
 var int OverrideSettingCaps[64];
+
+struct VMDButtonPos {
+	var int X;
+	var int Y;
+};
+
+var VMDButtonPos MiniSliderBarPos;
 
 event bool VirtualKeyPressed(EInputKey key, bool bRepeat)
 {
@@ -96,14 +103,19 @@ event InitWindow()
 // ----------------------------------------------------------------------
 function CreateControls()
 {
+	local VMDBufferPlayer VMP;
+	
 	Super.CreateControls();
 	
 	//Barf. Force these values on when window opens.
-	if (VMDBufferPlayer(Player) != None)
+	VMP = VMDBufferPlayer(Player);
+	if (VMP != None)
 	{
-		VMDBufferPlayer(Player).bNGPlusKeepInventory = true;
-		VMDBufferPlayer(Player).bNGPlusKeepSkills = true;
-		VMDBufferPlayer(Player).bNGPlusKeepAugs = true;
+		VMP.bNGPlusKeepInventory = 3;
+		VMP.bNGPlusKeepSkills = 4;
+		VMP.bNGPlusKeepAugs = 1;
+		VMP.bNGPlusKeepMoney = 1;
+		VMP.bNGPlusKeepInfamy = true;
 	}
 	
 	CreateHeaderButtons();
@@ -153,25 +165,36 @@ function CreateItemListWindow()
 	
 	lstItems.SetColumnFont(0, Font'FontMenuHeaders');
 	lstItems.SetColumnFont(1, Font'FontMenuHeaders');
-	//lstItems.SetSortColumn(0, False);
-	//lstItems.EnableAutoSort(True);
 	
 	SetFocusWindow(lstItems);
 }
 
 function populateItemList()
 {
-	local int rowIndex, i, maxEvents;
+	local int rowIndex, i, maxEvents, PopulatedCount;
 	
 	lstItems.DeleteAllRows();
 	
 	for (i=0; i<arrayCount(strSetting); i++)
 	{
 		if (strSetting[i] != "")
+		{
 			rowIndex = lstItems.AddRow(BuildItemString(i));
+			if (OverrideSettingCaps[i] > 2)
+			{
+				MiniSliders[i] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
+				MiniSliders[i].SetTicks(OverrideSettingCaps[i], 0, OverrideSettingCaps[i]-1);
+				MiniSliders[i].WinSlider.SetValue(int(Player.GetPropertyText(VarSetting[i])));
+				MiniSliders[i].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarSetting[i])));
+				MiniSliders[i].ConfigSetting = VarSetting[i];
+				MiniSliders[i].ParentWindow = Self;
+				MiniSliders[i].ArrayIndex = PopulatedCount;
+				MiniSliders[i].SetPos(MiniSliderBarPos.X, (MiniSliderBarPos.Y * PopulatedCount));
+			}
+			PopulatedCount += 1;
+		}
 	}
 	
-	//lstItems.Sort();
 	lstItems.SelectRow(lstItems.IndexToRowId(selectedRowIdBackup), True);
 	lstItems.SetFocusRow(lstItems.IndexToRowId(selectedRowIdBackup), True);
 	winDescription.SetText(strSetting[selectedRowIdBackup] $ "|n|n" $ strDescription[selectedRowIdBackup]);
@@ -232,15 +255,9 @@ function bool ButtonActivated( Window buttonPressed )
 	switch( buttonPressed )
 	{
 		case btnHeaderSetting:
-			//bSettingSortOrder = !bSettingSortOrder;
-			//lstItems.SetSortColumn( 0, bSettingSortOrder );
-			//lstItems.Sort();
 			break;
 
 		case btnHeaderValue:
-			//bValueSortOrder = !bValueSortOrder;
-			//lstItems.SetSortColumn( 1, bValueSortOrder );
-			//lstItems.Sort();
 			break;
 
 		default:
@@ -286,6 +303,12 @@ function SwitchVariable()
 	IGF = int(GF);
 	VS = varSetting[IGF];
 	
+	//MADDERS, 8/26/25: Don't let us manually fuck with slider settings.
+	if (OverrideSettingCaps[IGF] > 2)
+	{
+		return;
+	}
+	
 	if (OverrideSettingCaps[IGF] > 2)
 	{
 		GetValueI = int(Player.GetPropertyText(VS));
@@ -322,6 +345,52 @@ function SwitchVariable()
 	
 	newValue = lstItems.GetField(row, 0)$";"$LabelValue$";"$lstItems.GetField(row, 2);
 	lstItems.ModifyRow(row, newValue);
+}
+
+function SetRowVariable(int UseRow, int NewVal)
+{
+	local string GF, VS, WriteValue, LabelValue;
+	local bool GetValueB, SetValueB;
+	local int IGF, GetValueI, SetValueI;
+	
+	//NOTE: We are only supposed to be used artificially.
+	UseRow = LstItems.IndexToRowId(UseRow);
+	
+	GF = lstItems.GetField(UseRow, 2);
+	IGF = int(GF);
+	VS = varSetting[IGF];
+	
+	if (OverrideSettingCaps[IGF] > 2)
+	{
+		GetValueI = int(Player.GetPropertyText(VS));
+		SetValueI = (GetValueI+1) % OverrideSettingCaps[IGF];
+		
+		if (OverrideLabelValues[IGF] != "")
+		{
+			LabelValue = ExtractLabelValue(OverrideLabelValues[IGF], NewVal);
+		}
+		else
+		{
+			LabelValue = string(NewVal);
+		}
+		Player.SetPropertyText(VS, String(NewVal));
+	}
+	else
+	{
+		if (OverrideLabelValues[IGF] != "")
+		{
+			LabelValue = ExtractLabelValue(OverrideLabelValues[IGF], NewVal);
+		}
+		else
+		{
+			if (NewVal > 0) LabelValue = "On";
+			else LabelValue = "Off";
+		}
+		Player.SetPropertyText(VS, String(NewVal));
+	}
+	
+	WriteValue = lstItems.GetField(UseRow, 0)$";"$LabelValue$";"$lstItems.GetField(UseRow, 2);
+	lstItems.ModifyRow(UseRow, WriteValue);
 }
 
 // ----------------------------------------------------------------------
@@ -426,6 +495,16 @@ function string ExtractLabelValue(string StartStr, int PosDes)
 	return CurStr;
 }
 
+function MiniSliderChanged()
+{
+	if (LastMiniSlider != None)
+	{
+		SetRowVariable(LastMiniSlider.ArrayIndex, int(Player.GetPropertyText(LastMiniSlider.ConfigSetting)));
+		LstItems.SelectToRow(LstItems.IndexToRowId(LastMiniSlider.ArrayIndex));
+		LstItems.SetFocusRow(LstItems.IndexToRowId(LastMiniSlider.ArrayIndex));
+	}
+}
+
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
 
@@ -449,21 +528,30 @@ defaultproperties
      bUsesHelpWindow=True
      bEscapeSavesSettings=True
      colDesc=(R=200,G=200,B=200)
-	 strSetting(0)="Keep Inventory"
-	 strSetting(1)="Keep Skills"
-	 strSetting(2)="Keep Augs"
-	 strSetting(3)="Keep Cash"
-	 strSetting(4)="Keep Infamy"
-	 
-	 strDescription(0)="If enabled, you will keep all your inventory items, keys, and crafting recipes."
-	 strDescription(1)="If enabled, you will keep all your skill points and skill upgrades. If so, you will still have your talents respecced. Resonations will always be the same."
-	 strDescription(2)="If enabled, you will keep all your augmentations and their upgrade levels."
-	 strDescription(3)="If enabled, you will keep all your existing credits. Not recommended for fun sake."
-	 strDescription(4)="If enabled, you will retain all existing infamy score. If infamy is not enabled on your new difficulty, you won't suffer from infamy anyways."
-	 
-	 varSetting(0)="bNGPlusKeepInventory"
-	 varSetting(1)="bNGPlusKeepSkills"
-	 varSetting(2)="bNGPlusKeepAugs"
-	 varSetting(3)="bNGPlusKeepMoney"
-	 varSetting(4)="bNGPlusKeepInfamy"
+     
+     MiniSliderBarPos=(X=325,Y=12)
+     
+     OverrideSettingCaps(0)=5
+     strSetting(0)="Keep Inventory"
+     varSetting(0)="bNGPlusKeepInventory"
+     strDescription(0)="What gear to keep when your new playthrough begins."
+     OverrideLabelValues(0)="None|Only Keys|No Weapons|No Weapon Mods|Everything"
+     OverrideSettingCaps(1)=5
+     strSetting(1)="Keep Skills"
+     varSetting(1)="bNGPlusKeepSkills"
+     strDescription(1)="What percent of your skill points to keep on new game plus. At 100%, your skills will keep their current levels. At all settings, your talents will be respecced, and resonations cannot change."
+     OverrideLabelValues(1)="0%|25%|50%|75%|100%"
+     OverrideSettingCaps(2)=3
+     strSetting(2)="Keep Augs"
+     varSetting(2)="bNGPlusKeepAugs"
+     strDescription(2)="How much of your current augmentation to be saved."
+     OverrideLabelValues(2)="None|No Upgrades|All"
+     OverrideSettingCaps(3)=5
+     strSetting(3)="Keep Cash"
+     varSetting(3)="bNGPlusKeepMoney"
+     strDescription(3)="What percent of your money to keep on new game plus."
+     OverrideLabelValues(3)="0%|25%|50%|75%|100%"
+     strSetting(4)="Keep Infamy"
+     varSetting(4)="bNGPlusKeepInfamy"
+     strDescription(4)="If enabled, you will retain all existing infamy score. If infamy is not enabled on your new difficulty, you won't suffer from infamy anyways."     
 }
