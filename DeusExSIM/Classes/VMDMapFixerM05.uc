@@ -14,6 +14,10 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		case "05_NYC_UNATCOMJ12LAB":
 			if (!bRevisionMapSet)
 			{
+				//MADDERS, 10/3/25: Can't be arsed to fix it via flag triggers, so have this weird tweak instead.
+				A = Spawn(class'DestroyOtherTrigger',, 'BotOrders2', Vect(-4061, 1147, 171));
+				DestroyOtherTrigger(A).DestructionTarget = FindActorBySeed(class'AllianceTrigger', 0);
+				
 				//Busted pivots ahoy.
 				forEach AllActors(class'DeusExMover', DXM)
 				{

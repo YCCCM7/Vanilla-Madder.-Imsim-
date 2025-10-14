@@ -126,6 +126,25 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 			}
+			else
+			{
+				//MADDERS, 3/29/21: We're inverted default turret state, since most mods can't keep it in their pants.
+				//This is one of very few places where turrets are on by default.
+				forEach AllActors(class'AutoTurretSmall', SATur)
+				{
+					if (SATur != None)
+					{
+						switch(SF.Static.StripBaseActorSeed(SATur))
+						{
+							case 0:
+								SATur.bDisabled = false;
+								SATur.bPreAlarmActiveState = true;
+								SATur.bActive = true;
+							break;
+						}
+					}
+				}
+			}
 		break;
 		//12_VANDENBERG_COMPUTER: Frobbable softlock doors. Yay.
 		case "12_VANDENBERG_COMPUTER":

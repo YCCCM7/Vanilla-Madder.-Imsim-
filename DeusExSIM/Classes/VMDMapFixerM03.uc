@@ -14,7 +14,7 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 		case "03_NYC_747":
 			if (bRevisionMapSet)
 			{
-				class'VMDTerrainReskinner'.Static.SetSurfaceTexture(XLevel, "", Texture(DynamicLoadObject("CoreTexMisc.Glass.WhiteNoise_A01", class'Texture', False)));
+				class'VMDNative.VMDTerrainReskinner'.Static.SetSurfaceTexture(XLevel, "", Texture(DynamicLoadObject("CoreTexMisc.Glass.WhiteNoise_A01", class'Texture', False)));
 			}
 		break;
 		//03_NYC_AIRFIELD: Doors that don't open properly if you block them, and can soft lock you. Sigh.
@@ -232,6 +232,13 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					{
 						VendingMachine(ED).NumUses = 0;
 					}
+				}
+				
+				//MADDERS, 10/10/25: Bad damage trigger burns you inside the pipe. Sigh.
+				A = FindActorBySeed(class'DamageTrigger', 1);
+				if (A != None)
+				{
+					A.SetCollisionSize(80, A.CollisionHeight);
 				}
 				
 				//MADDERS, 11/1/21: LDDP branching functionality.

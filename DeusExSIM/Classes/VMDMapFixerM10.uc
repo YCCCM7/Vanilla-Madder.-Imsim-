@@ -134,6 +134,19 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 			}
+			
+			A = FindActorBySeed(class'Datacube', 0);
+			if (A != None)
+			{
+				A.Event = 'VMDFoundClubDatacube';
+			}
+			
+			A = Spawn(class'FlagTrigger',, 'VMDFoundClubDatacube', Vect(-1930, -1072, -125));
+			if (A != None)
+			{
+				A.SetCollision(False, False, False);
+				FlagTrigger(A).FlagName = 'VMDFoundClubDatacube';
+			}
 		break;
 		//10_PARIS_METRO: BSP error inside a wall.
 		//In DXT Maps, hole inside the front desk of the hostel.

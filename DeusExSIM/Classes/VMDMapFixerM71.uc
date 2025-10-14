@@ -254,7 +254,7 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 				}
 			}
 			
-			class'VMDLightRebuilder'.Static.RebuildLighting();
+			class'VMDNative.VMDLightRebuilder'.Static.RebuildLighting();
 		break;
 	}
 }

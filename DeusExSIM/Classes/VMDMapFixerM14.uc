@@ -64,6 +64,16 @@ function CommitMapFixing(out string MapName, out FlagBase Flags, out VMDBufferPl
 					}
 				}
 			}
+			else
+			{
+				forEach AllActors(class'Actor', A)
+				{
+					if (AlarmLight(A) != None)
+					{
+						AlarmLight(A).LightBrightness = 0;
+					}
+				}
+			}
 		break;
 		//14_VANDENBERG_SUB: Bad door pivot on a hatch... Or two...
 		case "14_VANDENBERG_SUB":
