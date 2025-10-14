@@ -57,7 +57,8 @@ function FirstFrame()
 function PreTravel()
 {
 	local BlackHelicopter chopper;
-
+	local DeusExMover Mover;
+	
 	Super.PreTravel();
 
 	if (localURL == "08_NYC_STREET")
@@ -65,6 +66,19 @@ function PreTravel()
 		// make sure that damn helicopter is gone
 		foreach AllActors(class'BlackHelicopter', chopper, 'EntranceCopter')
 			chopper.Destroy();
+	}
+	
+	//MADDERS, 9/1/25: Doing some spicy work here with elevators to reset them as makes sense. Modified DXT 06 code.
+	if (localURL == "08_NYC_STREET" || localURL == "08_NYC_SMUG")
+	{
+		foreach AllActors(class'DeusExMover', Mover)
+		{
+			if (Mover.Tag == 'ElevatorButton')
+			{
+				Mover.InterpolateTo(0,0);  // Instantly go back to closed position
+				Mover.Enable( 'Trigger' ); // Allow us to instantly reopen it.
+			}
+		}
 	}
 }
 

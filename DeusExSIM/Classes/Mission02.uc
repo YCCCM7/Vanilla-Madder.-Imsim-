@@ -120,6 +120,8 @@ function FirstFrame()
 
 function PreTravel()
 {
+	local DeusExMover Mover;
+	
 	if (localURL == "02_NYC_BATTERYPARK")
 	{
 		// if you leave without finishing, set some flags and remove the terrorists
@@ -141,7 +143,19 @@ function PreTravel()
 			flags.SetBool('FordSchickRescued', True,, 9);
 		}
 	}
-
+	//MADDERS, 9/1/25: Doing some spicy work here with elevators to reset them as makes sense. Modified DXT 06 code.
+	else if (localURL == "02_NYC_STREET" || localURL == "02_NYC_SMUG")
+	{
+		foreach AllActors(class'DeusExMover', Mover)
+		{
+			if (Mover.Tag == 'ElevatorButton')
+			{
+				Mover.InterpolateTo(0,0);  // Instantly go back to closed position
+				Mover.Enable( 'Trigger' ); // Allow us to instantly reopen it.
+			}
+		}
+	}
+	
 	Super.PreTravel();
 }
 
@@ -179,7 +193,7 @@ function Timer()
 	
 	if (localURL == "02_NYC_BATTERYPARK")
 	{
-		if (Level.TimeSeconds > 2)
+		if ((Level.TimeSeconds > 2) && (!flags.GetBool('VMDCountedTerries')))
 		{
 			foreach AllActors(class'Terrorist', T, 'ClintonTerrorist')
 			{
@@ -191,6 +205,7 @@ function Timer()
 			{
 				TMem.TrackedValue = TerrieCount;
 			}
+			flags.SetBool('VMDCountedTerries', True,, 3);
 		}
 		
 		// after terrorists are dead, set guards to wandering

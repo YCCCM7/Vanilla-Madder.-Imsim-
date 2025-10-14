@@ -88,11 +88,14 @@ function FirstFrame()
 function PreTravel()
 {
 	local int count;
+	local DeusExMover Mover;
 	
 	// If the hotel is clear of hostiles when the player leaves through the window,
 	//  remove the "Player Bailed" flag so Paul doesn't wind up dead anyway
 	if (localURL == "04_NYC_HOTEL" && flags.GetBool('M04RaidTeleportDone'))
+	{
 		CheckPaulWellbeing();
+	}
 	else if(localURL == "04_NYC_BATTERYPARK") // Transcended - Ported
 	{
 		//Bjorn: Check if player is doing a cinematic or dying in this map, otherwise it's a level transition back to NYC_Street.
@@ -126,6 +129,18 @@ function PreTravel()
 					}
 				}
 				DeusExRootWindow(Player.rootWindow).hud.belt.ClearBelt();
+			}
+		}
+	}
+	//MADDERS, 9/1/25: Doing some spicy work here with elevators to reset them as makes sense. Modified DXT 06 code.
+	else if (localURL == "04_NYC_STREET" || localURL == "04_NYC_SMUG")
+	{
+		foreach AllActors(class'DeusExMover', Mover)
+		{
+			if (Mover.Tag == 'ElevatorButton')
+			{
+				Mover.InterpolateTo(0,0);  // Instantly go back to closed position
+				Mover.Enable( 'Trigger' ); // Allow us to instantly reopen it.
 			}
 		}
 	}
