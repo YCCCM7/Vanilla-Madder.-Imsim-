@@ -107,8 +107,8 @@ function ApplyOverlayTexture(Texture TTex)
 		break;
 		case LODMesh'GM_Jumpsuit':
 		case LODMesh'MP_Jumpsuit':
+		case LODMesh'VMDMP_Jumpsuit':
 		case LODMesh'TransGM_Jumpsuit':
-		//case LODMesh'TransMP_Jumpsuit': Lol. Doesn't exist.
 			MultiSkins[5] = Texture'BlackMaskTex';
 		break;
 		case LODMesh'GM_Suit':
