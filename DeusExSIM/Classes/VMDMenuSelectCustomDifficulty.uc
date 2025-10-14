@@ -43,6 +43,8 @@ var int PresetButtonWidth;
 var VMDButtonPos PresetButtonPos[8];
 var MenuUIMenuButtonWindow PresetButtons[8];
 
+var bool bForceIndexZero;
+
 // ----------------------------------------------------------------------
 // MADDERS: 4/14/22: Vanilla function bullshit. Clustered together because it has minimal value.
 // ----------------------------------------------------------------------
@@ -252,7 +254,11 @@ function LoadPreset(int PresetIndex)
 	if (PresetIndex > 2)
 	{
 		SetRowVariable(VMDGetSettingIndex("Killswitch HP Scale"), 1); //On hard+ we turn on KS health tweaks.
+		SetRowVariable(VMDGetSettingIndex("Infamy System"), 1); //Infamy system enabled.
 	}
+	
+	bForceIndexZero = true;
+	AddTimer(0.02, false,, 'StopForceRowZero');
 	
 	switch(PresetIndex)
 	{
@@ -272,10 +278,10 @@ function LoadPreset(int PresetIndex)
 			SetRowVariable(VMDGetSettingIndex("Enemy Guessing Enhancement"), 1); //Do some mildly enhanced guessing.
 			SetRowVariable(VMDGetSettingIndex("Enemy Reaction Speed Boost"), 1); //Do some mildly enhanced reflexes.
 			SetRowVariable(VMDGetSettingIndex("Enemy Surprise Period Reduction"), 1); //Do some mildly enhanced surprise window.
+			SetRowVariable(VMDGetSettingIndex("Advanced Melee Movement"), 1); //More melee movement.
 		break;
 		//Nightmare
 		case 5:
-			SetRowVariable(VMDGetSettingIndex("Infamy System"), 1); //Infamy system enabled.
 			SetRowVariable(VMDGetSettingIndex("Infamy Mercenaries"), 1); //Bounty hunters enabled.
 			SetRowVariable(VMDGetSettingIndex("Infamy Mercenary Limit"), 0); //Bounty hunter quantity of 1. Nightmare baby mode.
 			SetRowVariable(VMDGetSettingIndex("Loot Swapping"), 1); //Reduce loot.
@@ -297,6 +303,7 @@ function LoadPreset(int PresetIndex)
 			SetRowVariable(VMDGetSettingIndex("Enemy Guessing Enhancement"), 1); //Do some mildly enhanced guessing.
 			SetRowVariable(VMDGetSettingIndex("Enemy Reaction Speed Boost"), 1); //Do some mildly enhanced reflexes.
 			SetRowVariable(VMDGetSettingIndex("Enemy Surprise Period Reduction"), 1); //Do some mildly enhanced surprise window.
+			SetRowVariable(VMDGetSettingIndex("Advanced Melee Movement"), 1); //More melee movement.
 			
 			DamageSlider.SetValue(5);
 			TimerSlider.SetValue(5);
@@ -304,7 +311,6 @@ function LoadPreset(int PresetIndex)
 		//Gallows
 		case 6:
 			SetRowVariable(VMDGetSettingIndex("Save Gate"), 1); //Save gate on, baby.
-			SetRowVariable(VMDGetSettingIndex("Infamy System"), 1); //Infamy system enabled.
 			SetRowVariable(VMDGetSettingIndex("Starting Infamy"), 1); //10 points of starting infamy, for fun.
 			SetRowVariable(VMDGetSettingIndex("Infamy Forgiveness"), 1); //Infamy forgiveness 5 points, Gallows special.
 			SetRowVariable(VMDGetSettingIndex("Infamy Mercenaries"), 1); //Bounty hunters enabled.
@@ -331,6 +337,7 @@ function LoadPreset(int PresetIndex)
 			SetRowVariable(VMDGetSettingIndex("Enemy Guessing Enhancement"), 1); //Do some mildly enhanced guessing, still. This stuff is potent.
 			SetRowVariable(VMDGetSettingIndex("Enemy Reaction Speed Boost"), 1); //Do some mildly faster reflexes. Not too fast, now.
 			SetRowVariable(VMDGetSettingIndex("Enemy Surprise Period Reduction"), 1); //Do some mildly enhanced surprise window still. Don't go too fast.
+			SetRowVariable(VMDGetSettingIndex("Advanced Melee Movement"), 1); //More melee movement.
 			
 			//Also, boost our gunnery just a notch.
 			SetRowVariable(VMDGetSettingIndex("Enemy Gunnery Boost"), 1);
@@ -346,7 +353,6 @@ function LoadPreset(int PresetIndex)
 			SetRowVariable(VMDGetSettingIndex("Save Gate"), 1); //Save gate on, baby.
 			SetRowVariable(VMDGetSettingIndex("Save Gate Duration"), 4); //Save gate lasts forever. AKA, no saving whatsoever.
 			SetRowVariable(VMDGetSettingIndex("Save Gate Combat Threshold"), 0); //Always save gated. Have fun.
-			SetRowVariable(VMDGetSettingIndex("Infamy System"), 1); //Infamy system enabled.
 			SetRowVariable(VMDGetSettingIndex("Infamy Forgiveness"), 0); //Infamy forgiveness 0 points. Good luck.
 			SetRowVariable(VMDGetSettingIndex("Infamy Mercenaries"), 1); //Bounty hunters enabled.
 			SetRowVariable(VMDGetSettingIndex("Infamy Mercenary Limit"), 2); //Bounty hunter quantity of 3. Gallows and Condemned exclusive.
@@ -363,6 +369,7 @@ function LoadPreset(int PresetIndex)
 			SetRowVariable(VMDGetSettingIndex("Boss Deathmatch"), 1); //Boss deathmatch enabled.
 			SetRowVariable(VMDGetSettingIndex("M04 Mortality"), 1); //Paul mortality enabled.
 			SetRowVariable(VMDGetSettingIndex("Continuous Laser Alarms"), 1); //Turn on continuous laser alarms.
+			SetRowVariable(VMDGetSettingIndex("Crafting Fatigue"), 1); //Turn on crafting fatigue, for Vital Coverage anticheese.
 			SetRowVariable(VMDGetSettingIndex("Weak Grenade Climbing"), 1); //Turn on weak grenade climbing.
 			
 			//MADDERS, 8/11/23: Add some seriously jacked senses for Phase 2.
@@ -376,6 +383,7 @@ function LoadPreset(int PresetIndex)
 			SetRowVariable(VMDGetSettingIndex("Enemy Guessing Enhancement"), 3); //Do some moderately enhanced guessing. Shit doesn't fuck around, bruv. Don't do T3.
 			SetRowVariable(VMDGetSettingIndex("Enemy Reaction Speed Boost"), 1); //Moderately faster reflexes on Condemned, for now.
 			SetRowVariable(VMDGetSettingIndex("Enemy Surprise Period Reduction"), 1); //Do some moderately enhanced surprise window. Stuff is potent.
+			SetRowVariable(VMDGetSettingIndex("Advanced Melee Movement"), 1); //More melee movement.
 			
 			//Also, boost our gunnery like hell.
 			SetRowVariable(VMDGetSettingIndex("Enemy Gunnery Boost"), 1);
@@ -398,6 +406,11 @@ function LoadPreset(int PresetIndex)
 	bCustomizedDifficulty = false;
 	
 	GiveTargetedTip(PresetIndex);
+}
+
+function StopForceRowZero()
+{
+	bForceIndexZero = False;
 }
 
 function DisableAllModifiers()
@@ -1303,6 +1316,16 @@ function MiniSliderChanged()
 	if (LastMiniSlider != None)
 	{
 		SetRowVariable(LastMiniSlider.ArrayIndex, int(Player.GetPropertyText(LastMiniSlider.ConfigSetting)));
+		if (bForceIndexZero)
+		{
+			LstItems.SelectToRow(LstItems.IndexToRowId(0));
+			LstItems.SetFocusRow(LstItems.IndexToRowId(0));
+		}
+		else
+		{
+			LstItems.SelectToRow(LstItems.IndexToRowId(LastMiniSlider.ArrayIndex));
+			LstItems.SetFocusRow(LstItems.IndexToRowId(LastMiniSlider.ArrayIndex));
+		}
 	}
 }
 
@@ -1380,174 +1403,180 @@ defaultproperties
      strSetting(16)="Weak Grenade Climbing"
      varSetting(16)="bWeakGrenadeClimbing"
      strDescription(16)="If enabled, emplaced grenade mines can still be climbed upon and support things, but after 1/4 second of support their adhesive will give out."
+     strSetting(17)="Crafting Fatigue"
+     varSetting(17)="bUseCraftingFatigue"
+     strDescription(17)="If enabled, breaking down the same item repeatedly will accumulate crafting fatigue, reducing output."
      
-     OverrideSettingCaps(17)=1
-     strSetting(17)=" "
-     varSetting(17)="BARF"
-     OverrideLabelValues(17)=" "
-     strDescription(17)=""
      OverrideSettingCaps(18)=1
-     strSetting(18)="----Infamy Settings----------------"
+     strSetting(18)=" "
      varSetting(18)="BARF"
-     OverrideLabelValues(18)="----"
+     OverrideLabelValues(18)=" "
      strDescription(18)=""
+     OverrideSettingCaps(19)=1
+     strSetting(19)="----Infamy Settings----------------"
+     varSetting(19)="BARF"
+     OverrideLabelValues(19)="----"
+     strDescription(19)=""
      
-     strSetting(19)="Infamy System"
-     varSetting(19)="bMayhemSystemEnabled"
-     strDescription(19)="If enabled, the Infamy system will be active. The Infamy system responds to player aggression by increasing the quality and quantity of opposition dynamically."
-     OverrideSettingCaps(20)=7
-     strSetting(20)="Starting Infamy"
-     varSetting(20)="BarfStartingMayhem"
-     OverrideLabelValues(20)="None|10 points|25 points|50 points|75 points|100 points|125 points"
-     strDescription(20)="How many infamy points you start with. Extra guard placements happen immediately upon gaining infamy. Other major events occur at 25, 35, 50, 65, 75, and 100 points."
+     strSetting(20)="Infamy System"
+     varSetting(20)="bMayhemSystemEnabled"
+     strDescription(20)="If enabled, the Infamy system will be active. The Infamy system responds to player aggression by increasing the quality and quantity of opposition dynamically."
+     OverrideSettingCaps(21)=7
+     strSetting(21)="Starting Infamy"
+     varSetting(21)="BarfStartingMayhem"
+     OverrideLabelValues(21)="None|10 points|25 points|50 points|75 points|100 points|125 points"
+     strDescription(21)="How many infamy points you start with. Extra guard placements happen immediately upon gaining infamy. Other major events occur at 25, 35, 50, 65, 75, and 100 points."
      NGPlusMayhemBlurb="During NG+, picking a higher starting infamy or not keeping your infamy on the previous screen will make this number your new infamy score."
-     OverrideSettingCaps(21)=4
-     strSetting(21)="Infamy Forgiveness"
-     varSetting(21)="BarfMayhemForgiveness"
-     OverrideLabelValues(21)="None|5+ Points|15+ Points|25+ Points"
-     strDescription(21)="At the end of every mission, your Infamy score will shift based on the difference of your owed Infamy score and Infamy forgiveness. Upon leaving an area, you gain 1 point on infamy for each knockout, 2 points for each kill, and 3 points for each dismemembered body. Every enemy left alive lowers infamy by 2 points, except when using the 'None' setting."
-     strSetting(22)="Infamy Mercenaries"
-     varSetting(22)="bBountyHuntersEnabled"
-     strDescription(22)="If enabled, the Infamy system will allow elite hunters to spawn if the infamy cap has been reached. They will truly test your skill. While not the most canon friendly, you ARE playing something crazier than vanilla."
-     OverrideSettingCaps(23)=3
-     strSetting(23)="Infamy Mercenary Limit"
-     varSetting(23)="BarfHunterQuantity"
-     OverrideLabelValues(23)="1 Hunter|2 Hunters|3 Hunters"
-     strDescription(23)="The maximum amount of infamy mercenaries that can spawn in a single ambush."
-     OverrideSettingCaps(24)=6
-     strSetting(24)="Mercenary Infamy Threshold"
-     varSetting(24)="BarfHunterThreshold"
-     OverrideLabelValues(24)="0 points|25 points|50 points|75 points|100 points|125 points"
-     strDescription(24)="The minimum infamy score required to begin spawning mercenaries, if they are enabled."
-     strSetting(25)="Infamy Mines"
-     varSetting(25)="bMayhemGrenadesEnabled"
-     strDescription(25)="If enabled, the Infamy system will begin placing various mines around as extra obstacles, in response to high Infamy score. One mine will appear per mission at 75 or more infamy, and a second at 100 or more infamy."
+     OverrideSettingCaps(22)=4
+     strSetting(22)="Infamy Forgiveness"
+     varSetting(22)="BarfMayhemForgiveness"
+     OverrideLabelValues(22)="None|5+ Points|15+ Points|25+ Points"
+     strDescription(22)="At the end of every mission, your Infamy score will shift based on the difference of your owed Infamy score and Infamy forgiveness. Upon leaving an area, you gain 1 point on infamy for each knockout, 2 points for each kill, and 3 points for each dismemembered body. Every enemy left alive lowers infamy by 2 points, except when using the 'None' setting."
+     strSetting(23)="Infamy Mercenaries"
+     varSetting(23)="bBountyHuntersEnabled"
+     strDescription(23)="If enabled, the Infamy system will allow elite hunters to spawn if the infamy cap has been reached. They will truly test your skill. While not the most canon friendly, you ARE playing something crazier than vanilla."
+     OverrideSettingCaps(24)=3
+     strSetting(24)="Infamy Mercenary Limit"
+     varSetting(24)="BarfHunterQuantity"
+     OverrideLabelValues(24)="1 Hunter|2 Hunters|3 Hunters"
+     strDescription(24)="The maximum amount of infamy mercenaries that can spawn in a single ambush."
+     OverrideSettingCaps(25)=6
+     strSetting(25)="Mercenary Infamy Threshold"
+     varSetting(25)="BarfHunterThreshold"
+     OverrideLabelValues(25)="0 points|25 points|50 points|75 points|100 points|125 points"
+     strDescription(25)="The minimum infamy score required to begin spawning mercenaries, if they are enabled."
+     strSetting(26)="Infamy Mines"
+     varSetting(26)="bMayhemGrenadesEnabled"
+     strDescription(26)="If enabled, the Infamy system will begin placing various mines around as extra obstacles, in response to high Infamy score. One mine will appear per mission at 75 or more infamy, and a second at 100 or more infamy."
      
-     OverrideSettingCaps(26)=1
-     strSetting(26)=" "
-     varSetting(26)="BARF"
-     OverrideLabelValues(26)=" "
-     strDescription(26)=""
      OverrideSettingCaps(27)=1
-     strSetting(27)="----Stealth AI Settings------------"
+     strSetting(27)=" "
      varSetting(27)="BARF"
-     OverrideLabelValues(27)="----"
+     OverrideLabelValues(27)=" "
      strDescription(27)=""
+     OverrideSettingCaps(28)=1
+     strSetting(28)="----Stealth AI Settings------------"
+     varSetting(28)="BARF"
+     OverrideLabelValues(28)="----"
+     strDescription(28)=""
      
-     strSetting(28)="Computer Visibility"
-     varSetting(28)="bComputerVisibilityEnabled"
-     strDescription(28)="If enabled, the player will be able to be seen and shot while using a computer, since this makes more sense."
-     strSetting(29)="Door Noise Projection"
-     varSetting(29)="bDoorNoiseEnabled"
-     strDescription(29)="If enabled, doors and such that make noise when moving will alert nearby enemies."
-     strSetting(30)="Camera Destruction Alarm"
-     varSetting(30)="bCameraKillAlarm"
-     strDescription(30)="If enabled, destroyed cameras will trigger alarms on their network."
-     strSetting(31)="Notice Bumping"
-     varSetting(31)="bNoticeBumpingEnabled"
-     strDescription(31)="If enabled, bumping into enemies mid-run will alert them to your position."
-     strSetting(32)="Recognize Moved Objects"
-     varSetting(32)="bRecognizeMovedObjectsEnabled"
-     strDescription(32)="If enabled, enemies will find decorations having been moved as suspicious."
-     strSetting(33)="Reload Noise Projection"
-     varSetting(33)="bReloadNoiseEnabled"
-     strDescription(33)="If enabled, the noise from reloading will alert nearby enemies."
-     strSetting(34)="Unconscious Reactions"
-     varSetting(34)="bEnemyReactKOdDudes"
-     strDescription(34)="If enabled, enemies will react to unconscious bodies just as they would dead bodies."
-     strSetting(35)="Enemy Open Vision Extension"
-     varSetting(35)="bEnemyVisionExtensionEnabled"
-     strDescription(35)="If enabled, enemies in larger, emptier spaces will have extended vision to match."
-     OverrideSettingCaps(36)=4
-     strSetting(36)="Enemy Search Extension"
-     varSetting(36)="EnemyExtraSearchSteps"
-     strDescription(36)="If enabled, the degree to which enemies will extend search periods."
-     OverrideLabelValues(36)="Disabled|Tier 1|Tier 2|Tier 3"
+     strSetting(29)="Computer Visibility"
+     varSetting(29)="bComputerVisibilityEnabled"
+     strDescription(29)="If enabled, the player will be able to be seen and shot while using a computer, since this makes more sense."
+     strSetting(30)="Door Noise Projection"
+     varSetting(30)="bDoorNoiseEnabled"
+     strDescription(30)="If enabled, doors and such that make noise when moving will alert nearby enemies."
+     strSetting(31)="Camera Destruction Alarm"
+     varSetting(31)="bCameraKillAlarm"
+     strDescription(31)="If enabled, destroyed cameras will trigger alarms on their network."
+     strSetting(32)="Notice Bumping"
+     varSetting(32)="bNoticeBumpingEnabled"
+     strDescription(32)="If enabled, bumping into enemies mid-run will alert them to your position."
+     strSetting(33)="Recognize Moved Objects"
+     varSetting(33)="bRecognizeMovedObjectsEnabled"
+     strDescription(33)="If enabled, enemies will find decorations having been moved as suspicious."
+     strSetting(34)="Reload Noise Projection"
+     varSetting(34)="bReloadNoiseEnabled"
+     strDescription(34)="If enabled, the noise from reloading will alert nearby enemies."
+     strSetting(35)="Unconscious Reactions"
+     varSetting(35)="bEnemyReactKOdDudes"
+     strDescription(35)="If enabled, enemies will react to unconscious bodies just as they would dead bodies."
+     strSetting(36)="Enemy Open Vision Extension"
+     varSetting(36)="bEnemyVisionExtensionEnabled"
+     strDescription(36)="If enabled, enemies in larger, emptier spaces will have extended vision to match."
+     OverrideSettingCaps(37)=4
+     strSetting(37)="Enemy Search Extension"
+     varSetting(37)="EnemyExtraSearchSteps"
+     strDescription(37)="If enabled, the degree to which enemies will extend search periods."
+     OverrideLabelValues(37)="Disabled|Tier 1|Tier 2|Tier 3"
      
-     OverrideSettingCaps(37)=1
-     strSetting(37)=" "
-     varSetting(37)="BARF"
-     OverrideLabelValues(37)=" "
-     strDescription(37)=""
      OverrideSettingCaps(38)=1
-     strSetting(38)="----AI Sensory Settings------------"
+     strSetting(38)=" "
      varSetting(38)="BARF"
-     OverrideLabelValues(38)="----"
+     OverrideLabelValues(38)=" "
      strDescription(38)=""
+     OverrideSettingCaps(39)=1
+     strSetting(39)="----AI Sensory Settings------------"
+     varSetting(39)="BARF"
+     OverrideLabelValues(39)="----"
+     strDescription(39)=""
      
-     OverrideSettingCaps(39)=4
-     strSetting(39)="Enemy General Vision Boost"
-     varSetting(39)="BarfVisionRangeMult"
-     strDescription(39)="If enabled, enemies in general will have a degree of vision range extension, regardless of all factors. This stacks with other vision boosts."
-     OverrideLabelValues(39)="Disabled|+50%|+100%|+150%"
      OverrideSettingCaps(40)=4
-     strSetting(40)="Enemy Shadow Vision Boost"
-     varSetting(40)="BarfVisionStrengthMult"
-     strDescription(40)="If enabled, enemies will see through darkness more easily."
-     OverrideLabelValues(40)="Disabled|+16%|+50%|+150%"
+     strSetting(40)="Enemy General Vision Boost"
+     varSetting(40)="BarfVisionRangeMult"
+     strDescription(40)="If enabled, enemies in general will have a degree of vision range extension, regardless of all factors. This stacks with other vision boosts."
+     OverrideLabelValues(40)="Disabled|+50%|+100%|+150%"
      OverrideSettingCaps(41)=4
-     strSetting(41)="Enemy Hearing Boost"
-     varSetting(41)="BarfHearingRangeMult"
-     strDescription(41)="If enabled, enemies in general will have a better ability to hear noises."
-     OverrideLabelValues(41)="Disabled|+15%|+27%|+66%"
+     strSetting(41)="Enemy Shadow Vision Boost"
+     varSetting(41)="BarfVisionStrengthMult"
+     strDescription(41)="If enabled, enemies will see through darkness more easily."
+     OverrideLabelValues(41)="Disabled|+16%|+50%|+150%"
      OverrideSettingCaps(42)=4
-     strSetting(42)="Enemy Guessing Enhancement"
-     varSetting(42)="BarfGuessingFudge"
-     strDescription(42)="If enabled, enemies will pick better spots to go looking for the player during searches."
-     OverrideLabelValues(42)="Disabled|Tier 1|Tier 2|Tier 3"
+     strSetting(42)="Enemy Hearing Boost"
+     varSetting(42)="BarfHearingRangeMult"
+     strDescription(42)="If enabled, enemies in general will have a better ability to hear noises."
+     OverrideLabelValues(42)="Disabled|+15%|+27%|+66%"
      OverrideSettingCaps(43)=4
-     strSetting(43)="Enemy Reaction Speed Boost"
-     varSetting(43)="BarfReactionSpeedMult"
-     strDescription(43)="If enabled, enemies will react to the player's presence substantially faster."
-     OverrideLabelValues(43)="Disabled|+50%|+100%|+200%"
+     strSetting(43)="Enemy Guessing Enhancement"
+     varSetting(43)="BarfGuessingFudge"
+     strDescription(43)="If enabled, enemies will pick better spots to go looking for the player during searches."
+     OverrideLabelValues(43)="Disabled|Tier 1|Tier 2|Tier 3"
      OverrideSettingCaps(44)=4
-     strSetting(44)="Enemy Surprise Period Reduction"
-     varSetting(44)="BarfSurprisePeriodMax"
-     strDescription(44)="If enabled, enemies will recover from the player surprising them much faster. Additionally, they will perform less confused and more concise searches for the player."
-     OverrideLabelValues(44)="Disabled|-25%|-50%|-75%"
+     strSetting(44)="Enemy Reaction Speed Boost"
+     varSetting(44)="BarfReactionSpeedMult"
+     strDescription(44)="If enabled, enemies will react to the player's presence substantially faster."
+     OverrideLabelValues(44)="Disabled|+50%|+100%|+200%"
+     OverrideSettingCaps(45)=4
+     strSetting(45)="Enemy Surprise Period Reduction"
+     varSetting(45)="BarfSurprisePeriodMax"
+     strDescription(45)="If enabled, enemies will recover from the player surprising them much faster. Additionally, they will perform less confused and more concise searches for the player."
+     OverrideLabelValues(45)="Disabled|-25%|-50%|-75%"
      
-     OverrideSettingCaps(45)=1
-     strSetting(45)=" "
-     varSetting(45)="BARF"
-     OverrideLabelValues(45)=" "
-     strDescription(45)=""
      OverrideSettingCaps(46)=1
-     strSetting(46)="----Combat AI Settings------------"
+     strSetting(46)=" "
      varSetting(46)="BARF"
-     OverrideLabelValues(46)="----"
+     OverrideLabelValues(46)=" "
      strDescription(46)=""
+     OverrideSettingCaps(47)=1
+     strSetting(47)="----Combat AI Settings------------"
+     varSetting(47)="BARF"
+     OverrideLabelValues(47)="----"
+     strDescription(47)=""
      
-     strSetting(47)="Dog Jump Attack"
-     varSetting(47)="bDogJumpEnabled"
-     strDescription(47)="If enabled, dogs will employ an extremely dangerous jump attack."
-     //strSetting(48)="Enemy GEP Lock"
-     //varSetting(48)="bEnemyGEPLockEnabled"
-     //strDescription(48)="If enabled, enemies with GEP guns can lock onto targets."
-     strSetting(49)="Enemies Disarm Explosives"
-     varSetting(49)="bEnemyDisarmExplosivesEnabled"
-     strDescription(49)="If enabled, during ambushs in M04 and M14, the AI will disarm explosives placed in the ambush area, to ensure a fair fight."
-     strSetting(50)="Enemies Target Explosives"
-     varSetting(50)="bShootExplosivesEnabled"
-     strDescription(50)="If enabled, opportunistic enemies will open fire on explosives you're in range of."
-     //strSetting(51)="Smart Enemy Melee"
-     //varSetting(51)="bDrawMeleeEnabled"
-     //strDescription(51)="If enabled, enemies will draw melee weapons instead of reloading, when it would benefit them."
-     //strSetting(52)="Smart Enemy Weapon Swap"
-     //varSetting(52)="bSmartEnemyWeaponSwapEnabled"
-     //strDescription(52)="If enabled, enemies will switch weapons instead of reloading, when it would save them in a pinch."
-     strSetting(53)="NPCs Projectile Fear"
-     varSetting(53)="bEnemyAlwaysAvoidProj"
-     strDescription(53)="If enabled, enemies will always fear projectiles, both in and out of combat... Poison gas, thrown grenades, etc."
-     OverrideSettingCaps(54)=4
-     strSetting(54)="Enemy Gunnery Boost"
-     varSetting(54)="BarfAccuracyMod"
-     strDescription(54)="If enabled, enemies will have improved accuracy with each level. At high values, enemies will reload and shoot faster."
-     OverrideLabelValues(54)="Disabled|+3.75%|+10.75%|+17.5%"
-     OverrideSettingCaps(55)=4
-     strSetting(55)="Enemy Weapon Speed Boost"
-     varSetting(55)="BarfROFWeight"
-     strDescription(55)="If enabled, enemies will shoot and reload faster."
-     OverrideLabelValues(55)="Disabled|+10%|+11%|+17%"
+     strSetting(48)="Dog Jump Attack"
+     varSetting(48)="bDogJumpEnabled"
+     strDescription(48)="If enabled, dogs will employ an extremely dangerous jump attack."
+     //strSetting(49)="Enemy GEP Lock"
+     //varSetting(49)="bEnemyGEPLockEnabled"
+     //strDescription(49)="If enabled, enemies with GEP guns can lock onto targets."
+     strSetting(50)="Enemies Disarm Explosives"
+     varSetting(50)="bEnemyDisarmExplosivesEnabled"
+     strDescription(50)="If enabled, during ambushs in M04 and M14, the AI will disarm explosives placed in the ambush area, to ensure a fair fight."
+     strSetting(51)="Enemies Target Explosives"
+     varSetting(51)="bShootExplosivesEnabled"
+     strDescription(51)="If enabled, opportunistic enemies will open fire on explosives you're in range of."
+     //strSetting(52)="Smart Enemy Melee"
+     //varSetting(52)="bDrawMeleeEnabled"
+     //strDescription(52)="If enabled, enemies will draw melee weapons instead of reloading, when it would benefit them."
+     //strSetting(53)="Smart Enemy Weapon Swap"
+     //varSetting(53)="bSmartEnemyWeaponSwapEnabled"
+     //strDescription(53)="If enabled, enemies will switch weapons instead of reloading, when it would save them in a pinch."
+     strSetting(54)="NPCs Projectile Fear"
+     varSetting(54)="bEnemyAlwaysAvoidProj"
+     strDescription(54)="If enabled, enemies will always fear projectiles, both in and out of combat... Poison gas, thrown grenades, etc."
+     strSetting(55)="Advanced Melee Movement"
+     varSetting(55)="bUseAdvancedMelee"
+     strDescription(55)="If enabled, well trained enemies will strafe when using melee, making them more evasive and lethal."
+     OverrideSettingCaps(56)=4
+     strSetting(56)="Enemy Gunnery Boost"
+     varSetting(56)="BarfAccuracyMod"
+     strDescription(56)="If enabled, enemies will have improved accuracy with each level. At high values, enemies will reload and shoot faster."
+     OverrideLabelValues(56)="Disabled|+3.75%|+10.75%|+17.5%"
+     OverrideSettingCaps(57)=4
+     strSetting(57)="Enemy Weapon Speed Boost"
+     varSetting(57)="BarfROFWeight"
+     strDescription(57)="If enabled, enemies will shoot and reload faster."
+     OverrideLabelValues(57)="Disabled|+5%|+11%|+17%"
      
      PlayerGuideTipHeader="To New Players"
      PlayerGuideTipText="VMD has no tutorial. Check the PDF guide bundled, or the youtube or Moddb player guides for VMD."
@@ -1573,7 +1602,7 @@ defaultproperties
      TipHeaders(0)="About Cakewalk"
      TipTexts(0)="Cakewalk is exceedingly easy, and is recommended only for those who continue to struggle with normal difficulty. Make sure this is you."
      TipHeaders(5)="About Nightmare"
-     TipTexts(5)="Nightmare is unlike most difficulties. While not as punishing as Gallows, it includes the Infamy system, light loot replacement, and light naked solution reduction."
+     TipTexts(5)="Nightmare is unlike most difficulties. While not as punishing as Gallows, it includes infamy mercenaries, light loot replacement, and light naked solution reduction."
      TipHeaders(6)="About Gallows"
      TipTexts(6)="Gallows is extremely punishing. It includes a 90 second save gate upon 2 weapon skill upgrades, high infamy, and naked solution reduction. Tread carefully."
      TipHeaders(7)="About Condemned"
