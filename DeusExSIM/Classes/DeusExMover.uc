@@ -1086,7 +1086,13 @@ function bool EncroachingOn( actor Other )
 		Other.Destroy();
 		return false;
 	}
-
+	
+	//MADDERS, 10/9/25: Stop halting movers with inventory items.
+	if (Other.IsA('Inventory'))
+	{
+		return false;
+	}
+	
 	// DEUS_EX CNN - make based actors not stop movers
 	if (Other.Base == Self)
 	{
