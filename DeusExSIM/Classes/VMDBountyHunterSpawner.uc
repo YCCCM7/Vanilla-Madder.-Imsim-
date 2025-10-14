@@ -323,23 +323,41 @@ function bool IsValidHidePoint(HidePoint TPoint, string MapName)
 	
 	if (TPoint == None) return false;
 	
+	if (HidePointMobile(TPoint) != None) return true;
+	
 	TSeed = class'VMDStaticFunctions'.Static.StripBaseActorSeed(TPoint);
 	switch(MapName)
 	{
-		case "06_HongKong_Storage":
-			return false;
-		break;
-		case "09_NYC_ShipBelow":
+		case "03_NYC_BrookylnBridgeStation":
 			if (bRevisionMapSet)
 			{
-				if (TSeed == 1)
+				if (TSeed == 1 || TSeed == 0)
 				{
 					return false;
 				}
 			}
 			else
 			{
-				if (TSeed == 1)
+				if (TSeed == 1 || TSeed == 0)
+				{
+					return false;
+				}
+			}
+		break;
+		case "06_HongKong_Storage":
+			return false;
+		break;
+		case "09_NYC_ShipBelow":
+			if (bRevisionMapSet)
+			{
+				if (TSeed == 1 || TSeed == 0)
+				{
+					return false;
+				}
+			}
+			else
+			{
+				if (TSeed == 1 || TSeed == 0)
 				{
 					return false;
 				}
@@ -358,6 +376,17 @@ function bool IsValidHidePoint(HidePoint TPoint, string MapName)
 			if (bRevisionMapSet)
 			{
 				if (TSeed == 13)
+				{
+					return false;
+				}
+			}
+			else
+			{
+				if (TSeed == 8 || TSeed == 9 || TSeed == 13) //O and Renault's apt is super shitty. Stop it.
+				{
+					return false;
+				}
+				else if (TSeed == 10 || TSeed == 33) //Inside of hotel is too overt as well.
 				{
 					return false;
 				}
