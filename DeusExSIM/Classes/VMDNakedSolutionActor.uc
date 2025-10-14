@@ -446,6 +446,7 @@ function CommitNakedSolutionNerfing()
 			break;
 			case "03_NYC_BROOKLYNBRIDGESTATION":
 				RemoveSolutions[0] = int(FakeFRand() < TFactor);
+				RemoveSolutions[1] = int(FakeFRand() < TFactor);
 				
 				//Solution 0: Remove the metal crates that make stacking + grenade climbing super easy.
 				forEach AllActors(class'Actor', TAct)
@@ -476,6 +477,25 @@ function CommitNakedSolutionNerfing()
 								}
 							break;
 						}
+					}
+				}
+				
+				//MADDERS, 10/10/25: New solution to this: Use muscle aug... Or just break shit.
+				if (RemoveSolutions[1] > 0)
+				{
+					TAct = Spawn(class'Roadblock',,, Vect(2463, -4080, 279), Rot(0, 16384, 0));
+					TAct = Spawn(class'Roadblock',,, Vect(2479, -3978, 269), Rot(8192, 16384, 0));
+					if (TAct != None)
+					{
+						TAct.SetPhysics(PHYS_None);
+						DeusExDecoration(TAct).bPushable = False;
+					}
+					TAct = FindActorBySeed(class'DeusExMover', 1);
+					if (TAct != None)
+					{
+						DeusExMover(TAct).bBreakable = True;
+						DeusExMover(TAct).MinDamageThreshold = 20;
+						DeusExMover(TAct).FragmentClass = class'MetalFragment';
 					}
 				}
 			break;
@@ -1574,6 +1594,21 @@ function int VMDGetMissionNumber()
 		return DXLI.MissionNumber;
 	}
 	return 1;
+}
+
+function Actor FindActorBySeed(class<Actor> TarClass, int TarSeed)
+{
+	local Actor TAct;
+	
+	forEach AllActors(TarClass, TAct)
+	{
+		if ((TAct != None) && (TarClass == TAct.Class) && (class'VMDStaticFunctions'.Static.StripBaseActorSeed(TAct) == TarSeed))
+		{
+			return TAct;
+		}
+	}
+	
+	return None;
 }
 
 defaultproperties
