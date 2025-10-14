@@ -156,7 +156,7 @@ simulated function int NumAugsActive()
 	anAug = FirstAug;
 	while(anAug != None)
 	{
-		if ((anAug.bHasIt) && (anAug.bIsActive) && (!anAug.bAlwaysActive))
+		if (anAug.bHasIt && anAug.bIsActive && !anAug.bAlwaysActive && (VMDBufferAugmentation(AnAug) == None || !VMDBufferAugmentation(AnAug).bPassive))
 			count++;
 
 		anAug = anAug.next;
@@ -597,8 +597,8 @@ simulated function Float CalcEnergyUse(float deltaTime)
 {
 	local int ActiveAugs;
 	local float energyUse, energyMult;
-	local Augmentation anAug, PowerAug;
-	local VMDBufferAugmentation VMA;
+	local Augmentation anAug;
+	local VMDBufferAugmentation VMA,  PowerAug;
 	
 	//MADDERS, 4/23/24: Update sounds here in case we forgor.
 	if ((VMDBufferAugmentationManager(Self) != None) && (VMDBufferAugmentationManager(Self).bSoundUpdateQueued))
@@ -628,9 +628,13 @@ simulated function Float CalcEnergyUse(float deltaTime)
 	anAug = FirstAug;
 	while(anAug != None)
 	{
+		VMA = VMDBufferAugmentation(AnAug);
       		if (anAug.IsA('AugPower'))
-         		PowerAug = anAug;
-		if ((anAug.bHasIt) && (anAug.bIsActive))
+		{
+         		PowerAug = AugPower(anAug);
+		}
+		
+		if (anAug.bHasIt && (anAug.bIsActive || (VMA != None && VMA.bPassive && !VMA.bDisabled)))
 		{
 			energyUse += ((anAug.GetEnergyRate()/60) * deltaTime);
 			if (anAug.IsA('AugPower'))
@@ -642,7 +646,7 @@ simulated function Float CalcEnergyUse(float deltaTime)
 	}
 	
    	// DEUS_EX AMSD Manage the power aug automatically in multiplayer.
-   	if ( (Level.NetMode != NM_Standalone) && (PowerAug != None) && (PowerAug.bHasIt) )
+   	if ((Level.NetMode != NM_Standalone) && (PowerAug != None) && (PowerAug.bHasIt))
    	{
       		//If using energy, turn on the power aug.
       		if ((energyUse > 0) && (!PowerAug.bIsActive))
@@ -652,7 +656,7 @@ simulated function Float CalcEnergyUse(float deltaTime)
       		if ((energyUse == 0) && (PowerAug.bIsActive))
          		ActivateAugByKey(PowerAug.HotKeyNum - 3);
 
-      		if (PowerAug.bIsActive)				
+      		if (PowerAug.bIsActive || (PowerAug.bPassive && !PowerAug.bDisabled))				
          		energyMult = PowerAug.LevelValues[PowerAug.CurrentLevel];
    	}
 	// check for the power augmentation
