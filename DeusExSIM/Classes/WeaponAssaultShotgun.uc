@@ -92,7 +92,7 @@ function int VMDGetCorrectNumProj( int In )
 function float VMDGetCorrectHitDamage( float In )
 {
  	//MADDERS: Always return full damage with sabot. We'll truncate like a mother fucker at all times.
- 	if (AmmoSabot(AmmoType) != None) return Default.HitDamage*OverrideNumProj;
+ 	if (AmmoSabot(AmmoType) != None) return Default.HitDamage*OverrideNumProj * 0.85;
 	
  	return In;
 }
