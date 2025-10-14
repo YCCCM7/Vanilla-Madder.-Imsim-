@@ -9,8 +9,8 @@ struct VMDButtonPos {
 	var int Y;
 };
 
-var MenuUIActionButtonWindow ExitButton, OpenSelectButton, BackOutButton;
-var localized string ExitButtonText, OpenButtonText, BackOutButtonText, SelectButtonText;
+var MenuUIActionButtonWindow ExitButton, LinksButton, OpenSelectButton, BackOutButton;
+var localized string ExitButtonText, LinksButtonText, OpenButtonText, BackOutButtonText, SelectButtonText;
 
 var localized string StrSelectAFile, StrAFile, StrCanOpenFolder, StrNoFileTitle, StrCurDirectory, StrFreeSpace, PopupHeader;
 
@@ -86,9 +86,10 @@ event InitWindow()
 {
 	Super.InitWindow();
 	
-	CurDirectory = class'VMDFileFinder'.Static.GetFileLocation("..\\");
+	CurDirectory = class'VMDNative.VMDFileFinder'.Static.GetFileLocation("..\\");
 	
 	ExitButton = WinButtonBar.AddButton(ExitButtonText, HALIGN_Left);
+	LinksButton = WinButtonBar.AddButton(LinksButtonText, HALIGN_Left);
 	BackOutButton = WinButtonBar.AddButton(BackOutButtonText, HALIGN_Right);
 	OpenSelectButton = WinButtonBar.AddButton(OpenButtonText, HALIGN_Right);
 	CreateInfoWindows();
@@ -146,7 +147,7 @@ function PopulateFileList()
 	SelectedTile = None;
 	WinTile.DestroyAllChildren();
 	
-	forEach class'VMDFileFinder'.Static.FindNextFileAt(CurDirectory$"*", GetName)
+	forEach class'VMDNative.VMDFileFinder'.Static.FindNextFileAt(CurDirectory$"*", GetName)
 	{
 		if (GetName == "")
 		{
@@ -308,23 +309,6 @@ function UpdateInfo()
 		}
 	}
 	
-	/*forEach class'VMDFileFinder'.Static.FindNextFileAt(CurDirectory$"*", GetName)
-	{
-		break;
-	}
-	if (CurDirectory != "..\\")
-	{
-		forEach class'VMDFileFinder'.Static.FindNextFileAt(CurDirectory$"..\\*", GetName2)
-		{
-			break;
-		}
-	}
-	
-	if (GetName != GetName2)
-	{
-		bCanBackOut = true;
-	}*/
-	
 	if (Len(CurDirectory) > 3)
 	{
 		bCanBackOut = true;
@@ -342,7 +326,7 @@ function string GetFreeSpaceString()
 	local float FreeGB, FreeTB;
 	local string Ret, TString;
 	
-	FreeMB = class'VMDHDSpacefix'.static.GetFreeHDSpace();
+	FreeMB = class'VMDNative.VMDHDSpacefix'.static.GetFreeHDSpace();
 	FreeGB = float(FreeMB) / 1024.0;
 	FreeTB = FreeGB / 1024.0;
 	
@@ -368,7 +352,7 @@ function bool HasRequiredSpace(string ModName)
 {
 	local int FreeMB;
 	
-	FreeMB = class'VMDHDSpacefix'.static.GetFreeHDSpace();
+	FreeMB = class'VMDNative.VMDHDSpacefix'.static.GetFreeHDSpace();
 	
 	switch(ModName)
 	{
@@ -417,6 +401,9 @@ function bool ButtonActivated( Window buttonPressed )
 	{
 		case ExitButton:
 			AddTimer(0.01, False,, 'DoPop');
+		break;
+		case LinksButton:
+			VMP.ConsoleCommand("Open https://www.moddb.com/mods/vanilla-madder/news/supported-vmd-mods-w-links");
 		break;
 		case OpenSelectButton:
 			if (SelectedTile != None)
@@ -475,125 +462,125 @@ function SelectKeyFolder()
 		switch(SelectedTile.FileName)
 		{
 			case "CF":
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
 				bWon[0] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Maps\\", "..\\VMDMods\\Maps\\", "*.dx"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Music");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Music");
 				bWon[1] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Music\\", "..\\VMDMods\\Music\\", "*.umx"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\System");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\System");
 				bWon[2] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\System\\", "..\\VMDMods\\System\\", "*.u"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Textures");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Textures");
 				bWon[3] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Textures\\", "..\\VMDMods\\Textures\\", "*.utx"));
 			break;
 			case "Fgrhk":
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
 				bWon[0] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Maps\\", "..\\VMDMods\\Maps\\", "*.dx"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Music");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Music");
 				bWon[1] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Music\\", "..\\VMDMods\\Music\\", "*.ogg"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Sounds");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Sounds");
 				bWon[2] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Sounds\\", "..\\VMDMods\\Sounds\\", "*.uax"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\System");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\System");
 				bWon[3] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\System\\", "..\\VMDMods\\System\\", "*.u"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Textures");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Textures");
 				bWon[4] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Textures\\", "..\\VMDMods\\Textures\\", "*.utx"));
 			break;
 			case "Mutations":
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
 				bWon[0] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Maps\\", "..\\VMDMods\\Maps\\", "*.dx"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\System");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\System");
 				bWon[1] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\System\\", "..\\VMDMods\\System\\", "*.u"));
 			break;
 			case "Redsun":
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
 				bWon[0] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Maps\\", "..\\VMDMods\\Maps\\", "*.dx"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Music");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Music");
 				bWon[1] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Music\\", "..\\VMDMods\\Music\\", "*.umx"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Sounds");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Sounds");
 				bWon[2] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Sounds\\", "..\\VMDMods\\Sounds\\", "*.uax"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\System");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\System");
 				bWon[3] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\System\\", "..\\VMDMods\\System\\", "*.u"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Textures");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Textures");
 				bWon[4] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Textures\\", "..\\VMDMods\\Textures\\", "*.utx"));
 			break;
 			case "Revision":
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDRevision");
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDRevision");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
 				
 				if (class'VMDStaticFunctions'.Static.GetConflictingMapURLStyle(GetPlayerPawn()) == 1)
 				{
-					class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDRevision\\Maps");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDRevision\\Maps");
 					bWon[0] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Maps\\", "..\\VMDRevision\\Maps\\", "*.dx"));
 				}
 				else
 				{
-					class'VMDFileFinder'.Static.CreateFolderAt("00");
-					class'VMDFileFinder'.Static.CreateFolderAt("00\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("01");
-					class'VMDFileFinder'.Static.CreateFolderAt("01\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("02");
-					class'VMDFileFinder'.Static.CreateFolderAt("02\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("03");
-					class'VMDFileFinder'.Static.CreateFolderAt("03\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("04");
-					class'VMDFileFinder'.Static.CreateFolderAt("04\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("05");
-					class'VMDFileFinder'.Static.CreateFolderAt("05\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("06");
-					class'VMDFileFinder'.Static.CreateFolderAt("06\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("08");
-					class'VMDFileFinder'.Static.CreateFolderAt("08\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("09");
-					class'VMDFileFinder'.Static.CreateFolderAt("09\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("10");
-					class'VMDFileFinder'.Static.CreateFolderAt("10\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("11");
-					class'VMDFileFinder'.Static.CreateFolderAt("11\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("12");
-					class'VMDFileFinder'.Static.CreateFolderAt("12\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("14");
-					class'VMDFileFinder'.Static.CreateFolderAt("14\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("15");
-					class'VMDFileFinder'.Static.CreateFolderAt("15\\VMDRevision");
-					class'VMDFileFinder'.Static.CreateFolderAt("99");
-					class'VMDFileFinder'.Static.CreateFolderAt("99\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("00");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("00\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("01");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("01\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("02");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("02\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("03");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("03\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("04");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("04\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("05");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("05\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("06");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("06\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("08");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("08\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("09");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("09\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("10");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("10\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("11");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("11\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("12");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("12\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("14");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("14\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("15");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("15\\VMDRevision");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("99");
+					class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("99\\VMDRevision");
 					bWon[0] = int(InstallAllRevisionMapFilesFrom(CurDirectory$SelectedTile.FileName$"\\Maps\\"));
 				}
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Music");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Music");
 				bWon[1] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Music\\", "..\\VMDMods\\Music\\", "*.ogg"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Sounds");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Sounds");
 				bWon[2] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Sounds\\", "..\\VMDMods\\Sounds\\", "*.uax"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\System");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\System");
 				bWon[3] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\System\\", "..\\VMDMods\\System\\", "*.u"));
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Textures");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Textures");
 				bWon[4] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\Textures\\", "..\\VMDMods\\Textures\\", "*.utx"));
 			break;
 			case "ZodiacMaps":
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods");
 				
-				class'VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
+				class'VMDNative.VMDFileFinder'.Static.CreateFolderAt("..\\VMDMods\\Maps");
 				bWon[0] = int(InstallAllFilesFrom(CurDirectory$SelectedTile.FileName$"\\", "..\\VMDMods\\Maps\\", "*.dx"));
 			break;
 		}
@@ -640,7 +627,7 @@ function bool InstallAllFilesFrom(string StartLoc, string EndLoc, string FileExt
 	local bool bWon;
 	local string GetName;
 	
-	forEach class'VMDFileFinder'.Static.FindNextFileAt(StartLoc$FileExtension, GetName)
+	forEach class'VMDNative.VMDFileFinder'.Static.FindNextFileAt(StartLoc$FileExtension, GetName)
 	{
 		//MADDERS, 7/18/25: Revision shit that we don't want. Unnecessary.
 		if (Left(GetName, 4) ~= "DXMP")
@@ -676,7 +663,7 @@ function bool InstallAllFilesFrom(string StartLoc, string EndLoc, string FileExt
 					bWon = true;
 				break;
 				default:
-					bWon = class'VMDFileFinder'.Static.CopyFileFrom(StartLoc$GetName, EndLoc$GetName);
+					bWon = class'VMDNative.VMDFileFinder'.Static.CopyFileFrom(StartLoc$GetName, EndLoc$GetName);
 				break;
 			}
 		}
@@ -701,7 +688,7 @@ function bool InstallAllRevisionMapFilesFrom(string StartLoc)
 	local bool bWon;
 	local string GetName, MissionClone;
 	
-	forEach class'VMDFileFinder'.Static.FindNextFileAt(StartLoc$"*.dx", GetName)
+	forEach class'VMDNative.VMDFileFinder'.Static.FindNextFileAt(StartLoc$"*.dx", GetName)
 	{
 		//MADDERS, 7/18/25: Revision shit that we don't want. Unnecessary.
 		if (Left(GetName, 4) ~= "DXMP")
@@ -739,7 +726,7 @@ function bool InstallAllRevisionMapFilesFrom(string StartLoc)
 				break;
 				default:
 					MissionClone = Left(GetName, 2);
-					bWon = class'VMDFileFinder'.Static.CopyFileFrom(StartLoc$GetName, MissionClone$"\\VMDRevision\\"$GetName);
+					bWon = class'VMDNative.VMDFileFinder'.Static.CopyFileFrom(StartLoc$GetName, MissionClone$"\\VMDRevision\\"$GetName);
 				break;
 			}
 		}
@@ -813,6 +800,7 @@ defaultproperties
      WinInfoSize(3)=(X=173,Y=40)
      
      Title="Mod Locator"
+     LinksButtonText="|&Links"
      ExitButtonText="|&Exit"
      OpenButtonText="|&Open"
      SelectButtonText="|&Install"
