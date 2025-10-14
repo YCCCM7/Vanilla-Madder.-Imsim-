@@ -215,6 +215,11 @@ simulated function vector CalcDrawOffset()
 	return DrawOffset;
 }
 
+function bool VMDCanHaveMultipleStacks()
+{
+	return !bCanHaveMultipleCopies;
+}
+
 //MADDERS, 8/8/23: Drop objection framework. For when you have stuff you don't want to be yeeted at bad times.
 function bool VMDHasDropObjection()
 {
