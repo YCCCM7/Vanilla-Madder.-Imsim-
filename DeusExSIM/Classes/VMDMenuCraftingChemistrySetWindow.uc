@@ -29,7 +29,7 @@ var localized string MsgBotRequired, MsgSkillRequired, MsgAllRequirementsMet, Sk
 			MsgCannotCraft, MsgCannotBreakdown,
 			MsgCraftParamsA, MsgCraftParamsB,
 			MsgCraftReqsA, MsgCraftReqsB,
-			MsgBreakdownParamsA, MsgBreakdownParamsB, MsgDepleted,
+			MsgBreakdownParamsA, MsgBreakdownParamsB,
 			MsgXOwned, MsgXOutOfY, MsgBreakdownGain, MsgItemSize;
 
 var VMDStylizedWindow RequirementBGs[5], RequirementPictures[5], LineOverlayHack;
@@ -611,9 +611,13 @@ function UpdateInfo()
 					BuildStr[2] = SprintF(MsgBreakdownParamsA, BreakdownQuan, ModifiedChemicalsGain);
 				}
 				
-				if (ModifiedChemicalsGain < ChemicalsGain)
+				/*if (ModifiedChemicalsGain < ChemicalsGain)
 				{
 					BuildStr[2] = BuildStr[2]@MsgDepleted;
+				}*/
+				if (VMP.CraftingManager != None)
+				{
+					BuildStr[2] = BuildStr[2]@VMP.CraftingManager.GetFatigueDesc(TarItem);
 				}
 				
 				BuildStr[1] = BuildStr[1]$BuildStr[2];
@@ -1234,7 +1238,6 @@ defaultproperties
      MsgCraftReqsB="x%d = "
      MsgBreakdownParamsA="Break down: (%d Count) +%d Chemicals"
      MsgBreakdownParamsB=", x%d = (%d Count) +%d Chemicals"
-     MsgDepleted="(Fatigued: -50% gain)"
      MsgXOwned="%d Owned"
      MsgXOutOfY="%d/%d"
      MsgBreakdownGain="+%d Return"
