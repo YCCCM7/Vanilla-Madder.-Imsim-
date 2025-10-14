@@ -211,7 +211,7 @@ defaultproperties
      ItemArticle="a"
      speed=1500.000000
      MaxSpeed=1500.000000
-     Damage=40.000000
+     Damage=32.000000 //MADDERS, 8/24/25: Nerfing plasma because it is a monster.
      MomentumTransfer=5000
      ImpactSound=Sound'DeusExSounds.Weapons.PlasmaRifleHit'
      ExplosionDecal=Class'DeusEx.ScorchMark'
