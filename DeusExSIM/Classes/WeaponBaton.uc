@@ -8,6 +8,21 @@ function name WeaponDamageType()
 	return 'KnockedOut';
 }
 
+function bool VMDCanBeDualWielded()
+{
+	return true;
+}
+
+function bool VMDCanDualWield()
+{
+	if ((VMDBufferPlayer(Owner) != None) && (VMDBufferPlayer(Owner).bUseGunplayVersionTwo))
+	{
+		return true;
+	}
+	
+	return false;
+}
+
 defaultproperties
 {
      DrawAnimFrames=14
@@ -22,6 +37,7 @@ defaultproperties
      MeleeAnimRates(1)=1.250000
      MeleeAnimRates(2)=0.710000
      ShotTime=0.050000
+     DisarmChanceMult=3.000000
      
      SelectTilt(0)=(X=45.000000,Y=30.000000)
      SelectTilt(1)=(X=0.000000,Y=0.000000)
