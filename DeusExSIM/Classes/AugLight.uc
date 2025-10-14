@@ -365,7 +365,7 @@ function bool VMDUseLowPowerMode()
 
 defaultproperties
 {
-     EnergyRate=10.000000
+     EnergyRate=5.000000
      MaxLevel=0
      Icon=Texture'DeusExUI.UserInterface.AugIconLight'
      smallIcon=Texture'DeusExUI.UserInterface.AugIconLight_Small'
