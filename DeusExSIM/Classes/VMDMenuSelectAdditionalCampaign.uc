@@ -7,60 +7,88 @@ function ProcessAction(String actionKey)
 {
 	local int i;
 	local VMDBufferPlayer VMP;
+	local VMDMenuSelectAdditionalCustomRevision NewRev;
 	
 	VMP = VMDBufferPlayer(GetPlayerPawn());
 	if (VMP == None) return;
 	
-	VMP.InvokedBindName = StoredBindName;
-	VMP.SelectedCampaign = StoredCampaign;
-	VMP.CampaignNewGameMap = StoredStartMap;
-	VMP.VMDResetPlayerNewGamePlus();
-
-	switch(StoredCampaign)
-	{
-		case "VANILLA":
-			for (i=0; i<ArrayCount(VMP.MapStyle); i++)
-			{
-				VMP.MapStyle[i] = 0;
-			}
-			
-			if (bool(DynamicLoadObject("FemJC.FJCJump", class'Sound', True)))
-			{
-				VMP.bDisableFemaleVoice = False;
-			}
-			else
-			{
-				VMP.bDisableFemaleVoice = True;
-			}
-		break;
-		case "REVISION":
-			for (i=0; i<ArrayCount(VMP.MapStyle); i++)
-			{
-				VMP.MapStyle[i] = 1;
-			}
-			
-			if (bool(DynamicLoadObject("FemJC.FJCJump", class'Sound', True)))
-			{
-				VMP.bDisableFemaleVoice = False;
-			}
-			else
-			{
-				VMP.bDisableFemaleVoice = True;
-			}
-		break;
-		default:
-			for (i=0; i<ArrayCount(VMP.MapStyle); i++)
-			{
-				VMP.MapStyle[i] = 0;
-			}
-			
-			VMP.bDisableFemaleVoice = True;	
-		break;
-	}
-	
 	switch(CAPS(ActionKey))
 	{
 		case "START":
+			VMP.InvokedBindName = StoredBindName;
+			VMP.SelectedCampaign = StoredCampaign;
+			VMP.CampaignNewGameMap = StoredStartMap;
+			VMP.VMDResetPlayerNewGamePlus();
+			
+			switch(StoredCampaign)
+			{
+				case "VANILLA":
+					for (i=0; i<ArrayCount(VMP.MapStyle); i++)
+					{
+						VMP.MapStyle[i] = 0;
+					}
+					
+					if (bool(DynamicLoadObject("FemJC.FJCJump", class'Sound', True)))
+					{
+						VMP.bDisableFemaleVoice = False;
+					}
+					else
+					{
+						VMP.bDisableFemaleVoice = True;
+					}
+				break;
+				case "REVISION":
+					for (i=0; i<ArrayCount(VMP.MapStyle); i++)
+					{
+						VMP.MapStyle[i] = 1;
+					}
+					
+					if (bool(DynamicLoadObject("FemJC.FJCJump", class'Sound', True)))
+					{
+						VMP.bDisableFemaleVoice = False;
+					}
+					else
+					{
+						VMP.bDisableFemaleVoice = True;
+					}
+				break;
+				case "CUSTOM REVISION":
+					VMP.VMDInterpolateHook();
+					VMP.bPendingNGPlusSave = true;
+					VMP.NGPlusLaps += 1;
+					
+					if (bool(DynamicLoadObject("FemJC.FJCJump", class'Sound', True)))
+					{
+						VMP.bDisableFemaleVoice = False;
+					}
+					else
+					{
+						VMP.bDisableFemaleVoice = True;
+					}
+					
+					ClearDXOgg();
+					if ((VMP.ModSwappedMusic != None) && (VMP.ModSwappedMusic != VMP.Level.Song))
+					{
+						VMP.ModSwappedMusic = None;
+						VMP.UpdateDynamicMusic(0.016);
+						VMP.ClientSetMusic(VMP.ModSwappedMusic, 4, 255, MTRAN_FastFade);
+					}
+					
+					newRev = VMDMenuSelectAdditionalCustomRevision(root.InvokeMenuScreen(Class'VMDMenuSelectAdditionalCustomRevision'));
+					newRev.SetCampaignData(StoredDifficulty, StoredCampaign);
+					
+					return;
+				break;
+				default:
+					for (i=0; i<ArrayCount(VMP.MapStyle); i++)
+					{
+						VMP.MapStyle[i] = 0;
+					}
+					
+					VMP.bDisableFemaleVoice = True;	
+				break;
+			}
+			
 			VMP.VMDInterpolateHook();
 			VMP.bPendingNGPlusSave = true;
 			VMP.NGPlusLaps += 1;
@@ -136,6 +164,8 @@ function EnableButtons()
 
 defaultproperties
 {
-     actionButtons(1)=(Align=HALIGN_Right,Action=AB_Other,Text="|&Start",Key="START")
+     AdvanceText(0)="|&Start"
+     AdvanceText(1)="C|&onfigure"
+     actionButtons(2)=(Align=HALIGN_Right,Action=AB_Other,Text="|&Start",Key="START")
      Title="New Game+ Campaign Selection"
 }
