@@ -19,7 +19,8 @@ var bool bLatentChargeCost; //Do we use up charge from being on?
 var localized string ChargeLabel, StrSecondsLeft;
 
  //Use this for fraction simulation. Yikes. Use the other for limiting how much we can score upon being looted.
-var int LatentChargeSteps, MaxLootCharge, LastActivationCharge;
+var int LatentChargeSteps, MaxLootCharge;
+var travel int LastActivationCharge;
 var localized string MsgConflictingPickup;
 
 // ----------------------------------------------------------------------
@@ -566,7 +567,10 @@ function VMDActivateHook()
 {
 	Super.VMDActivateHook();
 	
-	LastActivationCharge = Charge;
+	if (!bIsActive)
+	{
+		LastActivationCharge = Charge;
+	}
 }
 
 function string VMDGetItemName()
