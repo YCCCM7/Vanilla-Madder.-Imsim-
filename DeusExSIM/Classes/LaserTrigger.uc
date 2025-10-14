@@ -36,8 +36,14 @@ function BeginAlarm()
 	lastAlarmTime = Level.TimeSeconds;
 	
 	//MADDERS, 7/24/25: End stasis in radius for alarms. Special treatment.
-	class'VMDStaticFunctions'.Static.EndStasisInAOE(Self, Location, 50*(SoundRadius+1));
-	AIStartEvent('Alarm', EAITYPE_Audio, SoundVolume/255.0, 50*(SoundRadius+1));
+	class'VMDStaticFunctions'.Static.EndStasisInAOE(Self, Location, 25*(SoundRadius+1));
+	AIStartEvent('Alarm', EAITYPE_Audio, SoundVolume/255.0, 25*(SoundRadius+1));
+	
+	VMP = VMDBufferPlayer(GetPlayerPawn());
+	if ((VMP != None) && (TriggerType == TT_PlayerProximity || VMP == TriggerActor))
+	{
+		VMP.VMDAttemptAddOwedInfamy(5, 'Alarm');
+	}
 	
 	//MADDERS, 8/7/23: Add player stress.
 	forEach RadiusActors(class'VMDBufferPlayer', VMP, 25*(SoundRadius+1), Location)
