@@ -792,7 +792,7 @@ function DrawWindow(GC gc)
 				}
 				else if (frobTarget.IsA('DeusExCarcass'))
 				{
-					strInfo = DeusExCarcass(frobTarget).itemName;
+					strInfo = DeusExCarcass(frobTarget).VMDGetItemName();
 				}
 				else if (frobTarget.IsA('Inventory'))
 				{
