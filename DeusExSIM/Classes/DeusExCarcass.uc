@@ -58,7 +58,7 @@ var bool bImportant;
 var string StoredFamiliarName, FlagName;
 
 var bool bFrobbable, bEverSearched;
-var localized string MsgTimeTraveller, MsgLayingOnGrenade;
+var localized string MsgTimeTraveller, MsgLayingOnGrenade, MsgEmptySuffix;
 
 //MADDERS, 8/12/21: Inherit this from pawns for consistency sake.
 var int MyPawnSeed;
@@ -578,7 +578,14 @@ function InitFor(Actor Other)
 		Fatness = Other.Fatness;
 		DrawScale = Other.DrawScale;
 		
-		MyPawnSeed = class'VMDStaticFunctions'.Static.DeriveActorSeed(Other);
+		if (VMBP != None)
+		{
+			MyPawnSeed = VMBP.SelfAssessedSeed;
+		}
+		else
+		{
+			MyPawnSeed = class'VMDStaticFunctions'.Static.DeriveActorSeed(Other);
+		}
 		
 		//MADDERS: Store this data for use with complex corpse interactions.
 		FlagName = Other.BindName;
@@ -617,7 +624,9 @@ function InitFor(Actor Other)
 		}
 		
 		if (bAnimalCarcass)
+		{
 			itemName = msgAnimalCarcass;
+		}
 		
 		// set as unconscious or add the pawns name to the description
 		//if (!bAnimalCarcass)
@@ -1412,8 +1421,8 @@ function int LootNanoKeys(DeusExPlayer Player)
 
 function int LootPickups(DeusExPlayer Player)
 {
-	local bool bPickedItemUp;
-	local int Ret, ItemCount;
+	local bool bPickedItemUp, bCanHaveMoreCopies;
+	local int Ret, ItemCount, CurCopies, RefusalSetting;
 	local float LastCharge;
 	
 	local Inventory TItem, NextItem;
@@ -1466,6 +1475,27 @@ function int LootPickups(DeusExPlayer Player)
 				{
 					VMDRemoveInventory(TCharge, False);
 					continue;
+				}
+			}
+			
+			if ((VMP != None) && (DXP.VMDCanHaveMultipleStacks()))
+			{
+				RefusalSetting = VMP.GetItemRefusalSetting(DXP);
+				CurCopies = VMP.VMDCountNumPickups(DXP.Class, true);
+				switch(RefusalSetting)
+				{
+					case 2:
+						bCanHaveMoreCopies = CurCopies < 2;
+					break;
+					case 3:
+						bCanHaveMoreCopies = CurCopies < 1;
+					break;
+					case 4:
+						bCanHaveMoreCopies = False;
+					break;
+					default:
+						bCanHaveMoreCopies = True;
+					break;
 				}
 			}
 			
@@ -1528,7 +1558,7 @@ function int LootPickups(DeusExPlayer Player)
 			else
 			{
 				// Transcended - Drop the item on the ground
-				if ((VMP != None) && (VMP.GetItemRefusalSetting(DXP) == 2))
+				if ((VMP != None) && (VMP.GetItemRefusalSetting(DXP) >= 2) && (!bCanHaveMoreCopies))
 				{
 					VMP.ClientMessage(SprintF(VMP.ItemRefusedString, DXP.ItemName));
 					VMDRemoveInventory(DXP, Level.NetMode == NM_Standalone);
@@ -1583,8 +1613,8 @@ function int LootPickups(DeusExPlayer Player)
 
 function int LootWeaponsAmmo(DeusExPlayer Player)
 {
-	local bool bPickedItemUp, bWeaponWasDropped;
-	local int Ret, LastAmmoRand;
+	local bool bPickedItemUp, bWeaponWasDropped, bCanHaveMoreCopies;
+	local int Ret, LastAmmoRand, RefusalSetting, CurCopies;
 	local string TName;
 	
 	local Inventory TItem, NextItem;
@@ -1628,7 +1658,28 @@ function int LootWeaponsAmmo(DeusExPlayer Player)
 			FindWeapon = DeusExWeapon(Player.FindInventoryType(DXW.Class));
 			LastAmmoRand = DXW.PickupAmmoCount;
 			
-			if ((FindWeapon != None) || ((FindWeapon == None) && (!FindAdvancedInventorySlot(Player, DXW, true))))
+			if ((VMP != None) && (DXW.VMDCanHaveMultipleWeapons()))
+			{
+				RefusalSetting = VMP.GetItemRefusalSetting(DXW);
+				CurCopies = VMP.VMDCountNumWeapons(DXW.Class);
+				switch(RefusalSetting)
+				{
+					case 2:
+						bCanHaveMoreCopies = CurCopies < 2;
+					break;
+					case 3:
+						bCanHaveMoreCopies = CurCopies < 1;
+					break;
+					case 4:
+						bCanHaveMoreCopies = False;
+					break;
+					default:
+						bCanHaveMoreCopies = True;
+					break;
+				}
+			}
+			
+			if ((FindWeapon != None && !bCanHaveMoreCopies) || (FindWeapon == None && !FindAdvancedInventorySlot(Player, DXW, true)))
 			{
 				if (DXW.PickupAmmoCount > 0 || DXW.VMDIsMeleeWeapon())
 				{
@@ -1722,7 +1773,7 @@ function int LootWeaponsAmmo(DeusExPlayer Player)
 				if ((FindWeapon == None) && (!FindAdvancedInventorySlot(Player, DXW, true)))
 				{
 					// Transcended - Drop the item on the ground
-					if ((VMP != None) && (VMP.GetItemRefusalSetting(DXW) == 2))
+					if ((VMP != None) && (VMP.GetItemRefusalSetting(DXW) >= 2) && (!bCanHaveMoreCopies))
 					{
 						TName = DXW.ItemName;
 						if (!DXW.bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
@@ -2354,6 +2405,20 @@ function bool VMDHasInventory( Inventory TestItem )
 	return false;
 }
 
+function string VMDGetItemName()
+{
+	local string Ret;
+	
+	Ret = ItemName;
+	
+	if ((Inventory == None) && (StuckProjectiles[0] == None))
+	{
+		Ret = Ret@MsgEmptySuffix;
+	}
+	
+	return Ret;
+}
+
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
 
@@ -2366,6 +2431,7 @@ defaultproperties
 {
      MsgTimeTraveller="You know better than to invoke a time paradox... Let's just not."
      MsgLayingOnGrenade="You are unable to safely retrieve the %s"
+     MsgEmptySuffix="[EMPTY]"
      
      //MADDERS additions.
      SmellCooldown=7.500000
