@@ -15,11 +15,11 @@ function Tick(float DT)
  	
 	if (Player != None)
 	{
- 		if ((!FakebIsActive) && (!bDisabled) && (Player.Region.Zone != None) && (Player.Region.Zone.bWaterZone))
+ 		if ((!FakebIsActive) && (!bDisabled) && (bHasIt) && (Player.Region.Zone != None) && (Player.Region.Zone.bWaterZone))
 		{
 			FakeActivate();
 		}
- 		else if (FakebIsActive && (bDisabled || Player.Region.Zone == None || !Player.Region.Zone.bWaterZone))
+ 		else if (FakebIsActive && bHasIt && (bDisabled || Player.Region.Zone == None || !Player.Region.Zone.bWaterZone))
 		{
 			FakeDeactivate();
 		}
@@ -122,14 +122,7 @@ simulated function PreBeginPlay()
 //------------------------------------------
 function float VMDConfigureLungMod(bool bWater)
 {
-	if (bDisabled)
-	{
-		return 0;
-	}
-	else
-	{
- 		return LevelValues[CurrentLevel];
-	}
+ 	return LevelValues[CurrentLevel];
 }
 
 function string VMDGetAdvancedDescription()
