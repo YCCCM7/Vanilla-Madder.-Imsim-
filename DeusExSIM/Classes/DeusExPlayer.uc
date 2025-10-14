@@ -1331,7 +1331,7 @@ function ShowIntro(optional bool bStartNewGame)
 		DeusExRootWindow(rootWindow).ClearWindowStack();
 		DeusExRootWindow(rootWindow).hud.belt.ClearBelt(); // Transcended - Added
 	}
-
+	
 	bStartNewGameAfterIntro = bStartNewGame;
 	
 	// Transcended - Only glitches when the player is dead, let's make them technically not.
@@ -3480,10 +3480,14 @@ function HighlightCenterObject()
 	if (FrobTime >= 0.1)
 	{
 		//MADDERS, 5/3/25: Oopsies. Rearrange this a bit for dynamic camera.
-		if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).bUseDynamicCamera) && (VMDBufferPlayer(Self).VMDLastCameraLoc != Vect(0,0,0)))
+		if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).bUseDynamicCamera))
 		{
-			StartTrace = VMDBufferPlayer(Self).VMDLastCameraLoc;
+			StartTrace = Location + VMDBufferPlayer(Self).VMDGetDynamicCameraOffset();
 			EndTrace = StartTrace + (Vector(ViewRotation) * MaxFrobDistance);
+			
+			// adjust for the eye height
+			StartTrace.Z += BaseEyeHeight;
+			EndTrace.Z += BaseEyeHeight;
 		}
 		else
 		{
@@ -4387,7 +4391,13 @@ function bool SetBasedPawnSize(float newRadius, float newHeight)
 				PrePivot.Z -= 4.5;
 			}
 			//MADDERS, 5/11/25: Used to be -2, but oops, walk bob fucks everything up.
-			BaseEyeHeight -= 6;
+			BaseEyeHeight -= 2;
+			
+			//MADDERS, 10/3/25: Do some fucking around here for duck fudging.
+			if ((OldHeight ~= GetDefaultCollisionHeight()) && (NewHeight < OldHeight))
+			{
+				BaseEyeHeight -= 4;
+			}
 		}
 		
 		// Complaints that eye height doesn't seem like your crouching in multiplayer
@@ -4536,21 +4546,18 @@ state PlayerWalking
 	// lets us affect the player's movement
 	function ProcessMove ( float DeltaTime, vector newAccel, eDodgeDir DodgeMove, rotator DeltaRot)
 	{
-		local int newSpeed, defSpeed;
-		local name mat;
-		local vector HitLocation, HitNormal, checkpoint, downcheck;
-		local Actor HitActor, HitActorDown;
 		local bool bCantStandUp;
-		local Vector loc, traceSize;
-		local float alpha, maxLeanDist;
-		local float legTotal, weapSkill;
+		local int newSpeed, defSpeed;
+		local float alpha, maxLeanDist, legTotal, weapSkill;
+		local name mat;
+		local vector HitLocation, HitNormal, checkpoint, downcheck, loc, traceSize;
+		local Actor HitActor, HitActorDown;
 		
 		local bool bInverse, bJumpDuck, bFreshJumpDuck, bCanJumpDuck;
-		local float RollChunk, TMath, GSpeed;
-		local VMDBufferPlayer VMP;
-		
+		local float RollChunk, TMath, GSpeed, LeanSpeed;
 		local Vector HN, HL, TVel;
  		local Actor HitAct;
+		local VMDBufferPlayer VMP;
 		
 		GSpeed = 1.0;
 		if ((Level != None) && (Level.Game != None))
@@ -4956,7 +4963,9 @@ state PlayerWalking
       		// DEUS_EX AMSD Turns out this wasn't working right in multiplayer, I have a fix
       		// for it, but it would change all our balance.
 		if ((aForward < 0) && (Level.NetMode == NM_Standalone))
+		{
 			newSpeed *= 0.65;
+		}
 		
 		//MADDERS: Compensate for f/w bias.
 		if (VMP != None)
@@ -4979,8 +4988,14 @@ state PlayerWalking
 		 	
 			if (bInverse)
 		 	{
-		  		if (AForward < 0) NewSpeed /= 0.65;
-		  		else if (AForward > 0) NewSpeed *= 0.65;
+		  		if (AForward < 0)
+				{
+					NewSpeed /= 0.65;
+				}
+				else if (AForward > 0)
+				{
+					NewSpeed *= 0.65;
+				}
 		 	}
 		}
 		
@@ -4989,7 +5004,8 @@ state PlayerWalking
 		// if we are moving or crouching, we can't lean
 		// uncomment below line to disallow leaning during crouch
 		
-		if ((VSize(Velocity) < 10) && (aForward == 0))		// && !bIsCrouching && !bForceDuck)
+		//MADDERS, 10/2/25: Tweak for leaning here. More tac shooter esque.
+		if (Abs(Velocity.Z) < 10 && ((VSize(Velocity) < 10 && AForward == 0) || (!bIsCrouching && !bForceDuck)))		//) && (aForward == 0) // && !bIsCrouching && !bForceDuck)
 			bCanLean = True;
 		else
 			bCanLean = False;
@@ -5005,6 +5021,7 @@ state PlayerWalking
 			if (!bIsCrouching && !bForceDuck)
 				SetBasedPawnSize(CollisionRadius, GetDefaultCollisionHeight() - Abs(curLeanDist) / 3.0);
 		}
+		
 		if ((bCanLean) && (aExtra0 != 0))
 		{
 			// lean
@@ -5012,7 +5029,12 @@ state PlayerWalking
 			if (AnimSequence != 'CrouchWalk')
 				PlayCrawling();
 			
-			alpha = maxLeanDist * aExtra0 * 2.0 * DeltaTime;
+			LeanSpeed = 1.0;
+			if (VMP != None)
+			{
+				LeanSpeed = VMP.VMDGetLeanSpeedMult();
+			}
+			alpha = maxLeanDist * aExtra0 * 2.0 * DeltaTime * LeanSpeed;
 			
 			loc = vect(0,0,0);
 			loc.Y = alpha;
@@ -5030,12 +5052,12 @@ state PlayerWalking
 				HitActorDown = Trace(HitLocation, HitNormal, downcheck, checkpoint, True, traceSize);
 				if ((HitActor == None) && (HitActorDown != None))
 				{
-					if ( PlayerIsClient() || (Level.NetMode == NM_Standalone))
+					if (PlayerIsClient() || Level.NetMode == NM_Standalone)
 					{
 						SetLocation(checkpoint);
 						ServerUpdateLean( checkpoint );
 						curLeanDist += alpha;
-				}
+					}
 				}
 			}
 			else
@@ -5050,13 +5072,21 @@ state PlayerWalking
 			if (AnimSequence == 'CrouchWalk')
 				PlayRising();
 			
-			if ( PlayerIsClient() || (Level.NetMode == NM_Standalone))
+			if (PlayerIsClient() || Level.NetMode == NM_Standalone)
 			{
+				LeanSpeed = 1.0;
+				if (VMP != None)
+				{
+					LeanSpeed = VMP.VMDGetLeanSpeedMult();
+				}
+				
 				prevLeanDist = curLeanDist;
-				alpha = FClamp(7.0 * DeltaTime, 0.001, 0.9);
+				alpha = FClamp(7.0 * DeltaTime * LeanSpeed, 0.001, 0.9);
 				curLeanDist *= 1.0 - alpha;
 				if (Abs(curLeanDist) < 1.0)
+				{
 					curLeanDist = 0;
+				}
 			}
 			
 			loc = vect(0,0,0);
@@ -6313,8 +6343,17 @@ simulated event RenderOverlays( canvas Canvas )
 	}
 	
 	if ((!IsInState('Interpolating')) && (!IsInState('Paralyzed')) && (!IsInState('TrulyParalyzed')))
+	{
 		if ((inHand != None) && (!inHand.IsA('Weapon')))
+		{
 			inHand.RenderOverlays(Canvas);
+		}
+	}
+	
+	if ((DeusExWeapon(Weapon) != None) && (DeusExWeapon(Weapon).DualWieldPartner != None))
+	{
+		DeusExWeapon(Weapon).DualWieldPartner.RenderOverlays(Canvas);
+	}
 }
 
 // ----------------------------------------------------------------------
@@ -6526,10 +6565,11 @@ exec function ParseRightClick()
 	// - Put away (or drop if it's a deco) inHand
 	//
 	
-	local bool bPlayerOwnsIt;
+	local bool bPlayerOwnsIt, FlagReloading, FlagCrafting;
 	local int ViewIndex;
 	local Vector loc;
 	local AutoTurret turret;
+	local VMDCraftingAura HAura, MAura;
 	local Decoration oldCarriedDecoration;
    	local Inventory oldFirstItem, oldInHand;
 	
@@ -6658,6 +6698,18 @@ exec function ParseRightClick()
 			{
 				if ((!DeusExMover(FrobTarget).bHighlight) || (!DeusExMover(FrobTarget).bFrobbable))
 				{
+					FlagReloading = (DeusExWeapon(InHand) != None && DeusExWeapon(InHand).IsInState('Reload'));
+					HAura = VMDCraftingAura(FindInventoryType(class'VMDMechanicalCraftingAura'));
+					MAura = VMDCraftingAura(FindInventoryType(class'VMDMedicalCraftingAura'));
+					if ((HAura != None) && (HAura.bToolsRequired) && (VMDToolbox(InHand) != None))
+					{
+						FlagCrafting = true;
+					}
+					else if ((MAura != None) && (MAura.bToolsRequired) && (VMDChemistrySet(InHand) != None))
+					{
+						FlagCrafting = true;
+					}
+					
 					if (POVCorpse(inHand) != None)
 					{
 						DropItem();
@@ -6666,7 +6718,7 @@ exec function ParseRightClick()
 					{
 						DropDecoration();
 					}
-					else if ((DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload')) && (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).bFrobEmptyLowersWeapon))
+					else if (!FlagReloading && !FlagCrafting && (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).bFrobEmptyLowersWeapon))
 					{
 						PutInHand(None);
 					}
@@ -6674,6 +6726,18 @@ exec function ParseRightClick()
 			}
 			else if ((Mover(FrobTarget) != None) && (DeusExMover(FrobTarget) == None))
 			{
+				FlagReloading = (DeusExWeapon(InHand) != None && DeusExWeapon(InHand).IsInState('Reload'));
+				HAura = VMDCraftingAura(FindInventoryType(class'VMDMechanicalCraftingAura'));
+				MAura = VMDCraftingAura(FindInventoryType(class'VMDMedicalCraftingAura'));
+				if ((HAura != None) && (HAura.bToolsRequired) && (VMDToolbox(InHand) != None))
+				{
+					FlagCrafting = true;
+				}
+				else if ((MAura != None) && (MAura.bToolsRequired) && (VMDChemistrySet(InHand) != None))
+				{
+					FlagCrafting = true;
+				}
+				
 				if (POVCorpse(inHand) != None)
 				{
 					DropItem();
@@ -6682,7 +6746,7 @@ exec function ParseRightClick()
 				{
 					DropDecoration();
 				}
-				else if ((DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload')) && (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).bFrobEmptyLowersWeapon))
+				else if (!FlagReloading && !FlagCrafting && (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).bFrobEmptyLowersWeapon))
 				{
 					PutInHand(None);
 				}
@@ -6691,6 +6755,18 @@ exec function ParseRightClick()
 	}
 	else
 	{
+		FlagReloading = (DeusExWeapon(InHand) != None && DeusExWeapon(InHand).IsInState('Reload'));
+		HAura = VMDCraftingAura(FindInventoryType(class'VMDMechanicalCraftingAura'));
+		MAura = VMDCraftingAura(FindInventoryType(class'VMDMedicalCraftingAura'));
+		if ((HAura != None) && (HAura.bToolsRequired) && (VMDToolbox(InHand) != None))
+		{
+			FlagCrafting = true;
+		}
+		else if ((MAura != None) && (MAura.bToolsRequired) && (VMDChemistrySet(InHand) != None))
+		{
+			FlagCrafting = true;
+		}
+		
 		// if there's no FrobTarget, put away an inventory item or drop a decoration
 		// or drop the corpse
 		if (POVCorpse(inHand) != None)
@@ -6701,7 +6777,7 @@ exec function ParseRightClick()
 		{
 			DropDecoration();
 		}
-		else if ((DeusExWeapon(InHand) == None || !DeusExWeapon(InHand).IsInState('Reload')) && (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).bFrobEmptyLowersWeapon))
+		else if (!FlagReloading && !FlagCrafting && (VMDBufferPlayer(Self) == None || VMDBufferPlayer(Self).bFrobEmptyLowersWeapon))
 		{
 			PutInHand(None);
 		}
@@ -6741,8 +6817,8 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 	local Inventory foundItem;
 	
 	//MADDERS, efficiency sake.
-	local bool FlagLootAmmo, FlagRotationWorked, bAmmoAdded;
-	local int AmmoGrabbed;
+	local bool FlagLootAmmo, FlagRotationWorked, bAmmoAdded, bCopiesValid;
+	local int AmmoGrabbed, NumCopies, TSetting;
 	local float LastCharge;
 	local string QueuedAmmoMessage, TName;
 	local DeusExAmmo FindA, PFindA, AmmoA, AmmoB;
@@ -6768,15 +6844,15 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 	DXW = DeusExWeapon(TFrobTarget);
 	TInv = Inventory(TFrobTarget);
 	
-	if ((VMDBufferPlayer(Self) != None) && (TInv != None))
+	if ((VMP != None) && (TInv != None))
 	{
-		VMDBufferPlayer(Self).MarkItemDiscovered(TInv);
+		VMP.MarkItemDiscovered(TInv);
 	}
 	
 	//MADDERS: Unfuck this every time. Ugh.
-	if (VMDBufferPlayer(Self) != None)
+	if (VMP != None)
 	{
-		VMDBufferPlayer(Self).VMDUpdateInventoryJank();
+		VMP.VMDUpdateInventoryJank();
 	}
 	
 	if (TFrobTarget.IsA('DataVaultImage') || TFrobTarget.IsA('NanoKey') || TFrobTarget.IsA('Credits') || TFrobTarget.IsA('VMDScrapMetal') || TFrobTarget.IsA('VMDChemicals'))
@@ -6805,7 +6881,7 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 		// to hold this item.
 		foundItem = GetWeaponOrAmmo(Inventory(TFrobTarget));
 		
-		if (foundItem != None)
+		if (foundItem != None && (DeusExWeapon(FoundItem) == None || !DeusExWeapon(FoundItem).VMDCanHaveMultipleWeapons()))
 		{
 			bSlotSearchNeeded = False;
 			
@@ -6887,29 +6963,24 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 			
 			// Otherwise, if this is a single-use weapon, prevent the player
 			// from picking up
-			else if ((foundItem.IsA('DeusExWeapon')) && (VMDBufferPlayer(Self) == None || !VMDBufferPlayer(Self).VMDIsBurdenPlayer()))
+			else if ((foundItem.IsA('DeusExWeapon')) && (VMP == None || !VMP.VMDIsBurdenPlayer()))
 			{
 				// If these fields are set as checked, then this is a 
 				// single use weapon, and if we already have one in our 
 				// inventory another cannot be picked up (puke). 
+				
 				bCanPickup = ! ( (Weapon(foundItem).ReloadCount == 0) && 
 				                 (Weapon(foundItem).Default.PickupAmmoCount == 0) && //Changed to default because fucking why?
 				                 (Weapon(foundItem).AmmoName != None) );
 				
+				if ((!bCanPickup) && (DeusExWeapon(FoundItem).VMDCanHaveMultipleWeapons()))
+				{
+					bCanPickup = true;
+				}
+				
 				if (!bCanPickup)
 				{
 					ClientMessage(Sprintf(CanCarryOnlyOne, foundItem.itemName));
-				}
-				else if ((!DeusExWeapon(TFrobTarget).bItemRefusalOverride) && (Level.NetMode == NM_StandAlone))
-				{
-					if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExWeapon(TFrobTarget)) == 2))
-					{
-						TName = DeusExWeapon(TFrobTarget).ItemName;
-						if (!DeusExWeapon(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
-						ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, TName));
-						DeusExWeapon(TFrobTarget).bItemRefusalOverride = True;
-						bCanPickup = False;
-					}
 				}
 			}
 		}
@@ -6922,13 +6993,96 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 		{
 			if ((!DeusExWeapon(TFrobTarget).bItemRefusalOverride) && (Level.NetMode == NM_StandAlone))
 			{
-				if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExWeapon(TFrobTarget)) == 2))
+				if (VMP != None)
 				{
-					TName = DeusExWeapon(TFrobTarget).ItemName;
-					if (!DeusExWeapon(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
-					ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, TName));
-					DeusExWeapon(TFrobTarget).bItemRefusalOverride = True;
-					bCanPickup = False;
+					NumCopies = VMP.VMDCountNumWeapons(DeusExWeapon(TFrobTarget).Class);
+					TSetting = VMP.GetItemRefusalSetting(DeusExWeapon(TFrobTarget));
+					switch(TSetting)
+					{
+						case 2:
+							bCopiesValid = (NumCopies < 2 && DeusExWeapon(TFrobTarget).VMDCanHaveMultipleWeapons());
+						break;
+						case 3:
+							bCopiesValid = (NumCopies < 1 && DeusExWeapon(TFrobTarget).VMDCanHaveMultipleWeapons());
+						break;
+						case 4:
+							bCopiesValid = false;
+						break;
+						default:
+							bCopiesValid = true;
+						break;
+					}
+					if (!bCopiesValid)
+					{
+						DXW = DeusExWeapon(TFrobTarget);
+						//MADDERS: This process is for yoinking owned ammos out of guns lying on the ground.
+						if (DXW.AmmoName != None)
+						{
+							FindA = DeusExAmmo(FindInventoryType(DXW.AmmoName));
+						}
+						
+						if (FindA != None)
+						{
+							//MADDERS: Mega barf.
+							FlagLootAmmo = true;
+							if ((DXW.PickupAmmoCount <= 0) || (FindA == None) || (DXRW == None)) FlagLootAmmo = false;
+							else if ((DXRW.Hud == None) || (FindA.PickupViewMesh == LODMesh'TestBox')) FlagLootAmmo = false;
+							else if (DXRW.Hud.ReceivedItems == None) FlagLootAmmo = false;
+							
+							PFindA = DeusExAmmo(FindInventoryType(FindA.Class));
+							if ((FlagLootAmmo) && (PFindA != None) && (PFindA.AmmoAmount < PFindA.VMDConfigureMaxAmmo())) bAmmoAdded = true;
+							
+							if (FlagLootAmmo)
+							{
+								AmmoGrabbed = Min(DXW.PickupAmmoCount, FindA.VMDConfigureMaxAmmo() - FindA.AmmoAmount);
+								if ((AmmoGrabbed > 0) && (FindA.AddAmmo(AmmoGrabbed))) //(DXW.PickupAmmoCount > 0)     DXW.PickupAmmoCount
+								{
+									//MADDERS, 8/7/23: Play a yoink sound.
+									if (!DXW.bHandToHand) DXW.PlaySound(Sound'BasketballSwoosh',,,,,1.35 + (FRand() * 0.3));
+									
+									if (bAmmoAdded)
+									{
+										//QueuedAmmoMessage = (FindA.PickupMessage @ FindA.itemArticle @ FindA.ItemName @ "("$AmmoGrabbed$")"); //DXW.PickupAmmoCount
+										DXRW.Hud.ReceivedItems.AddItem(FindA, AmmoGrabbed); //DXW.PickupAmmoCount
+									}
+									DXW.PickupAmmoCount -= AmmoGrabbed; //= 0;
+								}
+								else
+								{
+									//QueuedAmmoMessage = TooMuchAmmo;
+								}
+							}
+						}
+						else if ((class<DeusExAmmo>(DXW.AmmoName) != None) && (!DXW.VMDHasJankyAmmo()))
+						{
+							FindA = DeusExAmmo(Spawn(DXW.AmmoName,,, DXW.Location));
+							if (FindA != None)
+							{
+								class'VMDStaticFunctions'.Static.AddReceivedItem(Self, FindA, DXW.PickupAmmoCount, true);
+								TName = FindA.ItemName;
+								if (!FindA.bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
+								
+								AddInventory(FindA);
+								FindA.BecomeItem();
+								FindA.AmmoAmount = DXW.PickupAmmoCount;
+								FindA.GotoState('Idle2');
+								DXW.PickupAmmoCount = 0;
+								
+								QueuedAmmoMessage = FindA.PickupMessage @ FindA.ItemArticle @ TName @ "("$FindA.AmmoAmount$")";
+							}
+						}
+						
+						TName = DeusExWeapon(TFrobTarget).ItemName;
+						if (!DeusExWeapon(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
+						ClientMessage(Sprintf(VMP.ItemRefusedString, TName));
+						DeusExWeapon(TFrobTarget).bItemRefusalOverride = True;
+						bCanPickup = False;
+						
+						if (QueuedAmmoMessage != "")
+						{
+							ClientMessage(QueuedAmmoMessage);
+						}
+					}
 				}
 			}
 		}
@@ -6936,13 +7090,34 @@ function bool HandleItemPickup(Actor TFrobTarget, optional bool bSearchOnly)
 		{
 			if ((!DeusExPickup(TFrobTarget).bItemRefusalOverride) && (Level.NetMode == NM_StandAlone))
 			{
-				if ((VMDBufferPlayer(Self) != None) && (VMDBufferPlayer(Self).GetItemRefusalSetting(DeusExPickup(TFrobTarget)) == 2))
+				if (VMP != None)
 				{
-					TName = DeusExPickup(TFrobTarget).ItemName;
-					if (!DeusExPickup(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
-					ClientMessage(Sprintf(VMDBufferPlayer(Self).ItemRefusedString, TName));
-					DeusExPickup(TFrobTarget).bItemRefusalOverride = True;
-					bCanPickup = False;
+					NumCopies = VMP.VMDCountNumPickups(DeusExPickup(TFrobTarget).Class, true);
+					TSetting = VMP.GetItemRefusalSetting(DeusExPickup(TFrobTarget));
+					switch(TSetting)
+					{
+						case 2:
+							bCopiesValid = (NumCopies < 2 && DeusExPickup(TFrobTarget).VMDCanHaveMultipleStacks());
+						break;
+						case 3:
+							bCopiesValid = (NumCopies < 1 && DeusExPickup(TFrobTarget).VMDCanHaveMultipleStacks());
+						break;
+						case 4:
+							bCopiesValid = false;
+						break;
+						default:
+							bCopiesValid = true;
+						break;
+					}
+					
+					if (!bCopiesValid)
+					{
+						TName = DeusExPickup(TFrobTarget).ItemName;
+						if (!DeusExPickup(TFrobTarget).bNameCaseSensitive) TName = class'VMDStaticFunctions'.Static.VMDLower(TName);
+						ClientMessage(Sprintf(VMP.ItemRefusedString, TName));
+						DeusExPickup(TFrobTarget).bItemRefusalOverride = True;
+						bCanPickup = False;
+					}
 				}
 			}
 		}
@@ -7816,11 +7991,7 @@ function ClearInventorySlots()
 function Bool FindInventorySlot(Inventory anItem, optional Bool bSearchOnly)
 {
 	local bool bPositionFound;
-	local int row;
-	local int col;
-	local int newSlotX;
-	local int newSlotY;
-   	local int beltpos;
+	local int row, col, newSlotX, newSlotY, beltpos;
 	local ammo foundAmmo;
 	
 	local int SX, SY;
@@ -7843,16 +8014,6 @@ function Bool FindInventorySlot(Inventory anItem, optional Bool bSearchOnly)
    	bPositionFound = False;
 	
 	VMP = VMDBufferPlayer(Self);
-	if ((Level.NetMode == NM_Standalone) && (VMP != None))
-	{
-		if (((DeusExPickUp(anItem) != None) && (!DeusExPickUp(anItem).bItemRefusalOverride)) || ((DeusExWeapon(anItem) != None) && (!DeusExWeapon(anItem).bItemRefusalOverride)))
-		{
-			if (VMP.GetItemRefusalSetting(anItem) == 2)
-			{
-				return False;
-			}
-		}
-	}
 	
    	// DEUS_EX AMSD In multiplayer, due to propagation delays, the inventory refreshers in the
    	// personascreeninventory can keep bouncing items back and forth.  So just return true and
@@ -11986,20 +12147,20 @@ function bool AddImage(DataVaultImage newImage)
 			newImage.Destroy();
 			return False;
 		}
-
+		
 		image = image.NextImage;
 	}
-
+	
 	// If the player doesn't yet have an image, make this his
 	// first image.  
 	newImage.nextImage = FirstImage;
 	newImage.prevImage = None;
-
+	
 	if (FirstImage != None)
 		FirstImage.prevImage = newImage;
-
+	
 	FirstImage = newImage;
-
+	
 	return True;
 }
 
@@ -12566,9 +12727,9 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 	
 	//MADDERS kit spending.
 	local bool bSelfEMP, bEMPImmunity, bProcDisarm, bPickupBlock;
-	local int i, TDamage, THand, TPos, TIndex;
+	local int i, TDamage, THand, TPos, TIndex, OldHealth, GateThresh;
 	local float ModMult, PickupMult, FDamage, BonusFDamage;
-	local DeusExWeapon IHDXW;
+	local DeusExWeapon IHDXW, DWP;
 	local Medkit Kit;
 	local VMDBufferPlayer VMP;
 	
@@ -12578,6 +12739,7 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 	if (IHDXW != None)
 	{
 		THand = IHDXW.GetHandType();
+		DWP = IHDXW.DualWieldPartner;
 	}
 	if (VMP != None)
 	{
@@ -12618,6 +12780,8 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 		{
 			ModMult *= VMP.ModHealthMultiplier;
 		}
+		
+		GateThresh = 96 * ModMult;
 		
 		if (VMP.DamageGateTimer > 0)
 		{
@@ -12732,10 +12896,17 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 	//MADDERS: Holy fucking hack, batman!
 	if (DamageType == 'EMP' || DamageType == 'Shocked')
 	{
-		//MADDERS: New shit. Bliiiip. Convert nanovirus to energy.
+		//MADDERS: Convert EMP and shocked damage to energy.
 		if ((ActualDamage < Damage) && (!VMP.bLastSplashWasDrone))
 		{
-			Energy = FClamp(Energy + ((Damage-ActualDamage) / 2), 0, EnergyMax);
+			if ((DamageType == 'EMP') && (Damage > 1999))
+			{
+				Energy = FClamp(Energy + FMin(25.0, (Damage-ActualDamage) / 2), 0, EnergyMax);
+			}
+			else
+			{
+				Energy = FClamp(Energy + ((Damage-ActualDamage) / 2), 0, EnergyMax);
+			}
 		}
 		
 		if ((VMP != None) && (ActualDamage > 15) && (!bEMPImmunity))
@@ -12949,9 +13120,17 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 					ActualDamage *= 2;
 				}
 				
+				OldHealth = HealthHead;
 				HealthHead -= actualDamage;
+				if ((VMP != None) && (HealthHead < GateThresh) && (OldHealth >= GateThresh))
+				{
+					VMP.VMDPlayDamageGatebreakNoise();
+				}
+				
 				if (bPlayAnim)
+				{
 					if (HasAnim('HitHead')) PlayAnim('HitHead', , 0.1);
+				}
 			}
 		}
 		else if (offset.z < 0.0)	// legs
@@ -13005,14 +13184,28 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 			{
 				TDamage = Clamp(-HealthLegLeft, 0, (95*ModMult)-VMP.CurTickDamageTaken[1]);
 				VMP.CurTickDamageTaken[1] = Clamp(VMP.CurTickDamageTaken[1] + TDamage, 0, 95*ModMult);
+				
+				OldHealth = HealthTorso;
 				HealthTorso -= TDamage;
+				if ((VMP != None) && (HealthTorso < GateThresh) && (OldHealth >= GateThresh))
+				{
+					VMP.VMDPlayDamageGatebreakNoise();
+				}
+				
 				HealthLegLeft = 0;
 			}
 			if (HealthLegRight <= 0)
 			{
 				TDamage = Clamp(-HealthLegRight, 0, (95*ModMult)-VMP.CurTickDamageTaken[1]);
 				VMP.CurTickDamageTaken[1] = Clamp(VMP.CurTickDamageTaken[1] + TDamage, 0, 95*ModMult);
+				
+				OldHealth = HealthTorso;
 				HealthTorso -= TDamage;
+				if ((VMP != None) && (HealthTorso < GateThresh) && (OldHealth >= GateThresh))
+				{
+					VMP.VMDPlayDamageGatebreakNoise();
+				}
+				
 				HealthLegRight = 0;
 			}
 		}
@@ -13030,7 +13223,7 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 				
 				if ((VMP != None) && (VMP.VMDDoAdvancedLimbDamage()))
 				{
-					if (THand == -1)
+					if (THand == -1 || DWP != None)
 					{
 						if ((HealthArmRight > 0) && (HealthArmRight-ActualDamage <= 0)) bProcDisarm = true;
 						else if (FRand()*50 < float(ActualDamage) * (CombatDifficulty / 32.0)) bProcDisarm = true;
@@ -13038,7 +13231,7 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 					
 					if (bProcDisarm)
 					{
-						VMP.VMDDisarmPlayer();
+						VMP.VMDDisarmPlayer(True);
 					}
 				}
 				
@@ -13052,7 +13245,14 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 				{
 					TDamage = Clamp(-HealthArmRight, 0, (95*ModMult)-VMP.CurTickDamageTaken[1]);
 					VMP.CurTickDamageTaken[1] = Clamp(VMP.CurTickDamageTaken[1] + TDamage, 0, 95*ModMult);
+					
+					OldHealth = HealthTorso;
 					HealthTorso -= TDamage;
+					if ((VMP != None) && (HealthTorso < GateThresh) && (OldHealth >= GateThresh))
+					{
+						VMP.VMDPlayDamageGatebreakNoise();
+					}
+					
 					HealthArmRight = 0;
 				}
 			}
@@ -13068,7 +13268,7 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 				
 				if ((VMP != None) && (VMP.VMDDoAdvancedLimbDamage()))
 				{
-					if (THand == 1)
+					if (THand == 1 || DWP != None)
 					{
 						if ((HealthArmLeft > 0) && (HealthArmLeft-ActualDamage <= 0)) bProcDisarm = true;
 						else if (FRand()*50 < float(ActualDamage) * (CombatDifficulty / 32.0)) bProcDisarm = true;
@@ -13076,7 +13276,7 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 					
 					if (bProcDisarm)
 					{
-						VMP.VMDDisarmPlayer();
+						VMP.VMDDisarmPlayer(False);
 					}
 				}
 				
@@ -13091,7 +13291,14 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 				{
 					TDamage = Clamp(-HealthArmLeft, 0, (95*ModMult)-VMP.CurTickDamageTaken[1]);
 					VMP.CurTickDamageTaken[1] = Clamp(VMP.CurTickDamageTaken[1] + TDamage, 0, 95*ModMult);
+					
+					OldHealth = HealthTorso;
 					HealthTorso -= TDamage;
+					if ((VMP != None) && (HealthTorso < GateThresh) && (OldHealth >= GateThresh))
+					{
+						VMP.VMDPlayDamageGatebreakNoise();
+					}
+					
 					HealthArmLeft = 0;
 				}
 			}
@@ -13116,9 +13323,17 @@ function TakeDamage(int Damage, Pawn instigatedBy, Vector hitlocation, Vector mo
 					ActualDamage *= 2;
 				}
 				
+				OldHealth = HealthTorso;
 				HealthTorso -= actualDamage;
+				if ((VMP != None) && (HealthTorso < GateThresh) && (OldHealth >= GateThresh))
+				{
+					VMP.VMDPlayDamageGatebreakNoise();
+				}
+				
 				if (bPlayAnim)
+				{
 					if (HasAnim('HitTorso')) PlayAnim('HitTorso', , 0.1);
+				}
 			}
 		}
 	}
