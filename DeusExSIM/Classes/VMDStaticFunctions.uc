@@ -316,6 +316,12 @@ static function string VMDGetMapName(Actor A)
  	S = A.GetURLMap();
  	S2 = "\\";
 	
+	//MADDERS, 9/1/25: Weird dude appearing in map names now. Unclear why, but axe it.
+	if (Right(S, 1) == " ")
+	{
+		S = Left(S, Len(S) - 1);
+	}
+	
 	if (class'VMDStaticFunctions'.Static.GetConflictingMapURLStyle(A) == 1)
 	{
 		S3 = "..\\VMDRevision\\Maps\\";
@@ -341,7 +347,7 @@ static function string VMDGetMapName(Actor A)
    			S = Right(S, Len(S) - InStr(S, S2) - 1);
   		}
   		until (InStr(S, S2) <= -1);
-
+		
 		if (InStr(S, ".") > -1)
 		{
   			S = Left(S, Len(S) - 4);
@@ -963,6 +969,7 @@ static function bool VMDIsWeaponSensitiveMap(Actor A, optional bool bMorallyGrey
 		//08 Hotel is allowed because the rentons are gone.
 		case "08_NYC_UNDERGROUND":
 		case "08_NYC_SMUG":
+		case "10_PARIS_CATACOMBS_TUNNELS": //MADDERS, 8/15/25: Bad revision spawns, sometimes killing hostages. Aight. Don't fuck with it.
 		case "11_PARIS_EVERETT":
 		//Redsun maps.
 		case "21_OTEMACHILAB_1":
@@ -1065,6 +1072,10 @@ static function string MutateDestinationByStyle(Actor A, string StartURL)
 	{
 		Trim = Left(Trim, Len(Trim) - 3);
 	}
+	else if (Right(Trim, 4) ~= ".dx ")
+	{
+		Trim = Left(Trim, Len(Trim) - 4);
+	}
 	
 	for(i=0; i<ArrayCount(VMP.RecordedMaps); i++)
 	{
@@ -1075,29 +1086,63 @@ static function string MutateDestinationByStyle(Actor A, string StartURL)
 		}
 	}
 	
-	VMP.VMDRecordMap(Trim);
-	
 	CurStyle = GetIntendedMapStyle(A);
 	NewStyle = GetIntendedMapStyleFromName(A, Trim);
 	
 	//MADDERS, 7/20/25: This... Isn't necessary?
 	//But any time we flip-flop styles on a map that doesn't exist in all sets (And uses a custom destination as a result), force redirection in this block.
-	/*if (NewStyle != CurStyle)
+	if (NewStyle != CurStyle)
 	{
-		switch(Ret)
+		switch(Trim)
 		{
-			case "":
+			case "06_HONGKONG_ENTERINGSCENE":
+				if (NewStyle != 1)
+				{
+					VMP.VMDRecordMap("06_HONGKONG_HELIBASE");
+					return "06_HONGKONG_HELIBASE.DX";
+				}
+			break;
+			case "06_HONGKONG_HELIBASE":
 				if (NewStyle == 1)
 				{
-					return "#";
+					VMP.VMDRecordMap("06_HONGKONG_ENTERINGSCENE");
+					if (class'VMDStaticFunctions'.Static.GetConflictingMapURLStyle(A) == 1)
+					{
+						return "..\\VMDRevision\\Maps\\06_HONGKONG_ENTERINGSCENE.DX";
+					}
+					else
+					{
+						return "06\\VMDRevision\\06_HONGKONG_ENTERINGSCENE.DX";
+					}
 				}
-				else
+			break;
+			case "10_PARIS_ENTRANCE":
+				if (NewStyle != 1)
 				{
-					return "#";
+					VMP.VMDRecordMap("10_PARIS_CATACOMBS");
+					return "10_PARIS_CATACOMBS.DX";
+				}
+			break;
+			case "10_PARIS_CATACOMBS":
+				if (NewStyle == 1)
+				{
+					VMP.VMDRecordMap("10_PARIS_ENTRANCE");
+					if (class'VMDStaticFunctions'.Static.GetConflictingMapURLStyle(A) == 1)
+					{
+						return "..\\VMDRevision\\Maps\\10_PARIS_ENTRANCE.DX";
+					}
+					else
+					{
+						return "10\\VMDRevision\\10_PARIS_ENTRANCE.DX";
+					}
 				}
 			break;
 		}
-	}*/
+	}
+	else
+	{
+		VMP.VMDRecordMap(Trim);
+	}
 	
 	switch(NewStyle)
 	{
@@ -1127,15 +1172,27 @@ static function int GetConflictingMapURLStyle(Actor A)
 {
 	// 0 = System path shitty method. Vanilla stable.
 	// 1 = Alien directory method, much cleaner.
-	return 0;
+	return 1;
 }
 
-static function int GetIntendedMapStyle(Actor A)
+static function int GetIntendedMapStyle(Actor A, optional bool bDirectRip)
 {
+	local DeusExLevelInfo TInfo;
 	local string TName;
 	
-	TName = VMDGetMapName(A);
-	
+	if (bDirectRip)
+	{
+		forEach A.AllActors(class'DeusExLevelInfo', TInfo)
+		{
+			TName = TInfo.MapName;
+			Log("LADDER POINT ADDER[!] FAST MAP NAME YOINK! RESULT?"@TName);
+			break;
+		}
+	}
+	else
+	{
+		TName = VMDGetMapName(A);
+	}
 	return GetIntendedMapStyleFromName(A, TName);
 }
 
@@ -1214,6 +1271,8 @@ static function int GetIntendedMapStyleFromName(Actor A, string TName)
 		case "05_NYC_UNATCOMJ12LAB":
 			RelIndex = 7;
 		break;
+		//Unique map for revision.
+		case "06_HONGKONG_ENTERINGSCENE":
 		case "06_HONGKONG_HELIBASE":
 		case "06_HONGKONG_TONGBASE":
 		case "06_HONGKONG_WANCHAI_CANAL":
@@ -1232,14 +1291,17 @@ static function int GetIntendedMapStyleFromName(Actor A, string TName)
 		break;
 		case "09_NYC_DOCKYARD":
 		case "09_NYC_SHIP":
-		case "09_NYC_SHIPEBELOW":
+		case "09_NYC_SHIPBELOW":
 		case "09_NYC_SHIPFAN":
 			RelIndex = 10;
 		break;
 		case "09_NYC_GRAVEYARD":
 			RelIndex = 11;
 		break;
+		//Unique map for Revision
+		case "10_PARIS_ENTRANCE":
 		case "10_PARIS_CATACOMBS":
+		//This one, too.
 		case "10_PARIS_CATACOMBS_METRO":
 		case "10_PARIS_CLUB":
 		case "10_PARIS_METRO":
@@ -1274,6 +1336,7 @@ static function int GetIntendedMapStyleFromName(Actor A, string TName)
 		case "14_OCEANLAB_SILO":
 			RelIndex = 20;
 		break;
+		case "15_AREA51_BUNKER":
 		case "15_AREA51_BUNKER":
 		case "15_AREA51_ENTRANCE":
 		case "15_AREA51_FINAL":
