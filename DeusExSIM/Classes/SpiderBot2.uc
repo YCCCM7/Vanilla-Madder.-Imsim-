@@ -7,7 +7,7 @@ defaultproperties
 {
      HitboxArchetype="Spiderbot"
      
-     EMPHitPoints=25
+     EMPHitPoints=50
      maxRange=640.000000
      MinRange=200.000000
      WalkingSpeed=1.000000
