@@ -255,8 +255,9 @@ function CreateBodyPart(out BodyPart part, texture tx, float newX, float newY,
 
 function SetHitColor(out BodyPart part, float deltaSeconds, bool bHide, int hitValue)
 {
+	local float mult, THealthMult;
 	local Color col;
-	local float mult;
+	local VMDBufferPlayer VMP;
 	
 	part.damageCounter -= deltaSeconds;
 	if (part.damageCounter < 0)
@@ -295,12 +296,31 @@ function SetHitColor(out BodyPart part, float deltaSeconds, bool bHide, int hitV
 		part.displayedHealth = hitValue;
 	}
 	
+	THealthMult = 1.0;
+	VMP = VMDBufferPlayer(Player);
+	if (VMP != None)
+	{
+		if (VMP.bKillswitchEngaged)
+		{
+			THealthMult *= VMP.KSHealthMult;
+		}
+		if (VMP.ModHealthMultiplier > 0)
+		{
+			THealthMult *= VMP.ModHealthMultiplier;
+		}
+	}
+	
 	hitValue = part.displayedHealth;
 	col = winEnergy.GetColorScaled(hitValue/100.0);
-	if ((VMDBufferPlayer(Player) != None) && (VMDBufferPlayer(Player).bEnergyArmor))
+	if ((VMP != None) && (VMP.bEnergyArmor))
 	{
 		if (Player.Energy > 0) col.B = Min(255, Col.B + (255 * (Player.Energy / 100.0)));
 	}
+	else if (HitValue >= 96 * THealthMult)
+	{
+		Col.B = 255;
+	}
+	
 	if (part.damageCounter > 0)
 	{
 		mult = part.damageCounter/damageFlash;
