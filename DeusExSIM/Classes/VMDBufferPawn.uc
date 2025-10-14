@@ -8,6 +8,7 @@ class VMDBufferPawn extends ScriptedPawn
 //MADDERS ADDITIONS!
 var(MADDERS) int AttackStateLaps, ConsecutiveShittyPaths;
 var(MADDERS) Actor LastShittyPathTarget;
+var float OldAgitation;
 
 var bool bSetupBuffedHealth, bAppliedSpecial, bAppliedSpecial2, bBuffedVision, bBuffedSenses, bBuffedAccuracy; //Already better health scaling than &%)*. God save us all
 var int MedkitHealthLevel; //MADDERS, 12/27/23: In some special cases, we may have a special threshold.
@@ -16,6 +17,7 @@ var(MADDERS) float OverrideHeight; //For locking collision height on reskinned c
 var bool bExplosive, bAerosolImmune, bEverNotFrobbed; //Watch me check for this super EZ.
 var float LastHitSeconds; //Set and reset as needed.
 var int SeedSet; //Binary sum.
+var int SelfAssessedSeed; //MADDERS, 10/2/25: New means of getting seeds - proves more reliable than other means.
 var float TimeSinceEngaged, TimeSincePickpocket; //If < 0.15
 
 //Silent kills yo.
@@ -102,6 +104,7 @@ var(MADDERSDIFF) float DifficultyVisionRangeMult, DifficultyReactionSpeedMult, E
 //MADDERS: Closed system hits, and armor hits.
 var bool bClosedSystemHit, bLastArmorHit, bArsonistIgnited;
 var Pawn LastInstigator;
+var VMDCorpseBlocker CorpseBlocker;
 
 var() float DrawShieldCooldown, DrawAugShieldCooldown, SmellSniffCooldown;
 var Pawn LastDamager; //Use this for not doing spam headshot calls. Yeet.
@@ -187,6 +190,29 @@ var DeusExPlayer localPlayer;
 
 function bool Facelift(bool bOn)
 {
+}
+
+function bool VMDShouldUseAdvancedMelee()
+{
+	local VMDBufferPlayer VMP;
+	
+	if (Animal(Self) != None || Robot(Self) != None || HumanThug(Self) != None || HumanCivilian(Self) != None)
+	{
+		return false;
+	}
+	
+	if (StartingHealthValues[6] < 100*LastEnemyHealthScale)
+	{
+		return false;
+	}
+	
+	VMP = GetLastVMP();
+	if ((VMP != None) && (VMP.bUseAdvancedMelee))
+	{
+		return true;
+	}
+	
+	return false;
 }
 
 function bool VMDCanRunWithAnyWeapon()
@@ -2337,7 +2363,26 @@ state Patrolling
 
 event PreBeginPlay()
 {
+	local int i;
+	local Pawn TPawn;
+	
 	Super.PreBeginPlay();
+	
+	//MADDERS, 10/2/25: Get our own seed this way.
+	for(TPawn = Level.PawnList; TPawn != None; TPawn = TPawn.NextPawn)
+	{
+		if (TPawn.NextPawn == None)
+		{
+			SelfAssessedSeed = i;
+			break;
+		}
+		
+		if (ScriptedPawn(TPawn) != None && (VMDBufferPawn(TPawn) == None || !VMDBufferPawn(TPawn).bInsignificant))
+		{
+			i += 1;
+		}
+	}
+	
 	//fake shrink to fix faked collision with floor problems - DEUS_EX CNN
 	//UNDO
 	if ((CollisionHeight > 9) && (InStr(String(Mesh), ".Trans") != -1))
@@ -4528,6 +4573,7 @@ function VMDUpdateSpeedAugEffects(float DT)
 				case 'GM_Jumpsuit':
 				case 'Trans_GM_Jumpsuit':
 				case 'MP_Jumpsuit':
+				case 'VMDMP_Jumpsuit':
 					TarIndex[0] = 5;
 				break;
 				case 'GM_Suit':
@@ -4834,7 +4880,7 @@ function VMDPawnTickHook(float DeltaTime)
 				}
 			}
 			
-			if (CurVisionAug != None)
+			if ((CurVisionAug != None) && (!CurVisionAug.bPassive))
 			{
 				if ((!IsInState('Seeking')) && (!IsInState('Attacking')))
 				{
@@ -4850,6 +4896,13 @@ function VMDPawnTickHook(float DeltaTime)
 						CurVisionAug.Activate();
 					}
 				}
+			}
+		}
+		else
+		{
+			if (CurCloakAug != None)
+			{
+				EnableCloak(false);
 			}
 		}
 	}
@@ -4887,7 +4940,7 @@ function VMDPawnTickHook(float DeltaTime)
 				{
 					TRadius = TechGogglesRadius;
 				}
-				if ((CurVisionAug != None) && (CurVisionAug.bIsActive))
+				if (CurVisionAug != None && (CurVisionAug.bIsActive || CurVisionAug.bPassive))
 				{
 					TRadius = FMax(TRadius, CurVisionAug.LevelValues[CurVisionAug.CurrentLevel]);
 				}
@@ -5243,7 +5296,12 @@ function VMDPawnTickHook(float DeltaTime)
 
 function bool VMDCanSeeThroughWalls()
 {
-	if (bTechGogglesActive || (CurVisionAug != None && CurVisionAug.bIsActive))
+	if (bTechGogglesActive)
+	{
+		return true;
+	}
+	
+	if (CurVisionAug != None && (CurVisionAug.bIsActive || CurVisionAug.bPassive))
 	{
 		return true;
 	}
@@ -6210,6 +6268,7 @@ function GiveBallisticArmorTexture()
 		case 'GM_Jumpsuit':
 		case 'TransGM_Jumpsuit':
 		case 'MP_Jumpsuit':
+		case 'VMDMP_Jumpsuit':
 			TarIndex = 2;
 		break;
 		case 'GM_Trench':
@@ -6286,6 +6345,7 @@ function RestoreBallisticArmorTexture()
 		case 'GM_Jumpsuit':
 		case 'TransGM_Jumpsuit':
 		case 'MP_Jumpsuit':
+		case 'VMDMP_Jumpsuit':
 			TarIndex = 2;
 		break;
 		case 'GM_Trench':
@@ -6316,6 +6376,7 @@ function GiveGogglesTexture()
 		case 'GM_Jumpsuit':
 		case 'TransGM_Jumpsuit':
 		case 'MP_Jumpsuit':
+		case 'VMDMP_Jumpsuit':
 			TarIndex = 6;
 		break;
 	}
@@ -6359,6 +6420,7 @@ function RestoreGogglesTexture()
 		case 'GM_Jumpsuit':
 		case 'TransGM_Jumpsuit':
 		case 'MP_Jumpsuit':
+		case 'VMDMP_Jumpsuit':
 			TarIndex = 6;
 		break;
 	}
@@ -6387,6 +6449,7 @@ function VMDResetSkinHook()
 		case 'GM_Jumpsuit':
 		case 'Trans_GM_Jumpsuit':
 		case 'MP_Jumpsuit':
+		case 'VMDMP_Jumpsuit':
 			TarIndex[0] = 5;
 		break;
 		case 'GM_Suit':
@@ -6449,6 +6512,7 @@ function VMDEnableCloakHook(bool bEnable)
 		case 'GM_Jumpsuit':
 		case 'Trans_GM_Jumpsuit':
 		case 'MP_Jumpsuit':
+		case 'VMDMP_Jumpsuit':
 			TarIndex[0] = 5;
 		break;
 		case 'GM_Suit':
@@ -6552,7 +6616,7 @@ function CheckForHelmets()
   		bHasBodyArmor = True;
  	}
  	
- 	if ((Mesh != LODMesh'GM_Jumpsuit') && (Mesh != LODMesh'TransGM_Jumpsuit') && (Mesh != LODMesh'MP_Jumpsuit')) return;
+ 	if ((Mesh != LODMesh'GM_Jumpsuit') && (Mesh != LODMesh'TransGM_Jumpsuit') && (Mesh != LODMesh'MP_Jumpsuit') && (Mesh != LODMesh'VMDMP_Jumpsuit')) return;
  	
  	//Goggles is the only real exception here, tbh.
  	switch(Multiskins[6])
