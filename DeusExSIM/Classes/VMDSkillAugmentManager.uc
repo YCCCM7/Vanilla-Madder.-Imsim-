@@ -986,12 +986,12 @@ defaultproperties
      SkillAugmentSkillRequired(44)=class'SkillSwimming'
      //5.) Bundle of various improvements
      SkillAugmentNames(45)="Fit as a Fiddle"
-     SkillAugmentDescs(45)="~Your rolling cooldown is reduced by 25%.|n~You can duck while jumping.|n~Most types of damage taken while rolling is halved."
+     SkillAugmentDescs(45)="~You can duck while jumping.|n~Most types of damage taken while rolling are halved."
      SkillAugmentIDs(45)=SwimmingFitness
      SkillAugmentAssumed(45)=1 //Keeping this for the sake of QOL.
-     SkillAugmentLevel(45)=2
-     SkillAugmentLevelRequired(45)=2
-     SkillAugmentRequired(45)=
+     SkillAugmentLevel(45)=1
+     SkillAugmentLevelRequired(45)=1
+     SkillAugmentRequired(45)=SwimmingCoreWorkout
      SkillAugmentSkillRequired(45)=class'SkillSwimming'
      
      //ENVIRO
@@ -1340,6 +1340,16 @@ defaultproperties
      SkillAugmentLevelRequired(76)=1
      SkillAugmentRequired(76)=
      SkillAugmentSkillRequired(76)=class'SkillLockpicking'
-
-     //ACTUAL LAST USED is 76!
+     
+     //6.) Lean speed improvement. Useful with GP2.0.
+     SkillAugmentNames(77)="Ab Day"
+     SkillAugmentDescs(77)="~Your minimum and maximum lean speeds are both doubled.|n~Your rolling cooldown is reduced by 25%."
+     SkillAugmentIDs(77)=SwimmingCoreWorkout
+     SkillAugmentAssumed(77)=0
+     SkillAugmentLevel(77)=1
+     SkillAugmentLevelRequired(77)=1
+     SkillAugmentRequired(77)=
+     SkillAugmentSkillRequired(77)=class'SkillSwimming'
+     
+     //ACTUAL LAST USED is 77!
 }
