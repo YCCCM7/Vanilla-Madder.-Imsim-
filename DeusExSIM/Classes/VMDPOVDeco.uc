@@ -15,7 +15,7 @@ var travel byte StoredSoundRadius, StoredSoundVolume, StoredSoundPitch,
 			StoredLightPhase, StoredLightCone, StoredVolumeBrightness, StoredVolumeRadius, StoredVolumeFog;
 var travel float StoredTransientSoundVolume, StoredTransientSoundRadius,
 			StoredCollisionHeight, StoredCollisionRadius,
-			StoredMass, StoredBuoyancy;
+			StoredMass, StoredBuoyancy, StoredDrawScale;
 var travel name StoredEvent, StoredTag;
 var travel string StoredMesh, StoredMultiskins[8], StoredSkin, StoredTexture, StoredAmbientSound,
 			StoredBindName, StoredBarkBindName, StoredFamiliarName, StoredUnfamiliarName;
@@ -166,6 +166,7 @@ function VMDTransferPOVPropertiesTo(DeusExDecoration Deco, VMDPOVDeco POV)
 		Deco.SetCollisionSize(POV.StoredCollisionRadius, POV.StoredCollisionHeight);
 		Deco.Mass = POV.StoredMass;
 		Deco.Buoyancy = POV.StoredBuoyancy;
+		Deco.DrawScale = POV.StoredDrawScale;
 		
 		Deco.Event = POV.StoredEvent;
 		Deco.Tag = POV.StoredTag;
@@ -300,6 +301,7 @@ function VMDTransferPOVPropertiesFrom(DeusExDecoration Deco, VMDPOVDeco POV)
 		
 		POV.StoredMass = Deco.Mass;
 		POV.StoredBuoyancy = Deco.Buoyancy;
+		POV.StoredDrawScale = Deco.DrawScale;
 		
 		POV.StoredEvent = Deco.Event;
 		POV.StoredTag = Deco.Tag;
@@ -424,6 +426,8 @@ simulated function vector CalcDrawOffset()
 	DXP = DeusExPlayer(Owner);
 	if (DXP == None) return DrawOffset;
 	//VMP = VMDBufferPlayer(Owner);
+	
+	DrawScale = StoredDrawScale;
 	
 	//Start with our offset, adjust it by our size and owner's size.
 	TViewOffset = PlayerViewOffset*0.01;
