@@ -245,31 +245,40 @@ function Mesh ParseMesh(Mesh StartingMesh)
 		case 'GM_TrenchLeft':
 			StartingMesh = LODMesh'GM_Trench';
 		break;
+		case 'VMDGM_Trench_F':
 		case 'GM_Trench_FLeft':
 			StartingMesh = LODMesh'GM_Trench_F';
 		break;
 		case 'MP_Jumpsuit':
+		case 'VMDMP_Jumpsuit':
 		case 'MP_JumpsuitLeft':
 			StartingMesh = LODMesh'GM_Jumpsuit';
 		break;
+		case 'VMDGM_Suit':
 		case 'GM_SuitLeft':
 			StartingMesh = LODMesh'GM_Suit';
 		break;
+		case 'VMDGM_DressShirt_S':
 		case 'GM_DressShirt_SLeft':
 			StartingMesh = LODMesh'GM_DressShirt_S';
 		break;
+		case 'VMDGM_DressShirt':
 		case 'GM_DressShirtLeft':
 			StartingMesh = LODMesh'GM_DressShirt';
 		break;
+		case 'VMDGM_DressShirt_F':
 		case 'GM_DressShirt_FLeft':
 			StartingMesh = LODMesh'GM_DressShirt_F';
 		break;
+		case 'VMDGFM_Trench':
 		case 'GFM_TrenchLeft':
 			StartingMesh = LODMesh'GFM_Trench';
 		break;
+		case 'VMDGFM_SuitSkirt':
 		case 'GFM_SuitSkirtLeft':
 			StartingMesh = LODMesh'GFM_SuitSkirt';
 		break;
+		case 'VMDGFM_SuitSkirt_F':
 		case 'GFM_SuitSkirt_FLeft':
 			StartingMesh = LODMesh'GFM_SuitSkirt_F';
 		break;
