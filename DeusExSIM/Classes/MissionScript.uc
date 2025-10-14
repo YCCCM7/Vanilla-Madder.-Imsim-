@@ -72,6 +72,13 @@ function InitStateMachine()
 		{
 			log("**** InitStateMachine() - flagBase not set - mission state machine NOT initialized!");
 		}
+		
+		//MADDERS, 10/7/25: Shitty fucking carone script intentionally jukes deleting this flag... Breaking melee.
+		//Thanks, Carone.
+		if (LocalURL == "16_HOTELCARONE_INTRO")
+		{
+			flags.DeleteFlag('PlayerTraveling', FLAG_Bool);
+		}
 	}
 	else
 	{
