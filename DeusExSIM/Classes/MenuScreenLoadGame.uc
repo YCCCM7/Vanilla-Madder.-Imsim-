@@ -813,7 +813,7 @@ function UpdateFreeDiskSpace()
 	//SaveDir = Player.CreateGameDirectoryObject();
 	//FreeDiskSpace = SaveDir.GetSaveFreeSpace();
 	
-	FreeDiskSpace = class'VMDHDSpacefix'.static.GetFreeHDSpace();
+	FreeDiskSpace = class'VMDNative.VMDHDSpacefix'.static.GetFreeHDSpace();
 	
 	// Are we so chunky as to be a pain in the ass? Handle it differently.
 	if (FreeDiskSpace < 0)
