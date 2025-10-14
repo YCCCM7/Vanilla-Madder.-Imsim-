@@ -27,6 +27,7 @@ var HUDReceivedDisplay				receivedItems;
 var HUDMultiSkills					hms;
 
 //MADDERS ADDITIONS!
+var HUDSecondaryAmmoDisplay SecondaryAmmo;
 var VMDHUDDroneIndicator DroneInd;
 var VMDHitIndicator HitInd;
 var VMDHUDSmellIcons Smell;
@@ -68,6 +69,8 @@ event InitWindow()
 	hms				= HUDMultiSkills(NewChild(Class'HUDMultiSkills'));
 	//hvo				= HUDVocalize(NewChild(Class'HUDVocalize'));
 
+	SecondaryAmmo = HUDSecondaryAmmoDisplay(NewChild(Class'HUDSecondaryAmmoDisplay'));
+	
 	//MADDERS: Have a hit indicator now!
 	HitInd = VMDHitIndicator(NewChild(Class'VMDHitIndicator'));
 	HitInd.Show(False);
@@ -150,6 +153,10 @@ event DescendantRemoved(Window descendant)
 	//else if ( descendant == hvo )
 	//	hvo = None;
 	//MADDERS: Clear these, too.
+	else if (Descendant == SecondaryAmmo)
+	{
+		SecondaryAmmo = None;
+	}
 	else if (descendant == HitInd)
 		HitInd = None;
 	else if (descendant == DroneInd)
@@ -233,6 +240,11 @@ function ConfigurationChanged()
 		{
 			LightGem = VMDHUDLightGem(NewChild(class'VMDHUDLightGem'));
 		}
+		if (SecondaryAmmo == None)
+		{
+			SecondaryAmmo = HUDSecondaryAmmoDisplay(NewChild(Class'HUDSecondaryAmmoDisplay'));
+		}
+		
 		AddTimer(0.01, True,, 'ClearConfiguring');
 		class'VMDNative.VMDNihilumCleaner'.Static.SilenceNihilum();
 	}
@@ -243,6 +255,10 @@ function ConfigurationChanged()
 		{
 			ammo.QueryPreferredSize(ammoWidth, ammoHeight);
 			ammo.ConfigureChild(0, height-ammoHeight, ammoWidth, ammoHeight);
+			if (SecondaryAmmo != None)
+			{
+				SecondaryAmmo.ConfigureChild(0, height-ammoHeight*2, ammoWidth, ammoHeight);
+			}
 		}
 		else
 		{
@@ -629,7 +645,14 @@ function UpdateSettings( DeusExPlayer player )
 	
 	//MADDERS, 8/29/22: Include hit indicator in whether crosshair is shown.
 	cross.SetCrosshair(player.bCrosshairVisible);
-	HitInd.SetVisibility(Player.bCrosshairVisible);
+	if (SecondaryAmmo != None)
+	{
+		SecondaryAmmo.SetVisibility(Player.bAmmoDisplayVisible);
+	}
+	if (HitInd != None)
+	{
+		HitInd.SetVisibility(Player.bCrosshairVisible);
+	}
 	
 	VMP = VMDBufferPlayer(Player);
 	if (VMP != None)
