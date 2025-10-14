@@ -7,9 +7,10 @@ class VMDCraftingManager extends Actor;
 var VMDBufferPlayer Player;
 
 var travel string DiscoverableItems[64];
-var travel byte bDiscoveredItems[64], RecipeTypes[64];
+var travel byte bDiscoveredItems[64], RecipeTypes[64], RecipeFatigue[64];
 
-var localized string StrDiscoveredItem, TypeDescStrings[2];
+var localized string StrDiscoveredItem, TypeDescStrings[2], FatigueDescs[4];
+var float FatigueLevels[4];
 
 var travel VMDNonStaticCraftingFunctions StatRef;
 
@@ -184,6 +185,65 @@ function DiscoverAllItems()
 	}
 }
 
+function UpdateFatigue(class<Inventory> NewFatigue, int CraftCount, bool bMedical)
+{
+	local int i;
+	
+	if (NewFatigue == None || StatRef == None || !Player.bUseCraftingFatigue) return;
+	
+	for(i=0; i<ArrayCount(RecipeFatigue); i++)
+	{
+		if ((StatRef.GetMechanicalItemArrayFromString(DiscoverableItems[i]) == -1) == bMedical)
+		{
+			if (string(NewFatigue) == DiscoverableItems[i])
+			{
+				RecipeFatigue[i] = Clamp(RecipeFatigue[i] + CraftCount, 0, 3);
+			}
+			else
+			{
+				RecipeFatigue[i] = Clamp(RecipeFatigue[i] - CraftCount, 0, 3);
+			}
+		}
+	}
+}
+
+function string GetFatigueDesc(class<Inventory> CheckType)
+{
+	local int i;
+	local string Ret;
+	
+	if (!Player.bUseCraftingFatigue) return "";
+	
+	for(i=0; i<ArrayCount(DiscoverableItems); i++)
+	{
+		if (DiscoverableItems[i] == string(CheckType))
+		{
+			Ret = SprintF(FatigueDescs[RecipeFatigue[i]], int(FatigueLevels[RecipeFatigue[i]] * 100.0));
+			
+			return Ret;
+		}
+	}
+	
+	return Ret;
+}
+
+function float GetFatigueLevel(class<Inventory> CheckType)
+{
+	local int i;
+	
+	if (!Player.bUseCraftingFatigue) return 1.0;
+	
+	for(i=0; i<ArrayCount(DiscoverableItems); i++)
+	{
+		if (DiscoverableItems[i] == string(CheckType))
+		{
+			return (1.0 - FatigueLevels[RecipeFatigue[i]]);
+		}
+	}
+	
+	return 1.0;
+}
+
 defaultproperties
 {
      bHidden=True
@@ -192,4 +252,13 @@ defaultproperties
      StrDiscoveredItem="New %s recipe: %s"
      TypeDescStrings(0)="Hardware"
      TypeDescStrings(1)="Medicine"
+     
+     FatigueDescs(0)=""
+     FatigueDescs(1)="- Light Fatigue (-%d%%)"
+     FatigueDescs(2)="- Fatigue (-%d%%)"
+     FatigueDescs(3)="- Heavy Fatigue (-%d%%)"
+     FatigueLevels(0)=0.000000
+     FatigueLevels(1)=0.250000
+     FatigueLevels(2)=0.500000
+     FatigueLevels(3)=0.660000
 }
