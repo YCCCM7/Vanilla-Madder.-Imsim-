@@ -5,6 +5,7 @@ class RoadBlock extends VMDBufferDeco;
 
 defaultproperties
 {
+     bCanBeBase=True
      HitPoints=75
      minDamageThreshold=75
      FragType=Class'DeusEx.Rockchip'
