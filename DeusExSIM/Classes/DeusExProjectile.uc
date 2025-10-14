@@ -1058,7 +1058,15 @@ auto simulated state Flying
 		else if ((!bStuckToActor) && (!bStuckToWorld))
 		{
 			if (bStuck)
+			{
 				return;
+			}
+			
+			//MADDERS, 9/1/25: Redirect sticky projectiles like so.
+			if (VMDCorpseBlocker(Other) != None)
+			{
+				Other = VMDCorpseBlocker(Other).Owner;
+			}
 			
 			//MADDERS: Stop grenades from insta-blowing up on corpses!
 			if ((Carcass(Other) != None) && (ThrownProjectile(Self) != None) && (bExplodes)) return;
