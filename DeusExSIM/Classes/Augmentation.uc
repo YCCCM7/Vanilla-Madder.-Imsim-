@@ -150,7 +150,7 @@ function Activate()
 				Player.PlaySound(ActivateSound, SLOT_None,,,, GSpeed);
 			}
 			
-			if ((Player.AugmentationSystem != None) && (Player.AugmentationSystem.NumAugsActive() == 0))
+			if (Player.AugmentationSystem != None && Player.AugmentationSystem.NumAugsActive() == 0 && (VMDBufferAugmentation(Self) == None || !VMDBufferAugmentation(Self).bPassive))
 			{
 				if (VMDBufferPlayer(Player) == None || VMDBufferPlayer(Player).bBoostAugNoise) Player.SoundVolume = 160;
 				Player.AmbientSound = LoopSound;
