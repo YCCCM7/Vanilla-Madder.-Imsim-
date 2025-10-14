@@ -14,15 +14,15 @@ function Tick(float DT)
  	
  	Super.Tick(DT);
  	
- 	if (Player != None)
+ 	/*if (Player != None)
  	{
   		AM = Player.AugmentationSystem;
   		if (AM != None)
   		{
    			bAugsOn = ((AM.NumAugsActive() - int(bIsActive)) > 0);
    			
-   			if ((bAugsOn) && (!bIsActive) && (!bDisabled)) Activate();
-   			else if ((!bAugsOn && bIsActive) || (bIsActive && bDisabled)) Deactivate();
+   			//if ((bAugsOn) && (!bIsActive) && (!bDisabled)) Activate();
+   			//else if ((!bAugsOn && bIsActive) || (bIsActive && bDisabled)) Deactivate();
   		}
  	}
 	if (VMBP != None)
@@ -32,10 +32,10 @@ function Tick(float DT)
   		{
    			bAugsOn = ((NPCAM.NumAugsActive() - int(bIsActive)) > 0);
    			
-   			if ((bAugsOn) && (!bIsActive) && (!bDisabled)) Activate();
-   			else if ((!bAugsOn && bIsActive) || (bIsActive && bDisabled)) Deactivate();
+   			//if ((bAugsOn) && (!bIsActive) && (!bDisabled)) Activate();
+   			//else if ((!bAugsOn && bIsActive) || (bIsActive && bDisabled)) Deactivate();
   		}
-	}
+	}*/
 }
 
 state Active
