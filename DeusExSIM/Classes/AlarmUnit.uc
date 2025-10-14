@@ -24,17 +24,25 @@ var localized string MsgActiveAlarm;
 //MADDERS, 6/26/25: Feedback for not reaching alarm units properly.
 var localized String MsgCannotReach;
 
+//MADDERS, 10/2/25: Related to infamy.
+var bool ActivatorHatedPlayer;
+
 function UpdateAIEvents()
 {
 	local VMDBufferPlayer VMP;
 	
 	if (bActive)
 	{
-		//MADDERS, 7/24/25: End stasis in radius for alarms. Special treatment.
-		class'VMDStaticFunctions'.Static.EndStasisInAOE(Self, Location, 50*(SoundRadius+1));
-		
 		// Make noise and light
-		AIStartEvent('Alarm', EAITYPE_Audio, SoundVolume/255.0, 50*(SoundRadius+1));
+		//MADDERS, 7/24/25: End stasis in radius for alarms. Special treatment.
+		class'VMDStaticFunctions'.Static.EndStasisInAOE(Self, Location, 25*(SoundRadius+1));
+		AIStartEvent('Alarm', EAITYPE_Audio, SoundVolume/255.0, 25*(SoundRadius+1));
+		
+		VMP = VMDBufferPlayer(GetPlayerPawn());
+		if ((VMP != None) && (ActivatorHatedPlayer))
+		{
+			VMP.VMDAttemptAddOwedInfamy(5, 'Alarm');
+		}
 		
 		//MADDERS, 8/7/23: Add player stress.
 		forEach RadiusActors(class'VMDBufferPlayer', VMP, 25*(SoundRadius+1), Location)
@@ -159,7 +167,15 @@ function Trigger(Actor Other, Pawn Instigator)
 	if (!bActive)
 	{
 		if (Instigator != None)
+		{
+			ActivatorHatedPlayer = False;
+			if (ScriptedPawn(Other) != None)
+			{
+				ActivatorHatedPlayer = (ScriptedPawn(Other).GetAllianceType('Player') == ALLIANCE_Hostile);
+			}
 			Instigator.ClientMessage(msgActivated);
+		}
+		
 		bActive = True;
 		AmbientSound = Sound'Klaxon2';
 		SoundRadius = 64;
