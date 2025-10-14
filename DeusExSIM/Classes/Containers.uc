@@ -241,6 +241,12 @@ function VMDLootSwapContents()
 					break;
 				}
 			}
+			
+			//MADDERS, 9/1/25: Don't replace these, as Revision does these like a weirdo.
+			if (Contents == class'AugmentationUpgradeCannister')
+			{
+				bTripped = false;
+			}
 		}
 		
 		if (bTripped)
