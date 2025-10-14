@@ -230,12 +230,16 @@ function UsedUp()
 					if (bMedicalCrafting)
 					{
 						MyVMP.AddChemicals(ComponentCost, True);
-						MyVMP.LastMedicalBreakdown = TravelCraftMatA;
+						//MyVMP.LastMedicalBreakdown = TravelCraftMatA;
 					}
 					else
 					{
 						MyVMP.AddScrap(ComponentCost, True);
-						MyVMP.LastMechanicalBreakdown = TravelCraftMatA;
+						//MyVMP.LastMechanicalBreakdown = TravelCraftMatA;
+					}
+					if (MyVMP.CraftingManager != None)
+					{
+						MyVMP.CraftingManager.UpdateFatigue(CraftMatA, MatQuanA, bMedicalCrafting);
 					}
 				}
 				ExpendResource(CraftMatA, MatQuanA, false);
