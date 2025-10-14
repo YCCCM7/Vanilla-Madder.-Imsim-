@@ -176,8 +176,14 @@ function TriggerEvent(bool bTrigger)
 		MultiSkins[2] = Texture'RedLightTex';
 		
 		//MADDERS, 7/24/25: End stasis in radius for alarms. Special treatment.
-		class'VMDStaticFunctions'.Static.EndStasisInAOE(Self, Location, 50*(SoundRadius+1));
-		AIStartEvent('Alarm', EAITYPE_Audio, SoundVolume/255.0, 50*(SoundRadius+1));
+		class'VMDStaticFunctions'.Static.EndStasisInAOE(Self, Location, 25*(SoundRadius+1));
+		AIStartEvent('Alarm', EAITYPE_Audio, SoundVolume/255.0, 25*(SoundRadius+1));
+		
+		VMP = VMDBufferPlayer(GetPlayerPawn());
+		if (VMP != None)
+		{
+			VMP.VMDAttemptAddOwedInfamy(5, 'Alarm');
+		}
 		
 		//MADDERS, 8/7/23: Add player stress.
 		forEach RadiusActors(class'VMDBufferPlayer', VMP, 25*(SoundRadius+1), Location)
@@ -362,7 +368,7 @@ function Destroyed()
 	{
 		forEach AllActors(class'AlarmUnit', TAlarm)
 		{
-			if (VSize(TAlarm.Location - Location) < 1536)
+			if (VSize(TAlarm.Location - Location) < 768)
 			{
 				TAlarm.Trigger(Self, VMP);
 			}
