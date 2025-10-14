@@ -457,7 +457,8 @@ event bool MouseButtonReleased(float pointX, float pointY, EInputKey button, int
 {
 	if (button == IK_LeftMouse)
 	{
-		FinishButtonDrag();
+		//MADDERS, 10/3/25: Prospective fix for dragging out of inventory causing crashes.
+		AddTimer(0.001, False,, 'FinishButtonDrag');
 		return True;
 	}
 	else
