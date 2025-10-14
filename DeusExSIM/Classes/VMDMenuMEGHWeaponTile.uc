@@ -8,7 +8,7 @@ var VMDMenuMEGHWeaponWindow WeaponWindow;
 var VMDMenuUISkillTextWindow WinName, WinDesc;
 var DeusExWeapon CurItem;
 
-var localized string MsgAmmo, MsgNoAmmo, MsgGrenadeWarning[2];
+var localized string MsgMelee, MsgAmmo, MsgNoAmmo, MsgGrenadeWarning[2];
 
 var Texture DefaultTex[3], HighlightTex[3];
 
@@ -150,7 +150,11 @@ function RefreshItemInfo()
 			default:
 				if (CurItem.bDroneGrenadeWeapon)
 				{
-					if (LastAmmoLeft > 0)
+					if (CurItem.VMDIsMeleeWeapon())
+					{
+						WinDesc.SetText(Left(CurItem.ItemName, 10)$CR()$MsgMelee);
+					}
+					else if (LastAmmoLeft > 0)
 					{
 						winName.SetText( Left( Left(CurItem.ItemName, 15)$CR()$SprintF(MsgAmmo, LastAmmoLeft), 33) );
 					}
@@ -162,7 +166,11 @@ function RefreshItemInfo()
 				}
 				else
 				{
-					if (LastAmmoLeft > 0)
+					if (CurItem.VMDIsMeleeWeapon())
+					{
+						WinDesc.SetText(Left(CurItem.ItemName, 10)$CR()$MsgMelee);
+					}
+					else if (LastAmmoLeft > 0)
 					{
 						winDesc.SetText(SprintF(MsgAmmo, LastAmmoLeft));
 					}
@@ -205,6 +213,7 @@ event bool MouseButtonPressed(float pointX, float pointY, EInputKey button, int 
 
 defaultproperties
 {
+     MsgMelee="Unlimited ammo"
      MsgAmmo="%d rounds of ammo"
      MsgNoAmmo="No ammo"
      MsgGrenadeWarning(0)="Cannot throw, will"
