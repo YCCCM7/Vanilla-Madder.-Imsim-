@@ -1040,6 +1040,12 @@ function bool IsSeatValid(Actor checkActor)
 
 function SetDistress(bool bDistress)
 {
+	//MADDERS, 8/18/25: Stop letting people care about us if we're just misc NPCs.
+	if ((VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).bInsignificant))
+	{
+		return;
+	}
+	
 	bDistressed = bDistress;
 	if (bDistress && bEmitDistress)
 		AIStartEvent('Distress', EAITYPE_Visual);
@@ -3808,6 +3814,8 @@ function EHitLocation HandleDamage(int actualDamage, Vector hitLocation, Vector 
 	local float headOffsetZ, headOffsetY, armOffset, DisarmOdds;
 	local int TPos;
 	local float HelmetFront, HelmetBack, HelmetX, FDamage;
+	local DeusExWeapon DXW;
+	local Pawn TPawn;
 	local VMDBufferPawn VMBP;
 	local VMDBufferPlayer VMP;
 	
@@ -3986,16 +3994,30 @@ function EHitLocation HandleDamage(int actualDamage, Vector hitLocation, Vector 
 					hitPos = HITLOC_RightArmFront;
 				}
 				
-				if ((VMBP != None) && (VMBP.VMDCanDropWeapon()))
+				if ((VMBP != None) && (!VMBP.bInvincible) && (VMBP.VMDCanDropWeapon()))
 				{
 					DisarmOdds = FDamage / float(VMBP.StartingHealthValues[3]);
-					if ((!VMBP.bStrafing) && (VMDBufferPlayer(VMBP.LastInstigator) != None) && (DeusExWeapon(VMDBufferPlayer(VMBP.LastInstigator).InHand) != None) && (DeusExWeapon(VMDBufferPlayer(VMBP.LastInstigator).InHand).VMDIsMeleeWeapon()))
+					if (VMBP.bStrafing)
 					{
-						DisarmOdds *= 2.0;
+						DisarmOdds *= 0.5;
 					}
-					else if ((!VMBP.bStrafing) && (VMDBufferPawn(VMBP.LastInstigator) != None) && (DeusExWeapon(VMDBufferPawn(VMBP.LastInstigator).Weapon) != None) && (DeusExWeapon(VMDBufferPawn(VMBP.LastInstigator).Weapon).VMDIsMeleeWeapon()))
+					
+					TPawn = VMBP.LastInstigator;
+					if (TPawn != None)
 					{
-						DisarmOdds *= 2.0;
+						if (DeusExPlayer(TPawn) != None)
+						{
+							DXW = DeusExWeapon(DeusExPlayer(TPawn).InHand);
+						}
+						else
+						{
+							DXW = DeusExWeapon(TPawn.Weapon);
+						}
+					}
+					
+					if (DXW != None)
+					{
+						DisarmOdds *= DXW.DisarmChanceMult;
 					}
 					
 					if (FRand() < DisarmOdds)
@@ -4107,7 +4129,7 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	//------------------------------------------
 	//MADDERS, 8/14/25: Offset for illogical rotations (model implied).
 	TRot = Rotation;
-	if ((VMBP != None) && (VMBP.bStrafing))
+	if (AnimSequence == 'Strafe' || AnimSequence == 'Strafe2H')
 	{
 		TRot.Yaw -= 16384;
 	}
@@ -4117,14 +4139,6 @@ function TakeDamageBase(int Damage, Pawn instigatedBy, Vector hitlocation, Vecto
 	//IE if we're running for the alarm, don't give us extra time.
 	if ((!CanShowPain()) && (DamageType != 'PoisonEffect'))
 		bPlayAnim = false;
-	
-	//MADDERS, 5/25/25: Don't show pain when in combat states, because handling hit fucks up our flow.
-	//MADDERS, 6/26/25: This isn't as reliable as I'd hoped. Just stop doing this in general, since it basically never matters.
-	if (DamageType == 'Fell')
-	// && (IsInState('Attacking') || IsInState('HandlingEnemy') || IsInState('Fleeing') || IsInState('RunningTo') || IsInState('Alerting')))
-	{
-		bPlayAnim = false;
-	}
 	
 	// Prevent injury if the NPC is intangible
 	if ((!bBlockActors) && (!bBlockPlayers) && (!bCollideActors))
@@ -4891,7 +4905,7 @@ function GotoDisabledState(name damageType, EHitLocation hitPos)
 	if ((!bCollideActors) && (!bBlockActors) && (!bBlockPlayers))
 		return;
 	
-	if ((damageType == 'TearGas' || damageType == 'HalonGas' || DamageType == 'OwnedHalonGas') && (Texture == Texture'VisorTex1') && (Mesh == LODMesh'GM_Jumpsuit' || Mesh == LODMesh'TransGM_Jumpsuit'))
+	if ((damageType == 'TearGas' || damageType == 'HalonGas' || DamageType == 'OwnedHalonGas') && (Texture == Texture'VisorTex1') && (Mesh == LODMesh'GM_Jumpsuit' || Mesh == LODMesh'TransGM_Jumpsuit' || Mesh == LODMesh'MP_Jumpsuit'))
 		return;
 	
 	else if (damageType == 'TearGas' || damageType == 'HalonGas' || DamageType == 'OwnedHalonGas')
@@ -5184,17 +5198,24 @@ function EnableCloak(bool bEnable)  // beware! called from C++
 {
 	local Inventory Inv;
 	local VMDBufferPawn VMBP;
-	local bool CamoCheck;
+	local bool CamoCheck, bOutOfBio;
 	
 	VMBP = VMDBufferPawn(Self);
-	if ((VMBP != None) && (VMBP.VMDConfigureCloakThresholdMod() > 0))
+	if (VMBP != None)
 	{
-		CamoCheck = true;
+		if (VMBP.VMDConfigureCloakThresholdMod() > 0)
+		{
+			CamoCheck = true;
+		}
+		if (VMBP.Energy <= 0)
+		{
+			bOutOfBio = true;
+		}
 	}
 	
 	if (VMBP == None || VMBP.CurCloakAug == None)
 	{
-		if ((!bHasCloak && !CamoCheck) || CloakEMPTimer > 0 || Health <= 0 || bOnFire)
+		if ((!bHasCloak && !CamoCheck) || CloakEMPTimer > 0 || Health <= 0 || bOnFire || bOutOfBio)
 		{
 			bEnable = false;
 		}
@@ -5320,8 +5341,10 @@ function PlayDyingSound()
 	PlaySound(Die, SLOT_Pain,,,, RandomPitch());
 	
 	AISendEvent('LoudNoise', EAITYPE_Audio);
-	if (bEmitDistress)
+	if (bEmitDistress && (VMDBufferPawn(Self) == None || !VMDBufferPawn(Self).bInsignificant))
+	{
 		AISendEvent('Distress', EAITYPE_Audio);
+	}
 }
 
 
@@ -5672,8 +5695,10 @@ function PlayTakeHitSound(int Damage, name damageType, int Mult)
 	}
 	else PlaySound(hitSound, SLOT_Pain, volume,,, RandomPitch());
 	
-	if ((hitSound != None) && (bEmitDistress))
+	if (HitSound != None && bEmitDistress && (VMDBufferPawn(Self) == None || !VMDBufferPawn(Self).bInsignificant))
+	{
 		AISendEvent('Distress', EAITYPE_Audio, volume);
+	}
 }
 
 
@@ -7801,13 +7826,19 @@ function IncreaseFear(Actor actorInstigator, float addedFearLevel,
 
 function IncreaseAgitation(Actor actorInstigator, optional float AgitationLevel)
 {
-	local Pawn  instigator;
-	local float minLevel;
+	local bool bStatusQuo;
 	local int TProvo;
+	local float minLevel;
+	local Pawn  instigator;
 	
 	if ((IsInState('Attacking')) && (DeusExPlayer(ActorInstigator) != None) && (ActorInstigator != Enemy))
 	{
 		return;
+	}
+	//MADDERS, 10/2/25: Stop civvies and important people getting pissed off at law enforcement deciding to apply lethal force, thanks.
+	if ((HumanCivilian(Self) != None || bInvincible || Default.bImportant) && (HumanMilitary(ActorInstigator) != None))
+	{
+		bStatusQuo = true;
 	}
 	
 	instigator = InstigatorToPawn(actorInstigator);
@@ -7828,8 +7859,20 @@ function IncreaseAgitation(Actor actorInstigator, optional float AgitationLevel)
 				if (TProvo < 0)
 					TProvo = 0;
 				
-				AgitationLevel = 1.0/(TProvo+1);
+				if (!bStatusQuo || VMDBufferPawn(Self) == None || DeusExPlayer(ActorInstigator) != None)
+				{
+					AgitationLevel = 1.0/(TProvo+1);
+				}
+				else
+				{
+					VMDBufferPawn(Self).OldAgitation += 1.0 / (TProvo+1);
+					if (VMDBufferPawn(Self).OldAgitation > 1.0)
+					{
+						AgitationLevel = 1.0 / (TProvo+1);
+					}
+				}
 			}
+			
 			if (AgitationLevel > 0)
 			{
 				bAlliancesChanged    = True;
@@ -9027,6 +9070,7 @@ function FindBestEnemy(bool bIgnoreCurrentEnemy)
 function bool ShouldStrafe()
 {
 	local DeusExWeapon DXW;
+	local VMDBufferPawn VMBP;
 	
 	//MADDERS, 8/2/25: Don't do this if we're not human. It's jank.
 	if (Animal(Self) != None || Robot(Self) != None)
@@ -9037,7 +9081,7 @@ function bool ShouldStrafe()
 	// This may be overridden from subclasses
 	//return (AICanSee(enemy, 1.0, false, true, true, true) > 0);
 	DXW = DeusExWeapon(Weapon);
-	if ((DXW != None) && (DXW.bInstantHit) && (DXW.MaxRange < 192) && (VSize(Enemy.Location - Location) < 256) && (AICanSee(enemy, 1.0, false, true, true, true) > 0))
+	if ((VMBP != None) && (VMBP.VMDShouldUseAdvancedMelee()) && (DXW != None) && (DXW.bInstantHit) && (DXW.MaxRange < 192) && (VSize(Enemy.Location - Location) < 256) && (AICanSee(enemy, 1.0, false, true, true, true) > 0))
 	{
 		return true;
 	}
@@ -9062,7 +9106,7 @@ function bool ShouldFlee()
 		{
 			return true;
 		}
-		else if ((Health <= MinHealth*2) && (Robot(Enemy) != None))
+		else if ((Health <= MinHealth*2) && (Robot(Enemy) != None) && (VMDSIDD(Enemy) == None) && (VMDMEGH(Enemy) == None))
 		{
 			return true;
 		}
@@ -9087,7 +9131,7 @@ function bool ShouldFlee()
 	//MADDERS, 8/18/23: If our enemy is a robot, and our weapon sucks, just make a run for it.
 	//But first, try to pick a better weapon, in case we have something better in mind.
 	DXW = DeusExWeapon(Weapon);
-	if ((Robot(Enemy) != None) && (Robot(Self) == None) && (DXW != None))
+	if ((Robot(Enemy) != None) && (VMDSIDD(Enemy) == None) && (VMDMEGH(Enemy) == None) && (Robot(Self) == None) && (DXW != None))
 	{
 		if ((DXW.bHandToHand) && (DXW.bInstantHit))
 		{
@@ -9229,8 +9273,10 @@ function EDestinationType ComputeBestFiringPosition(out vector newPosition)
 	
 	//MADDERS shit.
 	local float MeleeHomeDistance;
+	local VMDBufferPawn VMBP;
 
 	destType = DEST_Failure;
+	VMBP = VMDBufferPawn(Self);
 
 	extraDist   = enemy.CollisionRadius*0.5;
 	fudgeMargin = 100;
@@ -9357,7 +9403,12 @@ function EDestinationType ComputeBestFiringPosition(out vector newPosition)
 		MeleeHomeDistance *= VMDBufferPawn(Self).AugmentationSystem.VMDConfigureSpeedMult(Physics == PHYS_Swimming);
 	}
 	
-	if ((dist <= MeleeHomeDistance) && enemy.bIsPlayer && (enemy.Weapon != None) && (enemyMaxRange < 180))
+	if (DeusExWeapon(Weapon) == None || !DeusExWeapon(Weapon).bHandToHand || !DeusExWeapon(Weapon).bInstantHit || VMBP == None || !VMBP.VMDShouldUseAdvancedMelee())
+	{
+		MeleeHomeDistance = -99;
+	}
+	
+	if ((dist <= MeleeHomeDistance) && (enemy.bIsPlayer) && (enemy.Weapon != None) && (enemyMaxRange < 180))
 	{
 		//MADDERS, 7/21/25: Control our crazy amount of running around with speed aug melee like so.
 		TryVector = Enemy.Location;
@@ -10441,15 +10492,15 @@ function bool SwitchToBestWeapon()
 					Score -= 1.0;
 				}
 				
-				IdealMeleeRange = 208;
+				IdealMeleeRange = 160;
 				
 				//MADDERS, 8/6/24: Do some shit to make melee a good pick.
 				//Note: Weapons that shoot in full auto or that are shotguns are great picks for closer ranges, other factors allowing.
-				if ((CurWeapon.bHandToHand) && (CurWeapon.bInstantHit) && (EnemyRange > IdealMeleeRange))
+				if ((CurWeapon.bHandToHand) && (CurWeapon.bInstantHit) && (EnemyRange > IdealMeleeRange) && (ScriptedPawn(Enemy) == None || ScriptedPawn(Enemy).Weapon != None))
 				{
 					Score += 1.0;
 				}
-				else if (((!CurWeapon.bHandToHand && CurWeapon.VMDGetCorrectNumProj(TProj) < 2 && !CurWeapon.bAutomatic) || !CurWeapon.bInstantHit) && (EnemyRange <= IdealMeleeRange))
+				else if (((!CurWeapon.bHandToHand && CurWeapon.VMDGetCorrectNumProj(TProj) < 2 && !CurWeapon.bAutomatic) || !CurWeapon.bInstantHit) && EnemyRange <= IdealMeleeRange && (ScriptedPawn(Enemy) == None || ScriptedPawn(Enemy).Weapon != None))
 				{
 					Score += 1.0;
 				}
@@ -11503,7 +11554,7 @@ function Died(pawn Killer, name damageType, vector HitLocation)
 	{
 		if (bImportant)
 		{
-			if (JuanLebedev(Self) == None)
+			if (JuanLebedev(Self) == None || !bStunned)
 			{
 				flagName = player.rootWindow.StringToName(BindName$"_Dead");
 				player.flagBase.SetBool(flagName, True);
@@ -14842,8 +14893,6 @@ State Fleeing
 				}
 			}
 		}
-		
-		Global.Landed(HitNormal);
 	}
 	
 Begin:
@@ -14885,10 +14934,15 @@ Flee:
 Moving:
 	Sleep(0.0);
 	
-	if ((HumanCivilian(Self) == None) && (!bCower) && (!ShouldFlee()) && (VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).TurretFleeTimer <= 0) && (VMDBufferPawn(Self).VMDFindClosestFreeWeapon() != None))
+	if ((HumanCivilian(Self) == None) && (Enemy != None) && (!bCower) && (!ShouldFlee()) && (VMDBufferPawn(Self) != None) && (VMDBufferPawn(Self).TurretFleeTimer <= 0) && (VMDBufferPawn(Self).VMDFindClosestFreeWeapon() != None))
 	{
-		VMDBufferPawn(Self).LastSoughtWeapon = VMDBufferPawn(Self).VMDFindClosestFreeWeapon();
-		GoToState('VMDPickingUpWeapon', 'Begin');
+		SwitchToBestWeapon();
+		if (DeusExWeapon(Weapon) == None || DeusExWeapon(Weapon).VMDIsMeleeWeapon() != VSize(Enemy.Location-Location) <= 224)
+		{
+			VMDBufferPawn(Self).LastSoughtWeapon = VMDBufferPawn(Self).VMDFindClosestFreeWeapon();
+			GoToState('VMDPickingUpWeapon', 'Begin');
+		}
+		SetupWeapon(false, true);
 	}
 	
 	if (enemy == None && (VMDBufferPawn(Self) == None || VMDBufferPawn(Self).TurretFleeTimer <= 0))
@@ -15770,8 +15824,6 @@ State Attacking
 				PlaySound(Land, SLOT_Interact, FMin(20, landVol),,, GSpeed);
 			}
 		}
-		
-		Global.Landed(HitNormal);
 	}
 	
 ClimbLadder:
@@ -18903,15 +18955,22 @@ state TakingHit
 Begin:
 	Acceleration = vect(0, 0, 0);
 	FinishAnim();
-	if ( (Physics == PHYS_Falling) && !Region.Zone.bWaterZone )
+	
+	//MADDERS, 10/8/25: Turns out this falling clause fucks everything up in state attacking.
+	//Re-order it, and let's see what breaks.
+	if (HasNextState())
+	{
+		GotoNextState();
+	}
+	else if ((Physics == PHYS_Falling) && (!Region.Zone.bWaterZone))
 	{
 		Acceleration = vect(0,0,0);
 		GotoState('FallingState', 'Ducking');
 	}
-	else if (HasNextState())
-		GotoNextState();
 	else
+	{
 		GotoState('Wandering');
+	}
 }
 
 
@@ -18976,7 +19035,7 @@ state RubbingEyes
 		
 		//MADDRES, 8/6/23: Rubbing eyes is somehow not alerting nearby guys. Huh. Call it here.
 		AISendEvent('LoudNoise', EAITYPE_Audio);
-		if (bEmitDistress)
+		if (bEmitDistress && (VMDBufferPawn(Self) == None || !VMDBufferPawn(Self).bInsignificant))
 		{
 			AISendEvent('Distress', EAITYPE_Audio);
 		}
@@ -19295,6 +19354,9 @@ state Dying
 
 	function BeginState()
 	{
+		local VMDBufferPawn VMBP;
+		local VMDCorpseBlocker TBlock;
+		
 		EnableCheckDestLoc(false);
 		StandUp();
 		
@@ -19317,6 +19379,38 @@ state Dying
 			SetDistress(true);
 		}
 		DeathTimer = 0;
+		
+		VMBP = VMDBufferPawn(Self);
+		if (VMBP != None)
+		{
+			TBlock = Spawn(class'VMDCorpseBlocker', Self);
+			if (TBlock != None)
+			{
+				VMBP.CorpseBlocker = TBlock;
+				if (CarcassType != None)
+				{
+					TBlock.TargetRadius = CarcassType.Default.CollisionRadius;
+					TBlock.TargetHeight = CarcassType.Default.CollisionHeight;
+				}
+				TBlock.StartingRadius = CollisionRadius;
+				TBlock.StartingHeight = CollisionHeight;
+				TBlock.SetCollisionSize(CollisionRadius, CollisionHeight);
+				TBlock.SetCollision(bCollideActors, bBlockActors, bBlockPlayers);
+				
+				TBlock.SetBase(Base);
+				TBlock.SetPhysics(Physics);
+				//TBlock.Velocity = Velocity;
+				//TBlock.Acceleration = Acceleration;
+				
+				TBlock.LastRenderTime = Level.TimeSeconds;
+				
+				SetCollision(False, False, False);
+				SetBase(TBlock);
+				SetPhysics(PHYS_None);
+				Velocity = Vect(0,0,0);
+				Acceleration = Vect(0,0,0);
+			}
+		}
 	}
 
 Begin:
