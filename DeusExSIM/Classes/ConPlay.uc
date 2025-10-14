@@ -699,15 +699,28 @@ state WaitForConWin
 
 function Font GetCurrentSpeechFont()
 {
-	local int resWidth;
-
+	local int resWidth, ResHeight, UIScaling;
+	local VMDBufferPlayer VMP;
+	
 	resWidth = GetCurrentResolutionWidth();
-
+	ResHeight = GetCurrentResolutionHeight();
+	
+	VMP = VMDBufferPlayer(GetPlayerPawn());
+	if (VMP != None)
+	{
+		UIScaling = int(VMP.GetPropertyText("CustomUIScale"));
+	}
+	
+	//MADDERS, 8/17/25: Tweaking this to work better when UI scale is huge.
 	//if ((resWidth > 800) && (resWidth < 1280))
-	if (resWidth > 1280)
+	if ((resWidth > 1280) && (UIScaling == 1))
+	{
 		return ConversationSpeechFonts[1];
+	}
 	else
+	{
 		return ConversationSpeechFonts[0];
+	}
 }
 
 // ----------------------------------------------------------------------
@@ -716,15 +729,28 @@ function Font GetCurrentSpeechFont()
 
 function Font GetCurrentNameFont()
 {
-	local int resWidth;
-
+	local int resWidth, ResHeight, UIScaling;
+	local VMDBufferPlayer VMP;
+	
 	resWidth = GetCurrentResolutionWidth();
-
+	ResHeight = GetCurrentResolutionHeight();
+	
+	VMP = VMDBufferPlayer(GetPlayerPawn());
+	if (VMP != None)
+	{
+		UIScaling = int(VMP.GetPropertyText("CustomUIScale"));
+	}
+	
+	//MADDERS, 8/17/25: Tweaking this to work better when UI scale is huge.
 	//if ((resWidth > 800) && (resWidth < 1280))
-	if (resWidth > 1280)
+	if ((resWidth > 1280) && (UIScaling == 1))
+	{
 		return ConversationNameFonts[1];
+	}
 	else
+	{
 		return ConversationNameFonts[0];
+	}
 }
 
 // ----------------------------------------------------------------------
@@ -737,12 +763,28 @@ function int GetCurrentResolutionWidth()
 	local int resX;
 	local int resWidth;
 	local string CurrentRes;
-
+	
 	CurrentRes   = player.ConsoleCommand("GetCurrentRes");
-
+	
 	resX      = InStr(CurrentRes,"x");
 	resWidth  = int(Left(CurrentRes, resX));
+	
+	return resWidth;
+}
 
+//MADDERS, 8/17/25: Fucking around, finding out.
+function int GetCurrentResolutionHeight()
+{
+	local int p;
+	local int resX;
+	local int resWidth;
+	local string CurrentRes;
+	
+	CurrentRes   = player.ConsoleCommand("GetCurrentRes");
+	
+	resX      = InStr(CurrentRes,"x");
+	resWidth  = int(Right(CurrentRes, Len(CurrentRes) - resX - 1));
+	
 	return resWidth;
 }
 
