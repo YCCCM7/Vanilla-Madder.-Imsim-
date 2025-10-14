@@ -31,7 +31,7 @@ var class<VMDStaticFunctions> SF;
 
 function VMDUpdateRevisionMapStatus()
 {
-	switch(class'VMDStaticFunctions'.static.GetIntendedMapStyle(Self))
+	switch(class'VMDStaticFunctions'.static.GetIntendedMapStyle(Self, true))
 	{
 		case 0:
 			bRevisionMapSet = false;
@@ -183,6 +183,32 @@ function FinishRebuild()
 		if (Mover(CollisionHoes[i]) != None)
 		{
 			CollisionHoes[i].SetLocation(CollisionHoes[i].Location - Vect(0,0,10000));
+		}
+	}
+	
+	forEach AllActors(class'Actor', TAct)
+	{
+		//MADDERS, 8/18/25: Somehow we broke attach tags... And they're native, so nobody knows how they work.
+		//Substitute this stupid shit here.
+		if (TAct.attachTag != '')
+		{
+			foreach AllActors(class'Actor', A, TAct.attachTag)
+			{
+				if (Mover(A) != None)
+				{
+					TAct.SetBase(A);
+				}
+			}
+		}
+		else if (DeusExDecoration(TAct) != None && DeusExDecoration(TAct).MoverTag != '')
+		{
+			foreach AllActors(class'Actor', A, DeusExDecoration(TAct).MoverTag)
+			{
+				if (Mover(A) != None)
+				{
+					TAct.SetBase(A);
+				}
+			}
 		}
 	}
 	

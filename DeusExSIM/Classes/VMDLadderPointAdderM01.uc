@@ -27,6 +27,7 @@ function AddLadderPoints()
 		case "01_NYC_UNATCOHQ":
 			if (!bRevisionMapSet)
 			{
+				Log("REBUILDING UNATCO HQ!");
 				Pat = Spawn(class'PatrolPointMobile',,'ChetBathroomRoute01', Vect(253,275,7), Rot(0, 16080, 0));
 				Pat.NextPatrol = 'ChetBathroomRoute02';
 				Pat = Spawn(class'PatrolPointMobile',,'ChetBathroomRoute02', Vect(212,195,7), Rot(0, -608, 0));

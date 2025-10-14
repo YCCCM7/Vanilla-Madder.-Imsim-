@@ -62,7 +62,7 @@ function AddLadderPoints()
 				AddLadderGroup(Vect(-1, 0, 0), Vect(632,532,464)+TSpacing, Vect(615,532,498)+TSpacing, Vect(615,532,688)+TSpacing, Vect(532,532,624), 1+2+4+8,,, 1.3);
 				
 				//#12: Ladder from concrete top of garage to the dishes.
-				TSpacing = Vect(0,8,0);
+				TSpacing = Vect(0,12,0);
 				AddLadderGroup(Vect(0, -1, 0), Vect(752,-97,480)+TSpacing, Vect(752,-136,491)+TSpacing, Vect(752,-135,1096)+TSpacing, Vect(752,-254,1024), 1+2+4+8);
 				
 				//#13: Ladder from dishes to top of computer room.
