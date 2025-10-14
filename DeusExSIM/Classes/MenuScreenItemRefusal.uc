@@ -54,12 +54,15 @@ var string VarItemsNihilum[4];
 var MenuUISliderButtonWindowMini MiniSliders[128], LastMiniSlider;
 
 //MADDERS, 6/16/25: Upgrading this system a bit.
-var localized string StrRefusalLevels[3];
+var localized string StrRefusalLevels[5];
 
 struct VMDButtonPos {
 	var int X;
 	var int Y;
 };
+
+var bool bGP2;
+var int TGP2[128];
 
 var VMDButtonPos MiniSliderBarPos;
 
@@ -90,7 +93,12 @@ event InitWindow()
 function CreateControls()
 {
 	Super.CreateControls();
-
+	
+	if ((VMDBufferPlayer(Player) != None) && (VMDBufferPlayer(Player).bUseGunplayVersionTwo))
+	{
+		bGP2 = true;
+	}
+	
 	CreateHeaderButtons();
 	CreateItemListWindow();
 }
@@ -139,18 +147,28 @@ function CreateItemListWindow()
 
 function populateItemList()
 {
-	local int rowIndex, i, maxEvents, allSection, j;
+	local int rowIndex, i, maxEvents, allSection, j, GetVal;
 	
 	lstItems.DeleteAllRows();
 
 	allSection++;
 	for (i=0; i<arrayCount(strItemsRifle); i++)
 	{
+		GetVal = int(Player.GetPropertyText(VarItemsRifle[i]));
+		TGP2[j] = int(bGP2);
+		if ((TGP2[j] == 0) && (GetVal == 2 || GetVal == 3))
+		{
+			TGP2[j] = 1;
+		}
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
 		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
-		MiniSliders[j].SetTicks(3, 0, 2);
-		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsRifle[i])));
-		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsRifle[i])));
+		MiniSliders[j].SetTicks(3 + (TGP2[j] * 2), 0, 2 + (TGP2[j] * 2));
+		if ((GetVal == 4) && (TGP2[j] == 0))
+		{
+			GetVal -= 2;
+		}
+		MiniSliders[j].WinSlider.SetValue(GetVal);
+		MiniSliders[j].WinSlider.SetThumbStep(GetVal);
 		MiniSliders[j].ConfigSetting = VarItemsRifle[i];
 		MiniSliders[j].ParentWindow = Self;
 		MiniSliders[j].ArrayIndex = j;
@@ -160,11 +178,21 @@ function populateItemList()
 	allSection++;
 	for (i=0; i<arrayCount(strItemsPistol); i++)
 	{
+		GetVal = int(Player.GetPropertyText(VarItemsPistol[i]));
+		TGP2[j] = int(bGP2);
+		if ((TGP2[j] == 0) && (GetVal == 2 || GetVal == 3))
+		{
+			TGP2[j] = 1;
+		}
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
 		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
-		MiniSliders[j].SetTicks(3, 0, 2);
-		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsPistol[i])));
-		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsPistol[i])));
+		MiniSliders[j].SetTicks(3 + (TGP2[j] * 2), 0, 2 + (TGP2[j] * 2));
+		if ((GetVal == 4) && (TGP2[j] == 0))
+		{
+			GetVal -= 2;
+		}
+		MiniSliders[j].WinSlider.SetValue(GetVal);
+		MiniSliders[j].WinSlider.SetThumbStep(GetVal);
 		MiniSliders[j].ConfigSetting = VarItemsPistol[i];
 		MiniSliders[j].ParentWindow = Self;
 		MiniSliders[j].ArrayIndex = j;
@@ -174,11 +202,21 @@ function populateItemList()
 	allSection++;
 	for (i=0; i<arrayCount(strItemsHeavy); i++)
 	{
+		GetVal = int(Player.GetPropertyText(VarItemsHeavy[i]));
+		TGP2[j] = int(bGP2);
+		if ((TGP2[j] == 0) && (GetVal == 2 || GetVal == 3))
+		{
+			TGP2[j] = 1;
+		}
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
 		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
-		MiniSliders[j].SetTicks(3, 0, 2);
-		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsHeavy[i])));
-		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsHeavy[i])));
+		MiniSliders[j].SetTicks(3 + (TGP2[j] * 2), 0, 2 + (TGP2[j] * 2));
+		if ((GetVal == 4) && (TGP2[j] == 0))
+		{
+			GetVal -= 2;
+		}
+		MiniSliders[j].WinSlider.SetValue(GetVal);
+		MiniSliders[j].WinSlider.SetThumbStep(GetVal);
 		MiniSliders[j].ConfigSetting = VarItemsHeavy[i];
 		MiniSliders[j].ParentWindow = Self;
 		MiniSliders[j].ArrayIndex = j;
@@ -188,11 +226,21 @@ function populateItemList()
 	allSection++;
 	for (i=0; i<arrayCount(strItemsDemo); i++)
 	{
+		GetVal = int(Player.GetPropertyText(VarItemsDemo[i]));
+		TGP2[j] = int(bGP2);
+		if ((TGP2[j] == 0) && (GetVal == 2 || GetVal == 3))
+		{
+			TGP2[j] = 1;
+		}
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
 		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
-		MiniSliders[j].SetTicks(3, 0, 2);
-		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsDemo[i])));
-		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsDemo[i])));
+		MiniSliders[j].SetTicks(3 + (TGP2[j] * 2), 0, 2 + (TGP2[j] * 2));
+		if ((GetVal == 4) && (TGP2[j] == 0))
+		{
+			GetVal -= 2;
+		}
+		MiniSliders[j].WinSlider.SetValue(GetVal);
+		MiniSliders[j].WinSlider.SetThumbStep(GetVal);
 		MiniSliders[j].ConfigSetting = VarItemsDemo[i];
 		MiniSliders[j].ParentWindow = Self;
 		MiniSliders[j].ArrayIndex = j;
@@ -202,11 +250,21 @@ function populateItemList()
 	allSection++;
 	for (i=0; i<arrayCount(strItemsLowTech); i++)
 	{
+		GetVal = int(Player.GetPropertyText(VarItemsLowTech[i]));
+		TGP2[j] = int(bGP2);
+		if ((TGP2[j] == 0) && (GetVal == 2 || GetVal == 3))
+		{
+			TGP2[j] = 1;
+		}
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
 		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
-		MiniSliders[j].SetTicks(3, 0, 2);
-		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsLowTech[i])));
-		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsLowTech[i])));
+		MiniSliders[j].SetTicks(3 + (TGP2[j] * 2), 0, 2 + (TGP2[j] * 2));
+		if ((GetVal == 4) && (TGP2[j] == 0))
+		{
+			GetVal -= 2;
+		}
+		MiniSliders[j].WinSlider.SetValue(GetVal);
+		MiniSliders[j].WinSlider.SetThumbStep(GetVal);
 		MiniSliders[j].ConfigSetting = VarItemsLowTech[i];
 		MiniSliders[j].ParentWindow = Self;
 		MiniSliders[j].ArrayIndex = j;
@@ -216,11 +274,21 @@ function populateItemList()
 	allSection++;
 	for (i=0; i<arrayCount(strItemsEnviro); i++)
 	{
+		GetVal = int(Player.GetPropertyText(VarItemsEnviro[i]));
+		TGP2[j] = int(bGP2);
+		if ((TGP2[j] == 0) && (GetVal == 2 || GetVal == 3))
+		{
+			TGP2[j] = 1;
+		}
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
 		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
-		MiniSliders[j].SetTicks(3, 0, 2);
-		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsEnviro[i])));
-		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsEnviro[i])));
+		MiniSliders[j].SetTicks(3 + (TGP2[j] * 2), 0, 2 + (TGP2[j] * 2));
+		if ((GetVal == 4) && (TGP2[j] == 0))
+		{
+			GetVal -= 2;
+		}
+		MiniSliders[j].WinSlider.SetValue(GetVal);
+		MiniSliders[j].WinSlider.SetThumbStep(GetVal);
 		MiniSliders[j].ConfigSetting = VarItemsEnviro[i];
 		MiniSliders[j].ParentWindow = Self;
 		MiniSliders[j].ArrayIndex = j;
@@ -230,11 +298,21 @@ function populateItemList()
 	allSection++;
 	for (i=0; i<arrayCount(strItemsTools); i++)
 	{
+		GetVal = int(Player.GetPropertyText(VarItemsTools[i]));
+		TGP2[j] = int(bGP2);
+		if ((TGP2[j] == 0) && (GetVal == 2 || GetVal == 3))
+		{
+			TGP2[6] = 1;
+		}
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
 		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
-		MiniSliders[j].SetTicks(3, 0, 2);
-		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsTools[i])));
-		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsTools[i])));
+		MiniSliders[j].SetTicks(3 + (TGP2[j] * 2), 0, 2 + (TGP2[j] * 2));
+		if ((GetVal == 4) && (TGP2[j] == 0))
+		{
+			GetVal -= 2;
+		}
+		MiniSliders[j].WinSlider.SetValue(GetVal);
+		MiniSliders[j].WinSlider.SetThumbStep(GetVal);
 		MiniSliders[j].ConfigSetting = VarItemsTools[i];
 		MiniSliders[j].ParentWindow = Self;
 		MiniSliders[j].ArrayIndex = j;
@@ -244,11 +322,21 @@ function populateItemList()
 	allSection++;
 	for (i=0; i<arrayCount(strItemsConsumables); i++)
 	{
+		GetVal = int(Player.GetPropertyText(VarItemsConsumables[i]));
+		TGP2[j] = int(bGP2);
+		if ((TGP2[j] == 0) && (GetVal == 2 || GetVal == 3))
+		{
+			TGP2[j] = 1;
+		}
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
 		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
-		MiniSliders[j].SetTicks(3, 0, 2);
-		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsConsumables[i])));
-		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsConsumables[i])));
+		MiniSliders[j].SetTicks(3 + (TGP2[j] * 2), 0, 2 + (TGP2[j] * 2));
+		if ((GetVal == 4) && (TGP2[j] == 0))
+		{
+			GetVal -= 2;
+		}
+		MiniSliders[j].WinSlider.SetValue(GetVal);
+		MiniSliders[j].WinSlider.SetThumbStep(GetVal);
 		MiniSliders[j].ConfigSetting = VarItemsConsumables[i];
 		MiniSliders[j].ParentWindow = Self;
 		MiniSliders[j].ArrayIndex = j;
@@ -258,11 +346,21 @@ function populateItemList()
 	allSection++;
 	for (i=0; i<arrayCount(strItemsNihilum); i++)
 	{
+		GetVal = int(Player.GetPropertyText(VarItemsNihilum[i]));
+		TGP2[j] = int(bGP2);
+		if ((TGP2[j] == 0) && (GetVal == 2 || GetVal == 3))
+		{
+			TGP2[j] = 1;
+		}
 		rowIndex = lstItems.AddRow(BuildItemString(i, allSection, j));
 		MiniSliders[j] = MenuUISliderButtonWindowMini(LstItems.NewChild(class'MenuUISliderButtonWindowMini')); //ClipWindow.
-		MiniSliders[j].SetTicks(3, 0, 2);
-		MiniSliders[j].WinSlider.SetValue(int(Player.GetPropertyText(VarItemsNihilum[i])));
-		MiniSliders[j].WinSlider.SetThumbStep(int(Player.GetPropertyText(VarItemsNihilum[i])));
+		MiniSliders[j].SetTicks(3 + (TGP2[j] * 2), 0, 2 + (TGP2[j] * 2));
+		if ((GetVal == 4) && (TGP2[j] == 0))
+		{
+			GetVal -= 2;
+		}
+		MiniSliders[j].WinSlider.SetValue(GetVal);
+		MiniSliders[j].WinSlider.SetThumbStep(GetVal);
 		MiniSliders[j].ConfigSetting = VarItemsNihilum[i];
 		MiniSliders[j].ParentWindow = Self;
 		MiniSliders[j].ArrayIndex = j;
@@ -281,12 +379,14 @@ function String BuildItemString(int num, optional int allSection, optional int n
 	local bool allowed;
 	local String section, variable, itemString, itemName;
 	//MADDERS, 6/16/25: New label logic.
-	local int GetVal;
+	local int GetVal, DisplayVal, SnipeIndex;
 	
 	section = String(num2+1);
 	if (Len(section) == 1)
+	{
 		section = (0 $ section);
-
+	}
+	
 	switch(allSection)
 	{
 		case 1: // Rifle
@@ -358,8 +458,45 @@ function String BuildItemString(int num, optional int allSection, optional int n
 			break;
 	}
 	
+	switch(AllSection)
+	{
+		case 1:
+			SnipeIndex = Num;
+		break;
+		case 2:
+			SnipeIndex = Num + GetCategoryThreshold("Pistols");
+		break;
+		case 3:
+			SnipeIndex = Num + GetCategoryThreshold("Heavy");
+		break;
+		case 4:
+			SnipeIndex = Num + GetCategoryThreshold("Demo");
+		break;
+		case 5:
+			SnipeIndex = Num + GetCategoryThreshold("LowTech");
+		break;
+		case 6:
+			SnipeIndex = Num + GetCategoryThreshold("Enviro");
+		break;
+		case 7:
+			SnipeIndex = Num + GetCategoryThreshold("Tools");
+		break;
+		case 8:
+			SnipeIndex = Num + GetCategoryThreshold("Consumables");
+		break;
+		case 9:
+			SnipeIndex = Num + GetCategoryThreshold("Nihilum");
+		break;
+	}
+	
+	DisplayVal = GetVal;
+	if ((TGP2[SnipeIndex] == 0) && (DisplayVal == 2))
+	{
+		DisplayVal = 4;
+	}
+	
 	//MADDERS, 6/16/25: Just get from a prebuilt array.
-	Variable = StrRefusalLevels[GetVal];
+	Variable = StrRefusalLevels[DisplayVal];
 	
 	//itemString = section $ ";" $ itemName $ ";" $ allowed $ ";" $ variable $ ";" $ num2;
 	itemString = section $ ";" $ itemName $ ";" $ Variable $ ";" $ variable $ ";" $ num2;
@@ -613,7 +750,7 @@ function SetRowVariable(int UseRow, int NewVal)
 	local bool allowed;
 	local String Section, variable, itemString, itemName;
 	//MADDERS, 6/16/25: New label logic.
-	local int GetVal;
+	local int GetVal, DisplayVal;
 	
 	Num2 = UseRow;
 	if (UseRow < GetCategoryThreshold("Pistol"))
@@ -745,8 +882,14 @@ function SetRowVariable(int UseRow, int NewVal)
 			break;
 	}
 	
+	DisplayVal = GetVal;
+	if ((TGP2[Num2] == 0) && (DisplayVal == 2))
+	{
+		DisplayVal = 4;
+	}
+	
 	//MADDERS, 6/16/25: Just get from a prebuilt array.
-	Variable = StrRefusalLevels[GetVal];
+	Variable = StrRefusalLevels[DisplayVal];
 	
 	//itemString = section $ ";" $ itemName $ ";" $ allowed $ ";" $ variable $ ";" $ num2;
 	itemString = section $ ";" $ itemName $ ";" $ Variable $ ";" $ variable $ ";" $ num2;
@@ -755,9 +898,62 @@ function SetRowVariable(int UseRow, int NewVal)
 
 function MiniSliderChanged()
 {
+	local int UseRow, AllSection, GetVal;
+	
 	if (LastMiniSlider != None)
 	{
-		SetRowVariable(LastMiniSlider.ArrayIndex, int(Player.GetPropertyText(LastMiniSlider.ConfigSetting)));
+		UseRow = LastMiniSlider.ArrayIndex;
+		if (UseRow < GetCategoryThreshold("Pistol"))
+		{
+			AllSection = 1;
+		}
+		else if (UseRow < GetCategoryThreshold("Heavy"))
+		{
+			AllSection = 2;
+		}
+		else if (UseRow < GetCategoryThreshold("Demo"))
+		{
+			AllSection = 3;
+		}
+		else if (UseRow < GetCategoryThreshold("LowTech"))
+		{
+			AllSection = 4;
+		}
+		else if (UseRow < GetCategoryThreshold("Enviro"))
+		{
+			AllSection = 5;
+		}
+		else if (UseRow < GetCategoryThreshold("Tools"))
+		{
+			AllSection = 6;
+		}
+		else if (UseRow < GetCategoryThreshold("Consumables"))
+		{
+			AllSection = 7;
+		}
+		else if	(UseRow < GetCategoryThreshold("Nihilum"))
+		{
+			AllSection = 8;
+		}
+		else
+		{
+			AllSection = 9;
+		}
+		
+		GetVal = int(Player.GetPropertyText(LastMiniSlider.ConfigSetting));
+		if ((TGP2[AllSection] == 0) && (GetVal == 2))
+		{
+			Player.SetPropertyText(LastMiniSlider.ConfigSetting, "4");
+		}
+		SetRowVariable(LastMiniSlider.ArrayIndex, GetVal);
+		
+		LstItems.SelectToRow(LstItems.IndexToRowId(LastMiniSlider.ArrayIndex));
+		LstItems.SetFocusRow(LstItems.IndexToRowId(LastMiniSlider.ArrayIndex));
+		
+		if ((TGP2[AllSection] == 0) && (GetVal == 2))
+		{
+			Player.SetPropertyText(LastMiniSlider.ConfigSetting, "4");
+		}
 	}
 }
 
@@ -923,5 +1119,7 @@ defaultproperties
      
      StrRefusalLevels(0)="Okay"
      StrRefusalLevels(1)="No Belt"
-     StrRefusalLevels(2)="Refuse"
+     StrRefusalLevels(2)="2 Copies"
+     StrRefusalLevels(3)="1 Copy"
+     StrRefusalLevels(4)="Refuse"
 }
