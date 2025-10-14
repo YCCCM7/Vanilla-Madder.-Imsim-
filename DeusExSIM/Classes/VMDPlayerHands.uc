@@ -1230,7 +1230,7 @@ defaultproperties
      ItemArticle=""
      ItemName=""
      BeltDescription=""
-     PlayerViewOffset=(X=5.000000,Y=0.000000,Z=-70.000000)
+     PlayerViewOffset=(X=5.000000,Y=0.000000,Z=-10.000000)
      PlayerViewMesh=LodMesh'VMDPlayerHands'
      LeftPlayerViewMesh=LodMesh'VMDPlayerHandsLeft'
 }
