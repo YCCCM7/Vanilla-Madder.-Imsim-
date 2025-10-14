@@ -30,7 +30,7 @@ function UpdateAugmentStatus()
 {
 	if (MyVMP != None)
 	{
-		bHasAugment = MyVMP.HasSkillAugment('SwimmingFitness');
+		bHasAugment = MyVMP.HasSkillAugment('SwimmingCoreWorkout');
 	}
 }
 
