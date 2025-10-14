@@ -54,6 +54,7 @@ function float VMDConfigureSpeedMult(bool bWater)
  	if (!bWater) return LevelValues[CurrentLevel];
  	return 1.0;
 }
+
 function float VMDConfigureJumpMult()
 {
  	return LevelValues[CurrentLevel];
