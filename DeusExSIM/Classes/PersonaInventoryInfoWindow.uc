@@ -16,7 +16,7 @@ var PersonaNormalLargeTextWindow lastAmmoDescription;
 //MADDERS, 5/6/22: New shiat.
 var localized string LineFiller,
 			StrItemName,
-			StrScrapCostCraft, StrScrapGainBreakdown, StrDepleted, StrChemicalsCostCraft, StrChemicalsGainBreakdown,
+			StrScrapCostCraft, StrScrapGainBreakdown, StrChemicalsCostCraft, StrChemicalsGainBreakdown,
 			StrToolboxRequired, StrRepairBotRequired, StrChemistrySetRequired, StrMedicalBotRequired,
 			StrInsufficientTechSkill, StrInsufficientMedicineSkill, StrSizeDesc, SkillLevelNames[4],
 			CraftButtonLabel, CraftButtonLabelNull, BreakdownButtonLabel,
@@ -328,6 +328,10 @@ function AddMechanicalCraftingInfoWindow(class<Inventory> TItem, bool bShowDescr
 		BPrice = CF.GetMechanicalBreakdownPrice(VMP, TItem);
 		CraftPrice = CPrice * CF.GetCraftSkillMult(TSkill, bHasTalent);
 		BreakdownGain = BPrice * CF.GetBreakdownSkillMult(TSkill, bHasTalent);
+		if ((VMP != None) && (VMP.CraftingManager != None))
+		{
+			BreakdownGain *= VMP.CraftingManager.GetFatigueLevel(TItem);
+		}
 		SkillNeeded = CF.GetMechanicalItemSkillReq(TItem);
 		QuantityOwned = CountNumThings(TItem, VMP);
 		RelevantQuantity = Max(CF.GetMechanicalItemQuanMade(TItem), CF.GetMechanicalBreakdownQuanNeeded(TItem));
@@ -367,9 +371,10 @@ function AddMechanicalCraftingInfoWindow(class<Inventory> TItem, bool bShowDescr
 		}
 		if (bCanBreakdown)
 		{
-			if (VMP.LastMechanicalBreakdown ~= string(TItem))
+			//if (VMP.LastMechanicalBreakdown ~= string(TItem))
+			if ((VMP.CraftingManager != None) && (VMP.CraftingManager.GetFatigueLevel(TItem) < 1.0))
 			{
-				WinText.AppendText(SprintF(StrScrapGainBreakdown, BreakdownGain)@StrDepleted$CR());	
+				WinText.AppendText(SprintF(StrScrapGainBreakdown, BreakdownGain)@VMP.CraftingManager.GetFatigueDesc(TItem)$CR());	
 				LineTrack += 11;
 			}
 			else
@@ -514,6 +519,10 @@ function AddMedicalCraftingInfoWindow(class<Inventory> TItem, bool bShowDescript
 		BPrice = CF.GetMedicalBreakdownPrice(VMP, TItem);
 		CraftPrice = CPrice * CF.GetCraftSkillMult(TSkill, bHasTalent);
 		BreakdownGain = BPrice * CF.GetBreakdownSkillMult(TSkill, bHasTalent);
+		if ((VMP != None) && (VMP.CraftingManager != None))
+		{
+			BreakdownGain *= VMP.CraftingManager.GetFatigueLevel(TItem);
+		}
 		SkillNeeded = CF.GetMedicalItemSkillReq(TItem);
 		QuantityOwned = CountNumThings(TItem, VMP);
 		RelevantQuantity = Max(CF.GetMedicalItemQuanMade(TItem), CF.GetMedicalBreakdownQuanNeeded(TItem));
@@ -553,9 +562,10 @@ function AddMedicalCraftingInfoWindow(class<Inventory> TItem, bool bShowDescript
 		}
 		if (bCanBreakdown)
 		{
-			if (VMP.LastMedicalBreakdown ~= string(TItem))
+			//if (VMP.LastMedicalBreakdown ~= string(TItem))
+			if ((VMP.CraftingManager != None) && (VMP.CraftingManager.GetFatigueLevel(TItem) < 1.0))
 			{
-				WinText.AppendText(SprintF(StrChemicalsGainBreakdown, BreakdownGain)@StrDepleted$CR());
+				WinText.AppendText(SprintF(StrChemicalsGainBreakdown, BreakdownGain)@VMP.CraftingManager.GetFatigueDesc(TItem)$CR());
 				LineTrack += 11;
 			}
 			else
@@ -772,7 +782,6 @@ defaultproperties
      StrChemicalsGainBreakdown="Breaks down for %d Chemicals"
      StrChemistrySetRequired="Requires use of chemistry set or medical bot"
      StrMedicalBotRequired="Requires use of medical bot"
-     StrDepleted="(Fatigued: -50% gain)"
      StrSizeDesc="Size: (%dx%d)"
      CraftButtonLabel="Craft"
      CraftButtonLabelNull="N/A"
