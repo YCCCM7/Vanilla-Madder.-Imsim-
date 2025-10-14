@@ -14,7 +14,7 @@ var travel bool bRevisionMapSet;
 
 function VMDUpdateRevisionMapStatus()
 {
-	switch(class'VMDStaticFunctions'.static.GetIntendedMapStyle(Self))
+	switch(class'VMDStaticFunctions'.static.GetIntendedMapStyle(Self, true))
 	{
 		case 0:
 			bRevisionMapSet = false;
@@ -333,6 +333,14 @@ function CommitMapFixing()
 	
 	switch(GM)
 	{
+		case 11:
+			switch(MN)
+			{
+				case "11_PARIS_EVERETT":
+					Flags.SetBool('MeetTobyAtanwe_Played', True,, 12);
+				break;
+			}
+		break;
 		case 16:
 			switch(MN)
 			{
