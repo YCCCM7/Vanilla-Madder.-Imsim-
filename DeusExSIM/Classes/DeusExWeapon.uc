@@ -213,7 +213,7 @@ var travel bool bHasEvolution;
 var travel bool bSemiautoTrigger, bBurstFire, bPocketReload, bSingleLoaded, bPumpAction; //Fire modes!
 var travel byte CurFiringMode, NumFiringModes, OverrideNumProj;
 var travel float OverrideAnimRate, NPCOverrideAnimRate, OverrideReloadAnimRate, MeleeAnimRates[3],
-			FalloffStartRange, RelativeRange, LastDamageMult, MoverDamageMult;
+			FalloffStartRange, RelativeRange, LastDamageMult, MoverDamageMult, DisarmChanceMult;
 
 var int DrawAnimFrames, HolsterAnimFrames;
 var float DrawAnimRate, HolsterAnimRate;
@@ -247,7 +247,7 @@ var byte FiringSystemOperation; //0 = None, 1 = Closed, 2 = Open
 var travel float AmmoDamageMultiplier, GunModDamageMultiplier, ExtraFloatDamage; //MADDERS, 4/28/25: Let us do fractional damage at base.
 var localized string MessageTooDirty, MessageTooWet, msgNoAmmo,
 			OpenSystemDesc, ClosedSystemDesc, GrimeLevelDesc[3], PenetrationDesc, RicochetDesc,
-			FiringSystemLabel, GrimeLevelLabel, PenetrationLabel, RicochetLabel, msgInfoMoverDamageMult,
+			FiringSystemLabel, GrimeLevelLabel, PenetrationLabel, RicochetLabel, msgInfoMoverDamageMult, msgInfoDisarmChanceMult,
 			MsgGainedMod, MsgMergedMods[2], ModNames[9];
 
 //How much damage do we do on impact, if secondary?
@@ -270,7 +270,7 @@ var travel int Last20mmCount;
 //Render overlay effects.
 //MADDERS: These is always being adjusted. Var it, for fuck's sake.
 var float BloodRenderMult, GrimeRenderMult, WaterRenderMult;
-var travel float GrimeLevel, WaterLogLevel, GrimeRateMult;
+var travel float GrimeLevel, WaterLogLevel, GrimeRateMult, ItemRefusalResetTime;
 var travel byte HandSkinIndex[2], SkinSwapException[8], MuzzleFlashIndex;
 var bool bLastShotJammed;
 var travel bool bReloadFromEmpty, bReloadWasntEmpty;
@@ -314,6 +314,10 @@ var(GP2Experimental) float SkillAccuracyFactors[4], AccuracyFactorScalar;
 var(GP2Experimental) float AimFocusMults[7], AimFocusRanges[2];
 var(GP2Experimental) float RecoilDecayMult, RecoilRecoveryFactors[4];
 var(GP2Experimental) float SwayDistanceCooldown, SwayDistanceRate, SwayExcitementScalar;
+
+var(GP2Experimental) DeusExWeapon DualWieldPartner;
+var(GP2Experimental) travel bool bDualWieldSlave;
+var(GP2Experimental) travel int PartnerGridX, PartnerGridY;
 
 //---------------------------------------------
 //DXT IMPORTS! (Not all made by DXT, disclaimer)
@@ -385,27 +389,109 @@ function bool Facelift(bool bOn)
 {
 }
 
-function float VMDGetWeaponDrawTime()
+function float VMDGetProjectileSpeedMult()
+{
+	local float ProjSpeed, Mult;
+	
+	//MADDERS: Define this as a default.
+	ProjSpeed = 1.0;
+	
+	// AugCombat increases our speed (distance) if hand to hand
+	if (bHandToHand)
+	{
+		if (VMDHasAugOwner())
+		{
+			//MADDERS: Remove this feature entirely for non-melee.
+			Mult = VMDGetWeaponSkill("VELOCITY");
+			if (mult == 0.0)
+			{
+				Mult = 1.0;
+			}
+			ProjSpeed *= Mult;
+		}
+	}
+	
+	//MADDERS: Skill augment for heavy weapons having proj speed boosting.
+	if ((GoverningSkill == class'SkillWeaponHeavy') && (VMDHasSkillAugment('HeavyProjectileSpeed')))
+	{
+		ProjSpeed *= 1.25;
+	}
+	
+	ProjSpeed *= VMDGetProjectileRangeMult();
+	
+	return ProjSpeed;
+}
+
+function float VMDGetProjectileRangeMult()
+{
+	local float ARM, RangeMult;
+	
+	ARM = 1.0;
+	if ((GoverningSkill == class'SkillWeaponPistol') && (VMDHasSkillAugment('PistolScope')))
+	{
+		ARM = 1.35;
+	}
+	
+	//MADDERS, 5/27/23: Cut taser slugs the same deal as crossbow darts.
+	if ((ProjectileClass == class'TaserSlug') && (VMDHasSkillAugment('RifleAltAmmos')))
+	{
+		ARM = 1.35;
+	}
+	
+	RangeMult = (1 + (ModAccurateRange * 0.5)) * ARM;
+	
+	return RangeMult;
+}
+
+function float VMDGetWeaponDrawTime(optional bool bSkipRate, optional float InputRate)
 {
 	local float Ret;
 	
-	Ret = float(DrawAnimFrames) / DrawAnimRate / VMDGetDrawRate();
+	if (bSkipRate)
+	{
+		if (InputRate <= 0)
+		{
+			Ret = float(DrawAnimFrames) / DrawAnimRate / VMDGetDrawRate(True);
+		}
+		else
+		{
+			Ret = float(DrawAnimFrames) / DrawAnimRate / InputRate;
+		}
+	}
+	else
+	{
+		Ret = float(DrawAnimFrames) / DrawAnimRate / VMDGetDrawRate();
+	}
 	
 	return Ret;
 }
 
-function float VMDGetWeaponHolsterTime()
+function float VMDGetWeaponHolsterTime(optional bool bSkipRate, optional float InputRate)
 {
 	local float Ret;
 	
-	Ret = float(HolsterAnimFrames) / HolsterAnimRate / VMDGetHolsterRate();
+	if (bSkipRate)
+	{
+		if (InputRate <= 0)
+		{
+			Ret = float(HolsterAnimFrames) / HolsterAnimRate / VMDGetHolsterRate(True);
+		}
+		else
+		{
+			Ret = float(HolsterAnimFrames) / HolsterAnimRate / InputRate;
+		}
+	}
+	else
+	{
+		Ret = float(HolsterAnimFrames) / HolsterAnimRate / VMDGetHolsterRate();
+	}
 	
 	return Ret;
 }
 
-function float VMDGetDrawRate()
+function float VMDGetDrawRate(optional bool bSkipPartner)
 {
-	local float Rate;
+	local float Rate, OurTime, OtherTime;
 	local VMDBufferPlayer VMP;
 	
 	VMP = VMDBufferPlayer(Owner);
@@ -443,13 +529,25 @@ function float VMDGetDrawRate()
 	}
 	
 	Rate *= FactorWM2DrawSpeedMultiplier();
+	Rate *= 1.0 / Sqrt(FactorWM2HeftMultiplier());
+	
+	if ((DualWieldPartner != None) && (!bSkipPartner))
+	{
+		OurTime = VMDGetWeaponDrawTime(True, Rate);
+		OtherTime = DualWieldPartner.VMDGetWeaponDrawTime(True, 0.0);
+		
+		if (OtherTime > OurTime)
+		{
+			Rate *= OurTime / OtherTime;
+		}
+	}
 	
 	return Rate;
 }
 
-function float VMDGetHolsterRate()
+function float VMDGetHolsterRate(optional bool bSkipPartner)
 {
-	local float Rate;
+	local float Rate, OurTime, OtherTime;
 	local VMDBufferPlayer VMP;
 	
 	VMP = VMDBufferPlayer(Owner);
@@ -487,6 +585,18 @@ function float VMDGetHolsterRate()
 	}
 	
 	Rate *= FactorWM2HolsterSpeedMultiplier();
+	Rate *= 1.0 / Sqrt(FactorWM2HeftMultiplier());
+	
+	if ((DualWieldPartner != None) && (!bSkipPartner))
+	{
+		OurTime = VMDGetWeaponHolsterTime(True, Rate);
+		OtherTime = DualWieldPartner.VMDGetWeaponHolsterTime(True, 0.0);
+		
+		if (OtherTime > OurTime)
+		{
+			Rate *= OurTime / OtherTime;
+		}
+	}
 	
 	return Rate;
 }
@@ -506,6 +616,16 @@ function float GetWM2FloatDamage()
 	Ret = DamageVals[2] * ExtraFloatDamage;
 	
 	return Ret;
+}
+
+function float FactorWM2HeftMultiplier()
+{
+	if (!ShouldUseWM2())
+	{
+		return 1.0;
+	}
+	
+	return 1.0;
 }
 
 function float FactorWM2DrawSpeedMultiplier()
@@ -604,6 +724,82 @@ function bool ShouldUseGP2()
 	return false;
 }
 
+function GP2AssignDualWieldPartner(DeusExWeapon DXW)
+{
+	local DeusExPlayer DXP;
+	
+	//MADDERS, 10/7/25: This crashes the game, in addition to doing nothing of value. Safeguard against it.
+	if (DXW == Self || DXW == None || (DXW == DualWieldPartner && DualWieldPartner != None)) return;
+	
+	DXW.GP2UnlinkDualWieldPartner();
+	GP2UnlinkDualWieldPartner();
+	
+	DXW.DualWieldPartner = Self;
+	DualWieldPartner = DXW;
+	
+	DXP = DeusExPlayer(Owner);
+	if (DXP != None)
+	{
+		if (Self == DXP.InHand)
+		{
+			PutDown();
+			GoToState('DownWeapon', 'SkipHack');
+			BringUp();
+			GP2DrawDualWieldPartner();
+		}
+		else if (DualWieldPartner == DXP.InHand)
+		{
+			DualWieldPartner.PutDown();
+			DualWieldPartner.GoToState('DownWeapon', 'SkipHack');
+			DualWieldPartner.BringUp();
+			DualWieldPartner.GP2DrawDualWieldPartner();
+		}
+	}
+}
+
+function GP2DrawDualWieldPartner()
+{
+	if ((DualWieldPartner != None) && (!bDualWieldSlave) && (!DualWieldPartner.bDualWieldSlave))
+	{
+		DualWieldPartner.bDualWieldSlave = true;
+		//DualWieldPartner.GoToState('Active');
+		DualWieldPartner.BringUp();
+	}
+}
+
+function GP2HolsterDualWieldPartner(optional bool bInstant)
+{
+	if ((DualWieldPartner != None) && (!bDualWieldSlave) && (DualWieldPartner.bDualWieldSlave))
+	{
+		//DualWieldPartner.bDualWieldSlave = false;
+		DualWieldPartner.PutDown();
+	}
+}
+
+function GP2UnlinkDualWieldPartner()
+{
+	if ((DualWieldPartner != None) && (DualWieldPartner.DualWieldPartner == Self))
+	{
+		if ((DualWieldPartner != None) && (DualWieldPartner.bDualWieldSlave))
+		{
+			DualWieldPartner = None;
+			DualWieldPartner.PutDown();
+			DualWieldPartner.GoToState('DownWeapon', 'SkipHack');
+		}
+		else if (bDualWieldSlave)
+		{
+			DualWieldPartner.DualWieldPartner = None;
+			PutDown();
+			GoToState('DownWeapon', 'SkipHack');
+		}
+		else
+		{
+			DualWieldPartner.DualWieldPartner = None;
+			DualWieldPartner = None;
+		}
+	}
+}
+
 function float GP2GetSwayRateMult()
 {
 	local float Ret;
@@ -689,7 +885,7 @@ function GP2AddRecoilPacket()
 	
 	SkillLevel = DeusExPlayer(Owner).SkillSystem.GetSkillLevel(GoverningSkill);
 	Recoil = RecoilStrength + (VMDGetWeaponSkill("RECOIL") * RecoilStrength);
-	FactoredRecoil = FMax(0.0, Recoil - (Recoil * (RecoilResetTimer / ShotTime) * RecoilDecayRate));
+	FactoredRecoil = FMax(0.0, Recoil - (Recoil * (RecoilResetTimer / Default.ShotTime) * RecoilDecayRate));
 	UseRecoilX = (6144) * FactoredRecoil * VMDGetRecoilMultX() * 0.01;
 	UseRecoilY = (6144) * FactoredRecoil * VMDGetRecoilMultY() * 0.01;
 	
@@ -698,7 +894,7 @@ function GP2AddRecoilPacket()
 	
 	if (!bZoomed)
 	{
-		GP2AddAimPacket(TRot, 1.0 / (ShotTime * 1.25 + (FRand() * RecoilRecoveryFactors[SkillLevel] * FactorWM2RecoilRecoveryMultiplier())), 0.0);
+		GP2AddAimPacket(TRot, 1.0 / (Default.ShotTime * 1.25 + (FRand() * RecoilRecoveryFactors[SkillLevel] * FactorWM2RecoilRecoveryMultiplier())), 0.0);
 	}
 	SwayExcitement += RecoilStrength * 0.33;
 }
@@ -715,7 +911,7 @@ function GP2AimTick(float DT)
 	DXP = DeusExPlayer(Owner);
 	if (DXP != None)
 	{
-		if (DXP.InHand == Self)
+		if (DXP.InHand == Self || (DualWieldPartner != None && DXP.InHand == DualWieldPartner))
 		{
 			//WCCC, 5/2/25: Start by fetching some things for reference.
 			CurAnimSet = GP2GetAnimSet();
@@ -1054,6 +1250,11 @@ function GP2AimTick(float DT)
 			DistanceVelocity = 0.0;
 		}
 		
+		if (ViewRot.Pitch <= 18000)
+		{
+			ViewRot.Pitch += 65536;
+		}
+		
 		LastViewRotation = ViewRot;
 		if (VSize(DXP.Velocity) > 3)
 		{
@@ -1172,6 +1373,11 @@ function int GetHandType(optional int OverrideHand)
 		}
 	}
 	
+	if (bDualWieldSlave)
+	{
+		Ret *= -1;
+	}
+	
 	return Ret;
 }
 
@@ -1205,7 +1411,13 @@ simulated function setHand( float Hand )
 		PlayerViewOffset.X = Default.PlayerViewOffset.X;
 		PlayerViewOffset.Y = Default.PlayerViewOffset.Y * Hand;
 		PlayerViewOffset.Z = Default.PlayerViewOffset.Z;
+		
+		if (DualWieldPartner != None)
+		{
+			PlayerViewOffset.Y += -4 * Hand;
+		}
 	}
+	
 	PlayerViewOffset *= 100; //scale since network passes vector components as ints
 	FireOffset.Y = Default.FireOffset.Y * Hand;
 }
@@ -1404,8 +1616,27 @@ function bool VMDDropFrom(vector StartLocation, optional bool bTest)
 	return true;
 }
 
+function DropFrom(Vector StartLocation)
+{
+	GP2UnlinkDualWieldPartner();
+	
+	Super.DropFrom(StartLocation);
+}
+
 //MADDERS, 6/10/22: For pre travel stuff on inv items. Yucky.
-function VMDPreTravel();
+function VMDPreTravel()
+{
+	if (DualWieldPartner != None)
+	{
+		PartnerGridX = DualWieldPartner.InvPosX;
+		PartnerGridY = DualWieldPartner.InvPosY;
+	}
+	else
+	{
+		PartnerGridX = -1;
+		PartnerGridY = -1;
+	}
+}
 
 function VMDPlayTranqFailNoise()
 {
@@ -1426,15 +1657,6 @@ function bool VMDHasJankyAmmo()
 		if (Default.AmmoName.Default.ItemName ~= "DEFAULT AMMO NAME - REPORT THIS AS A BUG") return true;
 	}
 	
-	return false;
-}
-
-function bool VMDIsTwoHandedWeapon()
-{
-	if (Mass >= 30)
-	{
-		return true;
-	}
 	return false;
 }
 
@@ -2148,6 +2370,11 @@ function VMDWeaponPostBeginPlayHook()
 		BoltEndSeq = 'ReloadEnd';
 		BoltActionRate = 1.250000;
 	}
+	//MADDERS, 8/20/25: Slight nerf to ancient sword disarming here. Rest I'm unsure of.
+	else if (IsA('WeaponAncientSword'))
+	{
+		DisarmChanceMult = 0.2;
+	}
 }
 
 function VMDSignalDamageTaken(int Damage, name DamageType, vector HitLocation, bool bCheckOnly);
@@ -2214,6 +2441,20 @@ function VMDUpdateWeaponModStats()
 //MADDERS, 1/10/21: For use in the LAW, primarily.
 function VMDDestroyOnFinishHook()
 {
+	local DeusExPlayer DXP;
+	
+	DXP = DeusExPlayer(Owner);
+	if ((DualWieldPartner != None) && (DXP != None) && (DXP.InHand == Self))
+	{
+		DualWieldPartner.bDualWieldSlave = False;
+		DualWieldPartner.DualWieldPartner = None;
+		DXP.PutInHand(DualWieldPartner);
+	}
+	else
+	{
+		GP2UnlinkDualWieldPartner();
+	}
+	
 	LaserOff();
 	if (bZoomed) ScopeOff();
 }
@@ -2390,6 +2631,8 @@ function VMDFixInvGrouping()
 function GiveTo(Pawn Other)
 {
 	local actor A;
+	
+	GP2UnlinkDualWieldPartner();
 	
 	foreach BasedActors(class'Actor', A)
 	{
@@ -2783,6 +3026,25 @@ function bool VMDIsSpecializedInSkill(class<Skill> TestSkill)
 	return VMDBufferPlayer(Owner).IsSpecializedInSkill(TestSkill);
 }
 
+function bool VMDIsTwoHandedWeapon()
+{
+	if (Mass >= 30)
+	{
+		return true;
+	}
+	return false;
+}
+
+function bool VMDCanBeDualWielded()
+{
+	return false;
+}
+
+function bool VMDCanDualWield()
+{
+	return false;
+}
+
 function bool VMDIsBulletWeapon()
 {
 	return ((!bHandToHand) && (bInstantHit) && (bPenetrating));
@@ -2791,6 +3053,45 @@ function bool VMDIsBulletWeapon()
 function bool VMDIsMeleeWeapon()
 {
 	return ((bHandToHand) && (bInstantHit));
+}
+
+function bool VMDIsSingleStackWeapon()
+{
+	local bool Ret, bGP2;
+	
+	if ((VMDBufferPlayer(Owner) != None) && (VMDBufferPlayer(Owner).bUseGunplayVersionTwo))
+	{
+		bGP2 = True;
+	}
+	else if ((VMDBufferPlayer(GetPlayerPawn()) != None) && (VMDBufferPlayer(GetPlayerPawn()).bUseGunplayVersionTwo))
+	{
+		bGP2 = True;
+	}
+	Ret = (VMDIsThrownWeapon() || (VMDIsMeleeWeapon() && !bGP2));
+	
+	return Ret;
+}
+
+function bool VMDCanHaveMultipleWeapons()
+{
+	local bool Ret, bGP2;
+	
+	if ((VMDBufferPlayer(Owner) != None) && (VMDBufferPlayer(Owner).bUseGunplayVersionTwo))
+	{
+		bGP2 = True;
+	}
+	else if ((VMDBufferPlayer(GetPlayerPawn()) != None) && (VMDBufferPlayer(GetPlayerPawn()).bUseGunplayVersionTwo))
+	{
+		bGP2 = True;
+	}
+	Ret = ((!VMDIsSingleStackWeapon()) && (bGP2));
+	
+	return Ret;
+}
+
+function bool VMDIsThrownWeapon()
+{
+	return ((bHandToHand) && (!bInstantHit) && (class<ThrownProjectile>(ProjectileClass) != None));
 }
 
 function bool VMDIsGrenadeWeapon()
@@ -3914,8 +4215,11 @@ function VMDAlertModApplied(String WeaponMod)
   		break;
   		default:
 			Log("WARNING: Unknown mod type applied! Type?"@WeaponMod);
-   			BroadcastMessage("WARNING: Unknown mod type applied! Type?"@WeaponMod);
-  		break;
+			if (Pawn(Owner) != None)
+			{
+	   			Pawn(Owner).CLientMessage("WARNING: Unknown mod type applied! Type?"@WeaponMod);
+			} 
+ 		break;
  	}
 }
 
@@ -4392,7 +4696,7 @@ function VMDUpdateEvoName()
  	BeltDescription = EvolvedBelt;
 }
 
-function VMDChangeFiringMode()
+function VMDChangeFiringMode(optional bool bNoFeedback)
 {
  	if (NumFiringModes < 2 || (VMDBufferPlayer(Owner) != None && VMDBufferPlayer(Owner).TaseDuration > 0)) return;
  	if ((!bInstantHit) && (Default.bInstantHit)) return; //No 20mm, please.
@@ -4456,7 +4760,7 @@ function VMDChangeFiringMode()
   		break;
  	}
  	
- 	if ((DeusExPlayer(Owner) != None) && (DeusExPlayer(Owner).InHand == Self) && (MessageChangedMode != "") && (ModeNames[CurFiringMode] != ""))
+ 	if ((DeusExPlayer(Owner) != None) && (DeusExPlayer(Owner).InHand == Self) && (MessageChangedMode != "") && (ModeNames[CurFiringMode] != "") && (!bNoFeedback))
 	{
 		Pawn(Owner).ClientMessage(SprintF(MessageChangedMode, ModeNames[CurFiringMode]));
 	}
@@ -4504,6 +4808,11 @@ function VMDRenderBlock( Canvas Canvas )
 					if (ShouldUseGP2())
 					{
 						NewRot += CurrentAimOffset;
+						
+						if (NewRot.Pitch <= 18000)
+						{
+							NewRot.Pitch += 65536;
+						}
 					}
 					
 					setRotation(newRot);
@@ -4578,6 +4887,11 @@ function VMDRenderBlock( Canvas Canvas )
 	if (ShouldUseGP2())
 	{
 		NewRot += CurrentAimOffset;
+		
+		if (NewRot.Pitch <= 18000)
+		{
+			NewRot.Pitch += 65536;
+		}
 	}
 	
 	setRotation(newRot);
@@ -4627,7 +4941,7 @@ simulated event RenderOverlays( Canvas Can )
 			Fatness = Rand(4) + 126;
 		}
 		
-		if (WeaponMiniCrossbow(Self) == None)
+		if (!VMDIsWeaponName("Crossbow"))
 		{
 			//Then swap out for our hand and draw us.
   			switch (VMBP.PlayerSkin)
@@ -4949,8 +5263,24 @@ function PlayLockSound()
 function TravelPostAccept()
 {
 	local int i;
+	local DeusExWeapon DXW;
+	local Inventory TInv;
 	
 	Super.TravelPostAccept();
+	
+	if ((DualWieldPartner == None) && (PartnerGridX > -1 && PartnerGridY > -1))
+	{
+		for(TInv = Owner.Inventory; TInv != None; TInv = TInv.Inventory)
+		{
+			DXW = DeusExWeapon(TInv);
+			if ((DXW != None) && (DXW.InvPosX == PartnerGridX) && (DXW.InvPosY == PartnerGridY))
+			{
+				DualWieldPartner = DXW;
+			}
+		}
+	}
+	PartnerGridX = -1;
+	PartnerGridY = -1;
 	
 	//MADDERS, 12/29/20: Apply religiously.
 	VMDFixInvGrouping();
@@ -4981,14 +5311,14 @@ function TravelPostAccept()
 		}
 	}
 	
+	//MADDERS: Fix for busted fire sounds.
+	VMDAlertPostAmmoLoad(bInstantHit);
+	FireSound = VMDGetIntendedFireSound(AmmoType);
+	
 	//MADDERS: Update our evolution!
 	VMDUpdateEvolution();
 	//MADDERS, 5/8/25: Also update our weapon mods. For future stuff.
 	VMDUpdateWeaponModStats();
-	
-	//MADDERS: Fix for busted fire sounds.
-	VMDAlertPostAmmoLoad(bInstantHit);
-	FireSound = VMDGetIntendedFireSound(AmmoType);
 	
 	//DXT: This stuff.
 	// Make the object follow us, for AmbientSound mainly
@@ -5242,7 +5572,10 @@ function bool HandlePickupQuery(Inventory Item)
 	W = DeusExWeapon(Item);
 	if ((W != None) && (W.Class == Class))
 	{
-		VMDTransferWeaponMods(W, Self);
+		if (!VMDCanHaveMultipleWeapons())
+		{
+			VMDTransferWeaponMods(W, Self);
+		}
 	}
 	
 	player = DeusExPlayer(Owner);
@@ -5251,7 +5584,7 @@ function bool HandlePickupQuery(Inventory Item)
 		DXRW = DeusExRootWindow(Player.RootWindow);
 	}
 	
-	if (Item.Class == Class)
+	if ((Item.Class == Class) && (!VMDCanHaveMultipleWeapons()))
 	{
       		if (!((Weapon(item).bWeaponStay) && (Level.NetMode == NM_Standalone) && (!Weapon(item).bHeldItem || Weapon(item).bTossedOut)))
 		{
@@ -5300,11 +5633,20 @@ function bool HandlePickupQuery(Inventory Item)
 		}
 	}
 	
-	bResult = VMDFakeSuperHandlePickupQuery(Item);
+	if ((VMDCanHaveMultipleWeapons()) && (Item.Class == Class))
+	{
+		bResult = false;
+	}
+	else
+	{
+		bResult = VMDFakeSuperHandlePickupQuery(Item);
+	}
 	
 	// Notify the object belt of the new ammo
 	if (player != None)
+	{
 		player.UpdateBeltText(Self);
+	}
 	
 	return bResult;
 }
@@ -5312,12 +5654,16 @@ function bool HandlePickupQuery(Inventory Item)
 function BringUp()
 {
 	if ( Level.NetMode != NM_Standalone )
+	{
 		ReadyClientToFire( False );
+	}
 	
 	// alert NPCs that I'm whipping it out
 	if (!bNativeAttack && bEmitWeaponDrawn)
+	{
 		AIStartEvent('WeaponDrawn', EAITYPE_Visual);
-
+	}
+	
 	// reset the standing still accuracy bonus
 	if (!ShouldUseGP2())
 	{
@@ -5329,9 +5675,9 @@ function BringUp()
 	
 	//MADDERS: Activate automatically!
 	if ((bHasLaser) && (!bLasing)) LaserOn();
-
+	
 	ResetShake();
-
+	
 	Super.BringUp();
 }
 
@@ -5351,35 +5697,29 @@ function bool PutDown()
 
 function ReloadAmmo()
 {
-	local bool bDoesCleaning, bMagFull;
+	local bool bMagFull;
 	
 	// single use or hand to hand weapon if ReloadCount == 0
-	if (ReloadCount == 0)
+	if (ReloadCount == 0 && (DualWieldPartner == None || DualWieldPartner.ReloadCount == 0))
 	{
 		Pawn(Owner).ClientMessage(msgCannotBeReloaded);
 		return;
 	}
 	
-	if (VMDHasReloadObjection()) return;
-	
-	/*bDoesCleaning = true;
-	if (VMDGetGrimeLevel() <= 0) bDoesCleaning = false;
-	if ((FiringSystemOperation == 2) && (VMDHasSkillAugment('TagTeamOpenGrimeproof'))) bDoesCleaning = false;*/
+	if (VMDHasReloadObjection() && (DualWieldPartner == None || DualWieldPartner.VMDHasReloadObjection())) return;
+	if (DualWieldPartner != None && (DualWieldPartner.AnimSequence == 'Reload' || DualWieldPartner.AnimSequence == 'ReloadBegin'))
+	{
+		return;
+	}
 	
 	//MADDERS: Save effort real quick here.
 	bMagFull = (ClipCount <= 0 - int(VMDHasOpenSystemMagBoost()) || (ReloadCount-ClipCount) >= AmmoType.AmmoAmount);
+	if ((bMagFull) && (DualWieldPartner != None))
+	{
+		bMagFull = (DualWieldPartner.ClipCount <= 0 - int(DualWieldPartner.VMDHasOpenSystemMagBoost()) || (DualWieldPartner.ReloadCount-DualWieldPartner.ClipCount) >= DualWieldPartner.AmmoType.AmmoAmount);
+	}
 	
-	if ((bMagFull) && (bDoesCleaning))
-	{
-		if (VMDGetGrimeLevel() > 0)
-			GoToState('CleanWeapon');
-	}
-	else if ((bLastShotJammed) && (bDoesCleaning))
-	{
-		if (VMDGetGrimeLevel() > 0)
-			GoToState('CleanWeapon');
-	}
-	else if (!IsInState('Reload'))
+	if (!IsInState('Reload'))
 	{
 		//MADDERS: Inspired by Nihilum's broken-ass still animation on its Walther, AKA WeaponBeretta... Sigh.
 		if (bMagFull) return;
@@ -5465,6 +5805,18 @@ simulated function float CalculateAccuracy()
 			{
 				Accuracy -= 0.15;
 			}
+			
+			if ((VMP != None) && (VMP.bStressEnabled) && (bZoomed))
+			{
+				if (VMP.ActiveStress > 80)
+				{
+					Accuracy += 0.15;
+				}
+				else if (VMP.ActiveStress > 60)
+				{
+					Accuracy += 0.05;
+				}
+			}
 		}
 		
 		bCheckIt = True;
@@ -5487,6 +5839,11 @@ simulated function float CalculateAccuracy()
 			{
 				Accuracy -= 0.1 + (FMax(-0.1, SP.BaseAccuracy));
 			}
+		}
+		
+		if (bStationaryFiringOnly && (VMDBufferPawn(Owner) == None || !VMDBufferPawn(Owner).VMDCanRunWithAnyWeapon()))
+		{
+			Accuracy += FMin(100.0, VSize(SP.Velocity)) * 0.01;
 		}
 		
 		if (VMDIsWeaponName("HideAGun"))
@@ -6459,6 +6816,15 @@ simulated function Tick(float deltaTime)
 	{
 		velMagnitude = VSize(Owner.Velocity);
 	}
+	else if (bItemRefusalOverride)
+	{
+		ItemRefusalResetTime += DeltaTime;
+		if (ItemRefusalResetTime >= 1.0)
+		{
+			ItemRefusalResetTime = 0.0;
+			bItemRefusalOverride = False;
+		}
+	}
 	
 	Super.Tick(deltaTime);
 	
@@ -6483,7 +6849,7 @@ simulated function Tick(float deltaTime)
 			Concealability = CONC_ALL;
 		}
 		
-		if ((VPlayer.InHand == Self) && (Mesh == PlayerViewMesh || Mesh == LeftPlayerViewMesh))
+		if ((VPlayer.InHand == Self || (DualWieldPartner != None && VPlayer.InHand == DualWieldPartner)) && (Mesh == PlayerViewMesh || Mesh == LeftPlayerViewMesh))
 		{
 			TMesh = VPlayer.GetHandednessPlayerMesh(THand);
 			THand = GetHandType(THand);
@@ -6522,7 +6888,7 @@ simulated function Tick(float deltaTime)
 		else
 		{
 			VMDIncreaseWaterLogLevel(-deltaTime);
-			if (VPlayer.InHand == Self)
+			if (VPlayer.InHand == Self || (DualWieldPartner != None && VPlayer.InHand == DualWieldPartner))
 			{
 				if ((VPlayer.bDuck == 1 || VPlayer.bForceDuck) && (VPlayer.ViewRotation.Pitch < -8192) && (VSize(VPlayer.Velocity) > 20))
 				{
@@ -6571,7 +6937,7 @@ simulated function Tick(float deltaTime)
       		LockTimer = 0;
 		return;
    	}
-	if (pawn.Weapon != self)
+	if (pawn.Weapon != self && (DualWieldPartner == None || Pawn.Weapon != DualWieldPartner))
    	{
 		if (ShouldUseGP2())
 		{
@@ -6924,7 +7290,7 @@ simulated function Tick(float deltaTime)
 	if (bLasing || bZoomed)
 	{
 		//== Though it uses the same code, the laser shake is different than the zoom shake
-		if(bZoomed)
+		if (bZoomed)
 		{
 			accunit = 2048;
 		}
@@ -6960,8 +7326,8 @@ simulated function Tick(float deltaTime)
 				
 				if (ShouldUseGP2())
 				{
-					ShakeYaw *= GP2GetSwayRateMult() * (1.0 + (VMDGetWoundAccuracyPenalty() * 2.0))  * FactorWM2SwayMultiplier();
-					ShakePitch *= GP2GetSwayRateMult() * (1.0 + (VMDGetWoundAccuracyPenalty() * 2.0))  * FactorWM2SwayMultiplier();
+					ShakeYaw *= Sqrt(Mass) * GP2GetSwayRateMult() * (1.0 + (VMDGetWoundAccuracyPenalty() * 2.0)) * FactorWM2SwayMultiplier();
+					ShakePitch *= Sqrt(Mass) * GP2GetSwayRateMult() * (1.0 + (VMDGetWoundAccuracyPenalty() * 2.0)) * FactorWM2SwayMultiplier();
 				}
 			}
 		}
@@ -7101,6 +7467,12 @@ simulated function ScopeToggle()
 {
 	if (VMDBufferPlayer(Owner) != None && VMDBufferPlayer(Owner).TaseDuration > 0) return;
 	
+	if ((DualWieldPartner != None) && (DualWieldPartner.bDualWieldSlave))
+	{
+		DualWieldPartner.Fire(0);
+		return;
+	}
+	
 	if (IsInState('Idle') || WeaponLAW(Self) != None)
 	{
 		if ((bHasScope) && (DeusExPlayer(Owner) != None))
@@ -7215,6 +7587,11 @@ function LaserToggle()
 		{
 			VMDChangeFiringMode();
 		}*/
+	}
+	
+	if ((DualWieldPartner != None) && (!bDualWieldSlave))
+	{
+		DualWieldPartner.LaserToggle();
 	}
 }
 
@@ -8112,17 +8489,27 @@ simulated function SpawnEffectSounds( Vector HitLocation, Vector HitNormal, Acto
 {
 	if (bHandToHand)
 	{
-		// if we are hand to hand, play an appropriate sound
-		if (Other.IsA('DeusExDecoration'))
-			Owner.PlayOwnedSound(Misc3Sound, SLOT_None,,, 1024, VMDGetMiscPitch());
-		else if (Other.IsA('Pawn'))
+		if (Pawn(Other) != None || VMDCorpseBlocker(Other) != None)
+		{
 			Owner.PlayOwnedSound(Misc1Sound, SLOT_None,,, 1024, VMDGetMiscPitch());
-		else if (Other.IsA('BreakableGlass'))
+		}
+		// if we are hand to hand, play an appropriate sound
+		if (DeusExDecoration(Other) != None || DeusExCarcass(Other) != None)
+		{
+			Owner.PlayOwnedSound(Misc3Sound, SLOT_None,,, 1024, VMDGetMiscPitch());
+		}
+		else if (BreakableGlass(Other) != None)
+		{
 			Owner.PlayOwnedSound(sound'GlassHit1', SLOT_None,,, 1024, VMDGetMiscPitch());
+		}
 		else if (GetWallMaterial(HitLocation, HitNormal) == 'Glass')
+		{
 			Owner.PlayOwnedSound(sound'BulletProofHit', SLOT_None,,, 1024, VMDGetMiscPitch());
+		}
 		else
+		{
 			Owner.PlayOwnedSound(Misc2Sound, SLOT_None,,, 1024, VMDGetMiscPitch());
+		}
 	}
 }
 
@@ -8175,15 +8562,15 @@ function SpawnEffects(Vector HitLocation, Vector HitNormal, Actor Other, float D
 	if (bHandToHand)
 	{
 		// if we are hand to hand, play an appropriate sound
-		if (Other.IsA('DeusExDecoration') || Other.IsA('DeusExCarcass'))
-		{
-			Owner.PlaySound(Misc3Sound, SLOT_None,,, 1024, VMDGetMiscPitch());
-		}
-		else if (Other.IsA('Pawn'))
+		if (Pawn(Other) != None || VMDCorpseBlocker(Other) != None)
 		{
 			Owner.PlaySound(Misc1Sound, SLOT_None,,, 1024, VMDGetMiscPitch());
 		}
-		else if (Other.IsA('BreakableGlass'))
+		else if (DeusExDecoration(Other) != None || DeusExCarcass(Other) != None)
+		{
+			Owner.PlaySound(Misc3Sound, SLOT_None,,, 1024, VMDGetMiscPitch());
+		}
+		else if (BreakableGlass(Other) != None)
 		{
 			Owner.PlaySound(sound'GlassHit1', SLOT_None,,, 1024, VMDGetMiscPitch());
 		}
@@ -8347,9 +8734,17 @@ simulated function Vector ComputeProjectileStart(Vector X, Vector Y, Vector Z)
 	
 	// if we are instant-hit, non-projectile, then don't offset our starting point by PlayerViewOffset
 	if (bInstantHit)
+	{
 		Start = Owner.Location + Pawn(Owner).BaseEyeHeight * vect(0,0,1);// - Vector(Pawn(Owner).ViewRotation)*(0.9*Pawn(Owner).CollisionRadius);
+	}
 	else
+	{
+		if (DualWieldPartner != None)
+		{
+			TOffset.Y += 4 * GetHandType();
+		}
 		Start = Owner.Location + CalcDrawOffset() + TOffset.X * X + TOffset.Y * Y + TOffset.Z * Z;
+	}
 	
 	return Start;
 }
@@ -8460,52 +8855,16 @@ simulated function Projectile ProjectileFire(class<projectile> ProjClass, float 
 		GP2AddRecoilPacket();
 	}
 	
-	ARM = 1.0;
-	if ((GoverningSkill == class'SkillWeaponPistol') && (VMDHasSkillAugment('PistolScope')))
-	{
-		ARM = 1.35;
-	}
-	
-	//MADDERS, 5/27/23: Cut taser slugs the same deal as crossbow darts.
-	if ((ProjClass == class'TaserSlug') && (VMDHasSkillAugment('RifleAltAmmos')))
-	{
-		ARM = 1.35;
-	}
-	
 	if ((DeusExAmmo(AmmoType) != None) && (!bPumpAction) && (!bBoltAction)) DeusExAmmo(AmmoType).VMDForceShellCasing(GetHandType());
 	
-	//MADDERS: Define this as a default.
-	ProjSpeed = 1.0;
-	
-	// AugCombat increases our speed (distance) if hand to hand
-	if (bHandToHand)
-	{
-		if (VMDHasAugOwner())
-		{
-			//MADDERS: Remove this feature entirely for non-melee.
-			mult = VMDGetWeaponSkill("VELOCITY");
-			if (mult == 0.0)
-			{
-				mult = 1.0;
-			}
-			ProjSpeed *= mult;
-		}
-	}
-	
-	//MADDERS: Skill augment for heavy weapons having proj speed boosting.
-	if ((GoverningSkill == class'SkillWeaponHeavy') && (VMDHasSkillAugment('HeavyProjectileSpeed')))
-	{
-		ProjSpeed *= 1.25;
-	}
-	
 	//MADDERS: Range mods actually doing something? Say what?
-	RangeMult = (1 + (ModAccurateRange * 0.5)) * ARM;
-	ProjSpeed *= RangeMult;
+	RangeMult = VMDGetProjectileRangeMult();
+	ProjSpeed = VMDGetProjectileSpeedMult();
 	
 	// skill also affects our damage
 	// GetWeaponSkill returns 0.0 to -0.7 (max skill/aug)
-	mult = 1.0;
-	mult += (VMDGetWeaponSkill("DAMAGE") - 1.0);
+	Mult = 1.0;
+	Mult += (VMDGetWeaponSkill("DAMAGE") - 1.0);
 	
 	if (AmmoDamageMultiplier > 0)
 	{
@@ -8844,8 +9203,8 @@ simulated function TraceFire( float Accuracy )
 	
 	//Trace into the void with fake parabola.
 	local bool bSimulatedDrop;
-	local float TProg, TRange;
-	local Vector ModdedStartLoc, ModdedEndLoc, RangeEndPoint, BulletDir, TracerEndPoints[10];
+	local float YRand, ZRand, TProg, TRange, ArcRange, ArcDist;
+	local Vector ArcEndTrace, ModdedStartLoc, ModdedEndLoc, RangeEndPoint, BulletDir, TracerEndPoints[10];
 	local DeusExProjectile TTracer, TTracer2;
 	local Tracer CastTracer, CastTracer2;
 	
@@ -9019,8 +9378,13 @@ simulated function TraceFire( float Accuracy )
 		
 		if (i == 0)
 		{
-      			EndTrace = StartTrace + Accuracy * (FRand()-0.5)*Y*1000 + Accuracy * (FRand()-0.5)*Z*1000;
+			YRand = FRand()-0.5;
+			ZRand = FRand()-0.5;
+      			EndTrace = StartTrace + Accuracy * YRand * Y * 1000 + Accuracy * ZRand * Z * 1000;
       			EndTrace += (TRange * vector(AdjustedAim));
+			ArcEndTrace = StartTrace + Accuracy * YRand * Y * 1000 + Accuracy * ZRand * Z * 1000;
+			ArcRange = FMax(TRange, AccurateRange + 1024);
+			ArcEndTrace += ArcRange * Vector(AdjustedAim);
 		}
 		else
 		{
@@ -9032,19 +9396,20 @@ simulated function TraceFire( float Accuracy )
 		if ((Other == None) && (MaxRange > TRange) && (VMDIsBulletWeapon()))
 		{
 			bSimulatedDrop = true;
-			TracerEndPoints[0] = EndTrace;
-			RangeEndPoint = EndTrace;
+			TracerEndPoints[0] = ArcEndTrace;
+			RangeEndPoint = ArcEndTrace;
 			ModdedStartLoc = RangeEndPoint;
+			ArcDist = FMax(1024, MaxRange-AccurateRange);
 			for (TProg = 1; TProg < ArrayCount(TracerEndPoints); TProg += 1)
 			{
 				BulletDir = Normal(RangeEndPoint - StartTrace);
 				if (Region.Zone != None)
 				{
-					ModdedEndLoc = ModdedStartLoc + (BulletDir * (MaxRange-AccurateRange) * 0.1818 * (1.0 - (TProg * 0.1))) + (Normal(Region.Zone.ZoneGravity) * (MaxRange-AccurateRange) * 0.016 * (TProg * 0.1));
+					ModdedEndLoc = ModdedStartLoc + (BulletDir * ArcDist * 0.1818 * (1.0 - (TProg * 0.1))) + (Normal(Region.Zone.ZoneGravity) * ArcDist * 0.016 * (TProg * 0.1));
 				}
 				else
 				{
-					ModdedEndLoc = ModdedStartLoc + (BulletDir * (MaxRange-AccurateRange) * 0.1818 * (1.0 - (TProg * 0.1))) + (Vect(0,0,-1) * (MaxRange-AccurateRange) * 0.016 * (TProg * 0.1));
+					ModdedEndLoc = ModdedStartLoc + (BulletDir * ArcDist * 0.1818 * (1.0 - (TProg * 0.1))) + (Vect(0,0,-1) * ArcDist * 0.016 * (TProg * 0.1));
 				}
 				
 				Other = Pawn(Owner).TraceShot(HitLocation, HitNormal, ModdedEndLoc, ModdedStartLoc);
@@ -9326,11 +9691,11 @@ simulated function TraceFire( float Accuracy )
 
 simulated function ProcessTraceHit(Actor Other, Vector HitLocation, Vector HitNormal, Vector X, Vector Y, Vector Z)
 {
-	local float        mult, value;
-	local name         damageType;
+	local float mult, value, TMult;
+	local name damageType;
+	local DeusExMover DXM;
 	local DeusExPlayer dxPlayer, DXP;
 	local DeusExRootWindow DXRW;
-	local DeusExMover DXM;
 	
 	local bool bWasFood, bShowIndicator, bQueueTranqFailNoise;
 	local int SeedMath;
@@ -9446,9 +9811,23 @@ simulated function ProcessTraceHit(Actor Other, Vector HitLocation, Vector HitNo
 		if (Other != None)
 		{
 			//Justice: Allows you to trigger buttons by shooting them Duke3D style
-			if ((Other.IsA('Button1') || Other.IsA('Switch1') || Other.IsA('Switch2') || Other.IsA('LightSwitch')) && (damageType == 'Shot'))
+			//MADDERS, 10/11/25: Tweak to shooting switches: Doesn't work on ricochet or wallbang. Kinda hacky.
+			if ((Other.IsA('Button1') || Other.IsA('Switch1') || Other.IsA('Switch2') || Other.IsA('LightSwitch')) && damageType == 'Shot')
 			{
-				Other.Frob(Pawn(Owner), None);
+				TMult = 1.0;
+				if (AmmoDamageMultiplier > 0)
+				{
+					TMult *= AmmoDamageMultiplier;
+				}
+				if (GunModDamageMultiplier > 0)
+				{
+					TMult *= GunModDamageMultiplier;
+				}
+				
+				if (HitDamage >= Default.HitDamage * TMult)
+				{
+					Other.Frob(Pawn(Owner), None);
+				}
 			}
 			
 			dxPlayer = DeusExPlayer(Owner);
@@ -9984,6 +10363,8 @@ simulated function bool UpdateInfo(Object winObject)
 	
 	str = VMDFormatFloatString(MoverDamageMult * 100.0, 0.1, "Damage Mod")$"%";
 	WinInfo.AddInfoItem(msgInfoMoverDamageMult, str, false);
+	
+	WinInfo.AddInfoItem(msgInfoDisarmChanceMult, string(int(DisarmChanceMult * HitDamage * 2.0 * TNumProj)), false);
 	
 	//-------------------------
 	//MADDERS additions:
@@ -11001,6 +11382,11 @@ state Reload
 			val /= 2;
 		}
 		
+		if (DualWieldPartner != None)
+		{
+			Val *= 1.65;
+		}
+		
 		return val;
 	}
 	
@@ -11184,6 +11570,11 @@ Begin:
 				VMDReloadCompleteHook();
 			}
 		}
+	}
+	
+	if ((DualWieldPartner != None) && (DualWieldPartner.bDualWieldSlave))
+	{
+		DualWieldPartner.ReloadAmmo();
 	}
 	
 	//MADDERS, 6/22/24: Weird inverse logic. If we now have ammo, set this to false, so we know to re-check it on our next reload.
@@ -11608,6 +11999,11 @@ state Active
 	}
 
 Begin:
+	if ((DualWieldPartner != None) && (VMDCanDualWield()))
+	{
+		GP2DrawDualWieldPartner();
+	}
+	
 	//MADDERS: Active automatically!
 	if ((bHasLaser) && (!bLasing)) LaserOn();
 	
@@ -11618,29 +12014,39 @@ Begin:
 	}
 	
 	// Rely on client to fire if we are a multiplayer client
-	if ( (Level.NetMode==NM_Standalone) || (Owner.IsA('DeusExPlayer') && DeusExPlayer(Owner).PlayerIsListenClient()) )
+	if (Level.NetMode == NM_Standalone || (Owner.IsA('DeusExPlayer') && DeusExPlayer(Owner).PlayerIsListenClient()))
+	{
 		bClientReady = True;
-	if (( Level.NetMode == NM_DedicatedServer ) || ((Level.NetMode == NM_ListenServer) && Owner.IsA('DeusExPlayer') && !DeusExPlayer(Owner).PlayerIsListenClient()))
+	}
+	if (Level.NetMode == NM_DedicatedServer || (Level.NetMode == NM_ListenServer && Owner.IsA('DeusExPlayer') && !DeusExPlayer(Owner).PlayerIsListenClient()))
 	{
 		ClientActive();
 		bClientReady = False;
 	}
 	
 	if (!Owner.IsA('ScriptedPawn'))
+	{
 		FinishAnim();
-	if ( bChangeWeapon )
+	}
+	if (bChangeWeapon)
+	{
 		GotoState('DownWeapon');
+	}
 	
 	bWeaponUp = True;
 	PlayPostSelect();
 	if (!Owner.IsA('ScriptedPawn'))
+	{
 		FinishAnim();
+	}
 	
 	// reload the weapon if it's empty and autoreload is true
 	if ((ClipCount >= ReloadCount) && (ReloadCount != 0))
 	{
 		if (Owner.IsA('ScriptedPawn') || ( DeusExPlayer(Owner) != None && (DeusExPlayer(Owner).bAutoReload || VMDIsWeaponName("Hideagun")) ))
+		{
 			ReloadAmmo();
+		}
 	}
 	Finish();
 }
@@ -11662,23 +12068,43 @@ Begin:
 	ZoomInCount = 0;
 	LaserOff();
 	
-	if (( Level.NetMode == NM_DedicatedServer ) || ((Level.NetMode == NM_ListenServer) && Owner.IsA('DeusExPlayer') && !DeusExPlayer(Owner).PlayerIsListenClient()))
+	if (Level.NetMode == NM_DedicatedServer || (Level.NetMode == NM_ListenServer && Owner.IsA('DeusExPlayer') && !DeusExPlayer(Owner).PlayerIsListenClient()))
+	{
 		ClientDownWeapon();
+	}
 	
 	TweenDown();
+	
+	if ((DualWieldPartner != None) && (!bDualWieldSlave) && (VMDCanDualWield()))
+	{
+		GP2HolsterDualWieldPartner();
+	}
+	
 	FinishAnim();
 	
+	//MADDERS, 10/12/25: Stops dual wield freeze, by letting our slave finish its animations before WE do...
+	if ((DualWieldPartner != None) && (!bDualWieldSlave) && (VMDCanDualWield()))
+	{
+		Sleep(0.0001);
+	}
+	
 	//MADDERS: Make some guns reload in pocket!
-	if ((Level.NetMode != NM_Standalone) || (bPocketReload))
+	if (Level.NetMode != NM_Standalone || bPocketReload)
 	{
 		ClipCount = 0;	// Auto-reload in multiplayer (when putting away)
 	}
 	bOnlyOwnerSee = false;
-	if (Pawn(Owner) != None)
+	if ((Pawn(Owner) != None) && (!bDualWieldSlave))
 	{
 		Pawn(Owner).ChangedWeapon();
 	}
+
 SkipHack:
+	bDualWieldSlave = False;
+	if ((DualWieldPartner != None) && (DualWieldPartner.DualWieldPartner != Self))
+	{
+		DualWieldPartner = None;
+	}
 }
 
 // ----------------------------------------------------------------------
@@ -11846,6 +12272,8 @@ defaultproperties
      
      DroneMinRange=0
      DroneMaxRange=480
+     PartnerGridX=-1
+     PartnerGridY=-1
      
      //MADDERS defaults:
      bNameCaseSensitive=True //MADDERS, lots of weird weapon examples, so assume case sensitive until said otherwise. Ugh.
@@ -11879,6 +12307,7 @@ defaultproperties
      MeleeAnimRates(1)=1.000000
      MeleeAnimRates(2)=1.000000
      MoverDamageMult=1.000000
+     DisarmChanceMult=1.000000
      
      FiringSystemOperation=0
      FiringSystemLabel="Part Style:"
@@ -11896,6 +12325,7 @@ defaultproperties
      RicochetLabel="Ricochets:"
      RicochetDesc="%d TIME(S), %d%% effectiveness"
      msgInfoMoverDamageMult="Terrain Damage:"
+     msgInfoDisarmChanceMult="Disarm Force:"
      msgInfoBurst="BURST"
      FiringModesLabel="Firing modes:"
      ClipsLabel="CLIPS"
