@@ -199,7 +199,7 @@ function Timer()
 	else if (localURL == "10_PARIS_CLUB")
 	{
 		BackroomKeypad = GetBackroomKeypad();
-		if (Flags.GetBool('GaveCassandraMoney') || Flags.GetBool('ClubVaultEntered'))
+		if (Flags.GetBool('GaveCassandraMoney') || Flags.GetBool('ClubVaultEntered') || Flags.GetBool('VMDFoundClubDatacube'))
 		{
 			if ((BackroomKeypad != None) && (!BackroomKeypad.bIsSecretGoal))
 			{
