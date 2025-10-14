@@ -18,6 +18,21 @@ simulated function PreBeginPlay()
 	}
 }
 
+function bool VMDCanBeDualWielded()
+{
+	return true;
+}
+
+function bool VMDCanDualWield()
+{
+	if ((VMDBufferPlayer(Owner) != None) && (VMDBufferPlayer(Owner).bUseGunplayVersionTwo))
+	{
+		return true;
+	}
+	
+	return false;
+}
+
 defaultproperties
 {
      DrawAnimFrames=3
@@ -32,6 +47,7 @@ defaultproperties
      MeleeAnimRates(0)=0.830000
      MeleeAnimRates(1)=1.250000
      MeleeAnimRates(2)=0.910000
+     DisarmChanceMult=2.000000
      
      SelectTilt(0)=(X=25.000000,Y=40.000000)
      SelectTiltIndices=1
