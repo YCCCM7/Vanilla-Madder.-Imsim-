@@ -54,6 +54,8 @@ var localized String AmmoInfoText;
 var localized String AmmoTitleLabel;
 var localized String NoAmmoLabel;
 var localized string ModWeaponLabel;
+var localized string UnlinkWeaponLabel;
+var localized string MsgDualWeaponsWielded;
 
 // Vanilla Matters
 var float VM_mouseX;									// Just something to keep track of mouse position during a drag.
@@ -1045,6 +1047,12 @@ function UseSelectedItem()
 
 	if ((inv != None) && (Player != None))
 	{
+		if ((DeusExWeapon(Inv) != None) && (DeusExWeapon(Inv).DualWieldPartner != None))
+		{
+			DeusExWeapon(Inv).GP2UnlinkDualWieldPartner();
+			EnableButtons();
+			return;
+		}
 		if ((DeusExWeapon(Inv) != None) && (DeusExWeapon(Inv).ShouldUseWM2()))
 		{
 			DeusExWeapon(Inv).InvokeWM2Window(Player, DeusExWeapon(Inv));
@@ -1569,9 +1577,13 @@ function EnableButtons()
 			// If this is a weapon, check to see if this item has more than 
 			// one type of ammo in the player's inventory that can be
 			// equipped.  If so, enable the "AMMO" button.
-			if ( inv.IsA('DeusExWeapon') )
+			if (inv.IsA('DeusExWeapon'))
 			{
-				if (DeusExWeapon(Inv).ShouldUseWM2())
+				if ((DeusExWeapon(Inv).DualWieldPartner != None) && (DeusExWeapon(Inv).DualWieldPartner.DualWieldPartner != None))
+				{
+					BtnUse.SetButtonText(UnlinkWeaponLabel);
+				}
+				else if (DeusExWeapon(Inv).ShouldUseWM2())
 				{
 					BtnUse.SetButtonText(ModWeaponLabel);
 				}
@@ -1608,17 +1620,17 @@ function EnableButtons()
 
 function UpdateDragMouse(float newX, float newY)
 {
-	local Window findWin;
-	local Float relX, relY;
+	local bool bValidDrop, bOverrideButtonColor;
 	local Int slotX, slotY;
-	local PersonaInventoryItemButton invButton;
+	local Float relX, relY;
+	local DeusExWeapon TDXW, FDXW;
 	local HUDObjectSlot objSlot;
-	local Bool bValidDrop;
-	local Bool bOverrideButtonColor;
+	local PersonaInventoryItemButton invButton;
+	local Window findWin;
 	
 	// Vanilla Matters
-	local Inventory buttonInv, TInv;
 	local int i, TSlotsX, TSlotsY;
+	local Inventory buttonInv, TInv;
 	
 	// buttons can be deleted (such as one use weapon, charged pickup) in real time UI, crashes without this.
 	if (dragButton == None)
@@ -1644,6 +1656,12 @@ function UpdateDragMouse(float newX, float newY)
 		// Vanilla Matters: Gets the inventory item of this button for swapping checks.
 		buttonInv = Inventory( dragButton.GetClientObject() );
 		invButton = PersonaInventoryItemButton(dragButton);
+		
+		FDXW = DeusExWeapon(ButtonInv);
+		if (FindWin != None)
+		{
+			TDXW = DeusExWeapon(FindWin.GetClientObject());
+		}
 		
 		// If we're over the Inventory Items window, check to see 
 		// if there's enough space to deposit this item here.
@@ -1711,7 +1729,16 @@ function UpdateDragMouse(float newX, float newY)
 					PersonaInventoryItemButton(FindWin).HighlightWeapon(False);
 				}
 			}
-			
+			else if (ShouldLinkDualWielding(FDXW, TDXW))
+			{
+				bValidDrop = True;
+				PersonaInventoryItemButton(FindWin).HighlightWeapon(True);
+				invButton.bValidSlot = False;
+				invButton.bDimIcon = False;
+				bOverrideButtonColor = True;
+				
+				invButton.ResetFill();
+			}
 			// Check for ammo being dragged over weapons
 			else if ((DeusExAmmo(dragButton.GetClientObject()) != None) && (DeusExWeapon(findWin.GetClientObject()) != None))
 			{
@@ -2040,7 +2067,7 @@ function FinishButtonDrag()
 	local int i;
 	
 	//VMD, 5/11/25: We're not savages. Store a cast.
-	local DeusExWeapon DXW;
+	local DeusExWeapon TDXW, FDXW;
 	
 	// Take a look at the last window we were over to determine
 	// what to do now.  If we were over the Inventory Items window,
@@ -2059,21 +2086,22 @@ function FinishButtonDrag()
 		invButton = PersonaInventoryItemButton( dragButton );
 		
 		dragInv = Inventory(dragButton.GetClientObject());
+		FDXW = DeusExWeapon(DragInv);
 		dragTarget = PersonaInventoryItemButton(lastDragOverButton);
 		
 		// Check if this is a weapon mod and we landed on a weapon
 		if (DragTarget != None)
 		{
-			DXW = DeusExWeapon(DragTarget.GetClientObject());
+			TDXW = DeusExWeapon(DragTarget.GetClientObject());
 		}
 		
-		if ((dragInv.IsA('WeaponMod')) && (DXW != None))
+		if ((dragInv.IsA('WeaponMod')) && (TDXW != None))
 		{
-			if (WeaponMod(dragInv).CanUpgradeWeapon(DXW))
+			if (WeaponMod(dragInv).CanUpgradeWeapon(TDXW))
 			{
-				if (DXW.ShouldUseWM2())
+				if (TDXW.ShouldUseWM2())
 				{
-					DXW.InvokeWM2Window(Player, DXW);
+					TDXW.InvokeWM2Window(Player, TDXW);
 				}
 				else
 				{
@@ -2083,13 +2111,13 @@ function FinishButtonDrag()
 					// 3.  Destroy the upgrade (will cause button to be destroyed)
 					// 4.  Highlight the weapon.
 					
-					WeaponMod(dragInv).ApplyMod(DXW);
+					WeaponMod(dragInv).ApplyMod(TDXW);
 					
             				Player.RemoveObjectFromBelt(dragInv);
             				//invBelt.objBelt.RemoveObjectFromBelt(dragInv);
 					
 					// Send status message
-					winStatus.AddText(Sprintf(WeaponUpgradedLabel, DXW.itemName));
+					winStatus.AddText(Sprintf(WeaponUpgradedLabel, TDXW.itemName));
 					
             				//DEUS_EX AMSD done here for multiplayer propagation.
             				WeaponMod(draginv).DestroyMod();
@@ -2105,14 +2133,18 @@ function FinishButtonDrag()
 				ReturnButton(PersonaInventoryItemButton(dragButton));
 			}
 		}
-		
-		// Check if this is ammo and we landed on a weapon
-		else if ((dragInv.IsA('DeusExAmmo')) && (DXW != None))
+		else if (ShouldLinkDualWielding(FDXW, TDXW))
 		{
-			if (DXW.CanLoadAmmoType(DeusExAmmo(dragInv)))
+			FDXW.GP2AssignDualWieldPartner(TDXW);
+			VM_bSwapping = False;
+		}
+		// Check if this is ammo and we landed on a weapon
+		else if ((dragInv.IsA('DeusExAmmo')) && (TDXW != None))
+		{
+			if (TDXW.CanLoadAmmoType(DeusExAmmo(dragInv)))
 			{
 				// Load this ammo into the weapon
-				DXW.LoadAmmoType(DeusExAmmo(dragInv));
+				TDXW.LoadAmmoType(DeusExAmmo(dragInv));
 				
 				// Send status message
 				winStatus.AddText(Sprintf(AmmoLoadedLabel, DeusExAmmo(dragInv).itemName));
@@ -2224,6 +2256,26 @@ function FinishButtonDrag()
 	}
 	
     	EndDragMode();
+}
+
+function bool ShouldLinkDualWielding(DeusExWeapon FDXW, DeusExWeapon TDXW)
+{
+	if (TDXW == None || TDXW == None || TDXW == FDXW)
+	{
+		return false;
+	}
+	
+	if (!FDXW.VMDCanBeDualWielded() || !FDXW.VMDCanDualWield() || !TDXW.VMDCanBeDualWielded() || !TDXW.VMDCanDualWield())
+	{
+		return false;
+	}
+	
+	if (abs(FDXW.InvPosX - TDXW.InvPosX) > 1 || FDXW.InvPosY != TDXW.InvPosY)
+	{
+		return false;
+	}
+	
+	return true;
 }
 
 // ----------------------------------------------------------------------
@@ -2481,9 +2533,10 @@ function ClearSpecialHighlights()
 // Vanilla Matters: Fills the array with item buttons in the potential space occupied of an item.
 function PopulateSwapOthers( Inventory item, int slotX, int slotY ) 
 {
-	local Window win;
 	local int x, y;
 	local float relX, relY;
+	local DeusExWeapon TDXW, FDXW;
+	local Window win;
 	
 	local int TSlotsX, TSlotsY;
 
@@ -2518,7 +2571,12 @@ function PopulateSwapOthers( Inventory item, int slotX, int slotY )
 			{
 				if (WeaponMod(Item) == None || DeusExWeapon(win.GetClientObject()) == None || !DeusExWeapon(Win.GetClientObject()).ShouldUseWM2())
 				{
-					AddSwapOther(PersonaInventoryItemButton(win));
+					FDXW = DeusExWeapon(Item);
+					TDXW = DeusExWeapon(Win.GetClientObject());
+					if (!ShouldLinkDualWielding(FDXW, TDXW))
+					{
+						AddSwapOther(PersonaInventoryItemButton(win));
+					}
 				}
 			}
 			
@@ -3945,6 +4003,8 @@ defaultproperties
      clientBorderTextureRows=2
      clientBorderTextureCols=3
      
+     MsgDualWeaponsWielded="You cannot do that with the weapon in hand"
+     UnlinkWeaponLabel="|&Unlink"
      ModWeaponLabel="Mod|&..."
      CancelCraftingLabel="Cancel Crafting"
      ScrapCountLabel="Scrap:"
