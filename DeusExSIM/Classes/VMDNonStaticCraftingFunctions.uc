@@ -95,6 +95,23 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 	return -1;
 }
 
+/*static*/ function int GetMechanicalItemArrayFromString(string CheckString)
+{
+	local int i;
+	
+	if (CheckString == "") return -1;
+	
+	for(i=0; i<ArrayCount(Default.MechanicalItems); i++)
+	{
+		if (string(GetMechanicalItem(i)) == CheckString)
+		{
+			return i;
+		}
+	}
+	
+	return -1;
+}
+
 /*static*/ function int GetMechanicalItemPrice(class<Inventory> CheckClass)
 {
 	local int TArray, Ret;
@@ -218,6 +235,23 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 	for(i=0; i<ArrayCount(Default.MedicalItems); i++)
 	{
 		if (GetMedicalItem(i) == CheckClass)
+		{
+			return i;
+		}
+	}
+	
+	return -1;
+}
+
+/*static*/ function int GetMedicalItemArrayFromString(string CheckString)
+{
+	local int i;
+	
+	if (CheckString == "") return -1;
+	
+	for(i=0; i<ArrayCount(Default.MedicalItems); i++)
+	{
+		if (string(GetMedicalItem(i)) == CheckString)
 		{
 			return i;
 		}
@@ -366,9 +400,14 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 	if (CheckClass == None || TArray < 0) return 0;
 	
 	Ret = MechanicalBreakdownsPrice[TArray];
-	if ((VMP != None) && (VMP.LastMechanicalBreakdown ~= String(CheckClass)))
+	
+	/*if ((VMP != None) && (VMP.LastMechanicalBreakdown ~= String(CheckClass)))
 	{
 		Ret = Max(1, Ret*0.5);
+	}*/
+	if ((VMP != None) && (VMP.CraftingManager != None))
+	{
+		Ret = Max(1, Ret * VMP.CraftingManager.GetFatigueLevel(CheckClass));
 	}
 	
 	return Ret;
@@ -418,9 +457,14 @@ var byte MechanicalItemsSkillReq[32], MechanicalItemsComplexity[32], MedicalItem
 	if (CheckClass == None || TArray < 0) return 0;
 	
 	Ret = MedicalBreakdownsPrice[TArray];
-	if ((VMP != None) && (VMP.LastMedicalBreakdown ~= String(CheckClass)))
+	
+	/*if ((VMP != None) && (VMP.LastMedicalBreakdown ~= String(CheckClass)))
 	{
 		Ret = Max(1, Ret*0.5);
+	}*/
+	if ((VMP != None) && (VMP.CraftingManager != None))
+	{
+		Ret = Max(1, Ret * VMP.CraftingManager.GetFatigueLevel(CheckClass));
 	}
 	
 	return Ret;
