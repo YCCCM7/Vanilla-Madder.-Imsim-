@@ -228,7 +228,7 @@ defaultproperties
      ReloadCount=6
      PickupAmmoCount=6
      bInstantHit=True
-     FireOffset=(X=-20.000000,Y=2.000000,Z=30.000000)
+     FireOffset=(X=-20.000000,Y=2.000000,Z=10.000000)
      shakemag=50.000000
      FireSound=Sound'DeusExSounds.Weapons.RifleFire'
      AltFireSound=Sound'DeusExSounds.Weapons.RifleReloadEnd'
@@ -237,8 +237,8 @@ defaultproperties
      InventoryGroup=5
      bNameCaseSensitive=False
      ItemName="Sniper Rifle"
-     PlayerViewOffset=(X=20.000000,Y=-2.000000,Z=-30.000000)
-     PlayerViewMesh=LodMesh'DeusExItems.SniperRifle'
+     PlayerViewOffset=(X=20.000000,Y=-2.000000,Z=-10.000000)
+     PlayerViewMesh=LodMesh'VMDSniperRifle'
      LeftPlayerViewMesh=LodMesh'SniperRifleLeft'
      PickupViewMesh=LodMesh'DeusExItems.SniperRiflePickup'
      ThirdPersonMesh=LodMesh'DeusExItems.SniperRifle3rd'
