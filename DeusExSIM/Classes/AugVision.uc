@@ -3,6 +3,8 @@
 //=============================================================================
 class AugVision extends VMDBufferAugmentation;
 
+var travel bool FakebIsActive;
+
 var float mpAugValue, mpEnergyDrain;
 var bool bLastActive;
 
@@ -22,7 +24,7 @@ state Active
 Begin:
 }
 
-function Activate()
+/*function Activate()
 {
 	local bool bWasActive;
 	
@@ -55,6 +57,50 @@ function Deactivate()
 		{
 			Player.RelevantRadius = 0;
 		}
+	}
+}*/
+
+function FakeActivate()
+{
+	if (!FakebIsActive)
+	{
+		FakebIsActive = true;
+		SetVisionAugStatus(CurrentLevel,LevelValues[CurrentLevel],True);
+		if (Player != None) Player.RelevantRadius = LevelValues[CurrentLevel];
+	}
+}
+
+function FakeDeactivate()
+{
+	if (FakebIsActive)
+	{
+		FakebIsActive = false;
+		SetVisionAugStatus(CurrentLevel,LevelValues[CurrentLevel],False);
+		if (Player != None) Player.RelevantRadius = 0;
+	}
+}
+
+function Tick(float DT)
+{
+	Super.Tick(DT);
+	
+	if (bHasIt)
+	{
+		if (!bDisabled) SetVisionAugStatus(CurrentLevel,LevelValues[CurrentLevel],True);
+		else SetVisionAugStatus(CurrentLevel,LevelValues[CurrentLevel],False);
+		
+		if ((!FakebIsActive) && (!bDisabled))
+		{
+			FakeActivate();
+		}
+		else if ((FakebIsActive) && (bDisabled))
+		{
+			FakeDeactivate();
+		}
+	}
+	else if (FakebIsActive)
+	{
+		FakeDeactivate();
 	}
 }
 
@@ -120,7 +166,7 @@ simulated function SetVisionAugStatus(int Level, int LevelValue, bool IsActive)
 //Sometimes we're also out of range and in stasis, so tick can't save us. Great to see.
 function VMDAugWasPoked()
 {
-	if (bIsActive)
+	if (FakebIsActive)
 	{
 		bLastActive = false;
 		SetVisionAugStatus(CurrentLevel, LevelValues[CurrentLevel], bIsActive);
@@ -144,6 +190,10 @@ function string VMDGetAdvancedDescription()
 
 defaultproperties
 {
+     //MADDERS, 8/30/25: Now a passive aug, but 25% reduced wall vision per level.
+     bPassive=True
+     LoopSound=None
+     
      bBulkAugException=True
      AdvancedDescription="By bleaching selected rod photoreceptors and saturating them with metarhodopsin XII, the 'infravision' present in many commercial goggles can be duplicated. Subsequent upgrades increase the distance of infravision and sonar-resonance imaging, better allowing an agent to see through walls."
      AdvancedDescLevels(0)="TECH ONE: Thermal imaging, and sonar vision out to %d ft of range."
@@ -153,16 +203,16 @@ defaultproperties
      
      mpAugValue=800.000000
      mpEnergyDrain=50.000000
-     EnergyRate=40.000000
+     EnergyRate=0.000000 //Previously 40.
      Icon=Texture'DeusExUI.UserInterface.AugIconVision'
      smallIcon=Texture'DeusExUI.UserInterface.AugIconVision_Small'
      AugmentationName="Vision Enhancement"
      Description="By bleaching selected rod photoreceptors and saturating them with metarhodopsin XII, the 'infravision' present in many commercial goggles can be duplicated. Subsequent upgrades increase the distance of infravision and sonar-resonance imaging, better allowing an agent to see through walls.|n|nTECH ONE: Thermal imaging, and sonar vision out to 15 ft of range.|n|nTECH TWO: Sonar imaging is extended to 30 feet.|n|nTECH THREE: Sonar imaging is extended to 45 feet.|n|nTECH FOUR: Sonar imaging is extended to 60 feet."
      MPInfo="When active, you can see enemy players in the dark from any distance, and for short distances you can see through walls and see cloaked enemies.  Energy Drain: Moderate"
-     LevelValues(0)=240.000000
-     LevelValues(1)=480.000000
-     LevelValues(2)=720.000000
-     LevelValues(3)=960.000000
+     LevelValues(0)=208.000000
+     LevelValues(1)=304.000000
+     LevelValues(2)=400.000000
+     LevelValues(3)=496.000000
      AugmentationLocation=LOC_Eye
      MPConflictSlot=6
 }
