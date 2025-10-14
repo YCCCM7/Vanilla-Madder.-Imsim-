@@ -123,6 +123,7 @@ defaultproperties
      MeleeAnimRates(0)=1.000000
      MeleeAnimRates(1)=1.000000
      MeleeAnimRates(2)=1.000000
+     DisarmChanceMult=0.400000
      
      ShotTime=0.050000
      bCanRotateInInventory=True
@@ -195,7 +196,7 @@ defaultproperties
      AmmoName=Class'DeusEx.AmmoNone'
      ReloadCount=0
      bInstantHit=True
-     FireOffset=(X=-21.000000,Y=16.000000,Z=27.000000)
+     FireOffset=(X=-21.000000,Y=16.000000,Z=10.000000)
      shakemag=20.000000
      FireSound=Sound'DeusExSounds.Weapons.NanoSwordFire'
      SelectSound=Sound'DeusExSounds.Weapons.NanoSwordSelect'
@@ -206,8 +207,8 @@ defaultproperties
      bNameCaseSensitive=False
      ItemName="Dragon's Tooth Sword"
      ItemArticle="the"
-     PlayerViewOffset=(X=21.000000,Y=-16.000000,Z=-27.000000)
-     PlayerViewMesh=LodMesh'DeusExItems.NanoSword'
+     PlayerViewOffset=(X=21.000000,Y=-16.000000,Z=-10.000000)
+     PlayerViewMesh=LodMesh'VMDNanoSword'
      LeftPlayerViewMesh=LodMesh'NanoSwordLeft'
      PickupViewMesh=LodMesh'DeusExItems.NanoSwordPickup'
      ThirdPersonMesh=LodMesh'DeusExItems.NanoSword3rd'
