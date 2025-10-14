@@ -390,7 +390,7 @@ function NewSaveGame()
 	//So, instead we're gonna be finding it with our own native code, and using THAT ID.
 	//newSaveRowID = lstGames.AddRow(TChunker $ ";" $ timeString $ ";9999999999;;-2");
 	TarDir = GetConfig("Core.System", "SavePath");
-	FreeSave = class'VMDFileFinder'.Static.GetLatestSaveDir(TarDir);
+	FreeSave = class'VMDNative.VMDFileFinder'.Static.GetLatestSaveDir(TarDir);
 	Log("MADDERS: FREE SAVE?"@FreeSave);
 	NewSaveRowID = lstGames.AddRow(TChunker $ ";" $ TimeString $ ";9999999999;;"$FreeSave);
 	
